@@ -30,7 +30,6 @@ system/product/priv-app/Messages
 system/product/priv-app/Velvet
 
 system/app/BixbyWakeup
-system/app/DAAgent
 system/app/GalaxyResourceUpdater
 system/app/GearManagerStub
 system/app/KidsHome_Installer
@@ -82,7 +81,6 @@ Bixby
 BixbyInterpreter
 BixbyVisionFramework3.5
 BixbyWakeup
-DAAgent
 DuoStub
 GalaxyResourceUpdater
 GalaxyWearable
