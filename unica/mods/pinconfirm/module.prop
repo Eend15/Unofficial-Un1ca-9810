@@ -1,0 +1,4 @@
+id=pinconfirm
+name=4 digits auto confirm PIN
+author=salvogiangri
+description=Sets auto confirm PIN minimum required digits to 4.

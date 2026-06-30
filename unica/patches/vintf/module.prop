@@ -1,0 +1,4 @@
+id=vintf
+name=Vendor interface objects blobs
+author=salvogiangri
+description=Replaces VINTF objects blobs with target ones.

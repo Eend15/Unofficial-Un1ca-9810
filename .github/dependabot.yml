@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+        interval: "daily"
+    ignore:
+        - dependency-name: "external/erofs-utils"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+        interval: "daily"
