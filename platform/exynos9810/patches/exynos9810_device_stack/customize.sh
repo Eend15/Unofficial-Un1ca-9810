@@ -1376,14 +1376,17 @@ EOF
 EOF
 )" || return 1
 
-    SMALI="$(find "$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk" \
-        -path "*/v2/q.smali" | head -n 1)"
-    if [ ! -f "$SMALI" ]; then
-        LOGE "v2/q.smali not found in SamsungCamera.apk"
-        return 1
+    SMALI="$( { grep -RIl "invoke-static {p1}, Lu2/t;->c(Lcom/sec/android/app/camera/interfaces/CommandId;)Lcom/sec/android/app/camera/interfaces/CameraSettings\$Key;" \
+        "$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk" 2>/dev/null || true; } | head -n 1)"
+    if [ -z "$SMALI" ]; then
+        SMALI="$(find "$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk" \
+            -path "*/v2/q.smali" | head -n 1)"
     fi
 
-    python3 - "$SMALI" <<'PY' || return 1
+    if [ ! -f "$SMALI" ]; then
+        LOGW "Skipping unsafe back bokeh lens select guard: SamsungCamera.apk does not contain the expected One UI 8 lens selector pattern"
+    else
+        python3 - "$SMALI" <<'PY' || return 1
 from pathlib import Path
 import sys
 
@@ -1413,6 +1416,7 @@ if marker not in text:
     text = text.replace(needle, insert, 1)
     path.write_text(text)
 PY
+    fi
 
     SMALI="$(find "$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk" \
         -path "*/com/sec/android/app/camera/CameraErrorEventHandler.smali" | head -n 1)"
