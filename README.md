@@ -1,8 +1,18 @@
 # Unofficial UN1CA 9810
 
-Unofficial UN1CA 9810 is a community fork of [UN1CA](https://github.com/salvogiangri/UN1CA) focused on bringing Android 16 / One UI 8.0 to Samsung Exynos9810 devices.
+Unofficial UN1CA 9810 is an experimental custom firmware project for Samsung Exynos9810 devices, maintained by Eend15 and based on the UN1CA build system by salvo_giangri.
 
-This project is unofficial, experimental, and not affiliated with or endorsed by Samsung or the upstream UN1CA maintainers. It keeps the UN1CA build system and adapts it for the Galaxy S9 series and Galaxy Note9.
+It is designed to bring a modern, refined, and feature-rich One UI experience to the Galaxy S9, Galaxy S9+, and Galaxy Note9. The current development target is Android 16 / One UI 8.0, adapted for the legacy Exynos9810 platform.
+
+This is an unofficial community port. It is not affiliated with Samsung and is not an official release from the upstream UN1CA maintainers.
+
+## What Is UN1CA 9810?
+
+UN1CA 9810 keeps the upstream UN1CA workflow: the build system extracts Samsung firmware, applies ROM patches, prepares target-specific files, and generates a flashable recovery zip.
+
+This fork changes the target from newer supported Samsung devices to Exynos9810 devices. It adds a dedicated platform layer, S9/S9+/Note9 targets, repartition support, recovery compatibility hooks, kernel installer support, and device-specific fixes required to boot One UI 8 on these phones.
+
+The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy S9 series and Note9 while keeping as much of the upstream UN1CA experience as possible.
 
 ## Supported Devices
 
@@ -14,14 +24,16 @@ This project is unofficial, experimental, and not affiliated with or endorsed by
 
 - Android 16 / One UI 8.0 target
 - Galaxy S22 source firmware path, following the upstream UN1CA layout
-- Exynos9810 vendor compatibility work based around Note10 Lite VNDK31 components and device-specific S9/Note9 fixes
-- Samsung stock firmware extraction support for each target
+- Exynos9810 vendor compatibility work based around Note10 Lite VNDK31 components
+- S9, S9+, and Note9 stock firmware extraction support
+- Exynos9810 recovery, partition, and kernel workflow integration
 
-## Retained UN1CA Features
+## Core Features
 
-- Galaxy S22-based One UI 8 experience
-- EROFS-powered system image support
-- Galaxy AI feature framework where compatible with Exynos9810
+- One UI 8 experience adapted for Exynos9810
+- EROFS-powered system image support when used with a compatible recovery
+- Retained upstream UN1CA feature patches where compatible
+- Galaxy AI framework support where hardware and vendor components allow it
 - Galaxy S25 wallpapers and sounds from upstream UN1CA
 - High-end animations, native blur, live blur, and One UI Home animation options
 - AOD clock transition support
@@ -33,16 +45,17 @@ This project is unofficial, experimental, and not affiliated with or endorsed by
 - Custom FlipFont font support
 - Extra CSC features such as call recording, Hiya, network speed in the status bar, and AltZLife where compatible
 - BluetoothLibraryPatcher and KnoxPatch integration from upstream UN1CA
-- UN1CA Settings with native/live blur toggle, Vulkan renderer toggle, Play Integrity / PIF tooling, TrickyStore options, Hide My Applist integration, developer-options hiding, app downgrade toggle, old target SDK install toggle, secure screenshot toggle, screenshot/screen-recording detection toggle, unlimited Google Photos backup option, and games FPS unlock toggle
+- UN1CA Settings with Play Integrity / PIF tooling, TrickyStore options, Hide My Applist integration, developer-options hiding, app downgrade toggle, old target SDK install toggle, secure screenshot toggle, screenshot and screen-recording detection toggle, Google Photos backup option, and games FPS unlock toggle
 
 ## Exynos9810 Port Features
 
 - Dedicated `exynos9810` platform layer for legacy non-dynamic partition devices
 - Device targets for `starlte`, `star2lte`, and `crownlte`
 - Automatic Exynos9810 repartition and clean install flow integrated into the installer
-- DS-ACK / CrownTrail-compatible kernel installer support with permissive and enforcing kernel packages
+- DS-ACK and CrownTrail-compatible kernel installer support
+- Permissive and enforcing kernel package support
 - KernelSU-Next support through compatible kernel packages
-- Custom TWRP lite / large ZIP compatibility hooks for older recovery environments
+- Custom TWRP lite and large ZIP compatibility hooks for older recovery environments
 - EROFS-aware and large ZIP recovery workflow support when paired with a compatible recovery
 - Exynos9810 boot, fstab, first-stage init, metadata, keymaster, radio, and slot/IMEI compatibility fixes
 - Note10 Lite vendor adaptation with S9/S9+/Note9 specific overlays and properties
@@ -52,8 +65,6 @@ This project is unofficial, experimental, and not affiliated with or endorsed by
 - One UI camera compatibility fixes for photo, video, portrait, food, and pro-mode paths where possible
 - Debloat profile tailored for legacy Exynos9810 memory and partition limits
 - Device-specific overlays, DVFS/SIOP policy hooks, floating features, CSC feature tuning, and framework feature declarations
-- Optional Play Integrity / PIF integration through UN1CA Settings
-- UN1CA Settings and upstream UN1CA feature patches retained where they are compatible with Exynos9810
 
 ## Build
 
@@ -72,14 +83,16 @@ Build output and extracted firmware are intentionally not tracked in git. Keep `
 - `Android-16`: active Android 16 / One UI 8 Exynos9810 work
 - `Qpr2`: reserved branch for future Android 16 QPR2 work
 
-## Notes
+## Status
 
-This ROM is still a porting project. Some hardware features may require device-specific debugging, logs, and recovery-side fixes. Flash only on supported Exynos models and keep backups of EFS, modem, and important data.
+This ROM is still a porting project. Some hardware features may require device-specific debugging, logs, vendor changes, kernel changes, or recovery-side fixes.
+
+Flash only on supported Exynos models. Keep backups of EFS, modem, and important data before testing.
 
 ## Credits
 
 - [salvogiangri](https://github.com/salvogiangri) and all upstream UN1CA contributors for the original project and build system
-- Exynos9810 kernel and device-port contributors in the S9/S9+/Note9 community
+- Exynos9810 kernel and device-port contributors in the Galaxy S9, Galaxy S9+, and Galaxy Note9 community
 - BluetoothLibraryPatcher, KnoxPatch, TrickyStore, Play Integrity Fix, and the other upstream projects used by UN1CA
 
 ## License
