@@ -16,9 +16,9 @@ The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy 
 
 ## Supported Devices
 
-- Galaxy S9 Exynos (`starlte`, SM-G960F/FD/N)
-- Galaxy S9+ Exynos (`star2lte`, SM-G965F/FD/N)
-- Galaxy Note9 Exynos (`crownlte`, SM-N960F/FD/N)
+- Galaxy S9 Exynos (`starlte`, SM-G960F
+- Galaxy S9+ Exynos (`star2lte`, SM-G965F
+- Galaxy Note9 Exynos (`crownlte`, SM-N960F
 
 ## Current Base
 
@@ -81,7 +81,7 @@ Build output and extracted firmware are intentionally not tracked in git. Keep `
 ## Branches
 
 - `Android-16`: active Android 16 / One UI 8 Exynos9810 work
-- `Qpr2`: reserved branch for future Android 16 QPR2 work
+- `Qpr2`: reserved branch for future Android 16 QPR2 work (if even possible)
 
 ## Status
 
@@ -98,3 +98,10 @@ Flash only on supported Exynos models. Keep backups of EFS, modem, and important
 ## License
 
 This project follows the upstream UN1CA license terms. See [LICENSE](LICENSE).
+This project is licensed under the terms of the GNU General Public License v3.0. External dependencies might be distributed under a different license, such as:
+
+android-tools, licensed under the Apache License 2.0
+apktool, licensed under the Apache License 2.0
+erofs-utils, dual license (GPL-2.0, Apache-2.0)
+img2sdat, licensed under the MIT License
+platform_build (ext4_utils, f2fs_utils, signapk), licensed under the Apache License 2.0
