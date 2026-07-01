@@ -135,7 +135,7 @@ if $BUILD_ROM; then
     if [ -d "$APKTOOL_DIR" ]; then
         LOG_STEP_IN true "Building APKs/JARs"
 
-        APKTOOL_JOBS="${UN1CA_APKTOOL_JOBS:-0}"
+        APKTOOL_JOBS="${UN1CA_APKTOOL_JOBS:-4}"
         if ! [[ "$APKTOOL_JOBS" =~ ^[0-9]+$ ]]; then
             APKTOOL_JOBS=0
         fi
