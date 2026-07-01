@@ -3,7 +3,7 @@ if $DEBUG; then
     return 0
 fi
 
-ENABLE_EXYNOS9810_TWRP_LITE="${ENABLE_EXYNOS9810_TWRP_LITE:-true}"
+ENABLE_EXYNOS9810_TWRP_LITE="${ENABLE_EXYNOS9810_TWRP_LITE:-false}"
 if [[ "$TARGET_PLATFORM" == "exynos9810" ]] && $ENABLE_EXYNOS9810_TWRP_LITE; then
     LOG "\033[0;33m! Exynos9810 TWRP-lite build detected. Skipping large wallpaper pack\033[0m"
     return 0
