@@ -1236,49 +1236,53 @@ end += len(".end method")
 method = text[start:end]
 
 method = method.replace("    .locals 3", "    .locals 4", 1)
+
+annotation_end = method.find("    .end annotation")
+if annotation_end == -1:
+    raise SystemExit("isSelectedItem annotation end not found")
+annotation_end += len("    .end annotation")
+
+if "unica_zoom_index_invalid" not in method:
+    guard = """
+
+    if-ltz p2, :unica_zoom_index_invalid
+
+    invoke-interface {p1}, Ljava/util/List;->size()I
+
+    move-result v0
+
+    if-ge p2, v0, :unica_zoom_index_invalid
+"""
+    method = method[:annotation_end] + guard + method[annotation_end:]
+
 if "    move v3, p2" not in method:
-    method = method.replace(
-        "    move p2, v1\n\n    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;",
-        "    move v3, p2\n\n    move p2, v1\n\n    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;",
-        1,
-    )
+    marker = "    const/4 v2, 0x1\n"
+    if marker not in method:
+        raise SystemExit("isSelectedItem const v2 marker not found")
+    method = method.replace(marker, marker + "\n    move v3, p2\n", 1)
+
 method = method.replace(
     "    add-int/2addr p2, v2\n\n    invoke-interface {p1, p2}, Ljava/util/List;->get(I)Ljava/lang/Object;",
     "    add-int/lit8 v3, v3, 0x1\n\n    invoke-interface {p1, v3}, Ljava/util/List;->get(I)Ljava/lang/Object;",
     1,
 )
+
+if "unica_zoom_range_valid" not in method:
+    method = method.replace(
+        "    sub-int/2addr p1, v2\n\n    invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;",
+        "    sub-int/2addr p1, v2\n\n    if-ge p1, p2, :unica_zoom_range_valid\n\n    const/4 v1, 0x0\n\n    goto :goto_1\n\n    :unica_zoom_range_valid\n\n    invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;",
+        1,
+    )
+
+if "unica_zoom_index_invalid" in method and "    :unica_zoom_index_invalid" not in method:
+    method = method.replace(
+        "    nop\n\n    :pswitch_data_0",
+        "    :unica_zoom_index_invalid\n    const/4 v1, 0x0\n\n    return v1\n\n    nop\n\n    :pswitch_data_0",
+        1,
+    )
+
 path.write_text(text[:start] + method + text[end:])
 PY
-
-    if ! grep -q "unica_zoom_index_invalid" "$SMALI"; then
-        EVAL "sed -i '/    \\.end annotation/a\\
-\\
-    if-ltz p2, :unica_zoom_index_invalid\\
-\\
-    invoke-interface {p1}, Ljava\\/util\\/List;->size()I\\
-\\
-    move-result v0\\
-\\
-    if-ge p2, v0, :unica_zoom_index_invalid' \"$SMALI\"" || return 1
-        EVAL "sed -i '/    nop/i\\
-\\
-    :unica_zoom_index_invalid\\
-    const\\/4 v1, 0x0\\
-\\
-    return v1' \"$SMALI\"" || return 1
-    fi
-
-    if ! grep -q "unica_zoom_range_valid" "$SMALI"; then
-        EVAL "sed -i '/    sub-int\\/2addr p1, v2/a\\
-\\
-    if-ge p1, p2, :unica_zoom_range_valid\\
-\\
-    const\\/4 v1, 0x0\\
-\\
-    goto :goto_1\\
-\\
-    :unica_zoom_range_valid' \"$SMALI\"" || return 1
-    fi
 
     SMALI="$(find "$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk" \
         -path "*/com/sec/android/app/camera/util/ShootingModeMap.smali" | head -n 1)"
