@@ -1,16 +1,11 @@
-ui_print("Applying Exynos9810 vendor boot fixes...");
-package_extract_file("exynos9810/vendor_bootfix.sh", "/tmp/exynos9810/vendor_bootfix.sh");
-run_program("/system/bin/chmod", "0755", "/tmp/exynos9810/vendor_bootfix.sh");
-run_program("/sbin/sh", "/tmp/exynos9810/vendor_bootfix.sh") == 0 ||
-    abort("E9810: Failed to apply vendor boot fixes.");
 ui_print("Writing Exynos9810 boot ramdisk...");
 package_extract_file("exynos9810/ramdisk.img", "/dev/block/platform/11120000.ufs/by-name/BOOT");
 ui_print("Installing Exynos9810 kernel zip...");
 package_extract_file("exynos9810/kernel.zip", "/tmp/exynos9810/kernel.zip");
-run_program("/sbin/mkdir", "-p", "/tmp/exynos9810/kernel");
+run_program("/system/bin/mkdir", "-p", "/tmp/exynos9810/kernel");
 run_program("/system/bin/unzip", "/tmp/exynos9810/kernel.zip", "META-INF/com/google/android/*", "-d", "/tmp/exynos9810/kernel") == 0 ||
     abort("E9810: Failed to extract kernel installer.");
-run_program("/sbin/chmod", "-R", "0755", "/tmp/exynos9810/kernel");
+run_program("/system/bin/chmod", "-R", "0755", "/tmp/exynos9810/kernel");
 run_program("/sbin/sh", "/tmp/exynos9810/kernel/META-INF/com/google/android/update-binary", getprop("ro.boot.bootloader"), "1", "/tmp/exynos9810/kernel.zip") == 0 ||
     abort("E9810: Failed to install Exynos9810 kernel.");
 ui_print("Formatting cache, omr, preload and data...");

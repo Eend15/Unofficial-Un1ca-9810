@@ -36,3 +36,29 @@ else
     LOGE "Exynos9810 kernel not found: $EXYNOS9810_KERNEL_ZIP"
     exit 1
 fi
+
+UPDATER_SCRIPT="$TMP_DIR/META-INF/com/google/android/updater-script"
+if [ -f "$TMP_DIR/exynos9810/vendor_bootfix.sh" ] && [ -f "$UPDATER_SCRIPT" ]; then
+    LOG "- Injecting Exynos9810 vendor boot fixes after vendor image patch"
+    python3 - "$UPDATER_SCRIPT" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+script = path.read_text()
+marker = 'abort("E2001: Failed to update vendor image.");'
+block = '''ui_print("Applying Exynos9810 vendor boot fixes...");
+package_extract_file("exynos9810/vendor_bootfix.sh", "/tmp/exynos9810/vendor_bootfix.sh");
+run_program("/system/bin/chmod", "0755", "/tmp/exynos9810/vendor_bootfix.sh");
+run_program("/sbin/sh", "/tmp/exynos9810/vendor_bootfix.sh") == 0 ||
+    abort("E9810: Failed to apply vendor boot fixes.");'''
+
+if "Applying Exynos9810 vendor boot fixes" not in script:
+    index = script.find(marker)
+    if index == -1:
+        raise SystemExit("vendor image patch marker not found")
+    index += len(marker)
+    script = script[:index] + "\n" + block + script[index:]
+    path.write_text(script)
+PY
+fi
