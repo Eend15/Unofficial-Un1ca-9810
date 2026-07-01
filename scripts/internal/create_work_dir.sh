@@ -8,6 +8,27 @@ source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$SOURCE_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$SOURCE_FIRMWARE")"
 TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
 
+CLEAN_RSYNC_SYMLINK_CONFLICTS()
+{
+    local SOURCE_DIR="$1"
+    local DEST_DIR="$2"
+    local LINK
+    local REL_PATH
+    local DEST_PATH
+
+    [ -d "$SOURCE_DIR" ] || return 0
+    [ -d "$DEST_DIR" ] || return 0
+
+    while IFS= read -r LINK; do
+        REL_PATH="${LINK#$SOURCE_DIR/}"
+        DEST_PATH="$DEST_DIR/$REL_PATH"
+
+        if [ -d "$DEST_PATH" ] && [ ! -L "$DEST_PATH" ]; then
+            rm -rf "$DEST_PATH"
+        fi
+    done < <(find "$SOURCE_DIR" -type l)
+}
+
 COPY_SOURCE_FIRMWARE()
 {
     local SOURCE_FOLDERS="system product"
@@ -24,6 +45,7 @@ COPY_SOURCE_FIRMWARE()
                 sed "s/^product/system\/product/g" "$FW_DIR/$SOURCE_FIRMWARE_PATH/fs_config-product" >> "$WORK_DIR/configs/fs_config-system"
             else
                 LOG "- Copying /$f from source firmware"
+                CLEAN_RSYNC_SYMLINK_CONFLICTS "$FW_DIR/$SOURCE_FIRMWARE_PATH/$f" "$WORK_DIR/$f"
                 EVAL "rsync -a --mkpath --delete --exclude=\"*system_ext*\" \"$FW_DIR/$SOURCE_FIRMWARE_PATH/$f\" \"$WORK_DIR\"" || exit 1
                 sed "/system_ext/d" "$FW_DIR/$SOURCE_FIRMWARE_PATH/file_context-$f" > "$WORK_DIR/configs/file_context-$f"
                 sed "/system_ext/d" "$FW_DIR/$SOURCE_FIRMWARE_PATH/fs_config-$f" > "$WORK_DIR/configs/fs_config-$f"
@@ -125,6 +147,7 @@ COPY_TARGET_FIRMWARE()
     for f in $TARGET_FOLDERS; do
         if [ -d "$FW_DIR/$TARGET_FIRMWARE_PATH/$f" ]; then
             LOG "- Copying /$f from target firmware"
+            CLEAN_RSYNC_SYMLINK_CONFLICTS "$FW_DIR/$TARGET_FIRMWARE_PATH/$f" "$WORK_DIR/$f"
             EVAL "rsync -a --mkpath --delete \"$FW_DIR/$TARGET_FIRMWARE_PATH/$f\" \"$WORK_DIR\"" || exit 1
             EVAL "cp -a \"$FW_DIR/$TARGET_FIRMWARE_PATH/file_context-$f\" \"$WORK_DIR/configs/file_context-$f\"" || exit 1
             EVAL "cp -a \"$FW_DIR/$TARGET_FIRMWARE_PATH/fs_config-$f\" \"$WORK_DIR/configs/fs_config-$f\"" || exit 1
