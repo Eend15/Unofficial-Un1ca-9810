@@ -2369,6 +2369,91 @@ EOF
         "/system/bin/unica_exynos9810_bootlog.sh" 0 2000 755 "u:object_r:system_file:s0"
 }
 
+_EXYNOS9810_WRITE_VENDOR_INIT_DEBUG()
+{
+    if [ "${EXYNOS9810_ENABLE_INIT_DEBUG:-true}" != "true" ]; then
+        return 0
+    fi
+
+    LOG "- Adding Exynos9810 vendor init.debug boot logger"
+
+    mkdir -p "$WORK_DIR/vendor/etc/init" "$WORK_DIR/vendor/bin"
+
+    cat > "$WORK_DIR/vendor/etc/init/init.debug.rc" <<'EOF'
+on early-init
+    write /dev/kmsg "UN1CA-9810: init.debug early-init reached"
+
+on post-fs
+    write /dev/kmsg "UN1CA-9810: init.debug post-fs reached"
+    mkdir /cache/unica 0777 root root
+    write /cache/unica/init_debug_post_fs.txt "post-fs reached"
+    copy /proc/cmdline /cache/unica/cmdline.txt
+    copy /proc/mounts /cache/unica/mounts_post_fs.txt
+    copy /proc/partitions /cache/unica/partitions.txt
+    start unica9810_init_debug
+
+on post-fs-data
+    write /dev/kmsg "UN1CA-9810: init.debug post-fs-data reached"
+    mkdir /cache/unica 0777 root root
+    write /cache/unica/init_debug_post_fs_data.txt "post-fs-data reached"
+    copy /proc/mounts /cache/unica/mounts_post_fs_data.txt
+
+on property:sys.boot_completed=1
+    write /dev/kmsg "UN1CA-9810: boot_completed reached"
+    write /cache/unica/boot_completed.txt "1"
+
+service unica9810_init_debug /vendor/bin/init_debug_log.sh
+    class core
+    user root
+    group root log readproc
+    disabled
+    oneshot
+    seclabel u:r:su:s0
+EOF
+
+    cat > "$WORK_DIR/vendor/bin/init_debug_log.sh" <<'EOF'
+#!/system/bin/sh
+
+OUT=/cache/unica
+mkdir -p "$OUT"
+
+{
+    echo "UN1CA Exynos9810 init.debug logger"
+    date
+    echo
+    echo "cmdline:"
+    cat /proc/cmdline
+    echo
+    echo "mounts:"
+    cat /proc/mounts
+    echo
+    echo "partitions:"
+    cat /proc/partitions
+} > "$OUT/init_debug_start.txt" 2>&1
+
+getprop > "$OUT/props_start.txt" 2>&1
+dmesg > "$OUT/dmesg_start.txt" 2>&1
+logcat -b all -d -v threadtime > "$OUT/logcat_start.txt" 2>&1
+
+logcat -b all -v threadtime -f "$OUT/logcat_live.txt" &
+sleep 15
+dmesg > "$OUT/dmesg_15s.txt" 2>&1
+logcat -b all -d -v threadtime > "$OUT/logcat_15s.txt" 2>&1
+sleep 45
+dmesg > "$OUT/dmesg_60s.txt" 2>&1
+logcat -b all -d -v threadtime > "$OUT/logcat_60s.txt" 2>&1
+sync
+EOF
+
+    chmod 644 "$WORK_DIR/vendor/etc/init/init.debug.rc"
+    chmod 755 "$WORK_DIR/vendor/bin/init_debug_log.sh"
+
+    _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/init/init.debug.rc" \
+        "/vendor/etc/init/init.debug.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA "vendor" "vendor/bin/init_debug_log.sh" \
+        "/vendor/bin/init_debug_log.sh" 0 2000 755 "u:object_r:vendor_file:s0"
+}
+
 _EXYNOS9810_FIX_BOOT_METADATA()
 {
     LOG "- Fixing Exynos9810 boot-critical metadata"
@@ -2719,6 +2804,7 @@ _EXYNOS9810_WRITE_EXYNOS9810_KEYLAYOUTS
 _EXYNOS9810_PATCH_EXYNOS9810_INIT_FS
 _EXYNOS9810_WRITE_VENDOR_BOOT_TRACE
 _EXYNOS9810_WRITE_SYSTEM_BOOT_DEBUG
+_EXYNOS9810_WRITE_VENDOR_INIT_DEBUG
 _EXYNOS9810_PATCH_ENFORCING_COMPAT
 _EXYNOS9810_SANITIZE_DONOR_BRANDING
 _EXYNOS9810_FIX_BOOT_METADATA

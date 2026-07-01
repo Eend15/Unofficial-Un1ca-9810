@@ -1,6 +1,6 @@
 ui_print("Checking Exynos9810 partition layout...");
 package_extract_dir("exynos9810", "/tmp/exynos9810");
-run_program("/sbin/chmod", "-R", "0755", "/tmp/exynos9810");
+run_program("/system/bin/chmod", "-R", "0755", "/tmp/exynos9810");
 ifelse(is_mounted("/system"), unmount("/system"));
 ifelse(is_mounted("/system_root"), unmount("/system_root"));
 ifelse(is_mounted("/vendor"), unmount("/vendor"));
