@@ -2452,6 +2452,18 @@ EOF
         "/vendor/etc/init/init.debug.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
     _EXYNOS9810_SET_METADATA "vendor" "vendor/bin/init_debug_log.sh" \
         "/vendor/bin/init_debug_log.sh" 0 2000 755 "u:object_r:vendor_file:s0"
+
+    for rc in \
+        "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" \
+        "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"; do
+        if [ -f "$rc" ] && ! grep -q "init.debug.rc" "$rc"; then
+            {
+                echo ""
+                echo "# UN1CA 9810 boot debug"
+                echo "import /vendor/etc/init/init.debug.rc"
+            } >> "$rc"
+        fi
+    done
 }
 
 _EXYNOS9810_FIX_BOOT_METADATA()
