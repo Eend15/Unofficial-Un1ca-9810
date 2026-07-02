@@ -66,8 +66,10 @@ _EXYNOS9810_ADD_METADATA()
             esac
         fi
 
-        sed -i "\|^$ENTRY |d" "$WORK_DIR/configs/fs_config-$PARTITION"
-        sed -i "\|^$CONTEXT |d" "$WORK_DIR/configs/file_context-$PARTITION"
+        awk -v key="$ENTRY" '$1 != key' "$WORK_DIR/configs/fs_config-$PARTITION" > "$WORK_DIR/configs/fs_config-$PARTITION.tmp"
+        mv -f "$WORK_DIR/configs/fs_config-$PARTITION.tmp" "$WORK_DIR/configs/fs_config-$PARTITION"
+        awk -v key="$CONTEXT" '$1 != key' "$WORK_DIR/configs/file_context-$PARTITION" > "$WORK_DIR/configs/file_context-$PARTITION.tmp"
+        mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
         echo "$ENTRY $USER $GROUP $MODE capabilities=0x0" >> "$WORK_DIR/configs/fs_config-$PARTITION"
         echo "$CONTEXT $ENTRY_LABEL" >> "$WORK_DIR/configs/file_context-$PARTITION"
     done < <(find "$SRC")
@@ -84,8 +86,10 @@ _EXYNOS9810_SET_METADATA()
     local LABEL="$7"
 
     touch "$WORK_DIR/configs/fs_config-$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION"
-    sed -i "\|^$ENTRY |d" "$WORK_DIR/configs/fs_config-$PARTITION"
-    sed -i "\|^$CONTEXT |d" "$WORK_DIR/configs/file_context-$PARTITION"
+    awk -v key="$ENTRY" '$1 != key' "$WORK_DIR/configs/fs_config-$PARTITION" > "$WORK_DIR/configs/fs_config-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/fs_config-$PARTITION.tmp" "$WORK_DIR/configs/fs_config-$PARTITION"
+    awk -v key="$CONTEXT" '$1 != key' "$WORK_DIR/configs/file_context-$PARTITION" > "$WORK_DIR/configs/file_context-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
     echo "$ENTRY $USER $GROUP $MODE capabilities=0x0" >> "$WORK_DIR/configs/fs_config-$PARTITION"
     echo "$CONTEXT $LABEL" >> "$WORK_DIR/configs/file_context-$PARTITION"
 }
@@ -137,7 +141,10 @@ _EXYNOS9810_REPLACE_TREE()
     local DST="$2"
     shift 2
 
-    [ -d "$SRC" ] || return 0
+    if [ ! -d "$SRC" ]; then
+        LOGE "Required Exynos9810 donor tree is missing: $SRC"
+        return 1
+    fi
 
     rm -rf "$DST"
     _EXYNOS9810_COPY_TREE "$SRC" "$DST" "$@"
