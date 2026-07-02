@@ -8,6 +8,7 @@ EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY="${EXYNOS9810_PRESERVE_N770_VENDOR_IDEN
 EXYNOS9810_DISABLE_SETUP_WIZARDS="${EXYNOS9810_DISABLE_SETUP_WIZARDS:-false}"
 EXYNOS9810_KERNELSU_NEXT_APK="${EXYNOS9810_KERNELSU_NEXT_APK:-/mnt/c/Users/Admin/Downloads/KernelSU_Next_v3.0.0_32857-release.apk}"
 EXYNOS9810_USE_LEGACY_RADIO_STACK="${EXYNOS9810_USE_LEGACY_RADIO_STACK:-false}"
+EXYNOS9810_REMOVE_LEGACY_VAULTKEEPER="${EXYNOS9810_REMOVE_LEGACY_VAULTKEEPER:-false}"
 EXYNOS9810_HXA3_VENDOR_BASE_APPLIED=false
 
 if [ ! -d "$EXYNOS9810_LEGACY_PORT_DIR/device_port" ]; then
@@ -1791,6 +1792,11 @@ _EXYNOS9810_APPLY_UN1GAGA_VENDOR_COMPAT()
 
 _EXYNOS9810_DISABLE_LEGACY_VAULTKEEPER()
 {
+    if [ "$EXYNOS9810_REMOVE_LEGACY_VAULTKEEPER" != "true" ]; then
+        LOG "- Keeping legacy CASS/VaultKeeper vendor services for boot compatibility"
+        return 0
+    fi
+
     LOG "- Disabling legacy CASS/VaultKeeper vendor services"
 
     # These N770F services continuously restart on S9/N9 because their Trustonic
@@ -2526,28 +2532,59 @@ _EXYNOS9810_SANITIZE_DONOR_BRANDING()
     local LEGACY_ROM="Du${P2}ROM"
     local LEGACY_LIB="lib${P1}${P2}.so"
     local LEGACY_BOKEH="${P1}${P2}s_bokeh_feature.json"
-    local CLEAN_EXPR="s/${LEGACY_AUTHOR}@${LEGACY_ROM}-V4\\.3/UN1CA9810@OneUI8-Exynos/g; s/${LEGACY_ROM}-V4\\.3/UN1CA9810-Rom/g; s/${LEGACY_AUTHOR}/UN1CA9810/g; s/${LEGACY_LIB}/libunica.so/g; s/${LEGACY_BOKEH}/unica8_bokeh_feature.json/g"
+    local CLEAN_EXPR="s/${LEGACY_AUTHOR}@${LEGACY_ROM}-V4\\.3/UN1CA9810@OneUI8-Exynos/g; s/${LEGACY_ROM}-V4\\.3/UN1CA9810-Rom/g; s/${LEGACY_AUTHOR}/UN1CA9810/g; s/${LEGACY_BOKEH}/unica8_bokeh_feature.json/g"
 
     find "$WORK_DIR/system" "$WORK_DIR/vendor" "$WORK_DIR/odm" -type f -name "*.so" -print0 2>/dev/null | xargs -0 -r perl -0pi -e "$CLEAN_EXPR"
     find "$WORK_DIR/configs" "$WORK_DIR/system" "$WORK_DIR/vendor" "$WORK_DIR/odm" -type f \( -name "*.prop" -o -name "*.rc" -o -name "*.xml" -o -name "*.json" -o -name "fs_config-*" -o -name "file_context-*" \) -print0 2>/dev/null | xargs -0 -r perl -0pi -e "$CLEAN_EXPR"
 
     local OLD NEW
-    for OLD in \
-        "$WORK_DIR/system/system/lib/$LEGACY_LIB" \
-        "$WORK_DIR/system/system/lib64/$LEGACY_LIB" \
-        "$WORK_DIR/vendor/lib/$LEGACY_LIB" \
-        "$WORK_DIR/vendor/lib64/$LEGACY_LIB"
-    do
-        [ -f "$OLD" ] || continue
-        NEW="${OLD%/*}/libunica.so"
-        EVAL "mv \"$OLD\" \"$NEW\"" || return 1
-    done
-
     OLD="$WORK_DIR/system/system/cameradata/portrait_data/$LEGACY_BOKEH"
     if [ -f "$OLD" ]; then
         NEW="${OLD%/*}/unica8_bokeh_feature.json"
         EVAL "mv \"$OLD\" \"$NEW\"" || return 1
     fi
+}
+
+_EXYNOS9810_RESTORE_BOOT_VENDOR_SHIMS()
+{
+    LOG "- Restoring boot-critical Exynos9810 vendor shims"
+
+    local REL
+    for REL in \
+        "bin/cass" \
+        "bin/vaultkeeperd" \
+        "bin/vendor.samsung.hardware.security.vaultkeeper@2.0-service"; do
+        _EXYNOS9810_COPY_FILE "$EXYNOS9810_LEGACY_PORT_DIR/vendor/$REL" \
+            "$WORK_DIR/vendor/$REL" \
+            "vendor" "vendor/$REL" "/vendor/$REL" "u:object_r:vendor_file:s0"
+        [ -f "$WORK_DIR/vendor/$REL" ] && \
+            _EXYNOS9810_SET_METADATA "vendor" "vendor/$REL" "/vendor/$REL" \
+                0 2000 755 "u:object_r:vendor_file:s0"
+    done
+
+    for REL in \
+        "etc/init/cass.rc" \
+        "etc/init/vaultkeeper_common.rc" \
+        "etc/vintf/manifest/vaultkeeper_manifest.xml"; do
+        _EXYNOS9810_COPY_FILE "$EXYNOS9810_LEGACY_PORT_DIR/vendor/$REL" \
+            "$WORK_DIR/vendor/$REL" \
+            "vendor" "vendor/$REL" "/vendor/$REL" "u:object_r:vendor_configs_file:s0"
+        [ -f "$WORK_DIR/vendor/$REL" ] && \
+            _EXYNOS9810_SET_METADATA "vendor" "vendor/$REL" "/vendor/$REL" \
+                0 0 644 "u:object_r:vendor_configs_file:s0"
+    done
+
+    for REL in \
+        "lib/libduhan.so" \
+        "lib64/libduhan.so" \
+        "lib64/vendor.samsung.hardware.security.vaultkeeper@2.0.so"; do
+        _EXYNOS9810_COPY_FILE "$EXYNOS9810_LEGACY_PORT_DIR/vendor/$REL" \
+            "$WORK_DIR/vendor/$REL" \
+            "vendor" "vendor/$REL" "/vendor/$REL" "u:object_r:vendor_file:s0"
+        [ -f "$WORK_DIR/vendor/$REL" ] && \
+            _EXYNOS9810_SET_METADATA "vendor" "vendor/$REL" "/vendor/$REL" \
+                0 0 644 "u:object_r:vendor_file:s0"
+    done
 }
 
 _EXYNOS9810_WRITE_EXYNOS9810_FSTABS()
@@ -2826,4 +2863,5 @@ _EXYNOS9810_WRITE_SYSTEM_BOOT_DEBUG
 _EXYNOS9810_WRITE_VENDOR_INIT_DEBUG
 _EXYNOS9810_PATCH_ENFORCING_COMPAT
 _EXYNOS9810_SANITIZE_DONOR_BRANDING
+_EXYNOS9810_RESTORE_BOOT_VENDOR_SHIMS
 _EXYNOS9810_FIX_BOOT_METADATA
