@@ -30,6 +30,26 @@ BUILD()
         exit 1
     fi
 
+    local SKIP_LIST
+    local SKIP_PATTERN
+    for SKIP_LIST in \
+        "$SRC_DIR/platform/$TARGET_PLATFORM/apktool_skip_rebuild.list" \
+        "$SRC_DIR/target/$TARGET_CODENAME/apktool_skip_rebuild.list"; do
+        [ -f "$SKIP_LIST" ] || continue
+
+        while IFS= read -r SKIP_PATTERN || [ -n "$SKIP_PATTERN" ]; do
+            case "$SKIP_PATTERN" in
+                "" | \#*) continue ;;
+            esac
+
+            if [[ "$PARTITION/$FILE" == $SKIP_PATTERN ]]; then
+                LOG "- Skipping APK/JAR rebuild for ${INPUT_FILE//$WORK_DIR/}"
+                rm -rf "$OUTPUT_PATH/build" "$OUTPUT_PATH/dist"
+                return 0
+            fi
+        done < "$SKIP_LIST"
+    done
+
     LOG "- Building ${INPUT_FILE//$WORK_DIR/}"
 
     # Copy original META-INF

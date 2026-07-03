@@ -1,0 +1,30 @@
+# These files are restored from the known-booting Exynos9810 baseline in
+# platform/exynos9810/patches/exynos9810_device_stack/customize.sh.
+# Rebuilding/signing them after restore changes boot-critical bytecode and
+# regressed star2lte back to splash-screen reboot loops.
+system/system/framework/esecomm.jar
+system/framework/esecomm.jar
+system/system/framework/framework.jar
+system/framework/framework.jar
+system/system/framework/gamemanager.jar
+system/framework/gamemanager.jar
+system/system/framework/knoxsdk.jar
+system/framework/knoxsdk.jar
+system/system/framework/samsungkeystoreutils.jar
+system/framework/samsungkeystoreutils.jar
+system/system/framework/secinputdev-service.jar
+system/framework/secinputdev-service.jar
+system/system/framework/semwifi-service.jar
+system/framework/semwifi-service.jar
+system/system/framework/services.jar
+system/framework/services.jar
+system/system/framework/ssrm.jar
+system/framework/ssrm.jar
+system/system/framework/telephony-common.jar
+system/framework/telephony-common.jar
+system/system/app/BluetoothAgent/BluetoothAgent.apk
+system/app/BluetoothAgent/BluetoothAgent.apk
+system/system/priv-app/SamsungCamera/SamsungCamera.apk
+system/priv-app/SamsungCamera/SamsungCamera.apk
+system/system/priv-app/SecSettings/SecSettings.apk
+system/priv-app/SecSettings/SecSettings.apk
