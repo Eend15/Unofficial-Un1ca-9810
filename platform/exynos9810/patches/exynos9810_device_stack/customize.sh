@@ -2254,7 +2254,6 @@ _EXYNOS9810_APPLY_BOOT_PROPS()
 {
     LOG "- Applying Exynos9810 boot-critical props"
 
-    _EXYNOS9810_SET_PROP_ALL "ro.product.author" "Unofficial UN1CA 9810"
     _EXYNOS9810_SET_PROP_ALL "ro.unica9810.name" "Unofficial UN1CA 9810"
     _EXYNOS9810_SET_PROP_ALL "ro.unica9810.edition" "unofficial"
     _EXYNOS9810_SET_PROP_ALL "ro.unica9810.branch" "Android-16"
@@ -2524,7 +2523,7 @@ _EXYNOS9810_SANITIZE_DONOR_BRANDING()
     local LEGACY_ROM="Du${P2}ROM"
     local LEGACY_LIB="lib${P1}${P2}.so"
     local LEGACY_BOKEH="${P1}${P2}s_bokeh_feature.json"
-    local CLEAN_EXPR="s/${LEGACY_AUTHOR}@${LEGACY_ROM}-V4\\.3/UN1CA9810@OneUI8-Exynos/g; s/${LEGACY_ROM}-V4\\.3/UN1CA9810-Rom/g; s/${LEGACY_AUTHOR}/UN1CA9810/g; s/${LEGACY_BOKEH}/unica8_bokeh_feature.json/g"
+    local CLEAN_EXPR="s/${LEGACY_AUTHOR}@${LEGACY_ROM}-V4\\.3/UN1CA9810@OneUI8-Exynos/g; s/${LEGACY_ROM}-V4\\.3/UN1CA9810-Rom/g; s/${LEGACY_BOKEH}/unica8_bokeh_feature.json/g"
 
     find "$WORK_DIR/configs" "$WORK_DIR/system" "$WORK_DIR/vendor" "$WORK_DIR/odm" -type f \( -name "*.prop" -o -name "*.rc" -o -name "*.xml" -o -name "*.json" -o -name "fs_config-*" -o -name "file_context-*" \) -print0 2>/dev/null | xargs -0 -r perl -0pi -e "$CLEAN_EXPR"
 
