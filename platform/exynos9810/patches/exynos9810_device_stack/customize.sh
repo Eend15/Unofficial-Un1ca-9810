@@ -2148,7 +2148,7 @@ _EXYNOS9810_PATCH_ENFORCING_COMPAT()
     fi
 
     RC="$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc"
-    if [ -f "$RC" ]; then
+    if [ -f "$RC" ] && [ "${EXYNOS9810_DISABLE_CRYPTO_FUSE_SDCARD:-false}" = "true" ]; then
         sed -i '/setprop ro\.crypto\.fuse_sdcard /d' "$RC"
     fi
 
@@ -2384,7 +2384,7 @@ EOF
 
 _EXYNOS9810_WRITE_VENDOR_INIT_DEBUG()
 {
-    if [ "${EXYNOS9810_ENABLE_INIT_DEBUG:-true}" != "true" ]; then
+    if [ "${EXYNOS9810_ENABLE_INIT_DEBUG:-false}" != "true" ]; then
         return 0
     fi
 
@@ -2501,17 +2501,9 @@ _EXYNOS9810_FIX_BOOT_METADATA()
             0 0 755 "u:object_r:mobicore_exec:s0"
     fi
 
-    if [ -f "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" ]; then
-        mkdir -p "$WORK_DIR/vendor/etc/init/hw"
-        cp -a "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" \
-            "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"
-        _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/init/hw" "/vendor/etc/init/hw" \
-            0 2000 755 "u:object_r:vendor_configs_file:s0"
-        _EXYNOS9810_SET_METADATA "vendor" \
-            "vendor/etc/init/hw/init.samsungexynos9810.rc" \
-            "/vendor/etc/init/hw/init.samsungexynos9810.rc" \
-            0 0 644 "u:object_r:vendor_configs_file:s0"
-    fi
+    rm -f "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"
+    sed -i '\|^vendor/etc/init/hw/init.samsungexynos9810.rc |d' "$WORK_DIR/configs/fs_config-vendor"
+    sed -i '\|^/vendor/etc/init/hw/init.samsungexynos9810.rc |d' "$WORK_DIR/configs/file_context-vendor"
 
     _EXYNOS9810_SET_METADATA "odm" "odm/etc/build.prop" "/odm/etc/build.prop" 0 0 644 "u:object_r:vendor_file:s0"
 
@@ -2534,7 +2526,6 @@ _EXYNOS9810_SANITIZE_DONOR_BRANDING()
     local LEGACY_BOKEH="${P1}${P2}s_bokeh_feature.json"
     local CLEAN_EXPR="s/${LEGACY_AUTHOR}@${LEGACY_ROM}-V4\\.3/UN1CA9810@OneUI8-Exynos/g; s/${LEGACY_ROM}-V4\\.3/UN1CA9810-Rom/g; s/${LEGACY_AUTHOR}/UN1CA9810/g; s/${LEGACY_BOKEH}/unica8_bokeh_feature.json/g"
 
-    find "$WORK_DIR/system" "$WORK_DIR/vendor" "$WORK_DIR/odm" -type f -name "*.so" -print0 2>/dev/null | xargs -0 -r perl -0pi -e "$CLEAN_EXPR"
     find "$WORK_DIR/configs" "$WORK_DIR/system" "$WORK_DIR/vendor" "$WORK_DIR/odm" -type f \( -name "*.prop" -o -name "*.rc" -o -name "*.xml" -o -name "*.json" -o -name "fs_config-*" -o -name "file_context-*" \) -print0 2>/dev/null | xargs -0 -r perl -0pi -e "$CLEAN_EXPR"
 
     local OLD NEW
@@ -2585,6 +2576,129 @@ _EXYNOS9810_RESTORE_BOOT_VENDOR_SHIMS()
             _EXYNOS9810_SET_METADATA "vendor" "vendor/$REL" "/vendor/$REL" \
                 0 0 644 "u:object_r:vendor_file:s0"
     done
+}
+
+_EXYNOS9810_RESTORE_BOOT_SYSTEM_SHIMS()
+{
+    LOG "- Restoring boot-critical Exynos9810 system shims"
+
+    _EXYNOS9810_COPY_FILE "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/system/lib/libduhan.so" \
+        "$WORK_DIR/system/system/lib/libduhan.so" \
+        "system" "system/lib/libduhan.so" "/system/lib/libduhan.so" "u:object_r:system_lib_file:s0"
+    [ -f "$WORK_DIR/system/system/lib/libduhan.so" ] && \
+        _EXYNOS9810_SET_METADATA "system" "system/lib/libduhan.so" "/system/lib/libduhan.so" \
+            0 0 644 "u:object_r:system_lib_file:s0"
+
+    _EXYNOS9810_COPY_FILE "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/system/lib64/libduhan.so" \
+        "$WORK_DIR/system/system/lib64/libduhan.so" \
+        "system" "system/lib64/libduhan.so" "/system/lib64/libduhan.so" "u:object_r:system_lib_file:s0"
+    [ -f "$WORK_DIR/system/system/lib64/libduhan.so" ] && \
+        _EXYNOS9810_SET_METADATA "system" "system/lib64/libduhan.so" "/system/lib64/libduhan.so" \
+            0 0 644 "u:object_r:system_lib_file:s0"
+}
+
+_EXYNOS9810_RESTORE_BOOTING_VNDK_APEX()
+{
+    local VNDK33="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/system/system_ext/apex/com.android.vndk.v33.apex"
+
+    [ -f "$VNDK33" ] || return 0
+
+    LOG "- Restoring booting VNDK33 APEX"
+
+    rm -f "$WORK_DIR/system/system/system_ext/apex/com.android.vndk.v31.apex"
+    sed -i '\|^system/system_ext/apex/com.android.vndk.v31.apex |d' "$WORK_DIR/configs/fs_config-system"
+    sed -i '\|^/system/system_ext/apex/com.android.vndk.v31.apex |d' "$WORK_DIR/configs/file_context-system"
+
+    _EXYNOS9810_COPY_FILE "$VNDK33" \
+        "$WORK_DIR/system/system/system_ext/apex/com.android.vndk.v33.apex" \
+        "system" "system/system_ext/apex/com.android.vndk.v33.apex" \
+        "/system/system_ext/apex/com.android.vndk.v33.apex" "u:object_r:system_file:s0"
+    _EXYNOS9810_SET_METADATA "system" "system/system_ext/apex/com.android.vndk.v33.apex" \
+        "/system/system_ext/apex/com.android.vndk.v33.apex" 0 0 644 "u:object_r:system_file:s0"
+}
+
+_EXYNOS9810_RESTORE_BOOTING_SYSTEM_CORE()
+{
+    local BASE="$EXYNOS9810_LEGACY_PORT_DIR/system_booting_baseline"
+
+    if [ "${EXYNOS9810_RESTORE_BOOTING_SYSTEM_CORE:-true}" != "true" ] || [ ! -d "$BASE/system" ]; then
+        return 0
+    fi
+
+    LOG "- Restoring known-booting Exynos9810 system core"
+
+    _EXYNOS9810_REPLACE_TREE "$BASE/system/framework" \
+        "$WORK_DIR/system/system/framework" \
+        "system" "system/framework" "/system/framework" "u:object_r:system_file:s0" 0
+    _EXYNOS9810_REPLACE_TREE "$BASE/system/lib" \
+        "$WORK_DIR/system/system/lib" \
+        "system" "system/lib" "/system/lib" "u:object_r:system_lib_file:s0" 0
+    _EXYNOS9810_REPLACE_TREE "$BASE/system/lib64" \
+        "$WORK_DIR/system/system/lib64" \
+        "system" "system/lib64" "/system/lib64" "u:object_r:system_lib_file:s0" 0
+    _EXYNOS9810_REPLACE_TREE "$BASE/system/app/BluetoothAgent" \
+        "$WORK_DIR/system/system/app/BluetoothAgent" \
+        "system" "system/app/BluetoothAgent" "/system/app/BluetoothAgent" "u:object_r:system_file:s0" 0
+    _EXYNOS9810_REPLACE_TREE "$BASE/system/priv-app/SamsungCamera" \
+        "$WORK_DIR/system/system/priv-app/SamsungCamera" \
+        "system" "system/priv-app/SamsungCamera" "/system/priv-app/SamsungCamera" "u:object_r:system_file:s0" 0
+    _EXYNOS9810_REPLACE_TREE "$BASE/system/priv-app/SecSettings" \
+        "$WORK_DIR/system/system/priv-app/SecSettings" \
+        "system" "system/priv-app/SecSettings" "/system/priv-app/SecSettings" "u:object_r:system_file:s0" 0
+    _EXYNOS9810_REPLACE_TREE "$BASE/system/system_ext/etc" \
+        "$WORK_DIR/system/system/system_ext/etc" \
+        "system" "system/system_ext/etc" "/system/system_ext/etc" "u:object_r:system_file:s0" 0
+    _EXYNOS9810_COPY_FILE "$BASE/system/etc/init/audioserver.rc" \
+        "$WORK_DIR/system/system/etc/init/audioserver.rc" \
+        "system" "system/etc/init/audioserver.rc" "/system/etc/init/audioserver.rc" "u:object_r:system_file:s0"
+}
+
+_EXYNOS9810_REMOVE_RENAMED_BOOT_SHIMS()
+{
+    LOG "- Removing renamed Exynos9810 boot shim leftovers"
+
+    rm -f \
+        "$WORK_DIR/system/system/lib/libunica.so" \
+        "$WORK_DIR/system/system/lib64/libunica.so" \
+        "$WORK_DIR/vendor/lib/libunica.so" \
+        "$WORK_DIR/vendor/lib64/libunica.so"
+
+    sed -i \
+        -e '\|^system/lib/libunica.so |d' \
+        -e '\|^system/lib64/libunica.so |d' \
+        "$WORK_DIR/configs/fs_config-system"
+    sed -i \
+        -e '\|^/system/lib/libunica.so |d' \
+        -e '\|^/system/lib64/libunica.so |d' \
+        "$WORK_DIR/configs/file_context-system"
+    sed -i \
+        -e '\|^vendor/lib/libunica.so |d' \
+        -e '\|^vendor/lib64/libunica.so |d' \
+        "$WORK_DIR/configs/fs_config-vendor"
+    sed -i \
+        -e '\|^/vendor/lib/libunica.so |d' \
+        -e '\|^/vendor/lib64/libunica.so |d' \
+        "$WORK_DIR/configs/file_context-vendor"
+}
+
+_EXYNOS9810_RESTORE_BOOTING_VENDOR_BASELINE()
+{
+    if [ "${EXYNOS9810_RESTORE_BOOTING_VENDOR_BASELINE:-true}" != "true" ]; then
+        return 0
+    fi
+
+    LOG "- Restoring known-booting Exynos9810 vendor baseline"
+
+    _EXYNOS9810_REPLACE_TREE "$EXYNOS9810_LEGACY_PORT_DIR/vendor" \
+        "$WORK_DIR/vendor" \
+        "vendor" "vendor" "/vendor" "u:object_r:vendor_file:s0" 2000
+
+    _EXYNOS9810_SET_METADATA "vendor" "vendor/build.prop" "/vendor/build.prop" \
+        0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/fstab.samsungexynos9810" \
+        "/vendor/etc/fstab.samsungexynos9810" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/init/init.samsungexynos9810.rc" \
+        "/vendor/etc/init/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
 }
 
 _EXYNOS9810_WRITE_EXYNOS9810_FSTABS()
@@ -2653,7 +2767,7 @@ _EXYNOS9810_PATCH_EXYNOS9810_INIT_FS()
 
     LOG "- Patching Exynos9810 init fs flow"
 
-    if ! grep -q "UN1CA Exynos9810 metadata bind" "$INIT_RC"; then
+    if [ "${EXYNOS9810_ENABLE_METADATA_BIND:-false}" = "true" ] && ! grep -q "UN1CA Exynos9810 metadata bind" "$INIT_RC"; then
         sed -i '/mount_all \/vendor\/etc\/fstab\.${ro.hardware} --early/a\
 \
     # UN1CA Exynos9810 metadata bind mount for devices without a metadata partition.\
@@ -2863,5 +2977,4 @@ _EXYNOS9810_WRITE_SYSTEM_BOOT_DEBUG
 _EXYNOS9810_WRITE_VENDOR_INIT_DEBUG
 _EXYNOS9810_PATCH_ENFORCING_COMPAT
 _EXYNOS9810_SANITIZE_DONOR_BRANDING
-_EXYNOS9810_RESTORE_BOOT_VENDOR_SHIMS
 _EXYNOS9810_FIX_BOOT_METADATA

@@ -45,6 +45,7 @@ COPY_SOURCE_FIRMWARE()
                 sed "s/^product/system\/product/g" "$FW_DIR/$SOURCE_FIRMWARE_PATH/fs_config-product" >> "$WORK_DIR/configs/fs_config-system"
             else
                 LOG "- Copying /$f from source firmware"
+                [ -e "$WORK_DIR/$f" ] && rm -rf "$WORK_DIR/$f"
                 CLEAN_RSYNC_SYMLINK_CONFLICTS "$FW_DIR/$SOURCE_FIRMWARE_PATH/$f" "$WORK_DIR/$f"
                 EVAL "rsync -a --mkpath --delete --exclude=\"*system_ext*\" \"$FW_DIR/$SOURCE_FIRMWARE_PATH/$f\" \"$WORK_DIR\"" || exit 1
                 sed "/system_ext/d" "$FW_DIR/$SOURCE_FIRMWARE_PATH/file_context-$f" > "$WORK_DIR/configs/file_context-$f"
