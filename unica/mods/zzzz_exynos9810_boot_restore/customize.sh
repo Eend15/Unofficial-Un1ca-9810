@@ -169,7 +169,7 @@ _EXYNOS9810_SANITIZE_RESTORED_TEXT()
     local LEGACY_ROM="Du${P2}ROM"
     local CLEAN_EXPR
 
-    CLEAN_EXPR="s/${LEGACY_AUTHOR}@${LEGACY_ROM}-V4\\.3/UN1CA9810@OneUI8-Exynos/g; s/${LEGACY_ROM}-V4\\.3/Unofficial UN1CA 9810/g; s/${LEGACY_AUTHOR}/Unofficial UN1CA 9810/g"
+    CLEAN_EXPR="s/${LEGACY_AUTHOR}@${LEGACY_ROM}-V4\\.3/UN1CA9810@OneUI8-Exynos/g; s/${LEGACY_ROM}-V4\\.3/Unofficial UN1CA 9810/g"
 
     find "$WORK_DIR/configs" "$WORK_DIR/system" "$WORK_DIR/vendor" "$WORK_DIR/odm" \
         -type f \( -name "*.prop" -o -name "*.rc" -o -name "*.xml" -o -name "*.json" -o -name "fs_config-*" -o -name "file_context-*" \) \
