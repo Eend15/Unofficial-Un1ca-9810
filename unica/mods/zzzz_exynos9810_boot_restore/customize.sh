@@ -4,6 +4,8 @@ SKIPUNZIP=1
 
 EXYNOS9810_LEGACY_PORT_DIR="${EXYNOS9810_LEGACY_PORT_DIR:-/mnt/c/Users/Admin/Downloads/Exynos9810_LegacyPort}"
 EXYNOS9810_BOOT_BASE="$EXYNOS9810_LEGACY_PORT_DIR/system_booting_baseline"
+EXYNOS9810_FULL_SYSTEM_BASE="${EXYNOS9810_FULL_SYSTEM_BASE:-$SRC_DIR/../boot_baselines/system_full_booting_baseline}"
+EXYNOS9810_USED_FULL_SYSTEM_BASELINE=false
 
 if [ ! -d "$EXYNOS9810_LEGACY_PORT_DIR/vendor" ] || [ ! -d "$EXYNOS9810_BOOT_BASE/system" ]; then
     LOGW "Exynos9810 boot baseline missing: $EXYNOS9810_LEGACY_PORT_DIR"
@@ -48,6 +50,54 @@ _EXYNOS9810_SANITIZE_METADATA()
             "$WORK_DIR/configs/file_context-$PARTITION" \
             > "$WORK_DIR/configs/file_context-$PARTITION.tmp" && \
         mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
+}
+
+_EXYNOS9810_ENSURE_TREE_METADATA()
+{
+    local PARTITION="$1"
+    local ROOT="$2"
+    local DEFAULT_LABEL="$3"
+    local FS_CONFIG="$WORK_DIR/configs/fs_config-$PARTITION"
+    local FILE_CONTEXT="$WORK_DIR/configs/file_context-$PARTITION"
+    local ENTRY
+    local MODE
+    local LABEL
+    local PATTERN
+
+    touch "$FS_CONFIG" "$FILE_CONTEXT"
+
+    while IFS= read -r -d '' ENTRY; do
+        ENTRY="${ENTRY#$ROOT/}"
+        [ "$ENTRY" ] || continue
+
+        if ! grep -q -F "$ENTRY " "$FS_CONFIG" 2> /dev/null; then
+            MODE="$(stat -c "%a" "$ROOT/$ENTRY" 2> /dev/null || echo 644)"
+            echo "$ENTRY 0 0 $MODE capabilities=0x0" >> "$FS_CONFIG"
+        fi
+
+        PATTERN="$(_HANDLE_SPECIAL_CHARS "$ENTRY")"
+        if ! grep -q -F "/$PATTERN " "$FILE_CONTEXT" 2> /dev/null; then
+            LABEL="$(_GET_SELINUX_LABEL "$PARTITION" "/$ENTRY" 2> /dev/null || true)"
+            [ "$LABEL" ] || LABEL="$DEFAULT_LABEL"
+            echo "/$PATTERN $LABEL" >> "$FILE_CONTEXT"
+        fi
+    done < <(find "$ROOT" -mindepth 1 -print0)
+}
+
+_EXYNOS9810_RESTORE_FULL_SYSTEM_BASELINE()
+{
+    if [ ! -d "$EXYNOS9810_FULL_SYSTEM_BASE/system" ]; then
+        return 1
+    fi
+
+    LOG "- Restoring final full known-booting Exynos9810 system baseline"
+
+    rm -rf "$WORK_DIR/system"
+    mkdir -p "$WORK_DIR/system"
+    cp -a "$EXYNOS9810_FULL_SYSTEM_BASE"/. "$WORK_DIR/system"/
+
+    _EXYNOS9810_ENSURE_TREE_METADATA "system" "$WORK_DIR/system" "u:object_r:system_file:s0"
+    EXYNOS9810_USED_FULL_SYSTEM_BASELINE=true
 }
 
 _EXYNOS9810_RESTORE_SYSTEM()
@@ -145,24 +195,26 @@ _EXYNOS9810_FIX_SYSTEM_PERMISSION_CASE()
     sed -i 's|/system/etc/Permissions|/system/etc/permissions|g' "$WORK_DIR/configs/file_context-system"
 }
 
-LOG "- Restoring final known-booting Exynos9810 system baseline"
+if ! _EXYNOS9810_RESTORE_FULL_SYSTEM_BASELINE; then
+    LOG "- Restoring final known-booting Exynos9810 system baseline"
 
-_EXYNOS9810_RESTORE_SYSTEM "system/build.prop"
-_EXYNOS9810_RESTORE_PRODUCT "etc/build.prop"
-_EXYNOS9810_RESTORE_SYSTEM "system/framework"
-_EXYNOS9810_RESTORE_SYSTEM "system/lib"
-_EXYNOS9810_RESTORE_SYSTEM "system/lib64"
-_EXYNOS9810_RESTORE_SYSTEM "system/etc/init/audioserver.rc"
-_EXYNOS9810_RESTORE_SYSTEM "system/system_ext/etc"
-_EXYNOS9810_RESTORE_SYSTEM "system/app/BluetoothAgent"
-_EXYNOS9810_RESTORE_SYSTEM "system/priv-app/SamsungCamera"
-_EXYNOS9810_RESTORE_SYSTEM "system/priv-app/SecSettings"
+    _EXYNOS9810_RESTORE_SYSTEM "system/build.prop"
+    _EXYNOS9810_RESTORE_PRODUCT "etc/build.prop"
+    _EXYNOS9810_RESTORE_SYSTEM "system/framework"
+    _EXYNOS9810_RESTORE_SYSTEM "system/lib"
+    _EXYNOS9810_RESTORE_SYSTEM "system/lib64"
+    _EXYNOS9810_RESTORE_SYSTEM "system/etc/init/audioserver.rc"
+    _EXYNOS9810_RESTORE_SYSTEM "system/system_ext/etc"
+    _EXYNOS9810_RESTORE_SYSTEM "system/app/BluetoothAgent"
+    _EXYNOS9810_RESTORE_SYSTEM "system/priv-app/SamsungCamera"
+    _EXYNOS9810_RESTORE_SYSTEM "system/priv-app/SecSettings"
 
-if [ -f "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/system/system_ext/apex/com.android.vndk.v33.apex" ]; then
-    rm -f "$WORK_DIR/system/system/system_ext/apex/com.android.vndk.v31.apex"
-    _EXYNOS9810_DELETE_METADATA "system" "system/system_ext/apex/com.android.vndk.v31.apex" "/system/system_ext/apex/com.android.vndk.v31.apex"
-    ADD_TO_WORK_DIR "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common" \
-        "system" "system/system_ext/apex/com.android.vndk.v33.apex" 0 0 644 "u:object_r:system_file:s0"
+    if [ -f "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/system/system_ext/apex/com.android.vndk.v33.apex" ]; then
+        rm -f "$WORK_DIR/system/system/system_ext/apex/com.android.vndk.v31.apex"
+        _EXYNOS9810_DELETE_METADATA "system" "system/system_ext/apex/com.android.vndk.v31.apex" "/system/system_ext/apex/com.android.vndk.v31.apex"
+        ADD_TO_WORK_DIR "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common" \
+            "system" "system/system_ext/apex/com.android.vndk.v33.apex" 0 0 644 "u:object_r:system_file:s0"
+    fi
 fi
 
 rm -f \
@@ -178,7 +230,10 @@ _EXYNOS9810_DELETE_METADATA "vendor" "vendor/lib64/libunica.so" "/vendor/lib64/l
 _EXYNOS9810_RESTORE_VENDOR_BASELINE
 _EXYNOS9810_RESTORE_ODM_BASELINE
 _EXYNOS9810_SANITIZE_RESTORED_TEXT
-_EXYNOS9810_FIX_SYSTEM_PERMISSION_CASE
+
+if [ "$EXYNOS9810_USED_FULL_SYSTEM_BASELINE" != true ]; then
+    _EXYNOS9810_FIX_SYSTEM_PERMISSION_CASE
+fi
 
 _EXYNOS9810_DEDUP_METADATA "system"
 _EXYNOS9810_DEDUP_METADATA "vendor"
