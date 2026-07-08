@@ -1,12 +1,7 @@
 #!/sbin/sh
 
 BLOCK=/dev/block/platform/11120000.ufs/by-name
-TOLERANCE=$((16 * 1024 * 1024))
-
-mib()
-{
-    echo $(($1 * 1024 * 1024))
-}
+TOLERANCE_MIB=16
 
 detect_target()
 {
@@ -31,24 +26,24 @@ detect_target()
     esac
 }
 
-size_of()
+size_mib_of()
 {
     node="$1"
-    size="$(blockdev --getsize64 "$node" 2>/dev/null)"
-    [ -n "$size" ] || size="$(busybox blockdev --getsize64 "$node" 2>/dev/null)"
-    if [ -z "$size" ]; then
+    sectors="$(blockdev --getsz "$node" 2>/dev/null)"
+    [ -n "$sectors" ] || sectors="$(busybox blockdev --getsz "$node" 2>/dev/null)"
+    if [ -z "$sectors" ]; then
         real="$(readlink -f "$node" 2>/dev/null)"
         dev="$(basename "$real" 2>/dev/null)"
         sectors="$(cat "/sys/class/block/$dev/size" 2>/dev/null)"
-        [ -n "$sectors" ] && size=$((sectors * 512))
     fi
-    echo "$size"
+    [ -n "$sectors" ] || return 1
+    echo $((sectors / 2048))
 }
 
 check_partition()
 {
     name="$1"
-    required="$2"
+    required_mib="$2"
     node="$BLOCK/$name"
 
     if [ ! -e "$node" ]; then
@@ -56,37 +51,36 @@ check_partition()
         return 1
     fi
 
-    actual="$(size_of "$node")"
-    if [ -z "$actual" ]; then
+    actual_mib="$(size_mib_of "$node")" || {
         echo "E9810: cannot read $name partition size"
         return 1
-    fi
+    }
 
-    minimum=$((required - TOLERANCE))
-    if [ "$actual" -lt "$minimum" ]; then
-        echo "E9810: $name is too small: $actual < $required"
+    minimum_mib=$((required_mib - TOLERANCE_MIB))
+    if [ "$actual_mib" -lt "$minimum_mib" ]; then
+        echo "E9810: $name is too small: ${actual_mib}MiB < ${required_mib}MiB"
         return 1
     fi
 
-    echo "E9810: $name ok: $actual"
+    echo "E9810: $name ok: ${actual_mib}MiB"
     return 0
 }
 
 target="$(detect_target "$1")"
-system_size="$(mib 9500)"
-vendor_size="$(mib 1300)"
-cache_size="$(mib 600)"
-odm_size="$(mib 700)"
+system_size_mib=9500
+vendor_size_mib=1300
+cache_size_mib=600
+odm_size_mib=700
 
 if [ "$target" = "crownlte" ]; then
-    odm_size="$(mib 860)"
-    cache_size="$(mib 520)"
+    odm_size_mib=860
+    cache_size_mib=520
 fi
 
 ok=0
-check_partition SYSTEM "$system_size" || ok=1
-check_partition VENDOR "$vendor_size" || ok=1
-check_partition ODM "$odm_size" || ok=1
-check_partition CACHE "$cache_size" || ok=1
+check_partition SYSTEM "$system_size_mib" || ok=1
+check_partition VENDOR "$vendor_size_mib" || ok=1
+check_partition ODM "$odm_size_mib" || ok=1
+check_partition CACHE "$cache_size_mib" || ok=1
 
 exit "$ok"

@@ -5,6 +5,18 @@ TARGET="$1"
 DISK=/dev/block/sda
 STATE_FILE="$SELF_DIR/layout.prop"
 
+find_sgdisk()
+{
+    for bin in "$SELF_DIR/sgdisk" /system/bin/sgdisk /sbin/sgdisk /tmp/sgdisk; do
+        if [ -x "$bin" ] && "$bin" --version >/dev/null 2>&1; then
+            echo "$bin"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 write_state()
 {
     echo "repartitioned=$1" > "$STATE_FILE"
@@ -18,7 +30,8 @@ refresh_partitions()
     blockdev --rereadpt "$DISK" 2>/dev/null || true
     busybox blockdev --rereadpt "$DISK" 2>/dev/null || true
     partprobe "$DISK" 2>/dev/null || true
-    "$SELF_DIR/sgdisk" --verify "$DISK" >/dev/null 2>&1 || true
+    SGDISK="$(find_sgdisk 2>/dev/null || true)"
+    [ -n "$SGDISK" ] && "$SGDISK" --verify "$DISK" >/dev/null 2>&1 || true
 
     if [ -w /sys/block/sda/device/rescan ]; then
         echo 1 > /sys/block/sda/device/rescan 2>/dev/null || true
