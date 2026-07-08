@@ -60,6 +60,7 @@ ENCODE_MP4()
     LOG "- Encoding $FILE_NAME"
 
     CMD="ffmpeg"
+    CMD+=" -nostdin"
     CMD+=" -i \"$FILE_PATH/$FILE_NAME\""
     CMD+=" -c:v libx264 -c:a copy"
     CMD+=" -pix_fmt yuv420p -crf 18 -g 1"
