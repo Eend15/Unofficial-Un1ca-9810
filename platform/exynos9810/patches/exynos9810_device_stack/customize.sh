@@ -1423,10 +1423,9 @@ if marker not in text:
 
     :unica_allow_bokeh_lens_select
 """
-    if needle not in text:
-        raise SystemExit("onLensSelect bokeh lens insertion point not found")
-    text = text.replace(needle, insert, 1)
-    path.write_text(text)
+    if needle in text:
+        text = text.replace(needle, insert, 1)
+        path.write_text(text)
 PY
     fi
 
@@ -2254,6 +2253,10 @@ _EXYNOS9810_APPLY_BOOT_PROPS()
 {
     LOG "- Applying Exynos9810 boot-critical props"
 
+    # Keep this donor author string. Samsung init/property consumers on this
+    # port have proven boot-sensitive to renaming it; use ro.unica9810.* for
+    # public branding instead.
+    _EXYNOS9810_SET_PROP_ALL "ro.product.author" "duhansysl"
     _EXYNOS9810_SET_PROP_ALL "ro.unica9810.name" "Unofficial UN1CA 9810"
     _EXYNOS9810_SET_PROP_ALL "ro.unica9810.edition" "unofficial"
     _EXYNOS9810_SET_PROP_ALL "ro.unica9810.branch" "Android-16"
@@ -2500,9 +2503,15 @@ _EXYNOS9810_FIX_BOOT_METADATA()
             0 0 755 "u:object_r:mobicore_exec:s0"
     fi
 
-    rm -f "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"
-    sed -i '\|^vendor/etc/init/hw/init.samsungexynos9810.rc |d' "$WORK_DIR/configs/fs_config-vendor"
-    sed -i '\|^/vendor/etc/init/hw/init.samsungexynos9810.rc |d' "$WORK_DIR/configs/file_context-vendor"
+    if [ -f "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" ]; then
+        mkdir -p "$WORK_DIR/vendor/etc/init/hw"
+        cp -pf "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" \
+            "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"
+        _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/init/hw" \
+            "/vendor/etc/init/hw" 0 0 755 "u:object_r:vendor_configs_file:s0"
+        _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/init/hw/init.samsungexynos9810.rc" \
+            "/vendor/etc/init/hw/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    fi
 
     _EXYNOS9810_SET_METADATA "odm" "odm/etc/build.prop" "/odm/etc/build.prop" 0 0 644 "u:object_r:vendor_file:s0"
 
@@ -2515,24 +2524,14 @@ _EXYNOS9810_FIX_BOOT_METADATA()
 
 _EXYNOS9810_SANITIZE_DONOR_BRANDING()
 {
-    LOG "- Sanitizing Exynos9810 donor branding"
+    LOG "- Keeping Exynos9810 donor boot strings intact"
 
-    local P1="du"
-    local P2="han"
-    local LEGACY_AUTHOR="${P1}${P2}sysl"
-    local LEGACY_ROM="Du${P2}ROM"
-    local LEGACY_LIB="lib${P1}${P2}.so"
-    local LEGACY_BOKEH="${P1}${P2}s_bokeh_feature.json"
-    local CLEAN_EXPR="s/${LEGACY_AUTHOR}@${LEGACY_ROM}-V4\\.3/UN1CA9810@OneUI8-Exynos/g; s/${LEGACY_ROM}-V4\\.3/UN1CA9810-Rom/g; s/${LEGACY_BOKEH}/unica8_bokeh_feature.json/g"
-
-    find "$WORK_DIR/configs" "$WORK_DIR/system" "$WORK_DIR/vendor" "$WORK_DIR/odm" -type f \( -name "*.prop" -o -name "*.rc" -o -name "*.xml" -o -name "*.json" -o -name "fs_config-*" -o -name "file_context-*" \) -print0 2>/dev/null | xargs -0 -r perl -0pi -e "$CLEAN_EXPR"
-
-    local OLD NEW
-    OLD="$WORK_DIR/system/system/cameradata/portrait_data/$LEGACY_BOKEH"
-    if [ -f "$OLD" ]; then
-        NEW="${OLD%/*}/unica8_bokeh_feature.json"
-        EVAL "mv \"$OLD\" \"$NEW\"" || return 1
-    fi
+    # Do not bulk-rewrite restored .prop/.rc/.xml/context files or donor library
+    # names. The known-booting baseline depends on several of those strings and
+    # paths staying byte-for-byte compatible with the legacy Exynos9810 stack.
+    # Public ROM branding is provided through UN1CA props, installer text, and
+    # non-boot assets instead.
+    return 0
 }
 
 _EXYNOS9810_RESTORE_BOOT_VENDOR_SHIMS()
@@ -2817,7 +2816,7 @@ EOF
 
     chmod 644 "$WORK_DIR/vendor/etc/init/unica_exynos9810_trace.rc"
     _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/init/unica_exynos9810_trace.rc" \
-        "/vendor/etc/init/unica_exynos9810_trace.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+        "/vendor/etc/init/unica_exynos9810_trace.rc" 0 0 644 "u:object_r:vendor_file:s0"
 }
 
 _EXYNOS9810_COPY_VENDOR()

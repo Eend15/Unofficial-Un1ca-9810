@@ -5,7 +5,10 @@ SKIPUNZIP=1
 EXYNOS9810_LEGACY_PORT_DIR="${EXYNOS9810_LEGACY_PORT_DIR:-/mnt/c/Users/Admin/Downloads/Exynos9810_LegacyPort}"
 EXYNOS9810_BOOT_BASE="$EXYNOS9810_LEGACY_PORT_DIR/system_booting_baseline"
 EXYNOS9810_FULL_SYSTEM_BASE="${EXYNOS9810_FULL_SYSTEM_BASE:-$SRC_DIR/../boot_baselines/system_full_booting_baseline}"
+EXYNOS9810_METADATA_DIR="$SRC_DIR/platform/exynos9810/metadata"
 EXYNOS9810_USED_FULL_SYSTEM_BASELINE=false
+EXYNOS9810_USED_VENDOR_METADATA_SNAPSHOT=false
+EXYNOS9810_USED_ODM_METADATA_SNAPSHOT=false
 
 if [ ! -d "$EXYNOS9810_LEGACY_PORT_DIR/vendor" ] || [ ! -d "$EXYNOS9810_BOOT_BASE/system" ]; then
     LOGW "Exynos9810 boot baseline missing: $EXYNOS9810_LEGACY_PORT_DIR"
@@ -17,10 +20,98 @@ _EXYNOS9810_DELETE_METADATA()
     local PARTITION="$1"
     local ENTRY="$2"
     local CONTEXT="$3"
+    local RAW_CONTEXT
+    local ESCAPED_CONTEXT
 
     touch "$WORK_DIR/configs/fs_config-$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION"
-    sed -i "\|^$ENTRY |d" "$WORK_DIR/configs/fs_config-$PARTITION"
-    sed -i "\|^$CONTEXT |d" "$WORK_DIR/configs/file_context-$PARTITION"
+
+    awk -v entry="$ENTRY" '$1 != entry { print }' \
+        "$WORK_DIR/configs/fs_config-$PARTITION" > "$WORK_DIR/configs/fs_config-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/fs_config-$PARTITION.tmp" "$WORK_DIR/configs/fs_config-$PARTITION"
+
+    RAW_CONTEXT="$CONTEXT"
+    ESCAPED_CONTEXT="/$(_HANDLE_SPECIAL_CHARS "${CONTEXT#/}")"
+    awk -v raw="$RAW_CONTEXT" -v escaped="$ESCAPED_CONTEXT" \
+        '$1 != raw && $1 != escaped { print }' \
+        "$WORK_DIR/configs/file_context-$PARTITION" > "$WORK_DIR/configs/file_context-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
+}
+
+_EXYNOS9810_SET_METADATA_SAFE()
+{
+    local PARTITION="$1"
+    local ENTRY="$2"
+    local USER="$3"
+    local GROUP="$4"
+    local MODE="$5"
+    local LABEL="$6"
+    local PATTERN
+
+    while [[ "${ENTRY:0:1}" == "/" ]]; do
+        ENTRY="${ENTRY:1}"
+    done
+    [ "$PARTITION" != "system" ] && [[ "$ENTRY" != "$PARTITION/"* ]] && ENTRY="$PARTITION/$ENTRY"
+
+    LOG "- Adding metadata for /$ENTRY (uid:$USER gid:$GROUP mode:$MODE selabel:$LABEL)"
+
+    touch "$WORK_DIR/configs/fs_config-$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION"
+    PATTERN="/$(_HANDLE_SPECIAL_CHARS "$ENTRY")"
+
+    awk -v entry="$ENTRY" '$1 != entry { print }' \
+        "$WORK_DIR/configs/fs_config-$PARTITION" > "$WORK_DIR/configs/fs_config-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/fs_config-$PARTITION.tmp" "$WORK_DIR/configs/fs_config-$PARTITION"
+    echo "$ENTRY $USER $GROUP $MODE capabilities=0x0" >> "$WORK_DIR/configs/fs_config-$PARTITION"
+
+    awk -v pattern="$PATTERN" '$1 != pattern { print }' \
+        "$WORK_DIR/configs/file_context-$PARTITION" > "$WORK_DIR/configs/file_context-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
+    echo "$PATTERN $LABEL" >> "$WORK_DIR/configs/file_context-$PARTITION"
+}
+
+_EXYNOS9810_SET_FS_CONFIG_SAFE()
+{
+    local PARTITION="$1"
+    local ENTRY="$2"
+    local USER="$3"
+    local GROUP="$4"
+    local MODE="$5"
+
+    while [[ "${ENTRY:0:1}" == "/" ]]; do
+        ENTRY="${ENTRY:1}"
+    done
+    [ "$PARTITION" != "system" ] && [[ "$ENTRY" != "$PARTITION/"* ]] && ENTRY="$PARTITION/$ENTRY"
+
+    LOG "- Adding fs_config for /$ENTRY (uid:$USER gid:$GROUP mode:$MODE)"
+
+    touch "$WORK_DIR/configs/fs_config-$PARTITION"
+    awk -v entry="$ENTRY" '$1 != entry { print }' \
+        "$WORK_DIR/configs/fs_config-$PARTITION" > "$WORK_DIR/configs/fs_config-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/fs_config-$PARTITION.tmp" "$WORK_DIR/configs/fs_config-$PARTITION"
+    echo "$ENTRY $USER $GROUP $MODE capabilities=0x0" >> "$WORK_DIR/configs/fs_config-$PARTITION"
+}
+
+_EXYNOS9810_DEFAULT_MODE()
+{
+    local PARTITION="$1"
+    local ENTRY="$2"
+    local SOURCE="$3"
+
+    if [ -d "$SOURCE" ]; then
+        echo 755
+        return 0
+    fi
+
+    case "$ENTRY" in
+        "$PARTITION/bin/"*|"$PARTITION/bin")
+            echo 755
+            ;;
+        "$PARTITION/xbin/"*|"$PARTITION/xbin")
+            echo 755
+            ;;
+        *)
+            echo 644
+            ;;
+    esac
 }
 
 _EXYNOS9810_DEDUP_METADATA()
@@ -49,7 +140,31 @@ _EXYNOS9810_SANITIZE_METADATA()
         awk -v label="$DEFAULT_LABEL" 'NF == 1 { print $1 " " label; next } NF >= 2 { print }' \
             "$WORK_DIR/configs/file_context-$PARTITION" \
             > "$WORK_DIR/configs/file_context-$PARTITION.tmp" && \
-        mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
+            mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
+}
+
+_EXYNOS9810_RESTORE_METADATA_SNAPSHOT()
+{
+    local PARTITION="$1"
+    local FS_CONFIG="$EXYNOS9810_METADATA_DIR/known_good_fs_config-$PARTITION"
+    local FILE_CONTEXT="$EXYNOS9810_METADATA_DIR/known_good_file_context-$PARTITION"
+
+    if [ ! -s "$FS_CONFIG" ] || [ ! -s "$FILE_CONTEXT" ]; then
+        return 1
+    fi
+
+    LOG "- Restoring known-booting /$PARTITION fs_config and file_context metadata"
+    cp -f "$FS_CONFIG" "$WORK_DIR/configs/fs_config-$PARTITION"
+    cp -f "$FILE_CONTEXT" "$WORK_DIR/configs/file_context-$PARTITION"
+
+    case "$PARTITION" in
+        "vendor")
+            EXYNOS9810_USED_VENDOR_METADATA_SNAPSHOT=true
+            ;;
+        "odm")
+            EXYNOS9810_USED_ODM_METADATA_SNAPSHOT=true
+            ;;
+    esac
 }
 
 _EXYNOS9810_ENSURE_TREE_METADATA()
@@ -57,10 +172,14 @@ _EXYNOS9810_ENSURE_TREE_METADATA()
     local PARTITION="$1"
     local ROOT="$2"
     local DEFAULT_LABEL="$3"
+    local DEFAULT_USER="${4:-0}"
+    local DEFAULT_GROUP="${5:-0}"
     local FS_CONFIG="$WORK_DIR/configs/fs_config-$PARTITION"
     local FILE_CONTEXT="$WORK_DIR/configs/file_context-$PARTITION"
     local ENTRY
     local MODE
+    local USER
+    local GROUP
     local LABEL
     local PATTERN
 
@@ -69,10 +188,16 @@ _EXYNOS9810_ENSURE_TREE_METADATA()
     while IFS= read -r -d '' ENTRY; do
         ENTRY="${ENTRY#$ROOT/}"
         [ "$ENTRY" ] || continue
+        [ "$PARTITION" != "system" ] && [[ "$ENTRY" != "$PARTITION/"* ]] && ENTRY="$PARTITION/$ENTRY"
 
         if ! grep -q -F "$ENTRY " "$FS_CONFIG" 2> /dev/null; then
-            MODE="$(stat -c "%a" "$ROOT/$ENTRY" 2> /dev/null || echo 644)"
-            echo "$ENTRY 0 0 $MODE capabilities=0x0" >> "$FS_CONFIG"
+            MODE="$(_EXYNOS9810_DEFAULT_MODE "$PARTITION" "$ENTRY" "$ROOT/${ENTRY#$PARTITION/}")"
+            USER="$DEFAULT_USER"
+            GROUP="$DEFAULT_GROUP"
+            if [ -d "$ROOT/${ENTRY#$PARTITION/}" ] && [ "$PARTITION" = "vendor" ]; then
+                GROUP=2000
+            fi
+            echo "$ENTRY $USER $GROUP $MODE capabilities=0x0" >> "$FS_CONFIG"
         fi
 
         PATTERN="$(_HANDLE_SPECIAL_CHARS "$ENTRY")"
@@ -123,7 +248,7 @@ _EXYNOS9810_RESTORE_PRODUCT()
     rm -rf "$DST"
     mkdir -p "$(dirname "$DST")"
     cp -a "$SRC" "$DST"
-    SET_METADATA "system" "product/$REL" 0 0 644 "u:object_r:system_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "system" "product/$REL" 0 0 644 "u:object_r:system_file:s0"
 }
 
 _EXYNOS9810_RESTORE_VENDOR_BASELINE()
@@ -131,14 +256,191 @@ _EXYNOS9810_RESTORE_VENDOR_BASELINE()
     LOG "- Restoring final known-booting Exynos9810 vendor baseline"
 
     rm -rf "$WORK_DIR/vendor"
-    ADD_TO_WORK_DIR "$EXYNOS9810_LEGACY_PORT_DIR" "vendor" "." 0 2000 755 "u:object_r:vendor_file:s0"
+    mkdir -p "$WORK_DIR/vendor"
+    cp -a "$EXYNOS9810_LEGACY_PORT_DIR/vendor"/. "$WORK_DIR/vendor"/
+    _EXYNOS9810_RESTORE_METADATA_SNAPSHOT "vendor" || \
+        _EXYNOS9810_ENSURE_TREE_METADATA "vendor" "$WORK_DIR/vendor" "u:object_r:vendor_file:s0" 0 0
 
-    SET_METADATA "vendor" "vendor/build.prop" 0 0 644 "u:object_r:vendor_file:s0"
-    SET_METADATA "vendor" "vendor/etc/fstab.samsungexynos9810" 0 0 644 "u:object_r:vendor_configs_file:s0"
-    SET_METADATA "vendor" "vendor/etc/init/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/build.prop" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fstab.samsungexynos9810" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fstab.exynos9810" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/hw" 0 0 755 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/hw/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/android.hardware.keymaster@3.0-service.rc" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/vendor.samsung.hardware.camera.provider@4.0-service.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/unica_exynos9810_trace.rc" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/selinux" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/selinux/vendor_file_contexts" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fs_config_dirs" 0 0 444 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fs_config_files" 0 0 444 "u:object_r:vendor_file:s0"
 
-    rm -f "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"
-    _EXYNOS9810_DELETE_METADATA "vendor" "vendor/etc/init/hw/init.samsungexynos9810.rc" "/vendor/etc/init/hw/init.samsungexynos9810.rc"
+    if [ -f "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" ] && \
+       [ ! -f "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc" ]; then
+        mkdir -p "$WORK_DIR/vendor/etc/init/hw"
+        cp -pf "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" \
+            "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"
+    fi
+}
+
+_EXYNOS9810_SET_BUILD_PROP()
+{
+    local FILE="$1"
+    local PROP="$2"
+    local VALUE="$3"
+
+    [ -f "$FILE" ] || return 0
+    sed -i "/^$PROP=/d" "$FILE"
+    echo "$PROP=$VALUE" >> "$FILE"
+}
+
+_EXYNOS9810_DELETE_BUILD_PROP()
+{
+    local FILE="$1"
+    local PROP="$2"
+
+    [ -f "$FILE" ] || return 0
+    sed -i "/^$PROP=/d" "$FILE"
+}
+
+_EXYNOS9810_KEEP_SETUP_WIZARD_ENABLED()
+{
+    local FILE
+
+    LOG "- Keeping Samsung setup wizard enabled after boot baseline restore"
+
+    for FILE in \
+        "$WORK_DIR/system/system/build.prop" \
+        "$WORK_DIR/system/product/etc/build.prop" \
+        "$WORK_DIR/system/system/product/etc/build.prop"; do
+        [ -f "$FILE" ] || continue
+
+        _EXYNOS9810_DELETE_BUILD_PROP "$FILE" "persist.sys.setupwizard"
+        _EXYNOS9810_DELETE_BUILD_PROP "$FILE" "persist.sys.setupwizard.user_setup_complete"
+        _EXYNOS9810_DELETE_BUILD_PROP "$FILE" "ro.setupwizard.mode"
+        _EXYNOS9810_DELETE_BUILD_PROP "$FILE" "setupwizard.feature.enable_quick_start_flow"
+    done
+
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/system/product/etc/build.prop" \
+        "ro.setupwizard.mode" "OPTIONAL"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/system/product/etc/build.prop" \
+        "setupwizard.feature.enable_quick_start_flow" "false"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/system/system/product/etc/build.prop" \
+        "ro.setupwizard.mode" "OPTIONAL"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/system/system/product/etc/build.prop" \
+        "setupwizard.feature.enable_quick_start_flow" "false"
+}
+
+_EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT()
+{
+    local RC
+
+    LOG "- Applying final Exynos9810 vendor boot compat"
+
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.security_patch" "2026-05-05"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.hardware.keystore" "mdfpp"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.security.keystore.keytype" "sak"
+    sed -i '/^ro.hardware.keystore_desede=/d' "$WORK_DIR/vendor/build.prop" 2> /dev/null || true
+
+    RC="$WORK_DIR/vendor/etc/init/android.hardware.keymaster@3.0-service.rc"
+    if [ -f "$RC" ] && ! grep -q 'interface android.hardware.keymaster@3.0::IKeymasterDevice default' "$RC"; then
+        awk '
+            {
+                print
+                if ($0 ~ /^service vendor\.keymaster-3-0 /) {
+                    print "    interface android.hardware.keymaster@3.0::IKeymasterDevice default"
+                }
+            }
+        ' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
+    fi
+
+    RC="$WORK_DIR/vendor/etc/init/android.hardware.health@2.1-service-samsung.rc"
+    if [ -f "$RC" ] && ! grep -q 'interface android.hardware.health@2.1::IHealth default' "$RC"; then
+        awk '
+            {
+                print
+                if ($0 ~ /^service health-hal-2-1-samsung /) {
+                    print "    interface android.hardware.health@2.1::IHealth default"
+                }
+            }
+        ' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
+    fi
+    if [ -f "$RC" ] && ! grep -q 'interface android.hardware.health@2.0::IHealth default' "$RC"; then
+        awk '
+            {
+                print
+                if ($0 ~ /^service health-hal-2-1-samsung /) {
+                    print "    interface android.hardware.health@2.0::IHealth default"
+                }
+            }
+        ' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
+    fi
+
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/build.prop" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/android.hardware.keymaster@3.0-service.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/android.hardware.health@2.1-service-samsung.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.keymaster@3.0-service" 0 0 755 "u:object_r:hal_keymaster_default_exec:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.keymaster@4.0-service" 0 0 755 "u:object_r:hal_keymaster_default_exec:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.gatekeeper@1.0-service" 0 0 755 "u:object_r:hal_gatekeeper_default_exec:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.health@2.1-service-samsung" 0 0 755 "u:object_r:hal_health_default_exec:s0"
+}
+
+_EXYNOS9810_WRITE_FINAL_BOOT_TRACE()
+{
+    if [ "${EXYNOS9810_ENABLE_VENDOR_BOOT_TRACE:-false}" != "true" ]; then
+        return 0
+    fi
+
+    LOG "- Restoring final Exynos9810 boot trace"
+
+    mkdir -p "$WORK_DIR/vendor/etc/init"
+
+    cat > "$WORK_DIR/vendor/etc/init/unica_exynos9810_trace.rc" <<'EOF'
+on early-init
+    write /dev/kmsg "UN1CA-9810-TRACE: early-init"
+
+on init
+    write /dev/kmsg "UN1CA-9810-TRACE: init"
+
+on fs
+    write /dev/kmsg "UN1CA-9810-TRACE: fs"
+
+on post-fs
+    write /dev/kmsg "UN1CA-9810-TRACE: post-fs"
+
+on late-fs
+    write /dev/kmsg "UN1CA-9810-TRACE: late-fs"
+
+on post-fs-data
+    write /dev/kmsg "UN1CA-9810-TRACE: post-fs-data"
+
+on zygote-start
+    write /dev/kmsg "UN1CA-9810-TRACE: zygote-start"
+
+on boot
+    write /dev/kmsg "UN1CA-9810-TRACE: boot"
+EOF
+
+    chmod 644 "$WORK_DIR/vendor/etc/init/unica_exynos9810_trace.rc"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/unica_exynos9810_trace.rc" 0 0 644 "u:object_r:vendor_file:s0"
+}
+
+_EXYNOS9810_RESTORE_VENDOR_BIN_GROUPS()
+{
+    local ROOT="$WORK_DIR/vendor/bin"
+    local FS_CONFIG="$WORK_DIR/configs/fs_config-vendor"
+    local ENTRY
+    local REL
+    local MODE
+
+    [ -d "$ROOT" ] || return 0
+    touch "$FS_CONFIG"
+
+    while IFS= read -r -d '' ENTRY; do
+        REL="vendor/bin${ENTRY#$ROOT}"
+        MODE="$(_EXYNOS9810_DEFAULT_MODE "vendor" "$REL" "$ENTRY")"
+        _EXYNOS9810_SET_FS_CONFIG_SAFE "vendor" "$REL" 0 2000 "$MODE"
+    done < <(find "$ROOT" -mindepth 0 -print0)
 }
 
 _EXYNOS9810_RESTORE_ODM_BASELINE()
@@ -151,29 +453,26 @@ _EXYNOS9810_RESTORE_ODM_BASELINE()
     LOG "- Restoring final known-booting Exynos9810 ODM baseline"
 
     rm -rf "$WORK_DIR/odm"
-    ADD_TO_WORK_DIR "$EXYNOS9810_LEGACY_PORT_DIR" "odm" "." 0 0 755 "u:object_r:vendor_file:s0"
+    mkdir -p "$WORK_DIR/odm"
+    cp -a "$EXYNOS9810_LEGACY_PORT_DIR/odm"/. "$WORK_DIR/odm"/
+    _EXYNOS9810_RESTORE_METADATA_SNAPSHOT "odm" || \
+        _EXYNOS9810_ENSURE_TREE_METADATA "odm" "$WORK_DIR/odm" "u:object_r:vendor_file:s0" 0 0
     rm -rf "$WORK_DIR/odm/lost+found"
 
-    SET_METADATA "odm" "odm/etc/build.prop" 0 0 644 "u:object_r:vendor_file:s0"
-    SET_METADATA "odm" "odm/etc/fs_config_dirs" 0 0 644 "u:object_r:vendor_file:s0"
-    SET_METADATA "odm" "odm/etc/fs_config_files" 0 0 644 "u:object_r:vendor_file:s0"
-    SET_METADATA "odm" "odm/etc/group" 0 0 644 "u:object_r:vendor_file:s0"
-    SET_METADATA "odm" "odm/etc/passwd" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc" 0 0 755 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/build.prop" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/selinux" 0 0 755 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/fs_config_dirs" 0 0 444 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/fs_config_files" 0 0 444 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/group" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/passwd" 0 0 644 "u:object_r:vendor_file:s0"
 }
 
 _EXYNOS9810_SANITIZE_RESTORED_TEXT()
 {
-    local P1="du"
-    local P2="han"
-    local LEGACY_AUTHOR="${P1}${P2}sysl"
-    local LEGACY_ROM="Du${P2}ROM"
-    local CLEAN_EXPR
-
-    CLEAN_EXPR="s/${LEGACY_AUTHOR}@${LEGACY_ROM}-V4\\.3/UN1CA9810@OneUI8-Exynos/g; s/${LEGACY_ROM}-V4\\.3/Unofficial UN1CA 9810/g"
-
-    find "$WORK_DIR/configs" "$WORK_DIR/system" "$WORK_DIR/vendor" "$WORK_DIR/odm" \
-        -type f \( -name "*.prop" -o -name "*.rc" -o -name "*.xml" -o -name "*.json" -o -name "fs_config-*" -o -name "file_context-*" \) \
-        -print0 2> /dev/null | xargs -0 -r perl -0pi -e "$CLEAN_EXPR"
+    # Keep restored boot-critical props, init files, contexts, and manifests byte-for-byte
+    # aligned with the known-booting baseline. Branding belongs in non-boot assets.
+    return 0
 }
 
 _EXYNOS9810_FIX_SYSTEM_PERMISSION_CASE()
@@ -227,9 +526,18 @@ _EXYNOS9810_DELETE_METADATA "system" "system/lib64/libunica.so" "/system/lib64/l
 _EXYNOS9810_DELETE_METADATA "vendor" "vendor/lib/libunica.so" "/vendor/lib/libunica.so"
 _EXYNOS9810_DELETE_METADATA "vendor" "vendor/lib64/libunica.so" "/vendor/lib64/libunica.so"
 
+_EXYNOS9810_KEEP_SETUP_WIZARD_ENABLED
 _EXYNOS9810_RESTORE_VENDOR_BASELINE
+_EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT
 _EXYNOS9810_RESTORE_ODM_BASELINE
 _EXYNOS9810_SANITIZE_RESTORED_TEXT
+_EXYNOS9810_WRITE_FINAL_BOOT_TRACE
+if [ "$EXYNOS9810_USED_VENDOR_METADATA_SNAPSHOT" != true ]; then
+    _EXYNOS9810_RESTORE_VENDOR_BIN_GROUPS
+fi
+
+_EXYNOS9810_SET_METADATA_SAFE "system" "odm/etc/build.prop" 0 0 644 "u:object_r:system_file:s0"
+_EXYNOS9810_SET_METADATA_SAFE "system" "system/bin/unica_exynos9810_bootlog.sh" 0 2000 755 "u:object_r:system_file:s0"
 
 if [ "$EXYNOS9810_USED_FULL_SYSTEM_BASELINE" != true ]; then
     _EXYNOS9810_FIX_SYSTEM_PERMISSION_CASE

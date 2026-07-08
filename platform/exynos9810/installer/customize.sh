@@ -11,11 +11,31 @@ else
     exit 1
 fi
 
-REPARTITIONER_DIR="${REPARTITIONER_DIR:-/mnt/c/Users/Admin/Documents/Codex/2026-06-16/https-xdaforums-com-t-rom-oneui/work/repartitioner_analysis/repartitioner/exynos9810}"
-if [ -f "$REPARTITIONER_DIR/sgdisk" ]; then
-    LOG "- Bundling Exynos9810 sgdisk repartitioner binary"
-    cp -a "$REPARTITIONER_DIR/sgdisk" "$TMP_DIR/exynos9810/sgdisk"
-fi
+find_exynos9810_sgdisk()
+{
+    for bin in \
+        "${REPARTITIONER_SGDISK:-}" \
+        "${REPARTITIONER_DIR:-}/sgdisk" \
+        "/mnt/c/Users/Admin/Documents/Codex/2026-06-16/https-xdaforums-com-t-rom-oneui/work/repartitioner_analysis/repartitioner/duhan/sgdisk" \
+        "/mnt/c/Users/Admin/Documents/Codex/2026-06-16/https-xdaforums-com-t-rom-oneui/work/repartitioner_zip/duhan/sgdisk" \
+        "$EXYNOS9810_LEGACY_PORT_DIR/system/bin/sgdisk"; do
+        [ -n "$bin" ] || continue
+        [ -f "$bin" ] || continue
+        echo "$bin"
+        return 0
+    done
+
+    return 1
+}
+
+REPARTITIONER_DIR="${REPARTITIONER_DIR:-/mnt/c/Users/Admin/Documents/Codex/2026-06-16/https-xdaforums-com-t-rom-oneui/work/repartitioner_analysis/repartitioner/duhan}"
+REPARTITIONER_SGDISK_BIN="$(find_exynos9810_sgdisk)" || {
+    LOGE "Exynos9810 sgdisk repartitioner binary not found"
+    exit 1
+}
+LOG "- Bundling Exynos9810 sgdisk repartitioner binary"
+cp -a "$REPARTITIONER_SGDISK_BIN" "$TMP_DIR/exynos9810/sgdisk"
+chmod 0755 "$TMP_DIR/exynos9810/sgdisk"
 
 DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Permissive-KernelSU-OneUI7}"
 CROWNTRAIL_KERNEL_ZIP="${CROWNTRAIL_KERNEL_ZIP:-/mnt/c/Users/Admin/Downloads/CrownTrail-v1.6-15.05.2026-OneUI7-Permissive-KSUN.zip}"

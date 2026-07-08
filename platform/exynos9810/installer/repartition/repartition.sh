@@ -1,14 +1,24 @@
 #!/sbin/sh
 
 SELF_DIR="$(dirname "$0")"
-SGDISK="$SELF_DIR/sgdisk"
-[ -x "$SGDISK" ] || SGDISK=/tmp/sgdisk
 DISK=/dev/block/sda
 
-if [ ! -x "$SGDISK" ]; then
+find_sgdisk()
+{
+    for bin in "$SELF_DIR/sgdisk" /system/bin/sgdisk /sbin/sgdisk /tmp/sgdisk; do
+        if [ -x "$bin" ] && "$bin" --version >/dev/null 2>&1; then
+            echo "$bin"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+SGDISK="$(find_sgdisk)" || {
     echo "E9810: sgdisk binary not found"
     exit 1
-fi
+}
 
 case "$1" in
     crownlte)
