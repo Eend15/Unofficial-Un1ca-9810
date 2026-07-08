@@ -174,6 +174,11 @@ if $BUILD_TARGET_FILES || $BUILD_FLASHABLE_ZIP; then
     fi
     ZIP_FILE_NAME+="-target_files.zip"
 
+    if $BUILD_ROM && [ -f "$OUT_DIR/$ZIP_FILE_NAME" ]; then
+        LOGW "Removing stale target-files zip after ROM rebuild: ${OUT_DIR//$SRC_DIR\//}/$ZIP_FILE_NAME"
+        rm -f "$OUT_DIR/$ZIP_FILE_NAME"
+    fi
+
     if [ ! -f "$OUT_DIR/$ZIP_FILE_NAME" ]; then
         LOG_STEP_IN true "Creating target-files zip"
         "$SRC_DIR/scripts/internal/create_target_files_zip.sh" "$OUT_DIR/$ZIP_FILE_NAME" || exit 1
