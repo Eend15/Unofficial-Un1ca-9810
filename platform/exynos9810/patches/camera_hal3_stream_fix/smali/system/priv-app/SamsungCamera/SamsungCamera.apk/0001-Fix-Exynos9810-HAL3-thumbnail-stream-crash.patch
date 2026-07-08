@@ -1,0 +1,46 @@
+From 55b06068708c21b13779ad4e9112aeb530e10f19 Mon Sep 17 00:00:00 2001
+From: UN1CA <dev@example.com>
+Date: Wed, 8 Jul 2026 13:06:03 +0200
+Subject: [PATCH] Fix Exynos9810 HAL3 thumbnail stream configuration failure
+
+The Exynos9810 camera HAL (via the ported UniHAL 2.1 shim's
+ScenarioManager) never reports a valid buffer count for any
+non-PREVIEW scenario stream, always returning maxBuffers=0. Android's
+Camera3Device treats that as fatal ("Function not implemented (-38)"
+/ "Unsupported set of inputs/outputs provided"), which fails the
+whole capture session and previously caused the Camera app to close
+itself before a single preview frame was ever produced.
+
+CamDeviceImpl.d0() still built a THUMBNAIL PictureStreamInfo-based
+stream even though it's cosmetic/optional, so this null's it out
+before the null-check, matching how h0()/i0() already skip the other
+optional (picture/preview-callback) streams. With only the mandatory
+PREVIEW stream requested at session-open, configuration succeeds and
+the live viewfinder works again.
+
+Known limitation: actual photo/video capture is not fixed by this
+patch alone, since h0() already skips creating the picture (JPEG)
+ImageReader entirely on this platform (that stream hits the exact
+same HAL bug). Fixing capture requires either getting the real HAL
+to report a valid buffer count for CAPTURE-scenario streams, or a
+capture path that doesn't depend on it.
+---
+ .../com/samsung/android/camera/core2/device/CamDeviceImpl.smali | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/smali_classes3/com/samsung/android/camera/core2/device/CamDeviceImpl.smali b/smali_classes3/com/samsung/android/camera/core2/device/CamDeviceImpl.smali
+index d61d8f5..de4df6c 100644
+--- a/smali_classes3/com/samsung/android/camera/core2/device/CamDeviceImpl.smali
++++ b/smali_classes3/com/samsung/android/camera/core2/device/CamDeviceImpl.smali
+@@ -3631,6 +3631,8 @@
+     :goto_1
+     iget-object v1, v1, Lcom/samsung/android/camera/core2/container/SessionConfig;->i:Lcom/samsung/android/camera/core2/container/PictureStreamInfo;
+ 
++    const/4 v1, 0x0
++
+     if-nez v1, :cond_4
+ 
+     invoke-virtual/range {p0 .. p0}, Lcom/samsung/android/camera/core2/device/CamDeviceImpl;->X()V
+-- 
+2.43.0
+
