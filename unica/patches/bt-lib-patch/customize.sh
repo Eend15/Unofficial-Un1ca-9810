@@ -42,12 +42,23 @@ fi
 # cannot grant SCHED_FIFO to bt_main_thread. Report success from the shared
 # EnableRealTimeScheduling helper so A2DP follows the normal success path
 # without mixing in older One UI 7 Bluetooth binaries.
-if xxd -p -c 0 "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" | grep -q \
-    "5e8600f8ff4303d1fd7b0aa9f55b00f9f44f0ca9fd83029155d03bd5"; then
+#
+# This helper is inlined at every Bluetooth stack thread startup site (main
+# thread, HCI thread, A2DP thread, etc.), so the exact same byte sequence
+# appears multiple times in the library. HEX_PATCH only replaces the first
+# occurrence per call (non-global sed on the single-line hex dump), so this
+# must loop until every occurrence is patched -- otherwise whichever thread
+# starts up via one of the remaining, still-unpatched copies still aborts.
+_RT_SCHED_PATCH_COUNT=0
+while xxd -p -c 0 "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" | grep -q \
+    "5e8600f8ff4303d1fd7b0aa9f55b00f9f44f0ca9fd83029155d03bd5"; do
     HEX_PATCH "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" \
         "5e8600f8ff4303d1fd7b0aa9f55b00f9f44f0ca9fd83029155d03bd5" \
-        "20008052c0035fd6fd7b0aa9f55b00f9f44f0ca9fd83029155d03bd5"
-else
+        "20008052c0035fd6fd7b0aa9f55b00f9f44f0ca9fd83029155d03bd5" || break
+    _RT_SCHED_PATCH_COUNT=$((_RT_SCHED_PATCH_COUNT + 1))
+done
+
+if [ "$_RT_SCHED_PATCH_COUNT" -eq 0 ]; then
     LOGW "No Android 16 Bluetooth EnableRealTimeScheduling helper found"
 fi
 
