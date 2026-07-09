@@ -627,6 +627,178 @@ EOF
 )" || return 1
 }
 
+_EXYNOS9810_FINAL_PATCH_CAMERA_PROVIDEO_ICON_CRASH()
+{
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
+    local SMALI
+
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
+
+    # The obfuscated class holding this method (originally "C2.p", but this
+    # is an R8-assigned synthetic name that can differ across otherwise
+    # logically-identical rebuilds/targets) is located by its unique
+    # literal string rather than by class/file name, since that is stable.
+    SMALI="$(grep -rl 'Cannot find resource ID:' "$APK_DIR" 2>/dev/null | head -n 1)"
+    if [ ! -f "$SMALI" ]; then
+        LOGE "Pro Video icon-lookup smali not found in SamsungCamera.apk"
+        return 1
+    fi
+
+    LOG "- Fixing Pro Video mode crash on missing quick-setting icon resource"
+    python3 - "$SMALI" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+old = (
+    "    if-nez v1, :cond_2\n\n"
+    "    new-instance p1, Ljava/lang/StringBuilder;\n\n"
+    "    const-string v1, \"Cannot find resource ID:\""
+)
+new = (
+    "    if-nez v1, :cond_2\n\n"
+    "    const-string v1, \"\"\n\n"
+    "    return-object v1\n\n"
+    "    new-instance p1, Ljava/lang/StringBuilder;\n\n"
+    "    const-string v1, \"Cannot find resource ID:\""
+)
+if new not in text:
+    if old not in text:
+        raise SystemExit("Pro Video icon-lookup crash site not found")
+    text = text.replace(old, new, 1)
+    path.write_text(text)
+PY
+}
+
+_EXYNOS9810_FINAL_PATCH_CAMERA_SCENE_DETECTION_NODE()
+{
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
+    local SMALI="$APK_DIR/smali_classes3/com/samsung/android/camera/core2/node/NodeFeatureLoader.smali"
+
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
+    [ -f "$SMALI" ] || {
+        LOGE "NodeFeatureLoader.smali not found in SamsungCamera.apk"
+        return 1
+    }
+
+    LOG "- Forcing Exynos9810 camera onto the dummy scene-detection node"
+    python3 - "$SMALI" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+# NodeFeatureLoader.b lists vendor-lib names that must NOT be resolved to
+# their real node implementation, forcing NodeFactory to fall back to the
+# built-in dummy node. The donor S22 firmware's floating-feature vendor-lib
+# list still advertises "scene_detection.samsung.v1" (inherited unmodified
+# for this Exynos9810 port), so the app builds the real SribSceneDetectionNode
+# even though this SoC has no such AI/NPU backing.
+if '"scene_detection"' in text:
+    raise SystemExit(0)
+
+match = re.search(
+    r"(?ms)^\.method static constructor <clinit>\(\)V\n(.*?)^\.end method",
+    text,
+)
+if not match:
+    raise SystemExit("NodeFeatureLoader <clinit> not found")
+
+body = match.group(1)
+locals_match = re.search(r"\.locals (\d+)", body)
+of_match = re.search(
+    r"invoke-static/range \{v0 \.\. v(\d+)\}, Ljava/util/List;->of\(((?:Ljava/lang/Object;)+)\)Ljava/util/List;",
+    body,
+)
+if not locals_match or not of_match:
+    raise SystemExit("NodeFeatureLoader <clinit> shape not recognized")
+
+old_locals = int(locals_match.group(1))
+last_reg = int(of_match.group(1))
+new_reg = last_reg + 1
+new_locals = old_locals + 1
+if new_reg != old_locals:
+    raise SystemExit("NodeFeatureLoader <clinit> register layout unexpected")
+
+new_body = body.replace(f".locals {old_locals}", f".locals {new_locals}", 1)
+new_body = new_body.replace(
+    f"invoke-static/range {{v0 .. v{last_reg}}}, Ljava/util/List;->of({of_match.group(2)})Ljava/util/List;",
+    f'    const-string v{new_reg}, "scene_detection"\n\n'
+    f"    invoke-static/range {{v0 .. v{new_reg}}}, Ljava/util/List;->of({of_match.group(2)}Ljava/lang/Object;)Ljava/util/List;",
+    1,
+)
+if new_body == body:
+    raise SystemExit("Failed to extend NodeFeatureLoader ignore-list")
+
+text = text[:match.start(1)] + new_body + text[match.end(1):]
+path.write_text(text)
+PY
+}
+
+_EXYNOS9810_FINAL_PATCH_CAMERA_SCENE_DETECTION_STREAM()
+{
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
+    local SMALI="$APK_DIR/smali_classes3/com/samsung/android/camera/core2/maker/AutoBeautyPhotoMaker.smali"
+
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
+    [ -f "$SMALI" ] || {
+        LOGE "AutoBeautyPhotoMaker.smali not found in SamsungCamera.apk"
+        return 1
+    }
+
+    LOG "- Disabling Exynos9810 camera scene-detection preview-callback stream"
+    python3 - "$SMALI" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+# Applying scene_detection_mode enables the SCENE_DETECTION repeating key,
+# which requests an extra MAIN_PREVIEW_CALLBACK ImageReader stream via
+# PhotoMakerBase.applyRepeatingKey - independent of whether the scene
+# detection node itself is real or dummy. On this Exynos9810 port that
+# ImageReader is never actually created, so CamDeviceImpl throws
+# "There is no preview image reader" and the generic Request error handler
+# force-shuts-down the whole Engine state machine (breaking shooting-mode
+# switching and capture). Located by the unobfuscated RepeatingKey field
+# name rather than the lambda's R8-assigned method name, since that number
+# can shift between otherwise-identical rebuilds.
+match = re.search(
+    r"(?ms)^\.method[^\n]*\n(?:(?!^\.end method).)*?"
+    r"REPEATING_KEY_SCENE_DETECTION:Lcom/samsung/android/camera/core2/maker/MakerRepeatingModeManager\$RepeatingKey;"
+    r".*?^\.end method",
+    text,
+)
+if not match:
+    raise SystemExit("SCENE_DETECTION repeating-key executor not found")
+
+method = match.group(0)
+old = (
+    "    if-lez p1, :cond_0\n\n"
+    "    const/4 p1, 0x1\n\n"
+    "    goto :goto_0\n\n"
+    "    :cond_0\n"
+    "    const/4 p1, 0x0\n\n"
+    "    :goto_0\n"
+)
+new = "    const/4 p1, 0x0\n\n"
+if new in method and old not in method:
+    pass
+else:
+    if old not in method:
+        raise SystemExit("SCENE_DETECTION repeating-key enable logic not found")
+    method = method.replace(old, new, 1)
+    text = text[:match.start()] + method + text[match.end():]
+    path.write_text(text)
+PY
+}
+
 _EXYNOS9810_FINAL_REPATCH_APPS()
 {
     LOG "- Re-applying Exynos9810 Camera/Bluetooth/Settings patches after final restore"
@@ -639,6 +811,9 @@ _EXYNOS9810_FINAL_REPATCH_APPS()
     _EXYNOS9810_FINAL_PATCH_CAMERA_REPEATING_PREVIEW_SURFACE || return 1
     _EXYNOS9810_FINAL_PATCH_CAMERA_PREVIEW_CALLBACK_STREAM || return 1
     _EXYNOS9810_FINAL_PATCH_CAMERA_CAPTURE_SESSION_STREAMS || return 1
+    _EXYNOS9810_FINAL_PATCH_CAMERA_PROVIDEO_ICON_CRASH || return 1
+    _EXYNOS9810_FINAL_PATCH_CAMERA_SCENE_DETECTION_NODE || return 1
+    _EXYNOS9810_FINAL_PATCH_CAMERA_SCENE_DETECTION_STREAM || return 1
 
     _EXYNOS9810_FINAL_RESTORE_BLUETOOTH_LIB || return 1
     rm -rf "$APKTOOL_DIR/system/app/BluetoothAgent/BluetoothAgent.apk"
@@ -648,7 +823,39 @@ _EXYNOS9810_FINAL_REPATCH_APPS()
     _EXYNOS9810_FINAL_SETTINGS_DEVICE_IMAGE || return 1
 }
 
+_EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT()
+{
+    # zzzz_exynos9810_boot_restore fully wipes and rebuilds $WORK_DIR/vendor
+    # from the pristine legacy-port source (rm -rf + cp -a), which runs
+    # *after* platform/exynos9810/patches, undoing any earlier in-place
+    # patch to a vendor file. This module runs later still, so it's the
+    # place that actually survives into the final build.
+    #
+    # The Exynos9810 ExynosCamera HAL aborts the whole camera provider
+    # daemon whenever ExynosCamera::flush() has to wait for the pipeline
+    # to leave its RUN state: it polls every 100ms for only ~31 iterations
+    # (~3.1s) before hard-asserting via __android_log_assert(), which
+    # calls abort() and kills
+    # vendor.samsung.hardware.camera.provider@4.0-service outright. This
+    # extends the loop's iteration count from 0x1e (30) to 0xfa (250),
+    # i.e. ~3.1s to ~25.1s, giving the pipeline enough time to settle
+    # instead of aborting. Corresponds to
+    # android::ExynosCamera::m_transitState(), the `case 3`
+    # (EXYNOS_CAMERA_STATE_RUN) branch waiting to reach state 5.
+    local LIB="$WORK_DIR/vendor/lib/libexynoscamera3.so"
+
+    if [ -f "$LIB" ] && \
+            xxd -p -c 0 "$LIB" | grep -qi "3a4d06f5296b6ff01e0478447f447d44"; then
+        LOG "- Extending Exynos9810 camera flush() timeout"
+        HEX_PATCH "$LIB" \
+            "3a4d06f5296b6ff01e0478447f447d44" "3a4d06f5296b6ff0fa0478447f447d44" || return 1
+    else
+        LOGW "Exynos9810 camera flush() timeout byte pattern not found for $TARGET_CODENAME, skipping"
+    fi
+}
+
 _EXYNOS9810_FINAL_REPATCH_APPS
 _EXYNOS9810_FINAL_DEBLOAT
 _EXYNOS9810_FINAL_RAM_TWEAKS
 _EXYNOS9810_FINAL_PRELOAD_KERNELSU_NEXT
+_EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT

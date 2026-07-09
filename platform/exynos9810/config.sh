@@ -2,8 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Platform configuration file for Samsung Exynos 9810 devices (exynos9810)
-# Default to the known-booting Note10 Lite r7 VNDK33 baseline. Older
-# VNDK31 donor builds can still be tested by overriding the donor directory.
+# The actually-verified, known-booting/known-working camera baseline is the
+# legacy vendor port (EXYNOS9810_LEGACY_PORT_DIR), applied by default in
+# exynos9810_device_stack/customize.sh (EXYNOS9810_USE_N770_HXA3_VENDOR
+# defaults to false). Note10 Lite's own N770F vendor blobs are a *different*,
+# unverified camera HAL binary -- do not default to them without re-testing
+# every camera fix against that binary specifically.
 TARGET_BOARD_API_LEVEL="${EXYNOS9810_TARGET_BOARD_API_LEVEL:-33}"
 EXYNOS9810_ENABLE_SYSTEM_BOOT_DEBUG="${EXYNOS9810_ENABLE_SYSTEM_BOOT_DEBUG:-true}"
 EXYNOS9810_ENABLE_VENDOR_BOOT_TRACE="${EXYNOS9810_ENABLE_VENDOR_BOOT_TRACE:-true}"
