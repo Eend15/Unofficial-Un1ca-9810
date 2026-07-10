@@ -2,7 +2,7 @@ SKIPUNZIP=1
 
 [ "$TARGET_PLATFORM" = "exynos9810" ] || return 0
 
-EXYNOS9810_KERNELSU_NEXT_APK="${EXYNOS9810_KERNELSU_NEXT_APK:-/mnt/c/Users/Admin/Downloads/KernelSU_Next_v3.0.0_32857-release.apk}"
+EXYNOS9810_KERNELSU_NEXT_APK="${EXYNOS9810_KERNELSU_NEXT_APK:-/mnt/c/Users/Admin/Downloads/KernelSU_Next_v3.1.0_33024-release.apk}"
 
 _EXYNOS9810_FINAL_IMPORT_FUNCTIONS()
 {
