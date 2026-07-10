@@ -281,7 +281,8 @@ _EXYNOS9810_FINAL_DEBLOAT()
     done
 }
 
-_EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES()
+_EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
+_EXYNOS9810_FINAL_SET_STANDARD_HOME_LAYOUT()
 {
     local APK_DIR="$APKTOOL_DIR/system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk"
     local FILE
@@ -337,6 +338,51 @@ PY
 )" || return 1
         [ "$REMOVED" -gt 0 ] 2>/dev/null && LOG "  - ${FILE#$APK_DIR/}: removed $REMOVED entries"
     done < <(find "$APK_DIR/res" -type f -iname '*workspace*.xml' -print0 2>/dev/null)
+}
+
+_EXYNOS9810_FINAL_SET_STANDARD_HOME_LAYOUT()
+{
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk"
+    local FILE
+    local REL
+
+    DECODE_APK "system" "system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk" || return 1
+
+    LOG "- Setting standard UN1CA home screen layout (widget + Gallery/Play Store/My Files, Phone/Contacts/Camera dock)"
+
+    # Replaces the donor S22 stock layout (Microsoft/Google folders full of
+    # apps that were never installed on this ROM to begin with) with a small,
+    # deliberately curated layout built only from apps guaranteed present on
+    # every exynos9810 UN1CA build, so it's identical and ghost-icon-free on
+    # every fresh install regardless of what a given account restore does.
+    for REL in \
+        res/xml/default_workspace.xml \
+        res/xml/default_workspace_homeonly.xml \
+        res/xml/default_land_workspace.xml \
+        res/xml/default_land_workspace_homeonly.xml \
+        res/xml/default_front_workspace.xml \
+        res/xml/default_front_workspace_homeonly.xml; do
+        FILE="$APK_DIR/$REL"
+        [ -f "$FILE" ] || continue
+        cat > "$FILE" <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<favorites
+  xmlns:launcher="http://schemas.android.com/apk/res-auto/com.android.launcher3">
+    <home>
+        <appwidget className="com.sec.android.daemonapp.appwidget.WeatherAppWidget2x1" packageName="com.sec.android.daemonapp" screen="0" spanX="2" spanY="2" x="1" y="1" />
+        <favorite className="com.samsung.android.gallery.app.activity.GalleryActivity" packageName="com.sec.android.gallery3d" screen="0" x="0" y="4" />
+        <favorite className="com.android.vending.AssetBrowserActivity" packageName="com.android.vending" screen="0" x="1" y="4" />
+        <favorite className="com.sec.android.app.myfiles.ui.MainActivity" packageName="com.sec.android.app.myfiles" screen="0" x="2" y="4" />
+    </home>
+    <hotseat launcher:refPackageName="">
+        <favorite launcher:className="com.samsung.android.dialer.DialtactsActivity" launcher:packageName="com.samsung.android.dialer" launcher:screen="0" />
+        <favorite launcher:className="com.samsung.android.contacts.contactslist.PeopleActivity" launcher:packageName="com.samsung.android.app.contacts" launcher:screen="1" />
+        <favorite launcher:className="com.sec.android.app.camera.Camera" launcher:packageName="com.sec.android.app.camera" launcher:screen="2" />
+    </hotseat>
+</favorites>
+XML
+        LOG "  - Replaced ${REL#res/xml/}"
+    done
 }
 
 _EXYNOS9810_FINAL_RESTORE_BLUETOOTH_LIB()
