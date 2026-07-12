@@ -17,7 +17,7 @@ TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" 
 
 GET_WORK_DIR_HASH()
 {
-    find "$SRC_DIR/unica" "$SRC_DIR/target/$TARGET_CODENAME" -type f -print0 | \
+    find "$SRC_DIR/platform/$TARGET_PLATFORM" "$SRC_DIR/unica" "$SRC_DIR/target/$TARGET_CODENAME" -type f -print0 | \
         sort -z | xargs -0 sha1sum | sha1sum | cut -d " " -f 1
 }
 
@@ -71,6 +71,13 @@ PRINT_USAGE()
 # ]
 
 PREPARE_SCRIPT "$@"
+
+# A flashable build must always be assembled from the current source tree.
+# Reusing work_dir or target-files here can preserve old system images and
+# launcher workspace entries after a debloat/layout change.
+if $BUILD_FLASHABLE_ZIP; then
+    FORCE=true
+fi
 
 if $FORCE; then
     BUILD_ROM=true
@@ -174,9 +181,14 @@ if $BUILD_TARGET_FILES || $BUILD_FLASHABLE_ZIP; then
     fi
     ZIP_FILE_NAME+="-target_files.zip"
 
-    if $BUILD_ROM && [ -f "$OUT_DIR/$ZIP_FILE_NAME" ]; then
+    if [ -f "$OUT_DIR/$ZIP_FILE_NAME" ]; then
         LOGW "Removing stale target-files zip after ROM rebuild: ${OUT_DIR//$SRC_DIR\//}/$ZIP_FILE_NAME"
         rm -f "$OUT_DIR/$ZIP_FILE_NAME"
+    fi
+
+    if $BUILD_FLASHABLE_ZIP; then
+        # Remove old flashable outputs before generating a new image set.
+        find "$OUT_DIR" -maxdepth 1 -type f -name "UN1CA_*_$TARGET_CODENAME*.zip" -delete
     fi
 
     if [ ! -f "$OUT_DIR/$ZIP_FILE_NAME" ]; then
