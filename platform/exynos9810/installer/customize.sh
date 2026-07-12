@@ -38,9 +38,14 @@ cp -a "$REPARTITIONER_SGDISK_BIN" "$TMP_DIR/exynos9810/sgdisk"
 chmod 0755 "$TMP_DIR/exynos9810/sgdisk"
 
 DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Permissive-KernelSU-OneUI7}"
-CROWNTRAIL_KERNEL_ZIP="${CROWNTRAIL_KERNEL_ZIP:-/mnt/c/Users/Admin/Downloads/CrownTrail-v1.6-15.05.2026-OneUI7-KSUN.zip}"
+# NOTE: this legacy exynos9810 vendor cannot run SELinux enforcing -- Samsung's
+# VaultKeeper/CASS security stack requires signed TrustZone trustlets that do not
+# exist on a custom ROM, so an enforcing kernel bootloops (proven via a clean
+# no-KSU kernel: the policy itself is complete, the reboot comes from CASS, not a
+# denial). The permissive CrownTrail kernel must remain the default.
+CROWNTRAIL_KERNEL_ZIP="${CROWNTRAIL_KERNEL_ZIP:-/mnt/c/Users/Admin/Downloads/CrownTrail-v1.6-15.05.2026-OneUI7-Permissive-KSUN.zip}"
 if [ -z "${EXYNOS9810_KERNEL_ZIP:-}" ] && [ -f "$CROWNTRAIL_KERNEL_ZIP" ]; then
-    EXYNOS9810_KERNEL_NAME="${EXYNOS9810_KERNEL_NAME:-CrownTrail v1.6 Enforcing KernelSU-Next OneUI7}"
+    EXYNOS9810_KERNEL_NAME="${EXYNOS9810_KERNEL_NAME:-CrownTrail v1.6 Permissive KernelSU-Next OneUI7}"
     EXYNOS9810_KERNEL_ZIP="$CROWNTRAIL_KERNEL_ZIP"
 else
     EXYNOS9810_KERNEL_NAME="${EXYNOS9810_KERNEL_NAME:-DS-ACK V1.12 $DS_ACK_KERNEL_VARIANT}"

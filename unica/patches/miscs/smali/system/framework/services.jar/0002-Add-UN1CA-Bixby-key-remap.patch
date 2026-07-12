@@ -1,0 +1,153 @@
+From bc33210ba0f80370d2cf630c34a9878bd6d964e2 Mon Sep 17 00:00:00 2001
+From: u <a@b.c>
+Date: Sun, 12 Jul 2026 13:22:07 +0200
+Subject: [PATCH] Add UN1CA Bixby key remap
+
+---
+ .../android/server/policy/BixbyService.smali  | 127 ++++++++++++++++++
+ 1 file changed, 127 insertions(+)
+
+diff --git a/smali_classes2/com/android/server/policy/BixbyService.smali b/smali_classes2/com/android/server/policy/BixbyService.smali
+index bb39708..13b4b01 100644
+--- a/smali_classes2/com/android/server/policy/BixbyService.smali
++++ b/smali_classes2/com/android/server/policy/BixbyService.smali
+@@ -222,6 +222,15 @@
+ .method public final startService(Lcom/android/server/policy/BixbyService$Params;)V
+     .locals 7
+
++    invoke-static {p0, p1}, Lcom/android/server/policy/BixbyService;->unicaBixbyRemap(Lcom/android/server/policy/BixbyService;Lcom/android/server/policy/BixbyService$Params;)Z
++
++    move-result v0
++
++    if-eqz v0, :unica_no_remap
++
++    return-void
++
++    :unica_no_remap
+     const-string v0, "Can not start BixbyService: "
+
+     iget-boolean v1, p1, Lcom/android/server/policy/BixbyService$Params;->showToast:Z
+@@ -529,3 +538,121 @@
+     :goto_6
+     return-void
+ .end method
++
++.method static synthetic unicaBixbyRemap(Lcom/android/server/policy/BixbyService;Lcom/android/server/policy/BixbyService$Params;)Z
++    .locals 7
++
++    const/4 v0, 0x0
++
++    # UN1CA: only remap a plain single press; leave long/double press to stock Bixby
++    iget-boolean v1, p1, Lcom/android/server/policy/BixbyService$Params;->longPress:Z
++
++    if-nez v1, :ret_false
++
++    iget-boolean v1, p1, Lcom/android/server/policy/BixbyService$Params;->doublePress:Z
++
++    if-nez v1, :ret_false
++
++    # action: 0=default(Bixby) 1=Gemini 2=Camera 3=custom package
++    const-string v1, "persist.sys.unica.bixby_action"
++
++    invoke-static {v1, v0}, Landroid/os/SystemProperties;->getInt(Ljava/lang/String;I)I
++
++    move-result v3
++
++    if-eqz v3, :ret_false
++
++    iget-object v1, p0, Lcom/android/server/policy/BixbyService;->mContext:Landroid/content/Context;
++
++    invoke-virtual {v1}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
++
++    move-result-object v4
++
++    const/4 v5, 0x0
++
++    const/4 v6, 0x1
++
++    if-ne v3, v6, :not_gemini
++
++    const-string v6, "com.google.android.apps.bard"
++
++    invoke-virtual {v4, v6}, Landroid/content/pm/PackageManager;->getLaunchIntentForPackage(Ljava/lang/String;)Landroid/content/Intent;
++
++    move-result-object v5
++
++    if-nez v5, :have_intent
++
++    new-instance v5, Landroid/content/Intent;
++
++    const-string v6, "android.intent.action.VOICE_ASSIST"
++
++    invoke-direct {v5, v6}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
++
++    goto :have_intent
++
++    :not_gemini
++    const/4 v6, 0x2
++
++    if-ne v3, v6, :not_camera
++
++    new-instance v5, Landroid/content/Intent;
++
++    const-string v6, "android.media.action.STILL_IMAGE_CAMERA"
++
++    invoke-direct {v5, v6}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
++
++    goto :have_intent
++
++    :not_camera
++    const/4 v6, 0x3
++
++    if-ne v3, v6, :ret_false
++
++    const-string v2, "persist.sys.unica.bixby_package"
++
++    invoke-static {v2}, Landroid/os/SystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v2
++
++    invoke-static {v2}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
++
++    move-result v3
++
++    if-nez v3, :ret_false
++
++    invoke-virtual {v4, v2}, Landroid/content/pm/PackageManager;->getLaunchIntentForPackage(Ljava/lang/String;)Landroid/content/Intent;
++
++    move-result-object v5
++
++    :have_intent
++    if-eqz v5, :ret_false
++
++    const/high16 v2, 0x10000000
++
++    invoke-virtual {v5, v2}, Landroid/content/Intent;->addFlags(I)Landroid/content/Intent;
++
++    :try_start_0
++    sget-object v2, Landroid/os/UserHandle;->CURRENT:Landroid/os/UserHandle;
++
++    invoke-virtual {v1, v5, v2}, Landroid/content/Context;->startActivityAsUser(Landroid/content/Intent;Landroid/os/UserHandle;)V
++    :try_end_0
++    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
++
++    const/4 v0, 0x1
++
++    return v0
++
++    :catch_0
++    move-exception v1
++
++    const-string v1, "BixbyService"
++
++    const-string v2, "UN1CA Bixby remap failed to launch"
++
++    invoke-static {v1, v2}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
++
++    :ret_false
++    const/4 v0, 0x0
++
++    return v0
++.end method
+--
+2.43.0
