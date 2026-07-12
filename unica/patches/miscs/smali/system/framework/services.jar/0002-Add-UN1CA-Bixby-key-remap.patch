@@ -1,52 +1,26 @@
-From bc33210ba0f80370d2cf630c34a9878bd6d964e2 Mon Sep 17 00:00:00 2001
+From 18f2ff84ad8d8cdadd8b0a30bfb20f3aec3d2286 Mon Sep 17 00:00:00 2001
 From: u <a@b.c>
-Date: Sun, 12 Jul 2026 13:22:07 +0200
-Subject: [PATCH] Add UN1CA Bixby key remap
+Date: Sun, 12 Jul 2026 19:33:12 +0200
+Subject: [PATCH] Add UN1CA Bixby key remap (launchAssistAction hook)
 
 ---
- .../android/server/policy/BixbyService.smali  | 127 ++++++++++++++++++
- 1 file changed, 127 insertions(+)
+ .../server/policy/PhoneWindowManager.smali    | 118 ++++++++++++++++++
+ 1 file changed, 118 insertions(+)
 
-diff --git a/smali_classes2/com/android/server/policy/BixbyService.smali b/smali_classes2/com/android/server/policy/BixbyService.smali
-index bb39708..13b4b01 100644
---- a/smali_classes2/com/android/server/policy/BixbyService.smali
-+++ b/smali_classes2/com/android/server/policy/BixbyService.smali
-@@ -222,6 +222,15 @@
- .method public final startService(Lcom/android/server/policy/BixbyService$Params;)V
-     .locals 7
-
-+    invoke-static {p0, p1}, Lcom/android/server/policy/BixbyService;->unicaBixbyRemap(Lcom/android/server/policy/BixbyService;Lcom/android/server/policy/BixbyService$Params;)Z
-+
-+    move-result v0
-+
-+    if-eqz v0, :unica_no_remap
-+
-+    return-void
-+
-+    :unica_no_remap
-     const-string v0, "Can not start BixbyService: "
-
-     iget-boolean v1, p1, Lcom/android/server/policy/BixbyService$Params;->showToast:Z
-@@ -529,3 +538,121 @@
-     :goto_6
+diff --git a/smali_classes2/com/android/server/policy/PhoneWindowManager.smali b/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
+index e894aa5..74e1405 100644
+--- a/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
++++ b/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
+@@ -16884,9 +16884,127 @@
      return-void
  .end method
-+
-+.method static synthetic unicaBixbyRemap(Lcom/android/server/policy/BixbyService;Lcom/android/server/policy/BixbyService$Params;)Z
+ 
++.method static synthetic unicaBixbyRemap(Lcom/android/server/policy/PhoneWindowManager;)Z
 +    .locals 7
 +
 +    const/4 v0, 0x0
 +
-+    # UN1CA: only remap a plain single press; leave long/double press to stock Bixby
-+    iget-boolean v1, p1, Lcom/android/server/policy/BixbyService$Params;->longPress:Z
-+
-+    if-nez v1, :ret_false
-+
-+    iget-boolean v1, p1, Lcom/android/server/policy/BixbyService$Params;->doublePress:Z
-+
-+    if-nez v1, :ret_false
-+
-+    # action: 0=default(Bixby) 1=Gemini 2=Camera 3=custom package
++    # UN1CA Bixby-key remap: action 0=default(assist) 1=Gemini 2=Camera 3=custom pkg
 +    const-string v1, "persist.sys.unica.bixby_action"
 +
 +    invoke-static {v1, v0}, Landroid/os/SystemProperties;->getInt(Ljava/lang/String;I)I
@@ -55,7 +29,7 @@ index bb39708..13b4b01 100644
 +
 +    if-eqz v3, :ret_false
 +
-+    iget-object v1, p0, Lcom/android/server/policy/BixbyService;->mContext:Landroid/content/Context;
++    iget-object v1, p0, Lcom/android/server/policy/PhoneWindowManager;->mContext:Landroid/content/Context;
 +
 +    invoke-virtual {v1}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
 +
@@ -138,7 +112,7 @@ index bb39708..13b4b01 100644
 +    :catch_0
 +    move-exception v1
 +
-+    const-string v1, "BixbyService"
++    const-string v1, "PhoneWindowManager"
 +
 +    const-string v2, "UN1CA Bixby remap failed to launch"
 +
@@ -149,5 +123,22 @@ index bb39708..13b4b01 100644
 +
 +    return v0
 +.end method
---
++
+ .method public final launchAssistAction(IIJLjava/lang/String;)V
+     .locals 2
+ 
++    invoke-static {p0}, Lcom/android/server/policy/PhoneWindowManager;->unicaBixbyRemap(Lcom/android/server/policy/PhoneWindowManager;)Z
++
++    move-result v0
++
++    if-eqz v0, :unica_no_remap
++
++    return-void
++
++    :unica_no_remap
+     const-string/jumbo v0, "assist"
+ 
+     invoke-virtual {p0, v0}, Lcom/android/server/policy/PhoneWindowManager;->sendCloseSystemWindows(Ljava/lang/String;)V
+-- 
 2.43.0
+
