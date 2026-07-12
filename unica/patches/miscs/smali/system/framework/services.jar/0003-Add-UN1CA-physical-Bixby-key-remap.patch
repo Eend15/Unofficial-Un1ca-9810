@@ -1,0 +1,166 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: UN1CA Exynos9810 port <unica@localhost>
+Date: Sun, 12 Jul 2026 16:30:00 +0200
+Subject: [PATCH] Handle physical Exynos9810 Bixby key remapping
+
+---
+ smali_classes2/com/android/server/policy/PhoneWindowManagerExt.smali | physical key handler and remap helper
+ 1 file changed, 1 insertion(+)
+---
+--- a/smali_classes2/com/android/server/policy/PhoneWindowManagerExt.smali
++++ b/smali_classes2/com/android/server/policy/PhoneWindowManagerExt.smali
+@@ -4862,6 +4862,23 @@
+     const/4 v7, 0x0
+
+     :goto_0
++    const/16 v3, 0x246
++
++    if-ne v5, v3, :unica_bixby_key_continue
++
++    iget-object v3, v0, Lcom/android/server/policy/PhoneWindowManagerExt;->mContext:Landroid/content/Context;
++
++    invoke-static {v3, v2}, Lcom/android/server/policy/PhoneWindowManagerExt;->unicaHandleBixbyKey(Landroid/content/Context;Landroid/view/KeyEvent;)Z
++
++    move-result v3
++
++    if-eqz v3, :unica_bixby_key_continue
++
++    const-wide/16 v20, -0x1
++
++    return-wide v20
++
++    :unica_bixby_key_continue
+     invoke-virtual {v2}, Landroid/view/KeyEvent;->isLongPress()Z
+
+     move-result v9
+@@ -11271,3 +11288,128 @@
+     :goto_3
+     return-void
+ .end method
++
++
++.method public static final unicaHandleBixbyKey(Landroid/content/Context;Landroid/view/KeyEvent;)Z
++    .locals 9
++
++    const-string v0, "persist.sys.unica.bixby_action"
++
++    const/4 v1, 0x0
++
++    invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->getInt(Ljava/lang/String;I)I
++
++    move-result v0
++
++    if-eqz v0, :unica_bixby_return_false
++
++    invoke-virtual {p1}, Landroid/view/KeyEvent;->getAction()I
++
++    move-result v2
++
++    if-eqz v2, :unica_bixby_down
++
++    const/4 v1, 0x1
++
++    return v1
++
++    :unica_bixby_down
++    invoke-virtual {p1}, Landroid/view/KeyEvent;->getRepeatCount()I
++
++    move-result v2
++
++    if-nez v2, :unica_bixby_consume
++
++    invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
++
++    move-result-object v2
++
++    const/4 v3, 0x0
++
++    const/4 v4, 0x1
++
++    if-ne v0, v4, :unica_bixby_camera
++
++    const-string v4, "com.google.android.apps.bard"
++
++    invoke-virtual {v2, v4}, Landroid/content/pm/PackageManager;->getLaunchIntentForPackage(Ljava/lang/String;)Landroid/content/Intent;
++
++    move-result-object v3
++
++    if-nez v3, :unica_bixby_launch
++
++    new-instance v3, Landroid/content/Intent;
++
++    const-string v4, "android.intent.action.VOICE_ASSIST"
++
++    invoke-direct {v3, v4}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
++
++    goto :unica_bixby_launch
++
++    :unica_bixby_camera
++    const/4 v4, 0x2
++
++    if-ne v0, v4, :unica_bixby_custom
++
++    new-instance v3, Landroid/content/Intent;
++
++    const-string v4, "android.media.action.STILL_IMAGE_CAMERA"
++
++    invoke-direct {v3, v4}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
++
++    goto :unica_bixby_launch
++
++    :unica_bixby_custom
++    const/4 v4, 0x3
++
++    if-ne v0, v4, :unica_bixby_consume
++
++    const-string v4, "persist.sys.unica.bixby_package"
++
++    invoke-static {v4}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v4
++
++    invoke-static {v4}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
++
++    move-result v5
++
++    if-nez v5, :unica_bixby_consume
++
++    invoke-virtual {v2, v4}, Landroid/content/pm/PackageManager;->getLaunchIntentForPackage(Ljava/lang/String;)Landroid/content/Intent;
++
++    move-result-object v3
++
++    :unica_bixby_launch
++    if-eqz v3, :unica_bixby_consume
++
++    const/high16 v4, 0x10000000
++
++    invoke-virtual {v3, v4}, Landroid/content/Intent;->addFlags(I)Landroid/content/Intent;
++
++    :try_start_unica_bixby
++    sget-object v4, Landroid/os/UserHandle;->CURRENT:Landroid/os/UserHandle;
++
++    invoke-virtual {p0, v3, v4}, Landroid/content/Context;->startActivityAsUser(Landroid/content/Intent;Landroid/os/UserHandle;)V
++    :try_end_unica_bixby
++    .catch Ljava/lang/Exception; {:try_start_unica_bixby .. :try_end_unica_bixby} :catch_unica_bixby
++
++    :unica_bixby_consume
++    const/4 v1, 0x1
++
++    return v1
++
++    :catch_unica_bixby
++    move-exception v4
++
++    const-string v5, "PhoneWindowManagerExt"
++
++    const-string v6, "UN1CA Bixby key remap failed"
++
++    invoke-static {v5, v6}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
++
++    goto :unica_bixby_consume
++
++    :unica_bixby_return_false
++    return v1
++.end method
+--
+2.43.0
