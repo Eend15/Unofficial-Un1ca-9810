@@ -1067,9 +1067,68 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT()
     fi
 }
 
+_EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES()
+{
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk"
+    local FILE
+    local REMOVED
+
+    DECODE_APK "system" "system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk" || return 1
+
+    LOG "- Pruning debloated-app references from launcher default workspace"
+
+    while IFS= read -r -d '' FILE; do
+        REMOVED="$(python3 - "$FILE" <<'PY'
+import re
+import sys
+
+path = sys.argv[1]
+
+# These packages are debloated by _EXYNOS9810_FINAL_DEBLOAT / debloat.sh and
+# will never be installed on this ROM. The stock default_workspace*.xml files
+# (parsed once by TouchWizHome only on a fresh "set up as new device" flow,
+# i.e. not an account restore) still list them as home-screen favorites,
+# pair-apps, or widgets. Left in place, the launcher creates a permanent
+# "pending restore" placeholder entry that can never resolve, showing a
+# broken/generic icon forever since the package will never install.
+packages = (
+    "com.sec.android.app.popupcalculator",
+    "com.samsung.android.app.notes",
+    "com.samsung.android.voc",
+    "com.samsung.sree",
+    "com.sec.android.app.sbrowser",
+    "com.samsung.android.oneconnect",
+    "com.sec.android.app.voicenote",
+    "com.sec.android.app.shealth",
+    "com.samsung.android.app.watchmanager",
+)
+
+with open(path, encoding="utf-8") as f:
+    lines = f.readlines()
+
+kept = []
+removed = 0
+for line in lines:
+    if re.search(r'<(favorite|pairapps|appwidget)\b', line) and any(pkg in line for pkg in packages):
+        removed += 1
+        continue
+    kept.append(line)
+
+if removed:
+    with open(path, "w", encoding="utf-8") as f:
+        f.writelines(kept)
+
+print(removed)
+PY
+)" || return 1
+        [ "$REMOVED" -gt 0 ] 2>/dev/null && LOG "  - ${FILE#$APK_DIR/}: removed $REMOVED entries"
+    done < <(find "$APK_DIR/res" -type f -iname '*workspace*.xml' -print0 2>/dev/null)
+}
+
 _EXYNOS9810_FINAL_REPATCH_APPS
 _EXYNOS9810_FINAL_DEBLOAT
 _EXYNOS9810_FINAL_SET_HOME_LAYOUT
+_EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS
 _EXYNOS9810_FINAL_PRELOAD_KERNELSU_NEXT
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT
