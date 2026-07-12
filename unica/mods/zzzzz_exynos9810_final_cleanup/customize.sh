@@ -1036,6 +1036,25 @@ _EXYNOS9810_FINAL_REPATCH_APPS()
     _EXYNOS9810_FINAL_SETTINGS_DEVICE_IMAGE || return 1
 }
 
+_EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT()
+{
+    local KEYLAYOUT_DIR="$WORK_DIR/system/system/usr/keylayout"
+    local FILE
+    local COUNT=0
+
+    [ -d "$KEYLAYOUT_DIR" ] || return 0
+
+    LOG "- Enabling dynamic Exynos9810 Bixby key remapping for physical key 703"
+    while IFS= read -r -d "" FILE; do
+        if grep -qE "^key[[:space:]]+703[[:space:]]+" "$FILE" 2>/dev/null; then
+            sed -i -E "s/^key([[:space:]]+703[[:space:]]+).*/key\1VOICE_ASSIST/" "$FILE"
+            COUNT=$((COUNT + 1))
+        fi
+    done < <(find "$KEYLAYOUT_DIR" -maxdepth 1 -type f -name "*.kl" -print0)
+
+    LOG "  - Remapped key 703 in $COUNT keylayout file(s) to VOICE_ASSIST"
+}
+
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT()
 {
     # zzzz_exynos9810_boot_restore fully wipes and rebuilds $WORK_DIR/vendor
@@ -1132,3 +1151,4 @@ _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS
 _EXYNOS9810_FINAL_PRELOAD_KERNELSU_NEXT
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT
+_EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT
