@@ -10,4 +10,7 @@
     <com.samsung.android.settings.widget.SecInsetCategoryPreference />
     <SecSwitchPreference android:title="@string/unica_gphotos_title" android:key="unica_gphotos" settings:controller="io.mesalabs.unica.settings.extra.GooglePhotosPreferenceController" />
     <SecSwitchPreference android:title="@string/unica_games_spoof_title" android:key="unica_games_spoof" settings:controller="io.mesalabs.unica.settings.extra.GamesPropsPreferenceController" />
+    <com.samsung.android.settings.widget.SecInsetCategoryPreference />
+    <SecDropDownPreference android:title="@string/unica_bixby_key_title" android:key="unica_bixby_action" android:summary="%s" settings:controller="io.mesalabs.unica.settings.ui.BixbyKeyPreferenceController" />
+    <SecDropDownPreference android:title="@string/unica_bixby_app_title" android:key="unica_bixby_app" android:summary="%s" settings:controller="io.mesalabs.unica.settings.ui.BixbyAppPreferenceController" />
 </PreferenceScreen>
