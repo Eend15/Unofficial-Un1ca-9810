@@ -28,7 +28,7 @@ The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy 
 
 - Android 16 / One UI 8.0 target
 - Galaxy S22 source firmware path, following the upstream UN1CA layout
-- Exynos9810 vendor compatibility work based around Note10 Lite VNDK31 components
+- Exynos9810 vendor compatibility work based around Note10 Lite VNDK33 components
 - S9, S9+, and Note9 stock firmware extraction support
 - Exynos9810 recovery, partition, and kernel workflow integration
 
@@ -49,7 +49,7 @@ The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy 
 - Custom FlipFont font support
 - Extra CSC features such as call recording, Hiya, network speed in the status bar, and AltZLife where compatible
 - BluetoothLibraryPatcher and KnoxPatch integration from upstream UN1CA
-- UN1CA Settings with Play Integrity / PIF tooling, TrickyStore options, Hide My Applist integration, developer-options hiding, app downgrade toggle, old target SDK install toggle, secure screenshot toggle, screenshot and screen-recording detection toggle, Google Photos backup option, and games FPS unlock toggle
+- UN1CA Settings with custom Bixby Button remapper! Play Integrity / PIF tooling, TrickyStore options, Hide My Applist integration, developer-options hiding, app downgrade toggle, old target SDK install toggle, secure screenshot toggle, screenshot and screen-recording detection toggle, Google Photos backup option, and games FPS unlock toggle
 
 ## Exynos9810 Port Features
 
@@ -62,11 +62,11 @@ The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy 
 - Custom TWRP lite and large ZIP compatibility hooks for older recovery environments
 - EROFS-aware and large ZIP recovery workflow support when paired with a compatible recovery
 - Exynos9810 boot, fstab, first-stage init, metadata, keymaster, radio, and slot/IMEI compatibility fixes
-- Note10 Lite vendor adaptation with S9/S9+/Note9 specific overlays and properties
+- Note10 Lite vendor vndk33 adaptation with S9/S9+/Note9 specific overlays and properties
 - Bluetooth compatibility patches for the legacy Exynos9810 stack
 - Audio HAL compatibility patches and legacy audio effect backports
 - Camera feature matrices split per device, including S9 single-camera and S9+/Note9 dual-camera layouts
-- One UI camera compatibility fixes for photo, video, portrait, food, and pro-mode paths where possible
+- One UI 8 camera compatibility fixes for photo, video, portrait, food, and pro-mode paths where possible
 - Debloat profile tailored for legacy Exynos9810 memory and partition limits
 - Device-specific overlays, DVFS/SIOP policy hooks, floating features, CSC feature tuning, and framework feature declarations
 
