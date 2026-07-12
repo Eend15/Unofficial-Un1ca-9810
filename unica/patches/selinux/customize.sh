@@ -95,60 +95,18 @@ for e in $DUPLICATES; do
     fi
 done
 
-# Missing SELinux allow rules for this legacy exynos9810 vendor
-# - Append new "(allow scontext tcontext (class (perm)))" CIL statements to
-#   the SUPPLEMENTARY_RULES list, one per line
-# - Found by booting under permissive and grepping dmesg/logcat for
-#   "avc: denied" entries: the vendor_init ones are boot-critical (init.rc
-#   scripts on this legacy vendor set properties like ro.crypto.state
-#   directly from vendor_init, which the donor's platform/system_ext
-#   sepolicy never expected and so never granted -- under real enforcing
-#   this blocks whatever init.rc trigger depends on the property landing,
-#   hard-hanging boot instead of just logging like permissive does). The
-#   rest are later-boot service_manager lookups for optional Samsung
-#   features (mobicore, power sound play, hermes, knox, media quality)
-#   that only fail to look up their HAL/service under enforcing rather
-#   than blocking boot, but are included for completeness.
-# - Verified live: pushed the patched vendor_sepolicy.cil to a running
-#   device and rebooted under Permissive -- boot completed successfully
-#   (proving the CIL is syntactically valid; a malformed CIL would fail
-#   to compile and the device wouldn't boot at all) and every one of
-#   these denials was gone from a fresh kernel log afterwards.
-SUPPLEMENTARY_RULES="
-(allow vendor_init bootloader_prop (property_service (set)))
-(allow vendor_init build_prop (property_service (set)))
-(allow vendor_init config_prop (property_service (set)))
-(allow vendor_init default_prop (property_service (set)))
-(allow vendor_init net_dns_prop (property_service (set)))
-(allow vendor_init shell_prop (property_service (set)))
-(allow vendor_init userdebug_or_eng_prop (property_service (set)))
-(allow vendor_init vold_prop (property_service (set)))
-(allow vendor_init vold_status_prop (property_service (set)))
-(allow vendor_init wifi_prop (property_service (set)))
-(allow vendor_init mobicore_prop (file (read open getattr)))
-(allow vendor_init radio_prop (file (read open getattr)))
-(allow mobicore mobicore_prop (property_service (set)))
-(allow priv_app log_tag_prop (property_service (set)))
-(allow priv_app sqlite_log_prop (property_service (set)))
-(allow samsungpowersoundplay audio_service (service_manager (find)))
-(allow system_server default_android_service (service_manager (find)))
-(allow system_server hal_graphics_composer_service (service_manager (find)))
-(allow teed_app knoxzt_service (service_manager (find)))
-(allow mediaserver media_quality_service (service_manager (find)))
-"
-
-while IFS= read -r RULE; do
-    [ "$RULE" ] || continue
-    if ! grep -q -F "$RULE" "$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"; then
-        PATCHED=true
-        LOG "- Adding missing SELinux rule: $RULE"
-        echo "$RULE" >> "$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
-    fi
-done <<< "$SUPPLEMENTARY_RULES"
+# NOTE: Supplementary "(allow ...)" CIL rules for this legacy exynos9810
+# vendor (the boot-critical vendor_init property_service sets, etc.) are NOT
+# applied here. This patch runs early in the module pipeline, and the later
+# zzzz_exynos9810_boot_restore module wipes and re-copies a pristine vendor
+# tree (rm -rf "$WORK_DIR/vendor"), which would discard anything appended to
+# vendor_sepolicy.cil here. Those rules are therefore applied in
+# unica/mods/zzzz_exynos9810_boot_restore/customize.sh, immediately after the
+# vendor baseline restore, where they actually survive into vendor.img.
 
 if ! $PATCHED; then
     LOG "\033[0;33m! Nothing to do\033[0m"
 fi
 
-unset ENTRIES DUPLICATES CIL_NAME PATCHED VENDOR_API_LIST SUPPLEMENTARY_RULES RULE
+unset ENTRIES DUPLICATES CIL_NAME PATCHED VENDOR_API_LIST
 unset -f GET_SYSTEM_EXT

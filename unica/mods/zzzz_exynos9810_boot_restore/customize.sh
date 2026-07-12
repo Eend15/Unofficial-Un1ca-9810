@@ -342,6 +342,25 @@ _EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT()
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.security.keystore.keytype" "sak"
     sed -i '/^ro.hardware.keystore_desede=/d' "$WORK_DIR/vendor/build.prop" 2> /dev/null || true
 
+    # UN1CA RAM tuning: Samsung's Dynamic Hidden App manager (ro.slmk.dha_*) keeps
+    # up to dha_cached_max + dha_empty_max background app processes resident before
+    # it starts killing (stock 18 + 30 = 48). That is far too many for the 4GB
+    # Galaxy S9 and wastes idle RAM / causes zram thrash on all three models.
+    # Cap the background app pool lower -- more aggressively on the 4GB starlte than
+    # on the 6GB star2lte/crownlte, which have some headroom for multitasking.
+    # (All exynos9810 models sit below ro.slmk.dha_2ndprop_thMB=6144, so they all
+    # use this primary dha_* set.)
+    case "$TARGET_CODENAME" in
+        starlte)  # Galaxy S9 -- 4GB
+            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_cached_max" "10"
+            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_empty_max" "16"
+            ;;
+        *)        # Galaxy S9+ / Note9 -- 6GB
+            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_cached_max" "14"
+            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_empty_max" "24"
+            ;;
+    esac
+
     RC="$WORK_DIR/vendor/etc/init/android.hardware.keymaster@3.0-service.rc"
     if [ -f "$RC" ] && ! grep -q 'interface android.hardware.keymaster@3.0::IKeymasterDevice default' "$RC"; then
         awk '
@@ -383,6 +402,75 @@ _EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT()
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.keymaster@4.0-service" 0 0 755 "u:object_r:hal_keymaster_default_exec:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.gatekeeper@1.0-service" 0 0 755 "u:object_r:hal_gatekeeper_default_exec:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.health@2.1-service-samsung" 0 0 755 "u:object_r:hal_health_default_exec:s0"
+}
+
+_EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY()
+{
+    # Missing SELinux allow rules for this legacy exynos9810 vendor.
+    #
+    # These MUST be applied here, AFTER _EXYNOS9810_RESTORE_VENDOR_BASELINE
+    # has wiped and re-copied a pristine vendor tree. The upstream
+    # unica/patches/selinux/customize.sh runs much earlier in the module
+    # pipeline, so anything it appends to vendor_sepolicy.cil gets thrown
+    # away by the "rm -rf $WORK_DIR/vendor" in the vendor baseline restore.
+    # Re-appending here is the only place the rules survive into vendor.img.
+    #
+    # This device compiles sepolicy fresh from these .cil files at every
+    # boot (no precompiled_sepolicy blob), so appended CIL allow-rules take
+    # effect on next boot. The boot-critical rules are the vendor_init
+    # property_service sets: this legacy vendor's init.rc sets properties
+    # like ro.crypto.state directly from vendor_init, which the donor's
+    # platform/system_ext sepolicy never granted. Under permissive these
+    # are logged-but-allowed; under real enforcing they block, and a blocked
+    # ro.crypto.state set stalls whatever init.rc trigger waits on it,
+    # hanging boot at the splash screen. The remaining rules are later-boot
+    # service_manager lookups / prop sets for optional features that only
+    # fail their feature rather than blocking boot, included for completeness.
+    #
+    # Rule list captured by booting under the permissive kernel and diffing
+    # "avc: denied" tuples from logcat -b kernel against the loaded policy.
+    local CIL="$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
+    local RULE
+    local SUPPLEMENTARY_RULES="
+(allow vendor_init bootloader_prop (property_service (set)))
+(allow vendor_init build_prop (property_service (set)))
+(allow vendor_init config_prop (property_service (set)))
+(allow vendor_init default_prop (property_service (set)))
+(allow vendor_init net_dns_prop (property_service (set)))
+(allow vendor_init shell_prop (property_service (set)))
+(allow vendor_init userdebug_or_eng_prop (property_service (set)))
+(allow vendor_init vold_prop (property_service (set)))
+(allow vendor_init vold_status_prop (property_service (set)))
+(allow vendor_init wifi_prop (property_service (set)))
+(allow vendor_init mobicore_prop (file (read open getattr)))
+(allow vendor_init radio_prop (file (read open getattr)))
+(allow mobicore mobicore_prop (property_service (set)))
+(allow priv_app log_tag_prop (property_service (set)))
+(allow priv_app sqlite_log_prop (property_service (set)))
+(allow samsungpowersoundplay audio_service (service_manager (find)))
+(allow system_server default_android_service (service_manager (find)))
+(allow system_server hal_graphics_composer_service (service_manager (find)))
+(allow teed_app knoxzt_service (service_manager (find)))
+(allow mediaserver media_quality_service (service_manager (find)))
+(allow system_app tracingproxy_service (service_manager (find)))
+(allow system_app system_suspend_control_service (service_manager (find)))
+(allow system_app system_suspend_control_internal_service (service_manager (find)))
+(allow system_app logpersistd_logging_prop (property_service (set)))
+"
+
+    if [ ! -f "$CIL" ]; then
+        LOGW "Exynos9810 vendor_sepolicy.cil missing; cannot apply supplementary SELinux rules"
+        return 0
+    fi
+
+    LOG "- Applying supplementary Exynos9810 vendor SELinux allow rules"
+
+    while IFS= read -r RULE; do
+        [ "$RULE" ] || continue
+        if ! grep -q -F "$RULE" "$CIL"; then
+            echo "$RULE" >> "$CIL"
+        fi
+    done <<< "$SUPPLEMENTARY_RULES"
 }
 
 _EXYNOS9810_WRITE_FINAL_BOOT_TRACE()
@@ -528,6 +616,7 @@ _EXYNOS9810_DELETE_METADATA "vendor" "vendor/lib64/libunica.so" "/vendor/lib64/l
 
 _EXYNOS9810_KEEP_SETUP_WIZARD_ENABLED
 _EXYNOS9810_RESTORE_VENDOR_BASELINE
+_EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY
 _EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT
 _EXYNOS9810_RESTORE_ODM_BASELINE
 _EXYNOS9810_SANITIZE_RESTORED_TEXT

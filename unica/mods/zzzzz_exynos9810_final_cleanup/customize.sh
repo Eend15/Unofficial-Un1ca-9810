@@ -281,108 +281,58 @@ _EXYNOS9810_FINAL_DEBLOAT()
     done
 }
 
-_EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
-_EXYNOS9810_FINAL_SET_STANDARD_HOME_LAYOUT()
+_EXYNOS9810_FINAL_SET_HOME_LAYOUT()
 {
-    local APK_DIR="$APKTOOL_DIR/system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk"
+    # The OneUI launcher (com.sec.android.app.launcher) does NOT use the old
+    # TouchWizHome res/xml/default_workspace.xml mechanism -- those files do not
+    # exist in this launcher. On this device the default home layout is defined
+    # per-CSC in /prism/etc/carriers/<CSC>/default_workspace.xml, which the
+    # launcher parses once to build its OneUI.db on a clean setup. The stock
+    # (legacy-port) versions list apps that UN1CA debloats (Samsung Internet in
+    # the dock, Messages, Google/Microsoft folders, ...), so those become
+    # permanent broken "ghost" icons that never resolve. Overwrite every
+    # carrier's workspace with a small curated layout built only from apps
+    # guaranteed present on every exynos9810 UN1CA build, so a fresh setup is
+    # identical and ghost-icon-free regardless of the active sales code.
+    #
+    # NOTE: this runs after zzzz_exynos9810_boot_restore has placed the final
+    # /system/prism tree, so nothing overwrites these files afterwards. On a
+    # dirty flash the launcher keeps its existing OneUI.db and won't re-read
+    # these; a clean "set up as new device" (or clearing launcher data) applies
+    # the layout.
+    local PRISM="$WORK_DIR/system/prism/etc/carriers"
     local FILE
-    local REMOVED
+    local COUNT=0
 
-    DECODE_APK "system" "system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk" || return 1
+    if [ ! -d "$PRISM" ]; then
+        LOGW "prism carriers dir missing; skipping home layout"
+        return 0
+    fi
 
-    LOG "- Pruning debloated-app references from launcher default workspace"
+    LOG "- Setting clean UN1CA home layout in all CSC default_workspace.xml files"
 
     while IFS= read -r -d '' FILE; do
-        REMOVED="$(python3 - "$FILE" <<'PY'
-import re
-import sys
-
-path = sys.argv[1]
-
-# These packages are debloated by _EXYNOS9810_FINAL_DEBLOAT / debloat.sh and
-# will never be installed on this ROM. The stock default_workspace*.xml files
-# (parsed once by TouchWizHome only on a fresh "set up as new device" flow,
-# i.e. not an account restore) still list them as home-screen favorites,
-# pair-apps, or widgets. Left in place, the launcher creates a permanent
-# "pending restore" placeholder entry that can never resolve, showing a
-# broken/generic icon forever since the package will never install.
-packages = (
-    "com.sec.android.app.popupcalculator",
-    "com.samsung.android.app.notes",
-    "com.samsung.android.voc",
-    "com.samsung.sree",
-    "com.sec.android.app.sbrowser",
-    "com.samsung.android.oneconnect",
-    "com.sec.android.app.voicenote",
-    "com.sec.android.app.shealth",
-    "com.samsung.android.app.watchmanager",
-)
-
-with open(path, encoding="utf-8") as f:
-    lines = f.readlines()
-
-kept = []
-removed = 0
-for line in lines:
-    if re.search(r'<(favorite|pairapps|appwidget)\b', line) and any(pkg in line for pkg in packages):
-        removed += 1
-        continue
-    kept.append(line)
-
-if removed:
-    with open(path, "w", encoding="utf-8") as f:
-        f.writelines(kept)
-
-print(removed)
-PY
-)" || return 1
-        [ "$REMOVED" -gt 0 ] 2>/dev/null && LOG "  - ${FILE#$APK_DIR/}: removed $REMOVED entries"
-    done < <(find "$APK_DIR/res" -type f -iname '*workspace*.xml' -print0 2>/dev/null)
-}
-
-_EXYNOS9810_FINAL_SET_STANDARD_HOME_LAYOUT()
-{
-    local APK_DIR="$APKTOOL_DIR/system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk"
-    local FILE
-    local REL
-
-    DECODE_APK "system" "system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk" || return 1
-
-    LOG "- Setting standard UN1CA home screen layout (widget + Gallery/Play Store/My Files, Phone/Contacts/Camera dock)"
-
-    # Replaces the donor S22 stock layout (Microsoft/Google folders full of
-    # apps that were never installed on this ROM to begin with) with a small,
-    # deliberately curated layout built only from apps guaranteed present on
-    # every exynos9810 UN1CA build, so it's identical and ghost-icon-free on
-    # every fresh install regardless of what a given account restore does.
-    for REL in \
-        res/xml/default_workspace.xml \
-        res/xml/default_workspace_homeonly.xml \
-        res/xml/default_land_workspace.xml \
-        res/xml/default_land_workspace_homeonly.xml \
-        res/xml/default_front_workspace.xml \
-        res/xml/default_front_workspace_homeonly.xml; do
-        FILE="$APK_DIR/$REL"
-        [ -f "$FILE" ] || continue
         cat > "$FILE" <<'XML'
-<?xml version="1.0" encoding="utf-8"?>
-<favorites
-  xmlns:launcher="http://schemas.android.com/apk/res-auto/com.android.launcher3">
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<favorites xmlns:launcher="http://schemas.android.com/apk/res/com.sec.android.app.launcher">
+    <homeGridInfo default="4x6" />
     <home>
-        <appwidget className="com.sec.android.daemonapp.appwidget.WeatherAppWidget2x1" packageName="com.sec.android.daemonapp" screen="0" spanX="2" spanY="2" x="1" y="1" />
-        <favorite className="com.samsung.android.gallery.app.activity.GalleryActivity" packageName="com.sec.android.gallery3d" screen="0" x="0" y="4" />
-        <favorite className="com.android.vending.AssetBrowserActivity" packageName="com.android.vending" screen="0" x="1" y="4" />
-        <favorite className="com.sec.android.app.myfiles.ui.MainActivity" packageName="com.sec.android.app.myfiles" screen="0" x="2" y="4" />
+        <appwidget screen="0" packageName="com.sec.android.daemonapp" className="com.sec.android.daemonapp.appwidget.WeatherAppWidget2x1" x="1" y="1" spanX="2" spanY="2" />
+        <favorite screen="0" packageName="com.sec.android.gallery3d" className="com.samsung.android.gallery.app.activity.GalleryActivity" x="0" y="5" />
+        <favorite screen="0" packageName="com.android.vending" className="com.android.vending.AssetBrowserActivity" x="1" y="5" />
+        <favorite screen="0" packageName="com.sec.android.app.myfiles" className="com.sec.android.app.myfiles.ui.MainActivity" x="2" y="5" />
     </home>
-    <hotseat launcher:refPackageName="">
-        <favorite launcher:className="com.samsung.android.dialer.DialtactsActivity" launcher:packageName="com.samsung.android.dialer" launcher:screen="0" />
-        <favorite launcher:className="com.samsung.android.contacts.contactslist.PeopleActivity" launcher:packageName="com.samsung.android.app.contacts" launcher:screen="1" />
-        <favorite launcher:className="com.sec.android.app.camera.Camera" launcher:packageName="com.sec.android.app.camera" launcher:screen="2" />
+    <hotseat>
+        <favorite screen="0" packageName="com.samsung.android.dialer" className="com.samsung.android.dialer.DialtactsActivity" />
+        <favorite screen="1" packageName="com.samsung.android.app.contacts" className="com.samsung.android.contacts.contactslist.PeopleActivity" />
+        <favorite screen="2" packageName="com.sec.android.app.camera" className="com.sec.android.app.camera.Camera" />
     </hotseat>
 </favorites>
 XML
-        LOG "  - Replaced ${REL#res/xml/}"
-    done
+        COUNT=$((COUNT + 1))
+    done < <(find "$PRISM" -type f -name 'default_workspace.xml' -print0 2>/dev/null)
+
+    LOG "  - Rewrote $COUNT CSC workspace file(s)"
 }
 
 _EXYNOS9810_FINAL_RESTORE_BLUETOOTH_LIB()
@@ -440,6 +390,30 @@ _EXYNOS9810_FINAL_PRELOAD_KERNELSU_NEXT()
     cp -a "$EXYNOS9810_KERNELSU_NEXT_APK" "$DST" || return 1
     _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/KernelSUNext" 0 0 755 "u:object_r:system_file:s0"
     _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/KernelSUNext/KernelSUNext.apk" 0 0 644 "u:object_r:system_file:s0"
+
+    # The manager loads native code (libkernelsu.so, libksud.so, ...) at
+    # startup. A system app installed by simply copying the APK never has its
+    # JNI libs extracted, so MainActivity.onCreate crashes immediately with
+    # UnsatisfiedLinkError ("libkernelsu.so not found") -- this is exactly the
+    # "KernelSU apk crashes on a fresh ROM install" report. Stage the arm64-v8a
+    # libs next to the APK the same way AOSP preloads apps with native code
+    # (see /system/app/PrintSpooler/lib/arm64). The device is 64-bit primary
+    # and this APK ships only arm64-v8a/x86_64, so only arm64 is needed.
+    local LIB_DIR="$DST_DIR/lib/arm64"
+    local SO
+    LOG "- Extracting KernelSU Next native libraries for preload"
+    rm -rf "$DST_DIR/lib"
+    mkdir -p "$LIB_DIR"
+    if ! unzip -o -j -q "$EXYNOS9810_KERNELSU_NEXT_APK" "lib/arm64-v8a/*.so" -d "$LIB_DIR"; then
+        LOGW "Failed to extract KernelSU Next native libs; manager may crash on launch"
+        return 0
+    fi
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/KernelSUNext/lib" 0 0 755 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/KernelSUNext/lib/arm64" 0 0 755 "u:object_r:system_file:s0"
+    for SO in "$LIB_DIR"/*.so; do
+        [ -f "$SO" ] || continue
+        _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/KernelSUNext/lib/arm64/$(basename "$SO")" 0 0 644 "u:object_r:system_file:s0"
+    done
 }
 
 _EXYNOS9810_FINAL_SETTINGS_DEVICE_IMAGE()
@@ -492,6 +466,65 @@ else:
 
 text = text[:match.start()] + tag + text[match.end():]
 path.write_text(text)
+PY
+}
+
+_EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV()
+{
+    # OneUI8 SamsungCamera crashes the instant you switch to the front camera:
+    # ZoomController.getFrontCropAngleZoomValue() throws InvalidOperationException
+    # ("current camera is not supporting dynamic fov") because the app assumes the
+    # S22-style front selfie-zoom (dynamic FOV) that the legacy exynos9810 front
+    # camera hardware/HAL does not have. That kills the whole camera app (unusable
+    # until force-stop). Return the app's own no-crop / native-FOV default
+    # (0x3e8 == 1000 == 1.0x) instead of throwing, so the front camera opens and
+    # the app survives the switch.
+    #
+    # NOTE: this only stops the dynamic-FOV crash on switch. The second front-camera
+    # failure -- the engine shutting down on the missing preview-callback ImageReader
+    # -- is fixed separately by _EXYNOS9810_FINAL_PATCH_CAMERA_PREVIEW_CALLBACK_GUARD.
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
+    local ZOOM="$APK_DIR/smali_classes3/com/sec/android/app/camera/engine/ZoomController.smali"
+
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
+
+    LOG "- Fixing Exynos9810 front camera crash (unsupported dynamic FOV)"
+
+    if [ ! -f "$ZOOM" ]; then
+        LOGW "ZoomController.smali not found; skipping front camera crash fix"
+        return 0
+    fi
+
+    python3 - "$ZOOM" <<'PY' || return 1
+import sys
+p = sys.argv[1]
+s = open(p).read()
+old = (
+    '    :cond_1\n'
+    '    new-instance p0, Lcom/samsung/android/camera/core2/exception/InvalidOperationException;\n'
+    '\n'
+    '    const-string v0, "The current camera is not supporting dynamic fov."\n'
+    '\n'
+    '    invoke-direct {p0, v0}, Ljava/lang/RuntimeException;-><init>(Ljava/lang/String;)V\n'
+    '\n'
+    '    throw p0\n'
+    '.end method'
+)
+new = (
+    '    :cond_1\n'
+    '    const/16 v0, 0x3e8\n'
+    '\n'
+    '    return v0\n'
+    '.end method'
+)
+if old not in s:
+    if 'getFrontCropAngleZoomValue' in s and 'const/16 v0, 0x3e8' in s:
+        print("already patched")
+        sys.exit(0)
+    print("PATTERN_NOT_FOUND")
+    sys.exit(1)
+open(p, "w").write(s.replace(old, new, 1))
+print("ok")
 PY
 }
 
@@ -611,6 +644,80 @@ method = """.method public final i0(Lcom/samsung/android/camera/core2/container/
 .end method"""
 text = text[:match.start()] + method + text[match.end():]
 path.write_text(text)
+PY
+}
+
+_EXYNOS9810_FINAL_PATCH_CAMERA_PREVIEW_CALLBACK_GUARD()
+{
+    # Companion to _EXYNOS9810_FINAL_PATCH_CAMERA_PREVIEW_CALLBACK_STREAM above.
+    # That patch neuters CamDeviceImpl.i0() so the incompatible One UI 8 preview
+    # callback ImageReader stream is never configured -- which means the preview
+    # callback ImageReader (fields X/Y) stays null. But the front camera's beauty
+    # pipeline (SW_FACE_DETECTION) still enables a repeating request that asks for a
+    # "main preview callback" target, and CamDeviceImpl then throws
+    # CamDeviceException.NO_PREVIEW_IMAGE_READER because that ImageReader is null.
+    # The engine goes PREVIEWING -> SHUTDOWN and the whole camera freezes (frozen/
+    # blurred frame, dead UI) on both fresh front open and front<->back switching.
+    #
+    # Fix: in the two repeating-request builders, when a preview-callback ImageReader
+    # is requested (count > 0) but the reader is null, skip that capture target
+    # (branch to the block's exit label) instead of throwing. Live preview keeps
+    # running and switching works both ways; only the real-time face-beauty preview
+    # overlay -- which this legacy vendor cannot feed anyway -- is dropped.
+    #
+    # Verified on SM-G965F (star2lte): front open stays PREVIEWING, and front<->back
+    # switching completes cleanly with no NO_PREVIEW_IMAGE_READER / SHUTDOWN.
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
+    local SMALI="$APK_DIR/smali_classes3/com/samsung/android/camera/core2/device/CamDeviceImpl.smali"
+
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
+    [ -f "$SMALI" ] || {
+        LOGE "CamDeviceImpl.smali not found in SamsungCamera.apk"
+        return 1
+    }
+
+    LOG "- Guarding One UI 8 preview-callback repeating requests against null ImageReader on Exynos9810"
+    python3 - "$SMALI" <<'PY' || return 1
+import re
+import sys
+
+p = sys.argv[1]
+s = open(p).read()
+
+# Each repeating-request preview-callback guard looks like:
+#     if-lez v5, :<label>
+#
+#     iget-object v0, p0, ...CamDeviceImpl;->X|Y:Landroid/media/ImageReader;
+#
+#     sget-object v1, ...CamDeviceException$Type;->NO_PREVIEW_IMAGE_READER:...
+#
+#     invoke-static {v0, v1}, ...CamDeviceChecker;->a(...)V   # throws if v0 == null
+# Turn the throw-if-null checker into a skip-if-null branch to <label>.
+pat = re.compile(
+    r'(if-lez v5, :(cond_\w+)\n'
+    r'\n'
+    r'    iget-object v0, p0, Lcom/samsung/android/camera/core2/device/CamDeviceImpl;->[XY]:Landroid/media/ImageReader;\n)'
+    r'\n'
+    r'    sget-object v1, Lcom/samsung/android/camera/core2/exception/CamDeviceException\$Type;->NO_PREVIEW_IMAGE_READER:Lcom/samsung/android/camera/core2/exception/CamDeviceException\$Type;\n'
+    r'\n'
+    r'    invoke-static \{v0, v1\}, Lcom/samsung/android/camera/core2/device/CamDeviceChecker;->a\(Ljava/lang/Object;Lcom/samsung/android/camera/core2/exception/CamDeviceException\$Type;\)V\n'
+)
+
+s2, n = pat.subn(lambda m: m.group(1) + '\n    if-eqz v0, :' + m.group(2) + '\n', s)
+if n == 0:
+    already = re.search(
+        r'iget-object v0, p0, Lcom/samsung/android/camera/core2/device/CamDeviceImpl;->[XY]:Landroid/media/ImageReader;\n\n    if-eqz v0, :cond_',
+        s,
+    )
+    if already:
+        print("already patched")
+        sys.exit(0)
+    print("PATTERN_NOT_FOUND")
+    sys.exit(1)
+if n < 4:
+    sys.stderr.write("WARN: expected 4 preview-callback guard sites, patched %d\n" % n)
+open(p, "w").write(s2)
+print("patched %d site(s)" % n)
 PY
 }
 
@@ -912,8 +1019,10 @@ _EXYNOS9810_FINAL_REPATCH_APPS()
     rm -rf "$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
     _EXYNOS9810_PATCH_ONEUI8_CAMERA_APP || return 1
     _EXYNOS9810_FINAL_PATCH_CAMERA_NETWORK_ERRORS || return 1
+    _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV || return 1
     _EXYNOS9810_FINAL_PATCH_CAMERA_REPEATING_PREVIEW_SURFACE || return 1
     _EXYNOS9810_FINAL_PATCH_CAMERA_PREVIEW_CALLBACK_STREAM || return 1
+    _EXYNOS9810_FINAL_PATCH_CAMERA_PREVIEW_CALLBACK_GUARD || return 1
     _EXYNOS9810_FINAL_PATCH_CAMERA_CAPTURE_SESSION_STREAMS || return 1
     _EXYNOS9810_FINAL_PATCH_CAMERA_PROVIDEO_ICON_CRASH || return 1
     _EXYNOS9810_FINAL_PATCH_CAMERA_SCENE_DETECTION_NODE || return 1
@@ -960,7 +1069,7 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT()
 
 _EXYNOS9810_FINAL_REPATCH_APPS
 _EXYNOS9810_FINAL_DEBLOAT
-_EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
+_EXYNOS9810_FINAL_SET_HOME_LAYOUT
 _EXYNOS9810_FINAL_RAM_TWEAKS
 _EXYNOS9810_FINAL_PRELOAD_KERNELSU_NEXT
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT

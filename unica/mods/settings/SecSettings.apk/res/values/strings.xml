@@ -5,6 +5,9 @@
     <string name="unica_allow_downgrade_title">Allow application downgrade</string>
     <string name="unica_allow_sdkbypass_title">Disable low target SDK block</string>
     <string name="unica_asks_title">Disable ASKS</string>
+    <string name="unica_bixby_app_title">Bixby key app</string>
+    <string name="unica_bixby_key_summary">Choose what a single press of the Bixby key does.</string>
+    <string name="unica_bixby_key_title">Bixby key</string>
     <string name="unica_boot_sound_title">Play boot sound effect</string>
     <string name="unica_device_name_title">Device name</string>
     <string name="unica_dialog_reboot_msg">To apply the changes, a restart is required.</string>
