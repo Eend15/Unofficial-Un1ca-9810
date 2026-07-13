@@ -1,17 +1,54 @@
 From 18f2ff84ad8d8cdadd8b0a30bfb20f3aec3d2286 Mon Sep 17 00:00:00 2001
-From: u <a@b.c>
-Date: Sun, 12 Jul 2026 19:33:12 +0200
-Subject: [PATCH] Add UN1CA Bixby key remap (launchAssistAction hook)
+From: Eend15 <a@b.c>
+Date: Mon, 13 Jul 2026 01:15:00 +0200
+Subject: [PATCH] Dispatch Exynos9810 Bixby scan code through UN1CA selector
 
 ---
- .../server/policy/PhoneWindowManager.smali    | 118 ++++++++++++++++++
- 1 file changed, 118 insertions(+)
+ .../server/policy/PhoneWindowManager.smali    | 139 ++++++++++++++++++
+ 1 file changed, 139 insertions(+)
 
 diff --git a/smali_classes2/com/android/server/policy/PhoneWindowManager.smali b/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
-index e894aa5..74e1405 100644
+index e894aa5..315ead9 100644
 --- a/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
 +++ b/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
-@@ -16884,9 +16884,127 @@
+@@ -12706,6 +12706,36 @@
+ 
+     move/from16 v3, p2
+ 
++    # Handle the Exynos9810 physical Bixby key by scan code so this does not
++    # depend on Samsung's assistant policy and never affects a normal camera key.
++    invoke-virtual {v2}, Landroid/view/KeyEvent;->getScanCode()I
++
++    move-result v0
++
++    const/16 v4, 0x2bf
++
++    if-ne v0, v4, :unica_bixby_passthrough
++
++    invoke-virtual {v2}, Landroid/view/KeyEvent;->getAction()I
++
++    move-result v0
++
++    if-nez v0, :unica_bixby_consume
++
++    invoke-virtual {v2}, Landroid/view/KeyEvent;->getRepeatCount()I
++
++    move-result v0
++
++    if-nez v0, :unica_bixby_consume
++
++    invoke-static {v1}, Lcom/android/server/policy/PhoneWindowManager;->unicaBixbyRemap(Lcom/android/server/policy/PhoneWindowManager;)Z
++
++    :unica_bixby_consume
++    const/4 v0, 0x0
++
++    return v0
++
++    :unica_bixby_passthrough
+     invoke-virtual {v2}, Landroid/view/KeyEvent;->getKeyCode()I
+ 
+     move-result v4
+@@ -16884,6 +16914,109 @@
      return-void
  .end method
  
@@ -20,14 +57,12 @@ index e894aa5..74e1405 100644
 +
 +    const/4 v0, 0x0
 +
-+    # UN1CA Bixby-key remap: action 0=default(assist) 1=Gemini 2=Camera 3=custom pkg
++    # UN1CA Bixby-key remap: action 0=Bixby 1=Gemini 2=Camera
 +    const-string v1, "persist.sys.unica.bixby_action"
 +
 +    invoke-static {v1, v0}, Landroid/os/SystemProperties;->getInt(Ljava/lang/String;I)I
 +
 +    move-result v3
-+
-+    if-eqz v3, :ret_false
 +
 +    iget-object v1, p0, Lcom/android/server/policy/PhoneWindowManager;->mContext:Landroid/content/Context;
 +
@@ -37,6 +72,25 @@ index e894aa5..74e1405 100644
 +
 +    const/4 v5, 0x0
 +
++    if-nez v3, :not_default
++
++    const-string v6, "com.samsung.android.bixby.agent"
++
++    invoke-virtual {v4, v6}, Landroid/content/pm/PackageManager;->getLaunchIntentForPackage(Ljava/lang/String;)Landroid/content/Intent;
++
++    move-result-object v5
++
++    if-nez v5, :have_intent
++
++    new-instance v5, Landroid/content/Intent;
++
++    const-string v6, "android.intent.action.VOICE_ASSIST"
++
++    invoke-direct {v5, v6}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
++
++    goto :have_intent
++
++    :not_default
 +    const/4 v6, 0x1
 +
 +    if-ne v3, v6, :not_gemini
@@ -60,36 +114,13 @@ index e894aa5..74e1405 100644
 +    :not_gemini
 +    const/4 v6, 0x2
 +
-+    if-ne v3, v6, :not_camera
++    if-ne v3, v6, :ret_false
 +
 +    new-instance v5, Landroid/content/Intent;
 +
 +    const-string v6, "android.media.action.STILL_IMAGE_CAMERA"
 +
 +    invoke-direct {v5, v6}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
-+
-+    goto :have_intent
-+
-+    :not_camera
-+    const/4 v6, 0x3
-+
-+    if-ne v3, v6, :ret_false
-+
-+    const-string v2, "persist.sys.unica.bixby_package"
-+
-+    invoke-static {v2}, Landroid/os/SystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;
-+
-+    move-result-object v2
-+
-+    invoke-static {v2}, Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z
-+
-+    move-result v3
-+
-+    if-nez v3, :ret_false
-+
-+    invoke-virtual {v4, v2}, Landroid/content/pm/PackageManager;->getLaunchIntentForPackage(Ljava/lang/String;)Landroid/content/Intent;
-+
-+    move-result-object v5
 +
 +    :have_intent
 +    if-eqz v5, :ret_false
@@ -127,18 +158,6 @@ index e894aa5..74e1405 100644
  .method public final launchAssistAction(IIJLjava/lang/String;)V
      .locals 2
  
-+    invoke-static {p0}, Lcom/android/server/policy/PhoneWindowManager;->unicaBixbyRemap(Lcom/android/server/policy/PhoneWindowManager;)Z
-+
-+    move-result v0
-+
-+    if-eqz v0, :unica_no_remap
-+
-+    return-void
-+
-+    :unica_no_remap
-     const-string/jumbo v0, "assist"
- 
-     invoke-virtual {p0, v0}, Lcom/android/server/policy/PhoneWindowManager;->sendCloseSystemWindows(Ljava/lang/String;)V
 -- 
 2.43.0
 
