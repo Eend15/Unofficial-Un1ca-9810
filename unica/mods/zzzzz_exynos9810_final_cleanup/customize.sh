@@ -1047,12 +1047,15 @@ _EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT()
     LOG "- Enabling dynamic Exynos9810 Bixby key remapping for physical key 703"
     while IFS= read -r -d "" FILE; do
         if grep -qE "^key[[:space:]]+703[[:space:]]+" "$FILE" 2>/dev/null; then
-            sed -i -E "s/^key([[:space:]]+703[[:space:]]+).*/key\1VOICE_ASSIST/" "$FILE"
+            # CAMERA is the proven Exynos9810 input mapping. SystemServer uses
+            # scan code 703 to distinguish this button from a real camera key
+            # and dispatch the action selected in UN1CA Settings.
+            sed -i -E "s/^(key[[:space:]]+703[[:space:]]+)[^[:space:]]+(.*)$/\1CAMERA\2/" "$FILE"
             COUNT=$((COUNT + 1))
         fi
     done < <(find "$KEYLAYOUT_DIR" -maxdepth 1 -type f -name "*.kl" -print0)
 
-    LOG "  - Remapped key 703 in $COUNT keylayout file(s) to VOICE_ASSIST"
+    LOG "  - Remapped key 703 in $COUNT keylayout file(s) to CAMERA"
 }
 
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT()
