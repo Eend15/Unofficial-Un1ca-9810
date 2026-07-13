@@ -13,7 +13,6 @@ fi
 LOG "- Removing re-added non-critical packages for old TWRP/FAT32 compatibility"
 
 _EXYNOS9810_TWRP_LITE_PATHS=(
-    "system/product/priv-app/Velvet"
     "system/preload/SBrowser"
     "system/priv-app/SamsungSmartSuggestions"
     "system/priv-app/SpriteWallpaper"

@@ -174,11 +174,7 @@ _EXYNOS9810_FINAL_DEBLOAT()
         AREmoji \
         AREmojiEditor \
         AvatarEmojiSticker \
-        Bixby \
-        BixbyInterpreter \
         BixbyVisionFramework3.5 \
-        BixbyWakeup \
-        BardShell \
         Calculator \
         Chrome \
         DAAgent \
@@ -220,7 +216,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
         SoundRecorder \
         SecCalculator \
         SecCalculator2 \
-        Velvet \
         VoiceRecorder \
         YouTube \
         YourPhone_P1_5 \
@@ -234,7 +229,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
 
     for REL in \
         product/app/Chrome \
-        product/app/BardShell \
         product/app/DuoStub \
         product/app/FamilyLinkParentalControls \
         product/app/Gmail2 \
@@ -242,7 +236,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
         product/app/YouTube \
         system/app/Calculator \
         product/priv-app/Messages \
-        product/priv-app/Velvet \
         product/overlay/GoogleHealthFitnessFrameworkOverlay.apk \
         product/overlay/NotesRoleEnabled \
         system/preload/SBrowser \
