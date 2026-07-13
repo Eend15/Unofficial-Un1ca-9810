@@ -6,6 +6,5 @@ if ! $ENABLE_EXYNOS9810_TWRP_LITE; then
 fi
 
 LOG "- Removing large non-critical packages to keep the flashable zip below old TWRP/FAT32 limits"
-DELETE_FROM_WORK_DIR "system" "system/product/priv-app/Velvet"
 DELETE_FROM_WORK_DIR "system" "system/preload/SBrowser"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/SamsungSmartSuggestions"
