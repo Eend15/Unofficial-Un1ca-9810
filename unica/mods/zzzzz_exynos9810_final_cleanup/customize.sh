@@ -1089,59 +1089,113 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT()
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES()
 {
     local APK_DIR="$APKTOOL_DIR/system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk"
+    local PRISM_DIR="$WORK_DIR/system/prism/etc/carriers"
     local FILE
     local REMOVED
 
     DECODE_APK "system" "system/priv-app/TouchWizHome_2017/TouchWizHome_2017.apk" || return 1
 
-    LOG "- Pruning debloated-app references from launcher default workspace"
+    LOG "- Pruning debloated-app references from every launcher seed source"
 
     while IFS= read -r -d '' FILE; do
         REMOVED="$(python3 - "$FILE" <<'PY'
-import re
+import json
 import sys
+import xml.etree.ElementTree as ET
 
 path = sys.argv[1]
 
-# These packages are debloated by _EXYNOS9810_FINAL_DEBLOAT / debloat.sh and
-# will never be installed on this ROM. The stock default_workspace*.xml files
-# (parsed once by TouchWizHome only on a fresh "set up as new device" flow,
-# i.e. not an account restore) still list them as home-screen favorites,
-# pair-apps, or widgets. Left in place, the launcher creates a permanent
-# "pending restore" placeholder entry that can never resolve, showing a
-# broken/generic icon forever since the package will never install.
-packages = (
+# These packages are absent from the final image. Samsung's launcher seeds its
+# database from both APK resources and CSC/Prism application-order and restore
+# files. Keeping an absent package in any of those sources creates a permanent
+# pending-restore icon even after a clean data format.
+packages = {
     "com.sec.android.app.popupcalculator",
     "com.samsung.android.app.notes",
     "com.samsung.android.voc",
     "com.samsung.sree",
+    "com.samsung.android.globalgoals",
     "com.sec.android.app.sbrowser",
     "com.samsung.android.oneconnect",
     "com.sec.android.app.voicenote",
     "com.sec.android.app.shealth",
     "com.samsung.android.app.watchmanager",
-)
+    "com.samsung.android.app.tips",
+    "com.samsung.android.tvplus",
+    "com.samsung.android.game.gamehome",
+    "com.samsung.android.arzone",
+    "com.samsung.android.bixby.agent",
+    "com.samsung.android.messaging",
+    "com.google.android.gm",
+    "com.google.android.apps.maps",
+    "com.google.android.youtube",
+    "com.google.android.apps.youtube.music",
+    "com.google.android.apps.docs",
+    "com.google.android.videos",
+    "com.google.android.apps.tachyon",
+    "com.google.android.apps.photos",
+    "com.microsoft.office.officehubrow",
+    "com.microsoft.skydrive",
+    "com.microsoft.office.outlook",
+}
 
-with open(path, encoding="utf-8") as f:
-    lines = f.readlines()
-
-kept = []
 removed = 0
-for line in lines:
-    if re.search(r'<(favorite|pairapps|appwidget)\b', line) and any(pkg in line for pkg in packages):
-        removed += 1
-        continue
-    kept.append(line)
 
-if removed:
-    with open(path, "w", encoding="utf-8") as f:
-        f.writelines(kept)
+if path.endswith(".json"):
+    with open(path, encoding="utf-8") as stream:
+        root = json.load(stream)
+
+    def prune(value):
+        global removed
+        if isinstance(value, list):
+            kept = []
+            for item in value:
+                if isinstance(item, dict) and any(v in packages for v in item.values()):
+                    removed += 1
+                    continue
+                kept.append(prune(item))
+            return kept
+        if isinstance(value, dict):
+            return {key: prune(item) for key, item in value.items()}
+        return value
+
+    root = prune(root)
+    if removed:
+        with open(path, "w", encoding="utf-8") as stream:
+            json.dump(root, stream, ensure_ascii=True, indent=4)
+            stream.write("\n")
+else:
+    tree = ET.parse(path)
+    root = tree.getroot()
+
+    def references_removed_package(element):
+        return any(value in packages for value in element.attrib.values())
+
+    changed = True
+    while changed:
+        changed = False
+        for parent in root.iter():
+            for child in list(parent):
+                if references_removed_package(child) or (
+                        child.tag.rsplit("}", 1)[-1] == "folder" and len(child) == 0):
+                    parent.remove(child)
+                    removed += 1
+                    changed = True
+
+    if removed:
+        ET.indent(tree, space="    ")
+        tree.write(path, encoding="utf-8", xml_declaration=True)
 
 print(removed)
 PY
 )" || return 1
-        [ "$REMOVED" -gt 0 ] 2>/dev/null && LOG "  - ${FILE#$APK_DIR/}: removed $REMOVED entries"
-    done < <(find "$APK_DIR/res" -type f -iname '*workspace*.xml' -print0 2>/dev/null)
+        [ "$REMOVED" -gt 0 ] 2>/dev/null && LOG "  - ${FILE#$WORK_DIR/}: removed $REMOVED entries"
+    done < <(
+        find "$APK_DIR/res" "$PRISM_DIR" -type f \
+            \( -iname '*workspace*.xml' -o -iname '*application_order*.xml' \
+               -o -iname '*suggested*.xml' -o -iname 'restore*.json' \) \
+            -print0 2>/dev/null
+    )
 }
 
 _EXYNOS9810_FINAL_REPATCH_APPS
