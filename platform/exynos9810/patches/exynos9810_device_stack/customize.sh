@@ -452,11 +452,16 @@ _EXYNOS9810_WRITE_EXYNOS9810_KEYLAYOUTS()
 key 116   POWER             WAKE
 EOF
 
+    # Bixby button = scancode 703. Stock maps it to WINK (Bixby wake), which
+    # does nothing useful on this port. Map it to CAMERA so a short press
+    # launches the camera app (validated on-device). Keylayout is static, so
+    # this is the fixed hardware action; the UN1CA "Bixby action" dropdown is
+    # cosmetic on top of it (a static .kl can't read a runtime prop).
     cat > "$KL_DIR/gpio_keys.kl" <<'EOF'
 key 114   VOLUME_DOWN
 key 115   VOLUME_UP
 key 116   POWER             WAKE
-key 703   WINK
+key 703   CAMERA
 EOF
 
     _EXYNOS9810_SET_METADATA "system" "system/usr/keylayout/wg_pwrkey.kl" \
@@ -2487,7 +2492,7 @@ _EXYNOS9810_FIX_BOOT_METADATA()
 
     # Android init imports every *.rc-like backup left in this directory.
     # Keep build-time backups out of the final vendor image.
-    find "$WORK_DIR/vendor/etc/init" -maxdepth 1 -type f -name '*.bak_codex' -delete 2> /dev/null || true
+    find "$WORK_DIR/vendor/etc/init" -maxdepth 1 -type f -name '*.bak_*' -delete 2> /dev/null || true
 
     _EXYNOS9810_SET_METADATA "system" "system/build.prop" "/system/build.prop" 0 0 644 "u:object_r:system_file:s0"
     _EXYNOS9810_SET_METADATA "system" "system/system_ext/etc/build.prop" "/system/system_ext/etc/build.prop" 0 0 644 "u:object_r:system_file:s0"

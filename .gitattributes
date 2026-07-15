@@ -21,6 +21,7 @@
 prebuilts/bootable/deprecated-ota/updater binary
 prebuilts/*/*/*/** binary
 unica/mods/prophide/system/bin/rezetprop binary
+unica/mods/zzzzz_exynos9810_final_cleanup/native_camera/cameraserver binary
 
 # Device-specific prebuilt blobs
 target/a52sxq/patches/wpss/vendor/firmware/** binary

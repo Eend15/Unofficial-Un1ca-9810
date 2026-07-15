@@ -1,4 +1,4 @@
 name="Exynos9810 late TWRP zip compatibility"
 version=1
-author="OpenAI"
+author="Eend15"
 description="Late cleanup for Exynos9810 builds so re-added optional packages do not push the flashable zip over old TWRP/FAT32 limits."

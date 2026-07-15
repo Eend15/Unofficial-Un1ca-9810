@@ -1003,23 +1003,86 @@ else:
 PY
 }
 
+_EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA()
+{
+    # Install the exact stock One UI 8 v26 build proven on the Exynos9810 device.
+    # This keeps Samsung's own UI/capture controller and pairs it with the
+    # UniHAL and cameraserver compatibility patches that make the persistent
+    # JPEG stream usable.
+    local SRC="$MODPATH/native_camera"
+    local APK_SRC="$SRC/SamsungCamera.apk"
+    local HAL_SRC="$SRC/unihal_main@2.1.so"
+    local CAMERASERVER_SRC="$SRC/cameraserver"
+    local APK_DST="$WORK_DIR/system/system/priv-app/SamsungCamera/SamsungCamera.apk"
+    local HAL_DST="$WORK_DIR/vendor/lib/unihal_main@2.1.so"
+    local CAMERASERVER_DST="$WORK_DIR/system/system/bin/cameraserver"
+
+    [ -f "$APK_SRC" ] || {
+        LOGE "Native SamsungCamera payload missing: $APK_SRC"
+        return 1
+    }
+    [ -f "$HAL_SRC" ] || {
+        LOGE "Native camera UniHAL payload missing: $HAL_SRC"
+        return 1
+    }
+    [ -f "$CAMERASERVER_SRC" ] || {
+        LOGE "Native camera cameraserver payload missing: $CAMERASERVER_SRC"
+        return 1
+    }
+    [ -d "$(dirname "$APK_DST")" ] || {
+        LOGE "SamsungCamera destination directory missing: $(dirname "$APK_DST")"
+        return 1
+    }
+    [ -d "$(dirname "$HAL_DST")" ] || {
+        LOGE "UniHAL destination directory missing: $(dirname "$HAL_DST")"
+        return 1
+    }
+    [ -d "$(dirname "$CAMERASERVER_DST")" ] || {
+        LOGE "cameraserver destination directory missing: $(dirname "$CAMERASERVER_DST")"
+        return 1
+    }
+
+    # Refuse to package a silently replaced or stale payload. These are the
+    # hashes of the exact v26/APK, 32-bit UniHAL and cameraserver combination
+    # validated on the connected star2lte.
+    [ "$(sha256sum "$APK_SRC" | cut -d ' ' -f 1)" = \
+        "e334d42396f4bb0855d1092c89b82be46a1f70f684b3759c98800ffb039e518b" ] || {
+        LOGE "Unexpected native SamsungCamera payload hash"
+        return 1
+    }
+    [ "$(sha256sum "$HAL_SRC" | cut -d ' ' -f 1)" = \
+        "33bd98a20181fdd3e1204fd2e152420e8404534407b91e8d457da25acb165980" ] || {
+        LOGE "Unexpected native camera UniHAL payload hash"
+        return 1
+    }
+    [ "$(sha256sum "$CAMERASERVER_SRC" | cut -d ' ' -f 1)" = \
+        "06d1c14dd93b39b399beb97e0eb06e0dd0f08a3da2d643a96f588c488b43d061" ] || {
+        LOGE "Unexpected native camera cameraserver payload hash"
+        return 1
+    }
+
+    LOG "- Installing proven One UI 8 v26 native camera stack"
+
+    # Prevent the global apktool rebuild pass from overwriting this proven APK
+    # with an older decoded Camera2-bridge variant.
+    rm -rf "$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
+    cp -f "$APK_SRC" "$APK_DST" || return 1
+    cp -f "$HAL_SRC" "$HAL_DST" || return 1
+    cp -f "$CAMERASERVER_SRC" "$CAMERASERVER_DST" || return 1
+    chmod 0644 "$APK_DST" "$HAL_DST" || return 1
+    chmod 0755 "$CAMERASERVER_DST" || return 1
+}
+
 _EXYNOS9810_FINAL_REPATCH_APPS()
 {
     LOG "- Re-applying Exynos9810 Camera/Bluetooth/Settings patches after final restore"
 
     _EXYNOS9810_FINAL_IMPORT_FUNCTIONS || return 1
 
-    rm -rf "$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
-    _EXYNOS9810_PATCH_ONEUI8_CAMERA_APP || return 1
-    _EXYNOS9810_FINAL_PATCH_CAMERA_NETWORK_ERRORS || return 1
-    _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV || return 1
-    _EXYNOS9810_FINAL_PATCH_CAMERA_REPEATING_PREVIEW_SURFACE || return 1
-    _EXYNOS9810_FINAL_PATCH_CAMERA_PREVIEW_CALLBACK_STREAM || return 1
-    _EXYNOS9810_FINAL_PATCH_CAMERA_PREVIEW_CALLBACK_GUARD || return 1
-    _EXYNOS9810_FINAL_PATCH_CAMERA_CAPTURE_SESSION_STREAMS || return 1
-    _EXYNOS9810_FINAL_PATCH_CAMERA_PROVIDEO_ICON_CRASH || return 1
-    _EXYNOS9810_FINAL_PATCH_CAMERA_SCENE_DETECTION_NODE || return 1
-    _EXYNOS9810_FINAL_PATCH_CAMERA_SCENE_DETECTION_STREAM || return 1
+    # The old patch stack disabled Samsung's capture streams and routed the
+    # shutter through a separate Camera2 bridge. The native UniHAL path is now
+    # proven, so install the exact tested stock-camera/UniHAL pair instead.
+    _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA || return 1
 
     _EXYNOS9810_FINAL_RESTORE_BLUETOOTH_LIB || return 1
     rm -rf "$APKTOOL_DIR/system/app/BluetoothAgent/BluetoothAgent.apk"

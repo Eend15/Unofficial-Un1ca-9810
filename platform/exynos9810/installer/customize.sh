@@ -16,8 +16,6 @@ find_exynos9810_sgdisk()
     for bin in \
         "${REPARTITIONER_SGDISK:-}" \
         "${REPARTITIONER_DIR:-}/sgdisk" \
-        "/mnt/c/Users/Admin/Documents/Codex/2026-06-16/https-xdaforums-com-t-rom-oneui/work/repartitioner_analysis/repartitioner/duhan/sgdisk" \
-        "/mnt/c/Users/Admin/Documents/Codex/2026-06-16/https-xdaforums-com-t-rom-oneui/work/repartitioner_zip/duhan/sgdisk" \
         "$EXYNOS9810_LEGACY_PORT_DIR/system/bin/sgdisk"; do
         [ -n "$bin" ] || continue
         [ -f "$bin" ] || continue
@@ -28,7 +26,7 @@ find_exynos9810_sgdisk()
     return 1
 }
 
-REPARTITIONER_DIR="${REPARTITIONER_DIR:-/mnt/c/Users/Admin/Documents/Codex/2026-06-16/https-xdaforums-com-t-rom-oneui/work/repartitioner_analysis/repartitioner/duhan}"
+REPARTITIONER_DIR="${REPARTITIONER_DIR:-$EXYNOS9810_LEGACY_PORT_DIR/system/bin}"
 REPARTITIONER_SGDISK_BIN="$(find_exynos9810_sgdisk)" || {
     LOGE "Exynos9810 sgdisk repartitioner binary not found"
     exit 1
