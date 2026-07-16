@@ -1,3 +1,3 @@
-name=Exynos9810 final vendor baseline restore
+name=Exynos9810 target-aware vendor restore
 author=UN1CA Exynos9810 port
-description=Restores the known-booting Exynos9810 vendor and ODM baseline without replacing the target-specific system image.
+description=Restores the proven Note10 Lite VNDK33 baseline, applies the selected S9/S9+/Note9 hardware vendor layer, and preserves the target-specific system image.

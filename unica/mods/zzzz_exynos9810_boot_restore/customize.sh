@@ -4,6 +4,7 @@ SKIPUNZIP=1
 
 EXYNOS9810_LEGACY_PORT_DIR="${EXYNOS9810_LEGACY_PORT_DIR:-/mnt/c/Users/Admin/Downloads/Exynos9810_LegacyPort}"
 EXYNOS9810_METADATA_DIR="$SRC_DIR/platform/exynos9810/metadata"
+EXYNOS9810_DEVICE_VENDOR_DIR="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device"
 EXYNOS9810_USED_VENDOR_METADATA_SNAPSHOT=false
 EXYNOS9810_USED_ODM_METADATA_SNAPSHOT=false
 
@@ -238,6 +239,89 @@ _EXYNOS9810_RESTORE_VENDOR_BASELINE()
     fi
 }
 
+_EXYNOS9810_APPLY_TARGET_VENDOR_DELTA()
+{
+    local REFERENCE_VENDOR="$EXYNOS9810_DEVICE_VENDOR_DIR/star2lte/vendor"
+    local TARGET_VENDOR="$EXYNOS9810_DEVICE_VENDOR_DIR/$TARGET_CODENAME/vendor"
+    local ENTRY
+    local REL
+    local REMOVED=0
+    local COPIED=0
+
+    case "$TARGET_CODENAME" in
+        star2lte)
+            # The restored VNDK33 tree is the exact baseline proven on the S9+.
+            # Do not replace any of its hardware blobs with the older donor
+            # overlay: several camera/audio libraries intentionally differ.
+            LOG "- Keeping the proven star2lte Note10 Lite/VNDK33 vendor"
+            return 0
+            ;;
+        starlte|crownlte)
+            ;;
+        *)
+            LOGE "Unsupported Exynos9810 vendor target: $TARGET_CODENAME"
+            return 1
+            ;;
+    esac
+
+    if [ ! -d "$REFERENCE_VENDOR" ]; then
+        LOGE "Required star2lte vendor reference is missing: $REFERENCE_VENDOR"
+        return 1
+    fi
+    if [ ! -d "$TARGET_VENDOR" ]; then
+        LOGE "Required $TARGET_CODENAME vendor hardware overlay is missing: $TARGET_VENDOR"
+        return 1
+    fi
+
+    LOG "- Converting the proven VNDK33 vendor hardware layer to $TARGET_CODENAME"
+
+    # The booting baseline already contains the star2lte hardware layer. Remove
+    # only entries that came from that layer and do not exist for the selected
+    # target. This is important for starlte (single rear camera) and crownlte
+    # (different dual-camera, audio and NFC blobs), while leaving the generic
+    # Note10 Lite VNDK33 services, manifests and compatibility libraries intact.
+    while IFS= read -r -d '' ENTRY; do
+        REL="${ENTRY#$REFERENCE_VENDOR/}"
+        if [ -e "$TARGET_VENDOR/$REL" ] || [ -L "$TARGET_VENDOR/$REL" ]; then
+            continue
+        fi
+
+        rm -f "$WORK_DIR/vendor/$REL"
+        _EXYNOS9810_DELETE_METADATA "vendor" "vendor/$REL" "/vendor/$REL"
+        REMOVED=$((REMOVED + 1))
+    done < <(find "$REFERENCE_VENDOR" \( -type f -o -type l \) -print0)
+
+    # These are the original device-matched Exynos9810 hardware blobs: camera
+    # HAL/setfiles/OIS, audio DSP+mixer, sensors, NFC, TEE and the vendor RRO.
+    # They are an overlay, not a replacement vendor, so ro.vndk.version=33 and
+    # the known-booting Note10 Lite vendor core stay unchanged.
+    cp -a "$TARGET_VENDOR"/. "$WORK_DIR/vendor"/ || {
+        LOGE "Failed to apply the $TARGET_CODENAME vendor hardware overlay"
+        return 1
+    }
+
+    _EXYNOS9810_ENSURE_TREE_METADATA \
+        "vendor" "$TARGET_VENDOR" "u:object_r:vendor_file:s0" 0 0
+
+    # Fail the build instead of silently packaging a mixed-device vendor.
+    while IFS= read -r -d '' ENTRY; do
+        REL="${ENTRY#$TARGET_VENDOR/}"
+        if [ -L "$ENTRY" ]; then
+            if [ ! -L "$WORK_DIR/vendor/$REL" ] || \
+                    [ "$(readlink "$ENTRY")" != "$(readlink "$WORK_DIR/vendor/$REL")" ]; then
+                LOGE "Vendor symlink verification failed for $TARGET_CODENAME: $REL"
+                return 1
+            fi
+        elif ! cmp -s "$ENTRY" "$WORK_DIR/vendor/$REL"; then
+            LOGE "Vendor blob verification failed for $TARGET_CODENAME: $REL"
+            return 1
+        fi
+        COPIED=$((COPIED + 1))
+    done < <(find "$TARGET_VENDOR" \( -type f -o -type l \) -print0)
+
+    LOG "  - Verified $COPIED target blobs; removed $REMOVED star2lte-only blobs"
+}
+
 _EXYNOS9810_SET_BUILD_PROP()
 {
     local FILE="$1"
@@ -256,6 +340,75 @@ _EXYNOS9810_DELETE_BUILD_PROP()
 
     [ -f "$FILE" ] || return 0
     sed -i "/^$PROP=/d" "$FILE"
+}
+
+_EXYNOS9810_APPLY_TARGET_VENDOR_IDENTITY()
+{
+    local MODEL
+    local NAME
+    local STOCK_INCREMENTAL
+    local FIRST_API
+    local FILE_SPEC
+    local FILE
+    local PREFIX
+    local FINGERPRINT
+
+    case "$TARGET_CODENAME" in
+        star2lte)
+            # The baseline already carries the proven G965F identity.
+            return 0
+            ;;
+        starlte)
+            MODEL="SM-G960F"
+            NAME="starltexx"
+            STOCK_INCREMENTAL="G960FXXUHFVG4"
+            FIRST_API=26
+            ;;
+        crownlte)
+            MODEL="SM-N960F"
+            NAME="crownltexx"
+            STOCK_INCREMENTAL="N960FXXUHFVG4"
+            FIRST_API=27
+            ;;
+        *)
+            LOGE "Unsupported Exynos9810 vendor identity target: $TARGET_CODENAME"
+            return 1
+            ;;
+    esac
+
+    LOG "- Applying final $TARGET_CODENAME identity to vendor, vendor_dlkm, odm_dlkm and ODM"
+    FINGERPRINT="samsung/$NAME/$TARGET_CODENAME:10/QP1A.190711.020/$STOCK_INCREMENTAL:user/release-keys"
+
+    for FILE_SPEC in \
+        "$WORK_DIR/vendor/build.prop:vendor" \
+        "$WORK_DIR/vendor/vendor_dlkm/etc/build.prop:vendor_dlkm" \
+        "$WORK_DIR/vendor/odm_dlkm/etc/build.prop:odm_dlkm" \
+        "$WORK_DIR/odm/etc/build.prop:odm"; do
+        PREFIX="${FILE_SPEC##*:}"
+        FILE="${FILE_SPEC%:*}"
+        [ -f "$FILE" ] || continue
+
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.brand" "samsung"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.device" "$TARGET_CODENAME"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.manufacturer" "samsung"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.model" "$MODEL"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.name" "$NAME"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.fingerprint" "$FINGERPRINT"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "$STOCK_INCREMENTAL"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.factory.model" "$MODEL"
+    done
+
+    # Keep the Note10 Lite Android 13/VNDK33 contract that makes this vendor
+    # boot against the One UI 8 system. Only the physical-device identity and
+    # original shipping API differ between S9/S9+/Note9.
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.product.first_api_level" "$FIRST_API"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.first_api_level" "$FIRST_API"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.version.sdk" "33"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vndk.version" "33"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.api_level" "33"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.api_level" "33"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.product.board" "exynos9810"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.platform" "universal9810"
 }
 
 _EXYNOS9810_KEEP_SETUP_WIZARD_ENABLED()
@@ -548,10 +701,12 @@ _EXYNOS9810_DELETE_METADATA "vendor" "vendor/lib/libunica.so" "/vendor/lib/libun
 _EXYNOS9810_DELETE_METADATA "vendor" "vendor/lib64/libunica.so" "/vendor/lib64/libunica.so"
 
 _EXYNOS9810_KEEP_SETUP_WIZARD_ENABLED
-_EXYNOS9810_RESTORE_VENDOR_BASELINE
+_EXYNOS9810_RESTORE_VENDOR_BASELINE || return 1
+_EXYNOS9810_APPLY_TARGET_VENDOR_DELTA || return 1
 _EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY
 _EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT
-_EXYNOS9810_RESTORE_ODM_BASELINE
+_EXYNOS9810_RESTORE_ODM_BASELINE || return 1
+_EXYNOS9810_APPLY_TARGET_VENDOR_IDENTITY || return 1
 _EXYNOS9810_SANITIZE_RESTORED_TEXT
 _EXYNOS9810_WRITE_FINAL_BOOT_TRACE
 if [ "$EXYNOS9810_USED_VENDOR_METADATA_SNAPSHOT" != true ]; then
