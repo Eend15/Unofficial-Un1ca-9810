@@ -1,11 +1,9 @@
-# These files are restored from the known-booting Exynos9810 baseline in
-# platform/exynos9810/patches/exynos9810_device_stack/customize.sh.
-# Rebuilding/signing them after restore changes boot-critical bytecode and
-# regressed star2lte back to splash-screen reboot loops.
+# Keep only unmodified boot-critical JARs on their restored bytecode.
+# framework.jar must be rebuilt: UN1CA framework mods add hook classes that
+# are referenced by the rebuilt services.jar. Skipping it creates a fatal
+# system_server NoClassDefFoundError during every boot.
 system/system/framework/esecomm.jar
 system/framework/esecomm.jar
-system/system/framework/framework.jar
-system/framework/framework.jar
 system/system/framework/gamemanager.jar
 system/framework/gamemanager.jar
 system/system/framework/knoxsdk.jar
