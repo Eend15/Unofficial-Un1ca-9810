@@ -167,7 +167,7 @@ _EXYNOS9810_FINAL_DEBLOAT()
 {
     local APP DIR REL
 
-    LOG "- Applying final Exynos9810 debloat after boot baseline restore"
+    LOG "- Applying final Exynos9810 debloat after vendor baseline restore"
 
     for APP in \
         AndroidAutoStub \
@@ -288,11 +288,11 @@ _EXYNOS9810_FINAL_SET_HOME_LAYOUT()
     # guaranteed present on every exynos9810 UN1CA build, so a fresh setup is
     # identical and ghost-icon-free regardless of the active sales code.
     #
-    # NOTE: this runs after zzzz_exynos9810_boot_restore has placed the final
-    # /system/prism tree, so nothing overwrites these files afterwards. On a
-    # dirty flash the launcher keeps its existing OneUI.db and won't re-read
-    # these; a clean "set up as new device" (or clearing launcher data) applies
-    # the layout.
+    # NOTE: this runs after all earlier /system/prism patch phases. The late
+    # vendor baseline restore does not touch /system, so nothing overwrites
+    # these files afterwards. On a dirty flash the launcher keeps its existing
+    # OneUI.db and won't re-read these; a clean "set up as new device" (or
+    # clearing launcher data) applies the layout.
     local PRISM="$WORK_DIR/system/prism/etc/carriers"
     local FILE
     local COUNT=0
