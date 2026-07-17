@@ -83,7 +83,7 @@ Build output and extracted firmware are intentionally not tracked in git. Keep `
 
 ## Installation
 
-1. Flash the custom TWRP recovery first:
+1. Flash the custom TWRP recovery first via Download mode:
    https://drive.google.com/drive/folders/1_vXPLfoYasOAByOShmqu7nljq2kHvTus
 
 2. Boot into the custom TWRP recovery.
