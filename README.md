@@ -55,7 +55,7 @@ The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy 
 - Dedicated `exynos9810` platform layer for legacy non-dynamic partition devices
 - Device targets for `starlte`, `star2lte`, and `crownlte`
 - Automatic Exynos9810 repartition and clean install flow integrated into the installer
-- DS-ACK and CrownTrail-compatible kernel installer support
+- DS-ACK/CrownTrail-compatible kernel installer support all credit goes to them: https://github.com/RestlessGoose/exynos9810-kernel , https://github.com/duhansysl/exynos9810-kernel. 
 - Permissive and enforcing kernel package support
 - KernelSU-Next support through compatible kernel packages
 - Custom TWRP lite and large ZIP compatibility hooks for older recovery environments
@@ -97,13 +97,12 @@ Build output and extracted firmware are intentionally not tracked in git. Keep `
 
 5. Once flashing completes, go back and tap Wipe > Format Data,
    then type "yes" to confirm.
-   (This is required, not optional — a Format Data wipe is needed
-   for a clean install and to resolve encryption on first boot.)
+   a Format Data wipe is needed. (when coming from older one ui versions)
 
 6. Reboot System.
 
-First boot after a Format Data wipe can take a few minutes longer
-than usual — this is normal.
+First boot after a Format Data wipe can take a few minutes longer patiently wait.
+ — this is normal.
 
 Notes:
 - Back up EFS, modem, and any important data before you start —
