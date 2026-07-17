@@ -35,7 +35,6 @@ The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy 
 ## Core Features
 
 - One UI 8 experience adapted for Exynos9810
-- EROFS-powered system image support when used with a compatible recovery
 - Retained upstream UN1CA feature patches where compatible
 - Galaxy AI framework support where hardware and vendor components allow it
 - Galaxy S25 wallpapers and sounds from upstream UN1CA
@@ -66,7 +65,7 @@ The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy 
 - Bluetooth compatibility patches for the legacy Exynos9810 stack
 - Audio HAL compatibility patches and legacy audio effect backports
 - Camera feature matrices split per device, including S9 single-camera and S9+/Note9 dual-camera layouts
-- One UI 8 camera compatibility fixes for photo, video, portrait, food, and pro-mode paths where possible
+- One UI 8 camera compatibility fixes for photo, video, portrait, and pro-mode paths where possible
 - Debloat profile tailored for legacy Exynos9810 memory and partition limits
 - Device-specific overlays, DVFS/SIOP policy hooks, floating features, CSC feature tuning, and framework feature declarations
 
