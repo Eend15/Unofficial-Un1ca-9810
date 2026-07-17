@@ -81,6 +81,52 @@ source buildenv.sh crownlte unica make_rom -z
 
 Build output and extracted firmware are intentionally not tracked in git. Keep `out/` and `work/` local.
 
+## Installation
+
+1. Flash the custom TWRP recovery first:
+   https://drive.google.com/drive/folders/1_vXPLfoYasOAByOShmqu7nljq2kHvTus
+
+2. Boot into the custom TWRP recovery.
+
+3. Get the UN1CA zip onto the device using one of:
+   - Copy it to your microSD card and select it from there in TWRP, or
+   - Drag/copy the zip onto internal storage, or
+   - Use a USB stick (OTG) plugged into the device
+
+4. In TWRP, tap Install, select the UN1CA zip, and swipe to flash.
+
+5. Once flashing completes, go back and tap Wipe > Format Data,
+   then type "yes" to confirm.
+   (This is required, not optional — a Format Data wipe is needed
+   for a clean install and to resolve encryption on first boot.)
+
+6. Reboot System.
+
+First boot after a Format Data wipe can take a few minutes longer
+than usual — this is normal.
+
+Notes:
+- Back up EFS, modem, and any important data before you start —
+  this ROM is still a porting project.
+- Only flash on supported Exynos9810 models: S9 (`starlte`),
+  S9+ (`star2lte`), Note9 (`crownlte`).
+
+### Accountability
+
+```
+#include <std_disclaimer.h>
+
+/*
+* Your warranty is now void.
+*
+* I am not responsible for bricked devices, dead SD cards,
+* thermonuclear war, or you getting fired because the alarm app failed. Please
+* do some research if you have any concerns about doing this to your device
+* YOU are choosing to make these modifications, and if
+* you point the finger at me for messing up your device, I will laugh at you.
+*
+```
+
 ## Branches
 
 - `Android-16`: active Android 16 / One UI 8 Exynos9810 work
