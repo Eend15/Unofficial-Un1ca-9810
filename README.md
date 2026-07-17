@@ -109,6 +109,9 @@ Notes:
   this ROM is still a porting project.
 - Only flash on supported Exynos9810 models: S9 (`starlte`),
   S9+ (`star2lte`), Note9 (`crownlte`).
+  
+  Bugs and Notes:
+https://t.me/+sE1dIX31j5w1OWRk
 
 ### Accountability
 
