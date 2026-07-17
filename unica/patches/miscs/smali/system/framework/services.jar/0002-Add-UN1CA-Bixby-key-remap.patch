@@ -4,8 +4,8 @@ Date: Mon, 13 Jul 2026 01:15:00 +0200
 Subject: [PATCH] Dispatch Exynos9810 Bixby scan code through UN1CA selector
 
 ---
- .../server/policy/PhoneWindowManager.smali    | 143 ++++++++++++++++++
- 1 file changed, 143 insertions(+)
+ .../server/policy/PhoneWindowManager.smali    | 150 +++++++++++++++++++
+ 1 file changed, 150 insertions(+)
 
 diff --git a/smali_classes2/com/android/server/policy/PhoneWindowManager.smali b/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
 index e894aa5..315ead9 100644
@@ -48,12 +48,12 @@ index e894aa5..315ead9 100644
      invoke-virtual {v2}, Landroid/view/KeyEvent;->getKeyCode()I
  
      move-result v4
-@@ -16884,6 +16914,113 @@
+@@ -16884,6 +16914,126 @@
      return-void
  .end method
  
 +.method static synthetic unicaBixbyRemap(Lcom/android/server/policy/PhoneWindowManager;)Z
-+    .locals 7
++    .locals 10
 +
 +    const/4 v0, 0x0
 +
@@ -99,21 +99,34 @@ index e894aa5..315ead9 100644
 +
 +    if-ne v3, v6, :not_gemini
 +
-+    const-string v6, "com.google.android.apps.bard"
++    # Open the active VoiceInteraction session itself. Starting VOICE_ASSIST
++    # as an Activity opens Gemini's large/full UI; this call opens Google's
++    # compact FloatyActivity at the bottom, like the stock assistant gesture.
++    new-instance v4, Lcom/android/internal/app/AssistUtils;
 +
-+    invoke-virtual {v4, v6}, Landroid/content/pm/PackageManager;->getLaunchIntentForPackage(Ljava/lang/String;)Landroid/content/Intent;
++    invoke-direct {v4, v1}, Lcom/android/internal/app/AssistUtils;-><init>(Landroid/content/Context;)V
 +
-+    move-result-object v5
++    new-instance v5, Landroid/os/Bundle;
 +
-+    if-nez v5, :have_intent
++    invoke-direct {v5}, Landroid/os/Bundle;-><init>()V
 +
-+    new-instance v5, Landroid/content/Intent;
++    # SHOW_SOURCE_ASSIST_GESTURE (0x4): same source flag SystemUI's
++    # AssistManager passes for the corner-swipe gesture. Without it Gemini
++    # renders GoogleAppVoiceAssistEntrypoint full-screen instead of the
++    # compact floaty bar.
++    const/4 v6, 0x4
 +
-+    const-string v6, "android.intent.action.VOICE_ASSIST"
++    const/4 v7, 0x0
 +
-+    invoke-direct {v5, v6}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
++    const/4 v8, 0x0
 +
-+    goto :have_intent
++    const/4 v9, 0x0
++
++    invoke-virtual/range {v4 .. v9}, Lcom/android/internal/app/AssistUtils;->showSessionForActiveService(Landroid/os/Bundle;ILjava/lang/String;Lcom/android/internal/app/IVoiceInteractionSessionShowCallback;Landroid/os/IBinder;)Z
++
++    move-result v0
++
++    return v0
 +
 +    :not_gemini
 +    const/4 v6, 0x2
