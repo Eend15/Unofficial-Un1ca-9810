@@ -4,7 +4,7 @@
 # Device configuration file for Galaxy S9 (Exynos) (starlte)
 TARGET_NAME="Galaxy S9 (Exynos)"
 TARGET_CODENAME="starlte"
-TARGET_ASSERT_MODEL=("SM-G960F" "SM-G960FD" "SM-G960N")
+TARGET_ASSERT_MODEL=("SM-G960F" "SM-G960F/DS" "SM-G960FD" "SM-G960N")
 TARGET_PLATFORM="exynos9810"
 TARGET_FIRMWARE="SM-G960F/PHN/352410095670563"
 # Temporarily disabled: Samsung's FUS backend currently refuses this

@@ -14,7 +14,6 @@ priv-app/Messages
 
 SYSTEM_DEBLOAT+="
 system/preload/SBrowser
-system/priv-app/GalaxyApps_OPEN
 system/priv-app/SpriteWallpaper
 
 product/app/Gmail2
@@ -29,6 +28,7 @@ system/product/priv-app/Messages
 system/app/GalaxyResourceUpdater
 system/app/GearManagerStub
 system/app/KidsHome_Installer
+system/app/ParentalCare
 system/app/StickerCenter
 system/app/UniversalMDMClient
 system/etc/default-permissions/default-permissions-com.samsung.android.rubin.app.xml

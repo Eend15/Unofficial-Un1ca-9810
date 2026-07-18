@@ -22,7 +22,7 @@ detect_device()
         *N960F*) echo N960F ;;
         *G960N*) echo G960N ;;
         *G965N*) echo G965N ;;
-        *N960N*|*N965N*) echo N960N ;;
+        *N960N*) echo N960N ;;
         *) return 1 ;;
     esac
 }

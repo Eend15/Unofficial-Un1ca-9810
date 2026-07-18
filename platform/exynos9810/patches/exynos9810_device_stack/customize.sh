@@ -2369,8 +2369,23 @@ _EXYNOS9810_APPLY_BOOT_PROPS()
     _EXYNOS9810_SET_PROP_ALL "ro.crypto.state" "encrypted"
     _EXYNOS9810_SET_PROP_ALL "ro.boot.flash.locked" "1"
     _EXYNOS9810_SET_PROP_ALL "ro.surface_flinger.protected_contents" "1"
-    _EXYNOS9810_SET_PROP_ALL "ro.sf.lcd_density" "420"
-    _EXYNOS9810_SET_PROP_ALL "ro.sf.init.lcd_density" "560"
+    # Panel is 1440x2960 on all three, but the diagonal differs, so Samsung
+    # ships the S9 at 360dp width and the larger S9+/Note9 at 411dp. Verified
+    # against each device's stock build.prop:
+    #   SM-G960F (starlte)  480 / 640
+    #   SM-G965F (star2lte) 420 / 560
+    #   SM-N960F (crownlte) 420 / 560
+    # Hardcoding the S9+ value for everything renders the S9 UI ~14% too large.
+    case "$TARGET_CODENAME" in
+        starlte)
+            _EXYNOS9810_SET_PROP_ALL "ro.sf.lcd_density" "480"
+            _EXYNOS9810_SET_PROP_ALL "ro.sf.init.lcd_density" "640"
+            ;;
+        *)
+            _EXYNOS9810_SET_PROP_ALL "ro.sf.lcd_density" "420"
+            _EXYNOS9810_SET_PROP_ALL "ro.sf.init.lcd_density" "560"
+            ;;
+    esac
     _EXYNOS9810_SET_PROP_ALL "ro.gfx.driver.0" "com.samsung.gpudriver.S9MaliG72_90"
 
     _EXYNOS9810_SET_PROP_SYSTEM "persist.sys.usb.config" "mtp,adb"

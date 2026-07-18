@@ -182,7 +182,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
         DuoStub \
         FamilyLinkParentalControls \
         GalaxyResourceUpdater \
-        GalaxyApps_OPEN \
         GalaxyWearable \
         GearManager \
         GearManagerStub \
@@ -198,6 +197,7 @@ _EXYNOS9810_FINAL_DEBLOAT()
         MobileWips \
         MultiControl \
         MyDevice \
+        ParentalCare \
         RubinVersion37 \
         SamsungCloudClient \
         SamsungCalculator \
@@ -247,7 +247,7 @@ _EXYNOS9810_FINAL_DEBLOAT()
         system/preload/SBrowser \
         system/app/DAAgent \
         system/app/KidsHome_Installer \
-        system/priv-app/GalaxyApps_OPEN \
+        system/app/ParentalCare \
         system/priv-app/SecCalculator \
         system/priv-app/SecCalculator2 \
         system/app/SmartSwitchAgent \
@@ -1022,10 +1022,13 @@ PY
 
 _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA()
 {
-    # Install the exact stock One UI 8 v26 build proven on the Exynos9810 device.
-    # This keeps Samsung's own UI/capture controller and pairs it with the
-    # UniHAL and cameraserver compatibility patches that make the persistent
-    # JPEG stream usable.
+    # Keep the exact stock One UI 8 v26 app/cameraserver pair. The v2 UniHAL
+    # payload is byte-identical to the previously working build except for a
+    # tiny hook in unused executable padding: on a cold camera session it
+    # restores Samsung's option-2 flag to the JPEG stream before the existing
+    # buffer-manager repair runs. Without that self-heal, the first photo can
+    # leave JPEG in the repeating preview request, exhaust PIPE_3AA_CAPTURE
+    # (P6), and wedge the provider until reboot.
     local SRC="$MODPATH/native_camera"
     local APK_SRC="$SRC/SamsungCamera.apk"
     local HAL_SRC="$SRC/unihal_main@2.1.so"
@@ -1060,15 +1063,15 @@ _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA()
     }
 
     # Refuse to package a silently replaced or stale payload. These are the
-    # hashes of the exact v26/APK, 32-bit UniHAL and cameraserver combination
-    # validated on the connected star2lte.
+    # hashes of the exact v26/APK, cold-session-safe 32-bit UniHAL and
+    # cameraserver combination.
     [ "$(sha256sum "$APK_SRC" | cut -d ' ' -f 1)" = \
         "e334d42396f4bb0855d1092c89b82be46a1f70f684b3759c98800ffb039e518b" ] || {
         LOGE "Unexpected native SamsungCamera payload hash"
         return 1
     }
     [ "$(sha256sum "$HAL_SRC" | cut -d ' ' -f 1)" = \
-        "33bd98a20181fdd3e1204fd2e152420e8404534407b91e8d457da25acb165980" ] || {
+        "62c55a3f65779160839af2dffc88a07eb48e875abacad49b862d0d8e0c40de16" ] || {
         LOGE "Unexpected native camera UniHAL payload hash"
         return 1
     }
@@ -1078,7 +1081,7 @@ _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA()
         return 1
     }
 
-    LOG "- Installing proven One UI 8 v26 native camera stack"
+    LOG "- Installing One UI 8 v26 native camera stack with cold-session JPEG repair"
 
     # Prevent the global apktool rebuild pass from overwriting this proven APK
     # with an older decoded Camera2-bridge variant.
@@ -1097,8 +1100,8 @@ _EXYNOS9810_FINAL_REPATCH_APPS()
     _EXYNOS9810_FINAL_IMPORT_FUNCTIONS || return 1
 
     # The old patch stack disabled Samsung's capture streams and routed the
-    # shutter through a separate Camera2 bridge. The native UniHAL path is now
-    # proven, so install the exact tested stock-camera/UniHAL pair instead.
+    # shutter through a separate Camera2 bridge. Install the exact stock-camera
+    # pair with the cold-session UniHAL self-heal instead.
     _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA || return 1
 
     _EXYNOS9810_FINAL_RESTORE_BLUETOOTH_LIB || return 1
@@ -1131,7 +1134,7 @@ _EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT()
     LOG "  - Remapped key 703 in $COUNT keylayout file(s) to CAMERA"
 }
 
-_EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT()
+_EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY()
 {
     # zzzz_exynos9810_boot_restore fully wipes and rebuilds $WORK_DIR/vendor
     # from the pristine legacy-port source (rm -rf + cp -a), which runs
@@ -1139,27 +1142,319 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT()
     # patch to a vendor file. This module runs later still, so it's the
     # place that actually survives into the final build.
     #
-    # The Exynos9810 ExynosCamera HAL aborts the whole camera provider
-    # daemon whenever ExynosCamera::flush() has to wait for the pipeline
-    # to leave its RUN state: it polls every 100ms for only ~31 iterations
-    # (~3.1s) before hard-asserting via __android_log_assert(), which
-    # calls abort() and kills
-    # vendor.samsung.hardware.camera.provider@4.0-service outright. This
-    # extends the loop's iteration count from 0x1e (30) to 0xfa (250),
-    # i.e. ~3.1s to ~25.1s, giving the pipeline enough time to settle
-    # instead of aborting. Corresponds to
-    # android::ExynosCamera::m_transitState(), the `case 3`
-    # (EXYNOS_CAMERA_STATE_RUN) branch waiting to reach state 5.
+    # Exiting or backgrounding Portrait can leave the legacy HAL in RUN while
+    # Camera2 is already flushing. The old port workaround merely extended the
+    # wait from ~3.1s to ~25.1s and then still called __android_log_assert(),
+    # killing the entire camera provider and leaving Samsung Camera black.
+    # Restore the stock wait and redirect only its timeout branch to
+    # m_transitState()'s normal state-commit path. That returns success to
+    # ExynosCamera::flush(), which then performs its existing complete pipe,
+    # thread, request-list and buffer cleanup instead of aborting the provider.
     local LIB="$WORK_DIR/vendor/lib/libexynoscamera3.so"
+    local LONG_WAIT
+    local STOCK_WAIT
+    local RECOVER
 
-    if [ -f "$LIB" ] && \
-            xxd -p -c 0 "$LIB" | grep -qi "3a4d06f5296b6ff01e0478447f447d44"; then
-        LOG "- Extending Exynos9810 camera flush() timeout"
-        HEX_PATCH "$LIB" \
-            "3a4d06f5296b6ff01e0478447f447d44" "3a4d06f5296b6ff0fa0478447f447d44" || return 1
-    else
-        LOGW "Exynos9810 camera flush() timeout byte pattern not found for $TARGET_CODENAME, skipping"
+    # Each target overlay installs its own device HAL. The state-machine code
+    # is equivalent, but camera-id/log-context offsets differ between S9 and
+    # S9+/Note9, so keep a context-checked byte sequence for each layout.
+    case "$TARGET_CODENAME" in
+        star2lte|crownlte)
+            LONG_WAIT="39483a4f3a4d06f5296b6ff0fa0478447f447d448146013452d2d6f8c830"
+            STOCK_WAIT="39483a4f3a4d06f5296b6ff01e0478447f447d448146013452d2d6f8c830"
+            RECOVER="39483a4f3a4d06f5296b6ff01e0478447f447d44814601342fd2d6f8c830"
+            ;;
+        starlte)
+            LONG_WAIT="39483a4f3a4d06f6882b6ff0fa0478447f447d448146013452d2d6f8c030"
+            STOCK_WAIT="39483a4f3a4d06f6882b6ff01e0478447f447d448146013452d2d6f8c030"
+            RECOVER="39483a4f3a4d06f6882b6ff01e0478447f447d44814601342fd2d6f8c030"
+            ;;
+        *)
+            LOGE "Unsupported Exynos9810 camera target: $TARGET_CODENAME"
+            return 1
+            ;;
+    esac
+
+    if [ ! -f "$LIB" ]; then
+        LOGE "Exynos9810 camera HAL missing for $TARGET_CODENAME"
+        return 1
     fi
+
+    local RESULT
+    RESULT="$(python3 - "$LIB" "$LONG_WAIT" "$STOCK_WAIT" "$RECOVER" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+long_wait = bytes.fromhex(sys.argv[2])
+stock_wait = bytes.fromhex(sys.argv[3])
+recover = bytes.fromhex(sys.argv[4])
+data = path.read_bytes()
+
+counts = (data.count(long_wait), data.count(stock_wait), data.count(recover))
+if counts == (1, 0, 0):
+    path.write_bytes(data.replace(long_wait, recover, 1))
+    print("patched-long")
+elif counts == (0, 1, 0):
+    path.write_bytes(data.replace(stock_wait, recover, 1))
+    print("patched-stock")
+elif counts == (0, 0, 1):
+    print("present")
+else:
+    print(f"unknown:{counts[0]}:{counts[1]}:{counts[2]}")
+PY
+)" || return 1
+
+    case "$RESULT" in
+        patched-long|patched-stock)
+            LOG "- Making Exynos9810 camera flush timeout recover through full cleanup"
+            ;;
+        present)
+            LOG "- Exynos9810 camera flush recovery already present"
+            ;;
+        *)
+            LOGE "Exynos9810 camera flush recovery pattern mismatch for $TARGET_CODENAME ($RESULT)"
+            return 1
+            ;;
+    esac
+}
+
+_EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME()
+{
+    # The One UI 8 camera sends a normal single-photo request, but the legacy
+    # Exynos9810 HAL independently upgrades low-light scenes to a four-frame
+    # LLS/LLHDR capture. Samsung's newer request lifecycle does not reserve the
+    # extra legacy FLITE buffers: P6 exhausts after the first capture, PIPE_3AA
+    # starts returning -38, and opening QuickView merely exposes the already
+    # wedged session. Route Samsung-camera calls through checkLDCaptureMode()'s
+    # existing disabled/single-frame path. Non-Samsung Camera2 clients already
+    # take that path, so stream configuration and ordinary third-party capture
+    # behavior remain unchanged.
+    local LIB="$WORK_DIR/vendor/lib/libexynoscamera3.so"
+    local ORIGINAL
+    local PATCHED
+
+    # checkLDCaptureMode() is built at a different address for every device
+    # HAL, which changes both branch and BL encodings even though the source
+    # logic is the same. Force its existing disabled/single-frame branch with
+    # a target-specific contextual match.
+    case "$TARGET_CODENAME" in
+        star2lte)
+            ORIGINAL="fcf757f908b307bb204604f58475fef7bbfa"
+            PATCHED="fcf757f908b320e0204604f58475fef7bbfa"
+            ;;
+        starlte)
+            ORIGINAL="fcf75afc08b307bb204604f58475fef715fb"
+            PATCHED="fcf75afc08b320e0204604f58475fef715fb"
+            ;;
+        crownlte)
+            ORIGINAL="fcf7d1f808b307bb204604f58475fef769fa"
+            PATCHED="fcf7d1f808b320e0204604f58475fef769fa"
+            ;;
+        *)
+            LOGE "Unsupported Exynos9810 camera target: $TARGET_CODENAME"
+            return 1
+            ;;
+    esac
+
+    if [ ! -f "$LIB" ]; then
+        LOGE "Exynos9810 camera HAL missing for $TARGET_CODENAME"
+        return 1
+    fi
+
+    local RESULT
+    RESULT="$(python3 - "$LIB" "$ORIGINAL" "$PATCHED" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+old = bytes.fromhex(sys.argv[2])
+new = bytes.fromhex(sys.argv[3])
+data = path.read_bytes()
+
+old_count = data.count(old)
+new_count = data.count(new)
+if old_count == 1 and new_count == 0:
+    path.write_bytes(data.replace(old, new, 1))
+    print("patched")
+elif old_count == 0 and new_count == 1:
+    print("present")
+else:
+    print(f"unknown:{old_count}:{new_count}")
+PY
+)" || return 1
+
+    case "$RESULT" in
+        patched)
+            LOG "- Forcing stable single-frame low-light photo capture on Exynos9810"
+            ;;
+        present)
+            LOG "- Exynos9810 single-frame low-light capture fix already present"
+            ;;
+        *)
+            LOGE "Exynos9810 single-frame LLS byte pattern mismatch for $TARGET_CODENAME ($RESULT)"
+            return 1
+            ;;
+    esac
+}
+
+_EXYNOS9810_FINAL_PATCH_CAMERA_PORTRAIT_RESUME()
+{
+    # Samsung Camera opens camera 0 with shootingmode=0, starts the legacy HAL's
+    # fast-AE thread, and only then supplies the restored Portrait mode (25).
+    # On return from Gallery the fast-AE path programs FLITE first; Portrait's
+    # normal pipeline then repeats VIDIOC_S_FMT and the Exynos9810 driver rejects
+    # it with EINVAL/-38, leaving a black/frozen camera UI while the provider is
+    # still alive. Keep fast-AE for Photo and every existing supported mode, add
+    # Portrait to checkFastenAeStableEnable(), and re-run that check immediately
+    # before the delayed fast-AE thread touches the sensor. By then mode 25 has
+    # arrived, so only Portrait skips the unsafe pre-run.
+    #
+    local LIB="$WORK_DIR/vendor/lib/libexynoscamera3.so"
+    local MODE_ORIGINAL
+    local MODE_PATCHED
+    local THREAD_ORIGINAL
+    local THREAD_PATCHED
+
+    # The three device HALs implement the same fast-AE lifecycle at different
+    # addresses. These blocks were derived from each target's own ARM/Thumb
+    # code; no S9+ instructions are ever copied into the S9 or Note9 binary.
+    case "$TARGET_CODENAME" in
+        star2lte)
+            MODE_ORIGINAL="d4f80801122141f054fb16280cd0d4f80801122141f04dfb172805d0d4f80801022141f034fa"
+            MODE_PATCHED="d4f80801122141f054fb16280cd017280ad0192808d000bf00bf00bfd4f80801022141f034fa"
+            THREAD_ORIGINAL="44f6d630cde900b5029003203649364a79447a4452f01eed"
+            THREAD_PATCHED="d4f8c800800020180069eff7c4fde0b102e000bf00bf00bf"
+            ;;
+        starlte)
+            MODE_ORIGINAL="d4f80801122138f0c4fe16280cd0d4f80801122138f0bdfe172805d0"
+            MODE_PATCHED="d4f80801122138f0c4fe16280cd017280ad0192808d000bf00bf00bf"
+            THREAD_ORIGINAL="44f6d630cde900b5029003203649374a79447a443df0b0ee"
+            THREAD_PATCHED="d4f8c000800020180069f0f71ffae0b102e000bf00bf00bf"
+            ;;
+        crownlte)
+            MODE_ORIGINAL="d4f80801122141f0c2fe16280cd0d4f80801122141f0bbfe172805d0"
+            MODE_PATCHED="d4f80801122141f0c2fe16280cd017280ad0192808d000bf00bf00bf"
+            THREAD_ORIGINAL="44f6d630cde900b5029003203649364a79447a4454f084ed"
+            THREAD_PATCHED="d4f8c800800020180069eff7b0fde0b102e000bf00bf00bf"
+            ;;
+        *)
+            LOGE "Unsupported Exynos9810 camera target: $TARGET_CODENAME"
+            return 1
+            ;;
+    esac
+
+    if [ ! -f "$LIB" ]; then
+        LOGE "Exynos9810 camera HAL missing for $TARGET_CODENAME"
+        return 1
+    fi
+
+    local RESULT
+    RESULT="$(python3 - "$LIB" "$MODE_ORIGINAL" "$MODE_PATCHED" "$THREAD_ORIGINAL" "$THREAD_PATCHED" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+pairs = [
+    ("mode", bytes.fromhex(sys.argv[2]), bytes.fromhex(sys.argv[3])),
+    ("thread", bytes.fromhex(sys.argv[4]), bytes.fromhex(sys.argv[5])),
+]
+data = path.read_bytes()
+changed = []
+
+for name, old, new in pairs:
+    old_count = data.count(old)
+    new_count = data.count(new)
+    if old_count == 1 and new_count == 0:
+        data = data.replace(old, new, 1)
+        changed.append(name)
+    elif old_count == 0 and new_count == 1:
+        pass
+    else:
+        print(f"unknown:{name}:{old_count}:{new_count}")
+        raise SystemExit(2)
+
+for name, old, new in pairs:
+    if data.count(old) != 0 or data.count(new) != 1:
+        print(f"verify-failed:{name}:{data.count(old)}:{data.count(new)}")
+        raise SystemExit(3)
+
+if changed:
+    path.write_bytes(data)
+    print("patched:" + ",".join(changed))
+else:
+    print("present")
+PY
+)" || {
+        LOGE "Exynos9810 Portrait resume patch failed for $TARGET_CODENAME ($RESULT)"
+        return 1
+    }
+
+    case "$RESULT" in
+        patched:*)
+            LOG "- Preventing Exynos9810 Portrait preview failure after returning from Gallery"
+            ;;
+        present)
+            LOG "- Exynos9810 Portrait resume fix already present"
+            ;;
+        *)
+            LOGE "Exynos9810 Portrait resume byte pattern mismatch for $TARGET_CODENAME ($RESULT)"
+            return 1
+            ;;
+    esac
+}
+
+_EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY()
+{
+    # A failed legacy reprocessing frame normally reaches a hard assertion in
+    # m_captureStreamThreadFunc (pipe 205). __android_log_assert() aborts the
+    # entire provider, so every camera client remains broken until Android is
+    # rebooted. Redirect only that exact, context-checked call site to the
+    # function's existing nonfatal cleanup path. The single-frame LLS patch
+    # prevents the known P6 starvation; this remains a last-resort recovery
+    # guard if a malformed frame still reaches the vendor failure branch.
+    local LIB="$WORK_DIR/vendor/lib/libexynoscamera3.so"
+    local ORIGINAL="43f6aa10cde9000600200349044a044b79447a447b4427f0f0ec"
+    local PATCHED="43f6aa10cde9000600200349044a044b79447a447b44fef71dbe"
+
+    if [ ! -f "$LIB" ]; then
+        LOGW "Exynos9810 camera HAL missing for $TARGET_CODENAME, skipping reprocessing recovery"
+        return 0
+    fi
+
+    local RESULT
+    RESULT="$(python3 - "$LIB" "$ORIGINAL" "$PATCHED" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+old = bytes.fromhex(sys.argv[2])
+new = bytes.fromhex(sys.argv[3])
+data = path.read_bytes()
+
+old_count = data.count(old)
+new_count = data.count(new)
+if old_count == 1 and new_count == 0:
+    path.write_bytes(data.replace(old, new, 1))
+    print("patched")
+elif old_count == 0 and new_count == 1:
+    print("present")
+else:
+    print(f"unknown:{old_count}:{new_count}")
+PY
+)" || return 1
+
+    case "$RESULT" in
+        patched)
+            LOG "- Making Exynos9810 camera reprocessing failure recoverable"
+            ;;
+        present)
+            LOG "- Exynos9810 camera reprocessing recovery already present"
+            ;;
+        *)
+            LOGW "Exynos9810 reprocessing recovery byte pattern not found for $TARGET_CODENAME ($RESULT), skipping"
+            ;;
+    esac
 }
 
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES()
@@ -1264,13 +1559,182 @@ else:
 print(removed)
 PY
 )" || return 1
-        [ "$REMOVED" -gt 0 ] 2>/dev/null && LOG "  - ${FILE#$WORK_DIR/}: removed $REMOVED entries"
+        if [ "${REMOVED:-0}" -gt 0 ] 2>/dev/null; then
+            LOG "  - ${FILE#$WORK_DIR/}: removed $REMOVED entries"
+        fi
     done < <(
         find "$APK_DIR/res" "$PRISM_DIR" -type f \
             \( -iname '*workspace*.xml' -o -iname '*application_order*.xml' \
                -o -iname '*suggested*.xml' -o -iname 'restore*.json' \) \
             -print0 2>/dev/null
     )
+
+    # The loop above is the function's last command, so without this its exit
+    # status is whatever the final file's "removed > 0" test returned -- a file
+    # with nothing to prune (which depends purely on find's ordering) would
+    # fail the whole module.
+    return 0
+}
+
+_EXYNOS9810_FINAL_ADD_VISUAL_CLOUD_CORE()
+{
+    # Photo Editor's cloud/AI edit paths call into
+    # com.samsung.android.visual.cloudcore, which the legacy-port source
+    # firmware does not ship at all (it is not debloated anywhere -- it was
+    # simply never present). Previously this was delivered out-of-band as the
+    # UN1CA_9810_Fixphotoeditor TWRP zip; bundle it here so a stock build has
+    # a working photo editor without a second flash.
+    #
+    # Galaxy Store (system/priv-app/GalaxyApps_OPEN) needs no equivalent step:
+    # it exists in the source firmware, so dropping it from the debloat lists
+    # is enough, and its stock permission/sysconfig XMLs are left untouched.
+    local EXPECTED_SHA256="9e698cea74694fd90c1338d17e385d2e969c08fd5a9ec243409d8e09a95a4bdd"
+    local APK_SRC="$MODPATH/visualcloudcore/VisualCloudCore.apk"
+    local XML_SRC="$MODPATH/visualcloudcore/signature-permissions-com.samsung.android.visual.cloudcore.xml"
+    local APK_DST="$WORK_DIR/system/system/app/VisualCloudCore/VisualCloudCore.apk"
+    local XML_DST="$WORK_DIR/system/system/etc/permissions/signature-permissions-com.samsung.android.visual.cloudcore.xml"
+
+    if [ ! -f "$APK_SRC" ] || [ ! -f "$XML_SRC" ]; then
+        LOGE "VisualCloudCore payload is missing"
+        return 1
+    fi
+    if [ "$(sha256sum "$APK_SRC" | cut -d ' ' -f 1)" != "$EXPECTED_SHA256" ]; then
+        LOGE "Unexpected VisualCloudCore payload hash"
+        return 1
+    fi
+
+    LOG "- Adding VisualCloudCore for Photo Editor"
+
+    mkdir -p "$(dirname "$APK_DST")" "$(dirname "$XML_DST")"
+    cp -f "$APK_SRC" "$APK_DST" || return 1
+    cp -f "$XML_SRC" "$XML_DST" || return 1
+    chmod 0644 "$APK_DST" "$XML_DST"
+
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/VisualCloudCore" 0 0 755 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/VisualCloudCore/VisualCloudCore.apk" 0 0 644 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/permissions/signature-permissions-com.samsung.android.visual.cloudcore.xml" 0 0 644 "u:object_r:system_file:s0"
+
+    # Never let a helper's exit status become this function's -- a non-zero
+    # return here fails the whole module and aborts the build.
+    return 0
+}
+
+_EXYNOS9810_FINAL_ADD_VIBRATOR_AIDL_HAL()
+{
+    # The 9810 vendor only ships a HIDL vibrator HAL, but the One UI 8 framework
+    # binds android.hardware.vibrator over AIDL exclusively, so no vibrator ever
+    # registers: hasVibrator() is false, there is no Vibrate mode in Sound
+    # settings and nothing on the device buzzes. A donor AIDL HAL cannot be
+    # reused -- this SoC is ARMv8.0 and modern Samsung vendor binaries use
+    # ARMv8.2+ opcodes, so they SIGILL instantly. This is a small AIDL service
+    # built for armv8-a that drives the kernel's sec_vibrator timed_output nodes
+    # directly; its source sits next to the binary.
+    #
+    # It MUST carry a vendor.samsung.hardware.vibrator.ISehVibrator binder
+    # extension: AidlHalWrapper::supportsHapticEngine() fetches that extension
+    # and loads its vtable without a null check, so publishing a plain AOSP
+    # IVibrator boot-loops system_server during VibratorManagerService.<init>.
+    # The service attaches a stub extension carrying only the right descriptor.
+    #
+    # Lives here rather than in the platform patches because
+    # zzzz_exynos9810_boot_restore rebuilds $WORK_DIR/vendor from the pristine
+    # legacy-port source afterwards, which would discard it.
+    local EXPECTED_SHA256="d7a31ae596f56999c527b53543b1a3d81b668bd9ec14ed339eaf99ddf2e7d4cb"
+    local SRC="$MODPATH/vibrator"
+    local BIN_DST="$WORK_DIR/vendor/bin/hw/unica.vibrator-service"
+    local RC_DST="$WORK_DIR/vendor/etc/init/unica.vibrator.rc"
+    local XML_DST="$WORK_DIR/vendor/etc/vintf/manifest/unica.vibrator.xml"
+
+    if [ ! -f "$SRC/unica.vibrator-service" ] || [ ! -f "$SRC/unica.vibrator.rc" ] || \
+            [ ! -f "$SRC/unica.vibrator.xml" ]; then
+        LOGE "Vibrator AIDL HAL payload is missing"
+        return 1
+    fi
+    if [ "$(sha256sum "$SRC/unica.vibrator-service" | cut -d ' ' -f 1)" != "$EXPECTED_SHA256" ]; then
+        LOGE "Unexpected vibrator AIDL HAL payload hash"
+        return 1
+    fi
+    if [ ! -d "$WORK_DIR/vendor" ]; then
+        LOGW "No vendor partition in work dir, skipping vibrator AIDL HAL"
+        return 0
+    fi
+
+    LOG "- Adding AIDL vibrator HAL (HIDL-only vendor cannot drive One UI 8)"
+
+    mkdir -p "$(dirname "$BIN_DST")" "$(dirname "$RC_DST")" "$(dirname "$XML_DST")"
+    cp -f "$SRC/unica.vibrator-service" "$BIN_DST" || return 1
+    cp -f "$SRC/unica.vibrator.rc" "$RC_DST" || return 1
+    cp -f "$SRC/unica.vibrator.xml" "$XML_DST" || return 1
+    chmod 0755 "$BIN_DST"
+    chmod 0644 "$RC_DST" "$XML_DST"
+
+    # Reuse the stock vibrator HAL's exec label so init runs this in the domain
+    # that already has vibrator sysfs and binder access.
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" "bin/hw/unica.vibrator-service" 0 0 755 \
+        "u:object_r:hal_vibrator_default_exec:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" "etc/init/unica.vibrator.rc" 0 0 644 \
+        "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" "etc/vintf/manifest" 0 0 755 \
+        "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" "etc/vintf/manifest/unica.vibrator.xml" 0 0 644 \
+        "u:object_r:vendor_configs_file:s0"
+
+    # Never let a helper's exit status become this function's -- a non-zero
+    # return here fails the whole module and aborts the build.
+    return 0
+}
+
+_EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN()
+{
+    # crownlte is the only exynos9810 target with a digitizer. unica/patches/spen
+    # already installs the S Pen apps from the b0qxxx prebuilts, because it sees
+    # the S22 source has no S Pen while the Note9 target firmware does. Two things
+    # it does NOT do, and without them every one of those apps stays inert:
+    #
+    #  1. The system feature is never declared. The patch reads
+    #     com.sec.feature.spen_usp_level40.xml out of the *extracted target
+    #     firmware* purely as a detection probe; it never copies it into the ROM.
+    #     /system comes from the S22 source, which has no such file, so
+    #     hasSystemFeature("com.sec.feature.spen_usp") is false and the whole
+    #     S Pen stack disables itself.
+    #
+    #  2. The S Pen floating features are lost. zzzz_exynos9810_boot_restore
+    #     rebuilds vendor from the legacy port (an SM-N770F HXA3 base), which
+    #     carries only FACTORY_SUPPORT_FTL_SPEN_TYPE=none. Verified by diffing a
+    #     built vendor/etc/floating_feature.xml: byte-identical to the legacy
+    #     port's, not the target's.
+    #
+    # Values are verbatim from SM-N960F stock. The digitizer driver is kernel
+    # side (no wacom blobs in either vendor tree), so nothing is needed here for
+    # the hardware path.
+    [[ "$TARGET_CODENAME" == "crownlte" ]] || return 0
+
+    local SRC="$MODPATH/spen/com.sec.feature.spen_usp_level40.xml"
+    local DST="$WORK_DIR/system/system/etc/permissions/com.sec.feature.spen_usp_level40.xml"
+
+    if [ ! -f "$SRC" ]; then
+        LOGE "S Pen feature declaration is missing"
+        return 1
+    fi
+
+    LOG "- Enabling S Pen for crownlte"
+
+    mkdir -p "$(dirname "$DST")"
+    cp -f "$SRC" "$DST" || return 1
+    chmod 0644 "$DST"
+    _EXYNOS9810_FINAL_SET_METADATA "system" \
+        "system/etc/permissions/com.sec.feature.spen_usp_level40.xml" 0 0 644 \
+        "u:object_r:system_file:s0"
+
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_SPEN_VERSION" "40"
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_SUPPORT_BLE_SPEN" "TRUE"
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_BLE_SPEN_SPEC" "crown,button"
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SPEN_ALERT" "TRUE"
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_SPEN_FCC_ID" "A3LEJPN960"
+
+    # Never let a helper's exit status become this function's -- a non-zero
+    # return here fails the whole module and aborts the entire build.
+    return 0
 }
 
 _EXYNOS9810_FINAL_REPATCH_APPS
@@ -1279,5 +1743,11 @@ _EXYNOS9810_FINAL_SET_HOME_LAYOUT
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS
 _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT
-_EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT
+_EXYNOS9810_FINAL_ADD_VISUAL_CLOUD_CORE
+_EXYNOS9810_FINAL_ADD_VIBRATOR_AIDL_HAL
+_EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN
+_EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY
+_EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME
+_EXYNOS9810_FINAL_PATCH_CAMERA_PORTRAIT_RESUME
+_EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY
 _EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT

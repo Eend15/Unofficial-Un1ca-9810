@@ -32,7 +32,6 @@ _EXYNOS9810_TWRP_LITE_PATHS=(
     "system/priv-app/AutoDoodle"
     "system/priv-app/BixbyVisionFramework3.5"
     "system/priv-app/DressRoom"
-    "system/priv-app/GalaxyApps_OPEN"
     "system/priv-app/HashTagService"
     "system/priv-app/Routines"
     "system/priv-app/SamsungCloudClient"

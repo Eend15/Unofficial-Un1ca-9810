@@ -4,7 +4,7 @@
 # Device configuration file for Galaxy Note9 (Exynos) (crownlte)
 TARGET_NAME="Galaxy Note9 (Exynos)"
 TARGET_CODENAME="crownlte"
-TARGET_ASSERT_MODEL=("SM-N960F" "SM-N960FD" "SM-N960N")
+TARGET_ASSERT_MODEL=("SM-N960F" "SM-N960F/DS" "SM-N960FD" "SM-N960N")
 TARGET_PLATFORM="exynos9810"
 TARGET_FIRMWARE="SM-N960F/PHN/351752105470174"
 # Temporarily disabled: Samsung's FUS backend currently refuses this

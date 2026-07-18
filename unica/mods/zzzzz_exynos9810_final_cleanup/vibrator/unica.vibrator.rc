@@ -1,0 +1,26 @@
+# Which sysfs layout the motor exposes depends on the flashed kernel, not the
+# ROM: star2lte's kernel presents the legacy timed_output class, while the
+# legacy-port vendor init targets the LED transient-trigger class. Chown both
+# so the HAL (running as system) can drive whichever one exists -- a chown on a
+# missing path is a harmless no-op, and Samsung's own vibrator rc does the same.
+on early-boot
+    chown system system /sys/class/timed_output/vibrator/enable
+    chown system system /sys/class/timed_output/vibrator/intensity
+    chown system system /sys/class/timed_output/vibrator/haptic_intensities
+    chown system system /sys/class/timed_output/vibrator/motor_type
+    chmod 0660 /sys/class/timed_output/vibrator/intensity
+
+    chown system system /sys/class/leds/vibrator/activate
+    chown system system /sys/class/leds/vibrator/duration
+    chown system system /sys/class/leds/vibrator/intensity
+    chown system system /sys/class/leds/vibrator/haptic_intensities
+    chown system system /sys/class/leds/vibrator/motor_type
+    chmod 0660 /sys/class/leds/vibrator/activate
+    chmod 0660 /sys/class/leds/vibrator/duration
+    chmod 0660 /sys/class/leds/vibrator/intensity
+
+service unica-vibrator-aidl /vendor/bin/hw/unica.vibrator-service
+    class hal
+    user system
+    group system input
+    seclabel u:r:hal_vibrator_default:s0
