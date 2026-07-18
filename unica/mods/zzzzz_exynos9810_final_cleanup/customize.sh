@@ -2,7 +2,7 @@ SKIPUNZIP=1
 
 [ "$TARGET_PLATFORM" = "exynos9810" ] || return 0
 
-EXYNOS9810_KERNELSU_NEXT_APK="${EXYNOS9810_KERNELSU_NEXT_APK:-/mnt/c/Users/Admin/Downloads/KernelSU_Next_v3.1.0_33024-release.apk}"
+EXYNOS9810_KERNELSU_NEXT_APK="${EXYNOS9810_KERNELSU_NEXT_APK:-$MODPATH/kernelsu/KernelSUNext.apk}"
 
 _EXYNOS9810_FINAL_IMPORT_FUNCTIONS()
 {
@@ -174,6 +174,7 @@ _EXYNOS9810_FINAL_DEBLOAT()
         AREmoji \
         AREmojiEditor \
         AvatarEmojiSticker \
+        BeaconManager \
         BixbyVisionFramework3.5 \
         Calculator \
         Chrome \
@@ -186,12 +187,15 @@ _EXYNOS9810_FINAL_DEBLOAT()
         GearManager \
         GearManagerStub \
         GlobalGoals \
+        GoogleFeedback \
         Gmail2 \
         HealthService \
         KidsHome_Installer \
+        KLMSAgent \
         LinkToWindowsService \
         Maps \
         Members \
+        MobileWips \
         MultiControl \
         MyDevice \
         RubinVersion37 \
@@ -199,7 +203,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
         SamsungCalculator \
         SamsungGlobalGoals \
         SamsungHealth \
-        SamsungIntelliVoiceServices \
         SamsungMembers \
         SamsungMembers_Removable \
         SamsungNotes \
@@ -216,10 +219,13 @@ _EXYNOS9810_FINAL_DEBLOAT()
         SoundRecorder \
         SecCalculator \
         SecCalculator2 \
+        StickerCenter \
+        StickerFaceARAvatar \
         VoiceRecorder \
         YouTube \
         YourPhone_P1_5 \
-        YourPhone_Stub; do
+        YourPhone_Stub \
+        knoxanalyticsagent; do
         while IFS= read -r -d '' DIR; do
             _EXYNOS9810_FINAL_DELETE_FOUND_DIR "$DIR"
         done < <(find "$WORK_DIR/system" "$WORK_DIR/product" -type d \
@@ -249,7 +255,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
         system/priv-app/HealthService \
         system/priv-app/LinkToWindowsService \
         system/priv-app/MultiControl \
-        system/priv-app/SamsungIntelliVoiceServices \
         system/priv-app/SamsungSmartSuggestions \
         system/priv-app/SecureFolder \
         system/priv-app/YourPhone_Stub \
@@ -257,7 +262,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
         system/etc/default-permissions/default-permissions-com.samsung.android.rubin.app.xml \
         system/etc/default-permissions/default-permissions-com.samsung.android.smartsuggestions.xml \
         system/etc/permissions/privapp-permissions-com.microsoft.appmanager.xml \
-        system/etc/permissions/privapp-permissions-com.samsung.android.intellivoiceservice.xml \
         system/etc/permissions/privapp-permissions-com.samsung.android.rubin.app.xml \
         system/etc/permissions/privapp-permissions-com.samsung.android.scloud.xml \
         system/etc/permissions/privapp-permissions-com.samsung.android.smartsuggestions.xml \
@@ -267,7 +271,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
         system/etc/permissions/signature-permissions-com.samsung.android.app.notes.xml \
         system/etc/permissions/signature-permissions-com.sec.android.app.kidshome.xml \
         system/etc/permissions/signature-permissions-com.sec.android.app.voicenote.xml \
-        system/etc/sysconfig/samsungintellivoiceservice.xml \
         system/etc/sysconfig/samsungsmartsuggestions.xml \
         system/etc/sysconfig/smartswitch.xml; do
         _EXYNOS9810_FINAL_DELETE_SYSTEM_ENTRY "$REL"
@@ -368,45 +371,59 @@ _EXYNOS9810_FINAL_RAM_TWEAKS()
     done
 }
 
-_EXYNOS9810_FINAL_PRELOAD_KERNELSU_NEXT()
+_EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT()
 {
-    local DST_DIR="$WORK_DIR/system/system/app/KernelSUNext"
-    local DST="$DST_DIR/KernelSUNext.apk"
+    # KernelSU Next's legacy kernel scanner only crowns a manager found as a
+    # normal /data/app/.../base.apk. An otherwise byte-identical APK placed in
+    # /system/app is ignored, leaving the manager without its KernelSU fd and
+    # showing "v2 signature not found in kernel" after every clean boot.
+    #
+    # Keep the official, upstream-signed release outside PackageManager's
+    # system-app scan paths and install it normally after PackageManager is
+    # ready. packages.list then changes, the kernel scanner sees base.apk and
+    # crowns the manager immediately, exactly like a manual adb/package-
+    # installer install.
+    local EXPECTED_SHA256="5bf844d1431127dbb76042e9341de19216fdd7d394c01b3c96cc21216c8c69a5"
+    local PAYLOAD_DIR="$WORK_DIR/system/system/etc/unica/ksunext"
+    local PAYLOAD="$PAYLOAD_DIR/KernelSUNext.apk"
+    local SCRIPT="$WORK_DIR/system/system/bin/unica_ksunext_installer.sh"
+    local RC="$WORK_DIR/system/system/etc/init/unica_ksunext_installer.rc"
+    local SCRIPT_SRC="$MODPATH/kernelsu/unica_ksunext_installer.sh"
+    local RC_SRC="$MODPATH/kernelsu/unica_ksunext_installer.rc"
 
     if [ ! -f "$EXYNOS9810_KERNELSU_NEXT_APK" ]; then
         LOGW "KernelSU Next APK not found: $EXYNOS9810_KERNELSU_NEXT_APK"
-        return 0
+        return 1
+    fi
+    if [ ! -f "$SCRIPT_SRC" ] || [ ! -f "$RC_SRC" ]; then
+        LOGE "KernelSU Next first-boot installer files are missing"
+        return 1
     fi
 
-    LOG "- Preloading KernelSU Next manager after final boot restore"
-    mkdir -p "$DST_DIR"
-    cp -a "$EXYNOS9810_KERNELSU_NEXT_APK" "$DST" || return 1
-    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/KernelSUNext" 0 0 755 "u:object_r:system_file:s0"
-    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/KernelSUNext/KernelSUNext.apk" 0 0 644 "u:object_r:system_file:s0"
-
-    # The manager loads native code (libkernelsu.so, libksud.so, ...) at
-    # startup. A system app installed by simply copying the APK never has its
-    # JNI libs extracted, so MainActivity.onCreate crashes immediately with
-    # UnsatisfiedLinkError ("libkernelsu.so not found") -- this is exactly the
-    # "KernelSU apk crashes on a fresh ROM install" report. Stage the arm64-v8a
-    # libs next to the APK the same way AOSP preloads apps with native code
-    # (see /system/app/PrintSpooler/lib/arm64). The device is 64-bit primary
-    # and this APK ships only arm64-v8a/x86_64, so only arm64 is needed.
-    local LIB_DIR="$DST_DIR/lib/arm64"
-    local SO
-    LOG "- Extracting KernelSU Next native libraries for preload"
-    rm -rf "$DST_DIR/lib"
-    mkdir -p "$LIB_DIR"
-    if ! unzip -o -j -q "$EXYNOS9810_KERNELSU_NEXT_APK" "lib/arm64-v8a/*.so" -d "$LIB_DIR"; then
-        LOGW "Failed to extract KernelSU Next native libs; manager may crash on launch"
-        return 0
+    if [ "$(sha256sum "$EXYNOS9810_KERNELSU_NEXT_APK" | cut -d ' ' -f 1)" != "$EXPECTED_SHA256" ]; then
+        LOGE "Unexpected KernelSU Next v3.1.0 (33024) payload hash"
+        return 1
     fi
-    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/KernelSUNext/lib" 0 0 755 "u:object_r:system_file:s0"
-    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/KernelSUNext/lib/arm64" 0 0 755 "u:object_r:system_file:s0"
-    for SO in "$LIB_DIR"/*.so; do
-        [ -f "$SO" ] || continue
-        _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/KernelSUNext/lib/arm64/$(basename "$SO")" 0 0 644 "u:object_r:system_file:s0"
-    done
+
+    LOG "- Staging KernelSU Next for first-boot /data/app installation"
+
+    # Remove both the earlier platform-stage preload and any decoded copy, so
+    # PackageManager never registers this release as a system application.
+    _EXYNOS9810_FINAL_DELETE_SYSTEM_ENTRY "system/app/KernelSUNext"
+
+    mkdir -p "$PAYLOAD_DIR" "$(dirname "$SCRIPT")" "$(dirname "$RC")"
+    cp -f "$EXYNOS9810_KERNELSU_NEXT_APK" "$PAYLOAD" || return 1
+    cp -f "$SCRIPT_SRC" "$SCRIPT" || return 1
+    cp -f "$RC_SRC" "$RC" || return 1
+
+    chmod 0644 "$PAYLOAD" "$RC"
+    chmod 0755 "$SCRIPT"
+
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/unica" 0 0 755 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/unica/ksunext" 0 0 755 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/unica/ksunext/KernelSUNext.apk" 0 0 644 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/init/unica_ksunext_installer.rc" 0 0 644 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/unica_ksunext_installer.sh" 0 2000 755 "u:object_r:system_file:s0"
 }
 
 _EXYNOS9810_FINAL_SETTINGS_DEVICE_IMAGE()
@@ -1183,7 +1200,6 @@ packages = {
     "com.samsung.android.tvplus",
     "com.samsung.android.game.gamehome",
     "com.samsung.android.arzone",
-    "com.samsung.android.bixby.agent",
     "com.samsung.android.messaging",
     "com.google.android.gm",
     "com.google.android.apps.maps",
@@ -1262,6 +1278,6 @@ _EXYNOS9810_FINAL_DEBLOAT
 _EXYNOS9810_FINAL_SET_HOME_LAYOUT
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS
-_EXYNOS9810_FINAL_PRELOAD_KERNELSU_NEXT
+_EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_TIMEOUT
 _EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT

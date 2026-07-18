@@ -6,7 +6,6 @@ EXYNOS9810_USE_N770_HXA3_VENDOR="${EXYNOS9810_USE_N770_HXA3_VENDOR:-false}"
 EXYNOS9810_VENDOR_FIRMWARE="${EXYNOS9810_VENDOR_FIRMWARE:-SM-N770F_PHN}"
 EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY="${EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY:-false}"
 EXYNOS9810_DISABLE_SETUP_WIZARDS="${EXYNOS9810_DISABLE_SETUP_WIZARDS:-false}"
-EXYNOS9810_KERNELSU_NEXT_APK="${EXYNOS9810_KERNELSU_NEXT_APK:-/mnt/c/Users/Admin/Downloads/KernelSU_Next_v3.0.0_32857-release.apk}"
 EXYNOS9810_USE_LEGACY_RADIO_STACK="${EXYNOS9810_USE_LEGACY_RADIO_STACK:-false}"
 EXYNOS9810_REMOVE_LEGACY_VAULTKEEPER="${EXYNOS9810_REMOVE_LEGACY_VAULTKEEPER:-false}"
 EXYNOS9810_HXA3_VENDOR_BASE_APPLIED=false
@@ -280,6 +279,94 @@ EOF
         "decryptSpBlob(Ljava/lang/String;[B[B)[B" "$DECRYPT_BODY" || return 1
 }
 
+_EXYNOS9810_PATCH_BIXBY_ACCOUNT_SOFTWARE_CRYPTO()
+{
+    local SMALI
+    local BIXBY_KEY_BODY
+    local ACCOUNT_KEY_BODY
+
+    LOG "- Patching Bixby and Samsung Account AES for Exynos9810 keymaster"
+
+    DECODE_APK "system" "system/priv-app/Bixby/Bixby.apk" || return 1
+    SMALI="$(find "$APKTOOL_DIR/system/priv-app/Bixby/Bixby.apk" \
+        -path "*/smali/a/a.smali" | head -n 1)"
+    if [ ! -f "$SMALI" ]; then
+        LOGE "Bixby software-key target smali not found"
+        return 1
+    fi
+
+    BIXBY_KEY_BODY="$(cat <<'EOF'
+    .locals 3
+
+    const-string v0, "UN1CA:Exynos9810:Bixby:software-AES"
+
+    invoke-virtual {v0}, Ljava/lang/String;->getBytes()[B
+
+    move-result-object v0
+
+    const-string v1, "SHA-256"
+
+    invoke-static {v1}, Ljava/security/MessageDigest;->getInstance(Ljava/lang/String;)Ljava/security/MessageDigest;
+
+    move-result-object v1
+
+    invoke-virtual {v1, v0}, Ljava/security/MessageDigest;->digest([B)[B
+
+    move-result-object v0
+
+    new-instance v1, Ljavax/crypto/spec/SecretKeySpec;
+
+    const-string v2, "AES"
+
+    invoke-direct {v1, v0, v2}, Ljavax/crypto/spec/SecretKeySpec;-><init>([BLjava/lang/String;)V
+
+    return-object v1
+EOF
+)"
+    _EXYNOS9810_REPLACE_SMALI_METHOD "$SMALI" \
+        "j()Ljavax/crypto/SecretKey;" "$BIXBY_KEY_BODY" || return 1
+
+    DECODE_APK "system" "system/priv-app/SamsungAccount/SamsungAccount.apk" || return 1
+    SMALI="$(find "$APKTOOL_DIR/system/priv-app/SamsungAccount/SamsungAccount.apk" \
+        -path "*/com/samsung/android/samsungaccount/authentication/data/AESCrypto.smali" | head -n 1)"
+    if [ ! -f "$SMALI" ]; then
+        LOGE "Samsung Account software-key target smali not found"
+        return 1
+    fi
+
+    ACCOUNT_KEY_BODY="$(cat <<'EOF'
+    .locals 3
+
+    const-string v0, "UN1CA:Exynos9810:SamsungAccount:software-AES"
+
+    invoke-virtual {v0}, Ljava/lang/String;->getBytes()[B
+
+    move-result-object v0
+
+    const-string v1, "SHA-256"
+
+    invoke-static {v1}, Ljava/security/MessageDigest;->getInstance(Ljava/lang/String;)Ljava/security/MessageDigest;
+
+    move-result-object v1
+
+    invoke-virtual {v1, v0}, Ljava/security/MessageDigest;->digest([B)[B
+
+    move-result-object v0
+
+    new-instance v1, Ljavax/crypto/spec/SecretKeySpec;
+
+    const-string v2, "AES"
+
+    invoke-direct {v1, v0, v2}, Ljavax/crypto/spec/SecretKeySpec;-><init>([BLjava/lang/String;)V
+
+    return-object v1
+EOF
+)"
+    _EXYNOS9810_REPLACE_SMALI_METHOD "$SMALI" \
+        "getKey(Landroid/content/Context;)Ljavax/crypto/SecretKey;" \
+        "$ACCOUNT_KEY_BODY" || return 1
+}
+
 _EXYNOS9810_PATCH_SEMWIFI_STDP_BOOTLOOP()
 {
     local SMALI
@@ -452,11 +539,10 @@ _EXYNOS9810_WRITE_EXYNOS9810_KEYLAYOUTS()
 key 116   POWER             WAKE
 EOF
 
-    # Bixby button = scancode 703. Stock maps it to WINK (Bixby wake), which
-    # does nothing useful on this port. Map it to CAMERA so a short press
-    # launches the camera app (validated on-device). Keylayout is static, so
-    # this is the fixed hardware action; the UN1CA "Bixby action" dropdown is
-    # cosmetic on top of it (a static .kl can't read a runtime prop).
+    # Bixby button = scancode 703 on starlte, star2lte and crownlte. CAMERA is
+    # only the framework keycode carrier; PhoneWindowManager intercepts the
+    # physical scan code first and dispatches the selected Bixby/Gemini/Camera
+    # action from persist.sys.unica.bixby_action.
     cat > "$KL_DIR/gpio_keys.kl" <<'EOF'
 key 114   VOLUME_DOWN
 key 115   VOLUME_UP
@@ -1485,7 +1571,9 @@ _EXYNOS9810_PATCH_DEBLOATED_FLOATING_FEATURES()
         _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_FRAMEWORK_SUPPORT_SMART_SUGGESTIONS_WIDGET" "FALSE"
         _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_BIXBY_SUPPORT_CUSTOM_WAKEUP" "FALSE"
         _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_BIXBY_SUPPORT_USERKWD_WAKEUP" "FALSE"
-        _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_COMMON_SUPPORT_BIXBY" "FALSE"
+        # Keep the Bixby voice agent available for the physical-key selector.
+        # Vision/AR stays disabled separately below.
+        _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_COMMON_SUPPORT_BIXBY" "TRUE"
         _EXYNOS9810_DELETE_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_BIXBYVISION_CONFIG_FUNCTIONS"
         _EXYNOS9810_DELETE_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_BIXBYVISION_CONFIG_QUICKMEASURE"
     done
@@ -1883,25 +1971,10 @@ _EXYNOS9810_PATCH_SETTINGS_PROVIDER_SETUP_SKIP()
 
 _EXYNOS9810_PRELOAD_KERNELSU_NEXT()
 {
-    local DST_DIR="$WORK_DIR/system/system/app/KernelSUNext"
-    local DST="$DST_DIR/KernelSUNext.apk"
-
-    if [ ! -f "$EXYNOS9810_KERNELSU_NEXT_APK" ]; then
-        LOGW "KernelSU Next APK not found: $EXYNOS9810_KERNELSU_NEXT_APK"
-        return 0
-    fi
-
-    LOG "- Preloading KernelSU Next manager"
-    mkdir -p "$DST_DIR"
-    EVAL "cp -a \"$EXYNOS9810_KERNELSU_NEXT_APK\" \"$DST\"" || return 1
-    _EXYNOS9810_SET_METADATA "system" \
-        "system/app/KernelSUNext" \
-        "/system/app/KernelSUNext" \
-        0 0 755 "u:object_r:system_file:s0"
-    _EXYNOS9810_SET_METADATA "system" \
-        "system/app/KernelSUNext/KernelSUNext.apk" \
-        "/system/app/KernelSUNext/KernelSUNext.apk" \
-        0 0 644 "u:object_r:system_file:s0"
+    # The legacy KernelSU Next scanner only accepts a manager installed as a
+    # normal /data/app base.apk. The final Exynos9810 cleanup stage owns the
+    # first-boot installer; never create a conflicting /system/app preload.
+    LOG "- Deferring KernelSU Next manager to final first-boot installer"
 }
 
 _EXYNOS9810_RESTORE_EXYNOS9810_RADIO_STACK()
@@ -2962,6 +3035,7 @@ _EXYNOS9810_REMOVE_N770_INIT_COLLISIONS
 _EXYNOS9810_DISABLE_SETUP_WIZARDS
 _EXYNOS9810_PATCH_SETTINGS_PROVIDER_SETUP_SKIP
 _EXYNOS9810_PATCH_SERVICES_SP_SOFTWARE_CRYPTO
+_EXYNOS9810_PATCH_BIXBY_ACCOUNT_SOFTWARE_CRYPTO
 _EXYNOS9810_PATCH_SEMWIFI_STDP_BOOTLOOP
 _EXYNOS9810_PATCH_EXTENDED_ETHERNET_BOOTLOOP
 _EXYNOS9810_PATCH_SYSTEMUI_LAUNCHER_PERMISSIONS

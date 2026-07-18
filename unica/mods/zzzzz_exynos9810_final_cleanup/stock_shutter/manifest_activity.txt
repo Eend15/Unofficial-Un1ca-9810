@@ -1,0 +1,1 @@
+        <activity android:excludeFromRecents="true" android:exported="false" android:finishOnTaskLaunch="true" android:launchMode="singleTop" android:name="io.github.unica.stockshutter.CaptureActivity" android:showWhenLocked="true" android:theme="@style/StockShutterTransparentTheme"/>

@@ -1,0 +1,10 @@
+on property:sys.boot_completed=1
+    start unica_ksunext_installer
+
+service unica_ksunext_installer /system/bin/sh /system/bin/unica_ksunext_installer.sh
+    class late_start
+    user root
+    group root system shell
+    disabled
+    oneshot
+    seclabel u:r:su:s0

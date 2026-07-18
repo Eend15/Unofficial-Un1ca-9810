@@ -20,7 +20,6 @@ _EXYNOS9810_TWRP_LITE_PATHS=(
     # Large optional Samsung/AI packages. Keep boot, setup, launcher, camera,
     # camera-side photo processing, phone, settings, keyboard, and Google core
     # services intact.
-    "system/app/BixbyWakeup"
     "system/app/OCRDataProvider"
     "system/app/SamsungTTS"
     "system/app/SamsungWeather"
@@ -31,15 +30,12 @@ _EXYNOS9810_TWRP_LITE_PATHS=(
     "system/app/VisionIntelligence3.7"
     "system/priv-app/AREmoji"
     "system/priv-app/AutoDoodle"
-    "system/priv-app/Bixby"
-    "system/priv-app/BixbyInterpreter"
     "system/priv-app/BixbyVisionFramework3.5"
     "system/priv-app/DressRoom"
     "system/priv-app/GalaxyApps_OPEN"
     "system/priv-app/HashTagService"
     "system/priv-app/Routines"
     "system/priv-app/SamsungCloudClient"
-    "system/priv-app/SamsungIntelliVoiceServices"
     "system/priv-app/SemanticSearchCore"
     "system/priv-app/ShareLive"
     "system/priv-app/StickerFaceARAvatar"
