@@ -877,6 +877,36 @@ _EXYNOS9810_RESTORE_HXA3_VENDOR_CORE()
     done
 }
 
+_EXYNOS9810_FIX_SENSOR_SUBHALS()
+{
+    # Both vendor bases (legacy port and N770F HXA3) ship the sensors@2.0
+    # multihal service, but the legacy port pairs it with the stock Exynos9810
+    # sensor libraries, which are HAL 1.0 modules -- they export
+    # HAL_MODULE_INFO_SYM and not sensorsHalGetSubHal. multihal dlopens every
+    # library listed in etc/sensors/hals.conf, finds no sub-HAL entry point and
+    # registers nothing, so sensorservice reports "No Sensors on the device".
+    # It fails silently: no logcat error, just missing auto brightness, auto
+    # rotation and proximity. The N770F is the same Exynos9810 SSP stack with
+    # HAL 2.0 sub-HALs, so ship its libraries and hals.conf together with the
+    # service. Verified on star2lte: 0 -> 31 sensors.
+    #
+    # Note this drops sensors.bio.so (HRM): the N770F has no heart rate sensor
+    # and there is no 2.0 build of that sub-HAL. It is unusable under multihal
+    # either way, so nothing regresses.
+    local SRC="$EXYNOS9810_PATCH_DIR/sensors2/vendor"
+
+    [ -f "$WORK_DIR/vendor/bin/hw/android.hardware.sensors@2.0-service.multihal" ] || return 0
+
+    if [ ! -d "$SRC" ]; then
+        LOGW "Missing HAL 2.0 sensor sub-HALs: $SRC"
+        return 1
+    fi
+
+    LOG "- Applying N770F HAL 2.0 sensor sub-HALs"
+    _EXYNOS9810_COPY_TREE "$SRC" "$WORK_DIR/vendor" \
+        "vendor" "vendor" "/vendor" "u:object_r:vendor_file:s0" 2000
+}
+
 _EXYNOS9810_RESTORE_HXA3_AI_MODELS()
 {
     $EXYNOS9810_HXA3_VENDOR_BASE_APPLIED || return 0
@@ -3034,6 +3064,7 @@ fi
 _EXYNOS9810_APPLY_BOOT_PROPS
 _EXYNOS9810_RESTORE_HXA3_AI_MODELS
 _EXYNOS9810_RESTORE_HXA3_VENDOR_CORE
+_EXYNOS9810_FIX_SENSOR_SUBHALS
 _EXYNOS9810_APPLY_EXYNOS9810_CAMERA_BRIDGE
 _EXYNOS9810_PATCH_BLUETOOTH_AGENT
 _EXYNOS9810_PATCH_ONEUI8_CAMERA_APP
