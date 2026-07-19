@@ -1553,7 +1553,8 @@ else:
                     changed = True
 
     if removed:
-        ET.indent(tree, space="    ")
+        if hasattr(ET, "indent"):
+            ET.indent(tree, space="    ")
         tree.write(path, encoding="utf-8", xml_declaration=True)
 
 print(removed)
