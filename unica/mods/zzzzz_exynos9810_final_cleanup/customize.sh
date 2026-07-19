@@ -1414,7 +1414,8 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY()
     # prevents the known P6 starvation; this remains a last-resort recovery
     # guard if a malformed frame still reaches the vendor failure branch.
     local LIB="$WORK_DIR/vendor/lib/libexynoscamera3.so"
-    local ORIGINAL="43f6aa10cde9000600200349044a044b79447a447b4427f0f0ec"
+    local ORIGINAL_STAR2="43f6aa10cde9000600200349044a044b79447a447b4427f0f0ec"
+    local ORIGINAL_CROWN="43f6aa10cde9000600200349044a044b79447a447b4429f028ea"
     local PATCHED="43f6aa10cde9000600200349044a044b79447a447b44fef71dbe"
 
     if [ ! -f "$LIB" ]; then
@@ -1423,24 +1424,27 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY()
     fi
 
     local RESULT
-    RESULT="$(python3 - "$LIB" "$ORIGINAL" "$PATCHED" <<'PY'
+    RESULT="$(python3 - "$LIB" "$PATCHED" "$ORIGINAL_STAR2" "$ORIGINAL_CROWN" <<'PY'
 from pathlib import Path
 import sys
 
 path = Path(sys.argv[1])
-old = bytes.fromhex(sys.argv[2])
-new = bytes.fromhex(sys.argv[3])
+new = bytes.fromhex(sys.argv[2])
+originals = [bytes.fromhex(value) for value in sys.argv[3:]]
 data = path.read_bytes()
 
-old_count = data.count(old)
 new_count = data.count(new)
-if old_count == 1 and new_count == 0:
-    path.write_bytes(data.replace(old, new, 1))
+old_counts = [(old, data.count(old)) for old in originals]
+matches = [old for old, count in old_counts if count == 1]
+multi_matches = [count for _, count in old_counts if count > 1]
+
+if len(matches) == 1 and not multi_matches and new_count == 0:
+    path.write_bytes(data.replace(matches[0], new, 1))
     print("patched")
-elif old_count == 0 and new_count == 1:
+elif not matches and not multi_matches and new_count == 1:
     print("present")
 else:
-    print(f"unknown:{old_count}:{new_count}")
+    print(f"unknown:{','.join(str(count) for _, count in old_counts)}:{new_count}")
 PY
 )" || return 1
 
