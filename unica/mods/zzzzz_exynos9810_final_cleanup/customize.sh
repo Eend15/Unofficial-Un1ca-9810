@@ -1878,6 +1878,42 @@ _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN()
         "system/etc/permissions/com.sec.feature.spen_usp_level40.xml" 0 0 644 \
         "u:object_r:system_file:s0"
 
+    # Do not leave Note9 without the small factory-side S Pen silo/eject
+    # receiver. Upstream debloat removes FactoryAirCommandManager globally
+    # because it is factory cruft on non-pen phones, but crownlte uses it as the
+    # bridge for insert/remove handling. Without it the S Pen framework feature
+    # is present but eject events never reach the Samsung S Pen stack reliably.
+    local FACM_SRC=""
+    local TARGET_FW_PATH
+    TARGET_FW_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+    for CANDIDATE in \
+        "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/crownlte/pen/app/FactoryAirCommandManager" \
+        "$FW_DIR/$TARGET_FW_PATH/system/system/app/FactoryAirCommandManager" \
+        "$FW_DIR/SM-N960F_PHN/system/system/app/FactoryAirCommandManager"; do
+        if [ -f "$CANDIDATE/FactoryAirCommandManager.apk" ]; then
+            FACM_SRC="$CANDIDATE"
+            break
+        fi
+    done
+
+    if [ -n "$FACM_SRC" ]; then
+        LOG "- Restoring Note9 FactoryAirCommandManager for S Pen eject events"
+        rm -rf "$WORK_DIR/system/system/app/FactoryAirCommandManager"
+        mkdir -p "$WORK_DIR/system/system/app/FactoryAirCommandManager"
+        cp -f "$FACM_SRC/FactoryAirCommandManager.apk" \
+            "$WORK_DIR/system/system/app/FactoryAirCommandManager/FactoryAirCommandManager.apk" || return 1
+        chmod 0755 "$WORK_DIR/system/system/app/FactoryAirCommandManager"
+        chmod 0644 "$WORK_DIR/system/system/app/FactoryAirCommandManager/FactoryAirCommandManager.apk"
+        _EXYNOS9810_FINAL_SET_METADATA "system" \
+            "system/app/FactoryAirCommandManager" 0 0 755 \
+            "u:object_r:system_file:s0"
+        _EXYNOS9810_FINAL_SET_METADATA "system" \
+            "system/app/FactoryAirCommandManager/FactoryAirCommandManager.apk" 0 0 644 \
+            "u:object_r:system_file:s0"
+    else
+        LOGW "FactoryAirCommandManager source not found; S Pen eject handling may stay broken"
+    fi
+
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_SPEN_VERSION" "40"
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_SUPPORT_BLE_SPEN" "TRUE"
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_BLE_SPEN_SPEC" "crown,button"
