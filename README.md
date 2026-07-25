@@ -20,9 +20,11 @@ The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy 
 
 ## Supported Devices
 
-- Galaxy S9 Exynos (`starlte`, SM-G960F
-- Galaxy S9+ Exynos (`star2lte`, SM-G965F
-- Galaxy Note9 Exynos (`crownlte`, SM-N960F
+- Galaxy S9 Exynos (`starlte`) — SM-G960F, SM-G960FD, SM-G960N
+- Galaxy S9+ Exynos (`star2lte`) — SM-G965F, SM-G965FD, SM-G965N
+- Galaxy Note9 Exynos (`crownlte`) — SM-N960F, SM-N960FD, SM-N960N
+
+Snapdragon models are not supported.
 
 ## Current Base
 
@@ -108,7 +110,7 @@ Notes:
 - Back up EFS, modem, and any important data before you start —
   this ROM is still a porting project.
 - Only flash on supported Exynos9810 models: S9 (`starlte`),
-  S9+ (`star2lte`), Note9 (`crownlte`).
+  S9+ (`star2lte`), and Note9 (`crownlte`) global, dual-SIM, or Korean variants.
   
   Bugs and Notes:
 https://t.me/+sE1dIX31j5w1OWRk
