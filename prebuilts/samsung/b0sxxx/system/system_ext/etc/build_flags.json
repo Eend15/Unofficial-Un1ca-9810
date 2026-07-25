@@ -1,0 +1,4283 @@
+{
+  "flags": [
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ACONFIG_CHECK_API_LEVEL",
+        "namespace": "core_experiments_team_internal",
+        "description": "Control checking the SDK level for exported flags guarding finalized APIs.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ACONFIG_FLAG_DEFAULT_PERMISSION",
+        "namespace": "android_UNKNOWN",
+        "description": "The default permission for all flags",
+        "value": {
+          "Val": {
+            "StringValue": "READ_WRITE"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "READ_ONLY"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ACONFIG_NEW_EXPORTED",
+        "namespace": "core_experiments_team_internal",
+        "description": "Control if generated exported java flag library read from new storage.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ACONFIG_REQUIRE_ALL_READ_ONLY",
+        "namespace": "android_UNKNOWN",
+        "description": "If true, it is an error to set the permission of any aconfig flags to READ_WRITE.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ACONFIG_VALUE_SETS",
+        "namespace": "android_UNKNOWN",
+        "description": "Aconfig value sets assembled by release-config",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "system",
+          "system_ext",
+          "product",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "aconfig_value_set-platform_build_release-root aconfig_value_set-platform_build_release-ap3a aconfig_value_set-platform_build_release-ap4a aconfig_value_set-platform_build_release-bp1a aconfig_value_set-platform_build_release-bp2a"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AIDL_USE_UNFROZEN",
+        "namespace": "android_UNKNOWN",
+        "description": "Enables the use of the unfrozen versions of AIDL interfaces. When this is `False` the libraries of the latest unfrozen version of a stable interface will behave like the last frozen version. When this is `True` the libraries behave like the lastest unfrozen version like they always have.",
+        "value": {
+          "Val": {
+            "BoolValue": true
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_BOOT_JARS_PREBUILT_EXCLUDED_LIST",
+        "namespace": "android_UNKNOWN",
+        "description": "jars need to be excluded from Apex Boot Jars for targets with mainline prebuilts enabled.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_ADBD",
+        "namespace": "android_UNKNOWN",
+        "description": "The contributions made by apexes (source or prebuilts) to the rest of the build.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "adbd.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_ADSERVICES",
+        "namespace": "android_UNKNOWN",
+        "description": "",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "adservices.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_APPSEARCH",
+        "namespace": "android_UNKNOWN",
+        "description": "",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "appsearch.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_ART",
+        "namespace": "android_UNKNOWN",
+        "description": "",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "art.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_BLUETOOTH",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_CAPTIVEPORTALLOGIN",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "captiveportallogin.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_CELLBROADCAST",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "cellbroadcast.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_CONFIGINFRASTRUCTURE",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "configinfrastructure.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_CONNECTIVITY",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "connectivity.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_CONSCRYPT",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "conscrypt.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_CRASHRECOVERY",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_DEVICELOCK",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_DOCUMENTSUIGOOGLE",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "documentsui.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_EXTSERVICES",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "extservices.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_HEALTHFITNESS",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "healthfitness.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_IPSEC",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "ipsec.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_MEDIA",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "media.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_MEDIAPROVIDER",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "mediaprovider.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_MODULE_METADATA",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "modulemetadata.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_NETWORKSTACKGOOGLE",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "networkstack.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_NEURALNETWORKS",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "neuralnetworks.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_NFC",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_ONDEVICEPERSONALIZATION",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "ondevicepersonalization.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_PERMISSION",
+        "namespace": "android_UNKNOWN",
+        "description": "",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "permission.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_PRIMARY_LIBS",
+        "namespace": "android_UNKNOWN",
+        "description": "flag to enable prebuilts for primary libs module (DCLA)",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "primarylibs.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_PROFILING",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_REMOTEKEYPROVISIONING",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "rkpd.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_RESOLV",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "resolv.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_SAMSUNG_LIFEGUARD",
+        "namespace": "android_UNKNOWN",
+        "description": "The contributions made by apexes (source or prebuilts) to the rest of the build.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "lifeguard.samsung.contributions.prebuilt.signed"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_SCHEDULING",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "scheduling.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_SDKEXTENSIONS",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "sdkextensions.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_STATSD",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "statsd.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_SWCODEC",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "swcodec.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_TELEMETRY_TVP",
+        "namespace": "android_UNKNOWN",
+        "description": "flag to enable prebuilts for mainline telemetry tvp",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_TZDATA",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "tzdata.google.contributions.prebuilt"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_UPROBESTATS",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_UWB",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_CONTRIBUTIONS_WIFI",
+        "namespace": "android_UNKNOWN",
+        "description": "Specify whether to use prebuilts or source this module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_MOUNT_DATA_APEX_EARLY",
+        "namespace": "android_UNKNOWN",
+        "description": "Mounts Data APEXes in apexd-bootstrap stage",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APEX_USE_EROFS_PREINSTALLED",
+        "namespace": "android_UNKNOWN",
+        "description": "Uses erofs as a default file system for preinstalled/bundled APEXes.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APKCERTS_INSTALL_ONLY",
+        "namespace": "android_UNKNOWN",
+        "description": "If true, the entries in apkcerts.txt will be limited to the list of installed apps.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_APPSEARCH_ENABLE_ISOLATED_STORAGE",
+        "namespace": "appsearch",
+        "description": "Use isolated storage for user data.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ATTEST_MODULES",
+        "namespace": "hardware_backed_security",
+        "description": "Support attestation of modules",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVATAR_PICKER_APP",
+        "namespace": "android_UNKNOWN",
+        "description": "Move User avatar picker from SettingsLib to preinstalled app.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ALLOW_PREINSTALLED_APPS",
+        "namespace": "android_platform_virtualization",
+        "description": "Enables acces to the AVF APIs to pre-installed apps.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_DEVICE_ASSIGNMENT",
+        "namespace": "android_platform_virtualization",
+        "description": "Enables assigning hardware devices to the guest VMs. If this flag is enabled, then RELEASE_AVF_ENABLE_MICRODROID_VENDOR_MODULES must also be enabled.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_DICE_CHANGES",
+        "namespace": "android_platform_virtualization",
+        "description": "Enables new DICE functionality in Microdroid VMs.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_EARLY_VM",
+        "namespace": "android_platform_virtualization",
+        "description": "Adds supports for VMs in the early boot, before /data mount.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_LLPVM_CHANGES",
+        "namespace": "android_platform_virtualization",
+        "description": "Enables new llPvm functionality in Microdroid VMs.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_MICROFUCHSIA",
+        "namespace": "android_platform_virtualization",
+        "description": "Allows microfuchsia to run on AVF.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_MULTI_TENANT_MICRODROID_VM",
+        "namespace": "android_platform_virtualization",
+        "description": "Enables running multiple payloads in the same Microdroid VM instance.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_NETWORK",
+        "namespace": "android_platform_virtualization",
+        "description": "Adds supports for network functionality in VMs.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_REMOTE_ATTESTATION",
+        "namespace": "android_platform_virtualization",
+        "description": "Enables pVM remote attestation in Microdroid VM.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_TPU_ASSIGNABLE_DEVICE",
+        "namespace": "android_platform_virtualization",
+        "description": "Adds userspace support for assigning TPU device to pVMs",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_VENDOR_MODULES",
+        "namespace": "android_platform_virtualization",
+        "description": "Enables loading vendor modules (both kernel \u0026 userspace) in Microdroid VM.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_VIRT_CPUFREQ",
+        "namespace": "android_platform_virtualization",
+        "description": "Enables Virtual Cpufreq support in Microdroid VM.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_VM_TO_TEE_SERVICES_ALLOWLIST",
+        "namespace": "android_platform_virtualization",
+        "description": "Support for allowing some vms to access vendor smc services (b/360102915)",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_ENABLE_WIDEVINE_PVM",
+        "namespace": "android_platform_virtualization",
+        "description": "Adds supports for Widevine pVM",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_FIX_VM_FILES_STORAGE_LOCATION_b359439878",
+        "namespace": "android_platform_virtualization",
+        "description": "Fixes bug in how VM files are stored in apps data directory (b/359439878)",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_IMPROVE_DEBUGGABLE_VMS",
+        "namespace": "android_platform_virtualization",
+        "description": "Improvements to debuggable VMs (e.g. tracing in guest VMs, earlycon)",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_MICRODROID_KERNEL_VERSION",
+        "namespace": "android_platform_virtualization",
+        "description": "Specify which Microdroid kernel version to use for Microdroid VMs.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "android15_66"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_SUPPORT_CUSTOM_VM_WITH_PARAVIRTUALIZED_DEVICES",
+        "namespace": "android_platform_virtualization",
+        "description": "Enable running custom VMs with paravirtualized devices.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_AVF_SUPPORT_LONG_RUNNING_VMS",
+        "namespace": "android_platform_virtualization",
+        "description": "Improves support for long running VMs",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_AKITA",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for AKITArelease build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_BLUEJAY",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for BLUEJAYrelease build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_CHEETAH",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for CHEETAHrelease build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_FELIX",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for FELIXrelease build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_HUSKY",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for HUSKYrelease build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_LYNX",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for LYNXrelease build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_ORIOLE",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for ORIOLErelease build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_PANTHER",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for PANTHERrelease build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_RAVEN",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for RAVENrelease build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_SHIBA",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for SHIBArelease build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BASE_OS_TANGORPRO",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set ro.build.version.base_os or ro.build.version.emergency_base_os for TANGORPRO release build. The value is set to the last approved build for the device. This is required for the SMR/EMR build to be recognized by the Partner Approvals portal.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BINDER_DEATH_RECIPIENT_WEAK_FROM_JNI",
+        "namespace": "android_UNKNOWN",
+        "description": "If enabled, DeathRecipient is not strongly referenced from JNI.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BLUETOOTH_SOCKET_SERVICE",
+        "namespace": "android_UNKNOWN",
+        "description": "Enables Bluetooth Socket Service",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BOARD_API_LEVEL",
+        "namespace": "android_UNKNOWN",
+        "description": "The API level of current vendor API surface. It has YYYYMM format.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "202504"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BOARD_API_LEVEL_FROZEN",
+        "namespace": "android_UNKNOWN",
+        "description": "Set to True to freeze the board API level with vendor FRC",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BPF_ENABLE_LIBBPF",
+        "namespace": "android_UNKNOWN",
+        "description": "Enables Libbpf support in bpfloader.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BUILD_FLAGS_IN_PROTOBUF",
+        "namespace": "android_UNKNOWN",
+        "description": "Enable protobuf version of build flag processing. When true, the canonical source of truth for build flags is in the protobuf version of the data.",
+        "value": {
+          "Val": {
+            "BoolValue": true
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BUILD_PURGE_PRODUCT_ADB_KEYS",
+        "namespace": "android_UNKNOWN",
+        "description": "Remove product ADB keys from the build",
+        "value": {
+          "Val": {
+            "BoolValue": true
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_BUILD_USE_VARIANT_FLAGS",
+        "namespace": "android_UNKNOWN",
+        "description": "Whether to use BUILD_VARIANT overrides if available",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_CAR_FRAMEWORK_WATCHDOG_FLASHMEMORY_REFACTOR",
+        "namespace": "car_framework",
+        "description": "b/394348457: Controls CarWatchdog refactoring to extract flash memory protection feature.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_CAR_SYS_EXP_TOS_RESTRICTIONS",
+        "namespace": "car_sys_exp",
+        "description": "b/374362100: This flag controls the terms of service restriction experience in auto.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_CRASHRECOVERY_FILE_MOVE",
+        "namespace": "android_UNKNOWN",
+        "description": "If true, then files are moved from platform to apex",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_CRASHRECOVERY_MODULE",
+        "namespace": "modularization",
+        "description": "If true, then crashrecovery module is enabled as an apex",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_CREATE_ACONFIG_STORAGE_FILE",
+        "namespace": "android_UNKNOWN",
+        "description": "Enable build system to create new aconfig storage files.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_DEFAULT_MODULE_BUILD_FROM_SOURCE",
+        "namespace": "android_UNKNOWN",
+        "description": "The behavior for the tree wrt building mainline modules or using prebuilts",
+        "value": {
+          "Val": {
+            "BoolValue": true
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_DEFAULT_UPDATABLE_MODULE_VERSION",
+        "namespace": "android_UNKNOWN",
+        "description": "Use this flag to set version code for updatable apk and apex. This version code will be used only if the version field in module's manifest file is set to 0.",
+        "value": {
+          "Val": {
+            "StringValue": "352090000"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "360499999"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_DEPRECATE_VNDK",
+        "namespace": "android_UNKNOWN",
+        "description": "feature flag to deprecate VNDK",
+        "value": {
+          "Val": {
+            "BoolValue": true
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_DISABLE_SYSTEM_ACONFIGD_SOCKET",
+        "namespace": "android_UNKNOWN",
+        "description": "Control if we should turn on system aconfigd socket.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_DISABLE_VERIFY_OVERLAPS_CHECK",
+        "namespace": "android_UNKNOWN",
+        "description": "Disable verify_overlaps check for mainline prebuilts. Only used in non-AOSP builds.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_DOCUMENTSUI_BUNDLE",
+        "namespace": "documentsui",
+        "description": "If true, then DocumentsUI is enabled as an apex",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ENABLE_COMPOSE_IN_LAUNCHER",
+        "namespace": "launcher",
+        "description": "b/346290823: Flag to enable Jetpack Compose dependencies in Launcher.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ENABLE_MAINLINE_ACONFIGD_SOCKET",
+        "namespace": "android_UNKNOWN",
+        "description": "Control if we should turn on mainline aconfigd socket.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_EXPORTED_FLAG_CHECK",
+        "namespace": "core_experiments_team_internal",
+        "description": "Control checking exported flag only for API",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_EXTERNAL_TC3_DEBUG",
+        "namespace": "android_UNKNOWN",
+        "description": "Enables assertions and verbose logging in libtextclassifier.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_FINGERPRINT_ACONFIG_PACKAGES",
+        "namespace": "core_experiments_team_internal",
+        "description": "Control using fingerprints to guard cross-package reads.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_FRAMEWORK_NATIVE_POWER_NOTIFICATIONS",
+        "namespace": "car_framework",
+        "description": "b/377528743: Enables notifications to be sent to native listeners for power state changes",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_HARDWARE_AUDIO_USE_CAP_AIDL",
+        "namespace": "media_audio",
+        "description": "Enables use of Configurable Audio Policy via AIDL HAL. When the flag is 'false' the framework falls back to loading the CAP config directly from the vendor partition (as it used to be with HIDL).",
+        "value": {
+          "Val": {
+            "BoolValue": true
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_HARDWARE_BLUETOOTH_RANGING_SERVICE",
+        "namespace": "android_UNKNOWN",
+        "description": "Enables Bluetooth Ranging Service",
+        "value": {
+          "Val": {
+            "BoolValue": true
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_HC_PHR_FHIR_STRUCTURAL_VALIDATION",
+        "namespace": "health_fitness_aconfig",
+        "description": "This flag guards adding java_resources to the Health Connect service for PHR FHIR structural validation",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_HIDDEN_API_EXPORTABLE_STUBS",
+        "namespace": "android_UNKNOWN",
+        "description": "b/319697968: Flag to determine the dependency of hiddenapi to the stubs that contain all flagged apis (\"everything\" stubs), or to the stubs that contain only the enabled flagged apis (\"exportable\" stubs).",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_INSTALL_APEX_SYSTEMSERVER_DEXPREOPT_SAME_PARTITION",
+        "namespace": "android_UNKNOWN",
+        "description": "If true, the dexpreopt files of apex system server jars will be installed in the same partition as the apex.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_IS_EMR",
+        "namespace": "android_UNKNOWN",
+        "description": "Set this flag to true to mark a release build as EMR (Emergency Maintenance Release).",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_IS_SMR",
+        "namespace": "android_UNKNOWN",
+        "description": "Set this flag to true to mark a release build as SMR (Security Maintenance Release).",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_KOTLIN_LANG_VERSION",
+        "namespace": "android_UNKNOWN",
+        "description": "Which Kotlin Language version to target.",
+        "value": {
+          "Val": {
+            "StringValue": "1.9"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "2"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_LARGE_SYSTEM_PROPERTY_NODE",
+        "namespace": "android_UNKNOWN",
+        "description": "Allow system property storage node to be 1M to accomodate aconfig flags.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_LIBBINDER_ADDSERVICE_CACHE",
+        "namespace": "system_performance",
+        "description": "Enables caching in libbinder when registering a service.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_LIBBINDER_CLIENT_CACHE",
+        "namespace": "system_performance",
+        "description": "Enables caching in libbinder for client side when it is True.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_LIBBINDER_REMOVE_CACHE_STATIC_LIST",
+        "namespace": "system_performance",
+        "description": "Remove the static list from cache and use flags instead",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_LIBPOWER_NO_LOCK_BINDER_TXN",
+        "namespace": "android_UNKNOWN",
+        "description": "b/343527537: Flag to defer acquiring libpower lock until after binder transaction to optimize wake lock acquisition.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_MAINLINE_MODULE_PREBUILT_VERSION",
+        "namespace": "android_UNKNOWN",
+        "description": "The version of mainline prebuilts used when prebuilts are enabled.",
+        "value": {
+          "Val": {
+            "StringValue": "mainline_module_prebuilt_nightly"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "mainline_module_prebuilt_nightly"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_MEMORY_MANAGEMENT_DAEMON",
+        "namespace": "system_performance",
+        "description": "Enables Memory Management Daemon in system image.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_MOVE_PDFRENDERER_TO_MODULE",
+        "namespace": "android_UNKNOWN",
+        "description": "If true, then files are moved from platform to apex",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_MOVE_VCN_TO_MAINLINE",
+        "namespace": "vcn",
+        "description": "If true, build VCN in the Tethering module",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_NDK_ABI_MONITORED",
+        "namespace": "android_UNKNOWN",
+        "description": "Enables ABI monitoring of NDK libraries.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_NEXUS_LAUNCHER_USE_SPEED_PROFILE",
+        "namespace": "launcher",
+        "description": "b/400412521: Flag to use speed profile in Nexus Launcher.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_NFC_MAINLINE_MODULE",
+        "namespace": "nfc",
+        "description": "b/368405832: Flag to enable NFC mainline module",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ONDEVICE_INTELLIGENCE_MODULE",
+        "namespace": "ondeviceintelligence",
+        "description": "If true, then files are moved from platform to apex",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_EMOJI_FONT_VERSION",
+        "namespace": "text",
+        "description": "Version of the emoji font file.",
+        "value": {
+          "Val": {
+            "StringValue": "2.042"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "2.047"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_FLAG_EMOJI_FONT_VERSION",
+        "namespace": "text",
+        "description": "Version of the flag emoji font file.",
+        "value": {
+          "Val": {
+            "StringValue": "2.034"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "2.047"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_HEBREW_FONT_VERSION",
+        "namespace": "android_UNKNOWN",
+        "description": "Version of the Hebrew font file.",
+        "value": {
+          "Val": {
+            "StringValue": "1.04"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "1.04"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_HENTAIGANA_FONT",
+        "namespace": "android_UNKNOWN",
+        "description": "This flag will control of including Japanese variant (Hentaigana) font.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_LIBSQLITE3",
+        "namespace": "android_UNKNOWN",
+        "description": "The sqlite release.",
+        "value": {
+          "Val": {
+            "StringValue": "3420000"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "3440300"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_MESSAGEQUEUE_IMPLEMENTATION",
+        "namespace": "system_performance",
+        "description": "Which MessageQueue implementation to use.",
+        "value": {
+          "Val": {
+            "StringValue": "LegacyMessageQueue/MessageQueue.java"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "CombinedMessageQueue/MessageQueue.java"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_NFC_STACK",
+        "namespace": "android_UNKNOWN",
+        "description": "b/292140387: Flag to switch to the new NFC apex",
+        "value": {
+          "Val": {
+            "StringValue": "NfcNci"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "NfcNci"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_NOTO_SANS_KHMER_VERSION",
+        "namespace": "text",
+        "description": "Version of the Noto Sans Khmer font.",
+        "value": {
+          "Val": {
+            "StringValue": "1.901"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "2.004"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_PROFILING_MODULE",
+        "namespace": "android_UNKNOWN",
+        "description": "Flag will control the release of the Profiling module apex.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_SOUND_PICKER",
+        "namespace": "android_UNKNOWN",
+        "description": "This flag will control the rollout of new versions of the SoundPicker app.",
+        "value": {
+          "Val": {
+            "StringValue": "SoundPicker"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "SoundPicker"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_TZDATA_MODULE",
+        "namespace": "android_UNKNOWN",
+        "description": "tzdata to be installed to the system image.",
+        "value": {
+          "Val": {
+            "StringValue": "com.android.tzdata"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "com.android.tzdata"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_VARIABLE_NOTO_SANS_CJK",
+        "namespace": "android_UNKNOWN",
+        "description": "True for using variable font of the NotoSansCJK",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_VIRTUAL_CAMERA",
+        "namespace": "android_UNKNOWN",
+        "description": "The name of the virtual camera package to add to the system partition.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "virtual_camera"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PACKAGE_WEBVIEW_VERSION",
+        "namespace": "webview",
+        "description": "The version of WebView to include in the build",
+        "value": {
+          "Val": {
+            "StringValue": "128.0.6613.88"
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "product",
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "133.0.6943.137"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_BASE_SDK_EXTENSION_VERSION",
+        "namespace": "android_sdk",
+        "description": "The sdk extension version that shipped with current RELEASE_PLATFORM_SDK_VERSION. This flag is only updated when RELEASE_PLATFORM_SDK_VERSION is updated.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_MIN_SUPPORTED_TARGET_SDK_VERSION",
+        "namespace": "android_UNKNOWN",
+        "description": "Used to set minimum supported target sdk version. Apps targeting sdk version lower than the set value will result in a warning being shown when any activity from the app is started.",
+        "value": {
+          "Val": {
+            "StringValue": "28"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "28"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_SDK_EXTENSION_VERSION",
+        "namespace": "android_sdk",
+        "description": "The sdk extension version of this release configuration.",
+        "value": {
+          "Val": {
+            "StringValue": "12"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "17"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_SDK_VERSION",
+        "namespace": "android_sdk",
+        "description": "The SDK version of the platform, e.g. 34 for UDC. This should only be increased when the API is finalized and the codename is set to rel, not during development.",
+        "value": {
+          "Val": {
+            "StringValue": "34"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "36"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_SDK_VERSION_FULL",
+        "namespace": "android_sdk",
+        "description": "The major and minor SDK versions of the platform, e.g. 35.0 or 123.45. This should only be modified when the SDK API is finalized.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "36.0"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_SECURITY_PATCH",
+        "namespace": "android_UNKNOWN",
+        "description": "Used to indicate the security patch that has been applied to the device. It must signify that the build includes all security patches issued up through the designated Android Public Security Bulletin. It must be of the form \"YYYY-MM-DD\" on production devices. It must match one of the Android Security Patch Level strings of the Public Security Bulletins. If there is no $PLATFORM_SECURITY_PATCH set, keep it empty.",
+        "value": {
+          "Val": {
+            "StringValue": "2025-08-01"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "2026-05-05"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_VERSION",
+        "namespace": "android_UNKNOWN",
+        "description": "The platform version. This is the 4 letter code, e.g. UD1A, UPB1, ZP1A, etc.",
+        "value": {
+          "Val": {
+            "StringValue": "ZP1A"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "BP2A"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_VERSION_ALL_CODENAMES",
+        "namespace": "android_sdk",
+        "description": "A comma separated list of all codenames that are in preview. This variable is sort of a lie for historical reasons and only includes codenames up to and including the currently active codename",
+        "value": {
+          "Val": {
+            "StringValue": "VanillaIceCream"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "REL"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_VERSION_ALL_PREVIEW_CODENAMES",
+        "namespace": "android_sdk",
+        "description": "A comma separated list of all preview codenames the platform will accept apps built against",
+        "value": {
+          "Val": {
+            "StringValue": "VanillaIceCream"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "REL"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_VERSION_CODENAME",
+        "namespace": "android_sdk",
+        "description": "Set to REL for production platform builds, otherwise the codename string, e.g. UpsideDownCake or VanillaIceCream",
+        "value": {
+          "Val": {
+            "StringValue": "VanillaIceCream"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "REL"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_VERSION_KNOWN_CODENAMES",
+        "namespace": "android_sdk",
+        "description": "A comma separated list of all known codenames. For REL (finalized) configurations, it has to only contain finalized codenames.",
+        "value": {
+          "Val": {
+            "StringValue": "Base,Base11,Cupcake,Donut,Eclair,Eclair01,EclairMr1,Froyo,Gingerbread,GingerbreadMr1,Honeycomb,HoneycombMr1,HoneycombMr2,IceCreamSandwich,IceCreamSandwichMr1,JellyBean,JellyBeanMr1,JellyBeanMr2,Kitkat,KitkatWatch,Lollipop,LollipopMr1,M,N,NMr1,O,OMr1,P,Q,R,S,Sv2,Tiramisu,UpsideDownCake,VanillaIceCream"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "Base,Base11,Cupcake,Donut,Eclair,Eclair01,EclairMr1,Froyo,Gingerbread,GingerbreadMr1,Honeycomb,HoneycombMr1,HoneycombMr2,IceCreamSandwich,IceCreamSandwichMr1,JellyBean,JellyBeanMr1,JellyBeanMr2,Kitkat,KitkatWatch,Lollipop,LollipopMr1,M,N,NMr1,O,OMr1,P,Q,R,S,Sv2,Tiramisu,UpsideDownCake,VanillaIceCream,Baklava"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_VERSION_LAST_STABLE",
+        "namespace": "android_sdk",
+        "description": "The last stable version name of the platform that was released.  During development, this stays at that previous version, while the codename indicates further work based on the previous version.",
+        "value": {
+          "Val": {
+            "StringValue": "14"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "16"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_PLATFORM_VNDK_VERSION",
+        "namespace": "android_UNKNOWN",
+        "description": "The PLATFORM_VNDK_VERSION will be set to this version when the PLATFORM_VERSION_CODENAME is REL. This VNDK version flag will be removed when the VNDK is deprecated",
+        "value": {
+          "Val": {
+            "StringValue": "35"
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "35"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_R8_FULL_MODE_BY_DEFAULT",
+        "namespace": "system_performance",
+        "description": "feature flag for enabling R8 full mode by default for all build targets",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_R8_GLOBAL_CHECK_NOT_NULL_FLAGS",
+        "namespace": "system_performance",
+        "description": "Enables use of global -convertchecknotnull R8 flags by default",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_R8_ONLY_RUNTIME_VISIBLE_ANNOTATIONS",
+        "namespace": "system_performance",
+        "description": "feature flag for only retaining runtime visible annotations in R8",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_R8_STORE_STORE_FENCE_CONSTRUCTOR_INLINING",
+        "namespace": "system_performance",
+        "description": "feature flag for enabling more aggressive constructor inlining in R8",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_RANGING_STACK",
+        "namespace": "uwb",
+        "description": "b/331206299: Flag to add new generic ranging API surface",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_READ_FROM_NEW_STORAGE",
+        "namespace": "android_UNKNOWN",
+        "description": "Control if we should read from new storage.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_READ_FROM_NEW_STORAGE_CC",
+        "namespace": "android_UNKNOWN",
+        "description": "Enable reading from new storage from C/C++ aconfig flag codegen.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_REMOVE_LEGACY_EMOJI_FONT",
+        "namespace": "android_UNKNOWN",
+        "description": "feature flag for removing legacy emoji font from system image.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": "True"
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SELINUX_DATA_DATA_IGNORE",
+        "namespace": "android_UNKNOWN",
+        "description": "Ignore /data/data relabelling in libselinux.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SEPOLICY_RESTRICT_KERNEL_KEYRING_SEARCH",
+        "namespace": "hardware_backed_security",
+        "description": "Remove unnecessary kernel keyring search capability from generic domain",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SERVICE_WIFI_SPEED_PROFILE_ART_COMPILATION",
+        "namespace": "art_performance",
+        "description": "b/241823638: Flag to enable ART Speed Profile compilation for WIFI module service.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SM_OPEN_DECLARED_PASSTHROUGH_HAL",
+        "namespace": "android_UNKNOWN",
+        "description": "feature flag for a new API to open declared passthrough HAL",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SOONG_ONLY_CUTTLEFISH",
+        "namespace": "android_UNKNOWN",
+        "description": "Enables building cuttlefish devices with soong-only (no make) builds",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SUPERVISION_SERVICE",
+        "namespace": "supervision",
+        "description": "Include SupervisionService in the build",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SYSTEM_FEATURE_AUTOMOTIVE",
+        "namespace": "android_UNKNOWN",
+        "description": "System feature version for: android.hardware.type.automotive",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SYSTEM_FEATURE_EMBEDDED",
+        "namespace": "android_UNKNOWN",
+        "description": "System feature version for: android.hardware.type.embedded",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SYSTEM_FEATURE_LEANBACK",
+        "namespace": "android_UNKNOWN",
+        "description": "System feature version for: android.software.leanback",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SYSTEM_FEATURE_PC",
+        "namespace": "android_UNKNOWN",
+        "description": "System feature version for: android.hardware.type.pc",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SYSTEM_FEATURE_TELEVISION",
+        "namespace": "android_UNKNOWN",
+        "description": "System feature version for: android.hardware.type.television",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_SYSTEM_FEATURE_WATCH",
+        "namespace": "android_UNKNOWN",
+        "description": "System feature version for: android.hardware.type.watch",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 3,
+        "containers": [
+          "system"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_TARGET_JAVA_21",
+        "namespace": "core_libraries",
+        "description": "Control if we should target java 21.",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_UI_SOUNDS_DIR",
+        "namespace": "systemui",
+        "description": "Specify an alternate location for UI sounds.",
+        "value": {
+          "Val": {
+            "StringValue": ""
+          }
+        },
+        "workflow": 2,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "StringValue": ""
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_UNLOCKED_STORAGE_API",
+        "namespace": "android_UNKNOWN",
+        "description": "flag to enable the unlocked-only storage API's SEPolicy rules",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_UPROBESTATS_MODULE",
+        "namespace": "system_performance",
+        "description": "If true, then uprobestats module is enabled as an apex",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_USE_DEX_V41",
+        "namespace": "android_UNKNOWN",
+        "description": "feature flag for enabling new DEX file format (v41)",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_USE_OPTIMIZED_RESOURCE_SHRINKING_BY_DEFAULT",
+        "namespace": "android_UNKNOWN",
+        "description": "feature flag for enabling optimized_shrink_resources: true by default",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": null
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_USE_RESOURCE_PROCESSOR_BY_DEFAULT",
+        "namespace": "android_UNKNOWN",
+        "description": "feature flag for enabling use_resource_processor: true by default",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_USE_SYSTEM_FEATURE_BUILD_FLAGS",
+        "namespace": "system_performance",
+        "description": "Enable use of system feature build-time flags and codegen.",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_USE_TRANSITIVE_JARS_IN_CLASSPATH",
+        "namespace": "android_UNKNOWN",
+        "description": "feature flag for enabling building with transitive classpaths",
+        "value": {
+          "Val": {
+            "UnspecifiedValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": true
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_USE_WEBVIEW_BOOTSTRAP_MODULE",
+        "namespace": "android_UNKNOWN",
+        "description": "b/318717084 - enable the WebViewBootstrap mainline module",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_WRITE_APPCOMPAT_OVERRIDE_SYSTEM_PROPERTIES",
+        "namespace": "android_UNKNOWN",
+        "description": "flag to enable the writing of appcompat override system properties. Not expected to go beyond trunk",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ZUMAPRO_TARGET_ARCH_VARIANT_ARMV92",
+        "namespace": "system_performance",
+        "description": "Build code for Tensor G4 (Zuma Pro) as ARMv9.2-A instead of ARMv8.2-A",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    },
+    {
+      "flag_declaration": {
+        "name": "RELEASE_ZUMA_TARGET_ARCH_VARIANT_ARMV9",
+        "namespace": "system_performance",
+        "description": "Build code for Tensor G3 (Zuma) as ARMv9-A instead of ARMv8.2-A",
+        "value": {
+          "Val": {
+            "BoolValue": false
+          }
+        },
+        "workflow": 1,
+        "containers": [
+          "product",
+          "system",
+          "system_ext",
+          "vendor"
+        ]
+      },
+      "value": {
+        "Val": {
+          "BoolValue": false
+        }
+      }
+    }
+  ]
+}

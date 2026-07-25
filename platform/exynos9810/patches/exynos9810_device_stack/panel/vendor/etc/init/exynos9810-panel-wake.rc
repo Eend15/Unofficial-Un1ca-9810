@@ -1,0 +1,5 @@
+on property:sys.boot_completed=1
+    write /sys/class/lcd/panel/alpm 0
+
+on property:debug.tracing.screen_state=2
+    write /sys/class/lcd/panel/alpm 0

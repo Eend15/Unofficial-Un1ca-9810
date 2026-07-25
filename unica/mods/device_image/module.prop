@@ -1,0 +1,4 @@
+id=device_image
+name=Device Image
+author=Eend15
+description=Forces the About phone device image to fetch the correct Exynos9810 model from SCPM instead of the spoofed S22 identity.

@@ -1,0 +1,4 @@
+id=spen
+name=S Pen blobs
+author=salvogiangri
+description=Adds S Pen blobs if target device is capable.

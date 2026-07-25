@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Declares the S Pen system feature for crownlte (Galaxy Note9).
+
+     Copied verbatim from SM-N960F stock firmware
+     (/system/etc/permissions/com.sec.feature.spen_usp_level40.xml).
+     Level 40 matches SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_SPEN_VERSION=40
+     in the Note9's own floating_feature.xml.
+-->
+<permissions>
+    <feature name="com.sec.feature.spen_usp" version="40"/>
+</permissions>

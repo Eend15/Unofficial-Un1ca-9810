@@ -1,0 +1,5 @@
+/product u:object_r:system_file:s0
+/product/overlay u:object_r:system_file:s0
+/product/overlay/SoftapOverlay6GHz u:object_r:system_file:s0
+/product/overlay/SoftapOverlay6GHz/SoftapOverlay6GHz\.apk u:object_r:system_file:s0
+/product/overlay/UwbRROverlay\.apk u:object_r:system_file:s0

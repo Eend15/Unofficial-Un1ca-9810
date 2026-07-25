@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# Copyright (c) 2023 Salvo Giangreco
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+set -e
+
+#[
+source "$SRC_DIR/scripts/utils/module_utils.sh" || exit 1
+
+APPLY_MODULE()
+{
+    local MODPATH="$1"
+    local MODNAME
+    local MODAUTH
+
+    if [ ! -d "$MODPATH" ]; then
+        LOGE "Folder not found: ${MODPATH//$SRC_DIR\//}"
+        return 1
+    fi
+
+    if [ -d "$MODPATH/$TARGET_OS_SINGLE_SYSTEM_IMAGE" ]; then
+        MODPATH="$MODPATH/$TARGET_OS_SINGLE_SYSTEM_IMAGE"
+    fi
+
+    if [ ! -f "$MODPATH/module.prop" ]; then
+        LOGE "File not found: ${MODPATH//$SRC_DIR\//}/module.prop"
+        return 1
+    elif [ -f "$MODPATH/disable" ]; then
+        return 0
+    else
+        MODNAME="$(grep "^name" "$MODPATH/module.prop" | sed "s/name=//")"
+        MODAUTH="$(grep "^author" "$MODPATH/module.prop" | sed "s/author=//" | sed "s/, /, @/g")"
+    fi
+
+    LOG_STEP_IN "- Processing \"$MODNAME\" by @$MODAUTH"
+
+    if ! grep -q "^SKIPUNZIP=1$" "$MODPATH/customize.sh" 2> /dev/null; then
+        if [ -d "$MODPATH/odm" ]; then
+            ADD_TO_WORK_DIR "$MODPATH" "odm" "." 0 0 755 "u:object_r:vendor_file:s0"
+        fi
+        if [ -d "$MODPATH/product" ]; then
+            ADD_TO_WORK_DIR "$MODPATH" "product" "." 0 0 755 "u:object_r:system_file:s0"
+        fi
+        if [ -d "$MODPATH/system" ]; then
+            ADD_TO_WORK_DIR "$MODPATH" "system" "." 0 0 755 "u:object_r:system_file:s0"
+        fi
+        if [ -d "$MODPATH/system_ext" ]; then
+            ADD_TO_WORK_DIR "$MODPATH" "system_ext" "." 0 0 755 "u:object_r:system_file:s0"
+        fi
+        if [ -d "$MODPATH/vendor" ]; then
+            ADD_TO_WORK_DIR "$MODPATH" "vendor" "." 0 2000 755 "u:object_r:vendor_file:s0"
+        fi
+    fi
+
+    READ_AND_APPLY_PROPS "$MODPATH"
+
+    if [ -f "$MODPATH/customize.sh" ]; then
+        . "$MODPATH/customize.sh"
+    fi
+
+    if [ -d "$MODPATH/smali" ]; then
+        while IFS= read -r f; do
+            APPLY_SMALI_PATCHES "$MODPATH/smali" "$f"
+        done < <(find "$MODPATH/smali" -type d \( -name "*.apk" -o -name "*.jar" \) | sed "s|$MODPATH/smali/||")
+    fi
+
+    LOG_STEP_OUT
+
+    return 0
+}
+
+APPLY_SMALI_PATCHES()
+{
+    local PATCHES_PATH="$1"
+    local TARGET="$2"
+
+    local PARTITION
+    PARTITION="$(cut -d "/" -f 1 -s <<< "$TARGET")"
+
+    if ! IS_VALID_PARTITION_NAME "$PARTITION"; then
+        LOGE "\"$PARTITION\" is not a valid partition name"
+        return 1
+    fi
+
+    while IFS= read -r p; do
+        local FILE="$TARGET"
+        if [[ "$PARTITION" != "system" ]]; then
+            FILE="$(cut -d "/" -f 2- -s <<< "$FILE")"
+        fi
+
+        APPLY_PATCH "$PARTITION" "$FILE" "$p"
+    done < <(find "$PATCHES_PATH/$TARGET" -type f -name "*.patch" | sort -n)
+
+    return 0
+}
+
+READ_AND_APPLY_PROPS()
+{
+    local MODPATH="$1"
+    local PARTITION
+
+    while IFS= read -r f; do
+        PARTITION=$(basename "$f" | sed "s/.prop//")
+        IS_VALID_PARTITION_NAME "$PARTITION" || continue
+
+        while read -r l; do
+            if [[ "$l" == "#"* ]] || [ ! "$l" ]; then
+                continue
+            fi
+
+            if grep -q -F "=" <<< "$l"; then
+                if [ ! "$(cut -d "=" -f 2- -s <<< "$l")" ]; then
+                    SET_PROP "$PARTITION" "$(cut -d "=" -f 1 -s <<< "$l")" --delete
+                else
+                    SET_PROP "$PARTITION" "$(cut -d "=" -f 1 -s <<< "$l")" "$(cut -d "=" -f 2- -s <<< "$l")"
+                fi
+            else
+                LOGE "Malformed string in $f: \"$l\""
+                return 1
+            fi
+        done < "$f"
+    done < <(find "$MODPATH" -maxdepth 1 -type f -name "*.prop")
+
+    return 0
+}
+#]
+
+if [ "$#" != "1" ]; then
+    echo "Usage: apply_modules <folder>" >&2
+    exit 1
+elif [ ! -d "$1" ]; then
+    LOGE "Folder not found: ${1//$SRC_DIR\//}"
+    exit 1
+fi
+
+while IFS= read -r f; do
+    APPLY_MODULE "$f"
+done < <(find "$1" -mindepth 1 -maxdepth 1 -type d | LC_ALL=C sort)
+
+exit 0

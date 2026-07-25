@@ -1,0 +1,20 @@
+# Keep only unmodified boot-critical JARs on their restored bytecode.
+# framework.jar must be rebuilt: UN1CA framework mods add hook classes that
+# are referenced by the rebuilt services.jar. Skipping it creates a fatal
+# system_server NoClassDefFoundError during every boot.
+system/system/framework/esecomm.jar
+system/framework/esecomm.jar
+system/system/framework/gamemanager.jar
+system/framework/gamemanager.jar
+system/system/framework/knoxsdk.jar
+system/framework/knoxsdk.jar
+system/system/framework/samsungkeystoreutils.jar
+system/framework/samsungkeystoreutils.jar
+system/system/framework/secinputdev-service.jar
+system/framework/secinputdev-service.jar
+system/system/framework/semwifi-service.jar
+system/framework/semwifi-service.jar
+system/system/framework/ssrm.jar
+system/framework/ssrm.jar
+system/system/framework/telephony-common.jar
+system/framework/telephony-common.jar

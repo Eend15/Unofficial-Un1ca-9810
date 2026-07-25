@@ -1,0 +1,17 @@
+ui_print("Checking Exynos9810 partition layout...");
+package_extract_dir("exynos9810", "/tmp/exynos9810");
+run_program("/system/bin/chmod", "-R", "0755", "/tmp/exynos9810");
+ifelse(is_mounted("/system"), unmount("/system"));
+ifelse(is_mounted("/system_root"), unmount("/system_root"));
+ifelse(is_mounted("/vendor"), unmount("/vendor"));
+ifelse(is_mounted("/odm"), unmount("/odm"));
+ifelse(is_mounted("/cache"), unmount("/cache"));
+ifelse(is_mounted("/omr"), unmount("/omr"));
+ifelse(is_mounted("/data"), unmount("/data"));
+run_program("/sbin/sh", "/tmp/exynos9810/prepare_layout.sh", "starlte") == 0 ||
+    abort("E9810: Auto repartition failed. Reboot recovery, format data, then flash this ROM again.");
+if file_getprop("/tmp/exynos9810/layout.prop", "repartitioned") == "1" then
+    ui_print("Cleaning resized Exynos9810 partitions...");
+    run_program("/sbin/sh", "/tmp/exynos9810/format_partitions.sh", "layout_clean") == 0 ||
+        abort("E9810: Failed to format resized Exynos9810 partitions.");
+endif;

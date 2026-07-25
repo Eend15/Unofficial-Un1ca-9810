@@ -1,0 +1,1007 @@
+SKIPUNZIP=1
+
+[ "$TARGET_PLATFORM" = "exynos9810" ] || return 0
+
+EXYNOS9810_LEGACY_PORT_DIR="${EXYNOS9810_LEGACY_PORT_DIR:-/mnt/c/Users/Admin/Downloads/Exynos9810_LegacyPort}"
+EXYNOS9810_METADATA_DIR="$SRC_DIR/platform/exynos9810/metadata"
+EXYNOS9810_DEVICE_VENDOR_DIR="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device"
+EXYNOS9810_SOFTWARE_KEYMASTER4_DIR="$SRC_DIR/platform/exynos9810/patches/exynos9810_device_stack/keymaster4/vendor"
+EXYNOS9810_USED_VENDOR_METADATA_SNAPSHOT=false
+EXYNOS9810_USED_ODM_METADATA_SNAPSHOT=false
+
+if [ ! -d "$EXYNOS9810_LEGACY_PORT_DIR/vendor" ]; then
+    LOGW "Exynos9810 vendor baseline missing: $EXYNOS9810_LEGACY_PORT_DIR/vendor"
+    return 0
+fi
+
+_EXYNOS9810_DELETE_METADATA()
+{
+    local PARTITION="$1"
+    local ENTRY="$2"
+    local CONTEXT="$3"
+    local RAW_CONTEXT
+    local ESCAPED_CONTEXT
+
+    touch "$WORK_DIR/configs/fs_config-$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION"
+
+    awk -v entry="$ENTRY" '$1 != entry { print }' \
+        "$WORK_DIR/configs/fs_config-$PARTITION" > "$WORK_DIR/configs/fs_config-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/fs_config-$PARTITION.tmp" "$WORK_DIR/configs/fs_config-$PARTITION"
+
+    RAW_CONTEXT="$CONTEXT"
+    ESCAPED_CONTEXT="/$(_HANDLE_SPECIAL_CHARS "${CONTEXT#/}")"
+    awk -v raw="$RAW_CONTEXT" -v escaped="$ESCAPED_CONTEXT" \
+        '$1 != raw && $1 != escaped { print }' \
+        "$WORK_DIR/configs/file_context-$PARTITION" > "$WORK_DIR/configs/file_context-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
+}
+
+_EXYNOS9810_SET_METADATA_SAFE()
+{
+    local PARTITION="$1"
+    local ENTRY="$2"
+    local USER="$3"
+    local GROUP="$4"
+    local MODE="$5"
+    local LABEL="$6"
+    local PATTERN
+
+    while [[ "${ENTRY:0:1}" == "/" ]]; do
+        ENTRY="${ENTRY:1}"
+    done
+    [ "$PARTITION" != "system" ] && [[ "$ENTRY" != "$PARTITION/"* ]] && ENTRY="$PARTITION/$ENTRY"
+
+    LOG "- Adding metadata for /$ENTRY (uid:$USER gid:$GROUP mode:$MODE selabel:$LABEL)"
+
+    touch "$WORK_DIR/configs/fs_config-$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION"
+    PATTERN="/$(_HANDLE_SPECIAL_CHARS "$ENTRY")"
+
+    awk -v entry="$ENTRY" '$1 != entry { print }' \
+        "$WORK_DIR/configs/fs_config-$PARTITION" > "$WORK_DIR/configs/fs_config-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/fs_config-$PARTITION.tmp" "$WORK_DIR/configs/fs_config-$PARTITION"
+    echo "$ENTRY $USER $GROUP $MODE capabilities=0x0" >> "$WORK_DIR/configs/fs_config-$PARTITION"
+
+    awk -v pattern="$PATTERN" '$1 != pattern { print }' \
+        "$WORK_DIR/configs/file_context-$PARTITION" > "$WORK_DIR/configs/file_context-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
+    echo "$PATTERN $LABEL" >> "$WORK_DIR/configs/file_context-$PARTITION"
+}
+
+_EXYNOS9810_SET_FS_CONFIG_SAFE()
+{
+    local PARTITION="$1"
+    local ENTRY="$2"
+    local USER="$3"
+    local GROUP="$4"
+    local MODE="$5"
+
+    while [[ "${ENTRY:0:1}" == "/" ]]; do
+        ENTRY="${ENTRY:1}"
+    done
+    [ "$PARTITION" != "system" ] && [[ "$ENTRY" != "$PARTITION/"* ]] && ENTRY="$PARTITION/$ENTRY"
+
+    LOG "- Adding fs_config for /$ENTRY (uid:$USER gid:$GROUP mode:$MODE)"
+
+    touch "$WORK_DIR/configs/fs_config-$PARTITION"
+    awk -v entry="$ENTRY" '$1 != entry { print }' \
+        "$WORK_DIR/configs/fs_config-$PARTITION" > "$WORK_DIR/configs/fs_config-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/fs_config-$PARTITION.tmp" "$WORK_DIR/configs/fs_config-$PARTITION"
+    echo "$ENTRY $USER $GROUP $MODE capabilities=0x0" >> "$WORK_DIR/configs/fs_config-$PARTITION"
+}
+
+_EXYNOS9810_DEFAULT_MODE()
+{
+    local PARTITION="$1"
+    local ENTRY="$2"
+    local SOURCE="$3"
+
+    if [ -d "$SOURCE" ]; then
+        echo 755
+        return 0
+    fi
+
+    case "$ENTRY" in
+        "$PARTITION/bin/"*|"$PARTITION/bin")
+            echo 755
+            ;;
+        "$PARTITION/xbin/"*|"$PARTITION/xbin")
+            echo 755
+            ;;
+        *)
+            echo 644
+            ;;
+    esac
+}
+
+_EXYNOS9810_DEDUP_METADATA()
+{
+    local PARTITION="$1"
+    local FILE
+
+    for FILE in "$WORK_DIR/configs/fs_config-$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION"; do
+        [ -f "$FILE" ] || continue
+        awk '{ if (!($1 in order)) keys[++n] = $1; order[$1] = $0 } END { for (i = 1; i <= n; i++) print order[keys[i]] }' "$FILE" > "$FILE.tmp"
+        mv -f "$FILE.tmp" "$FILE"
+    done
+}
+
+_EXYNOS9810_SANITIZE_METADATA()
+{
+    local PARTITION="$1"
+    local DEFAULT_LABEL="$2"
+
+    [ -f "$WORK_DIR/configs/fs_config-$PARTITION" ] && \
+        awk 'NF >= 5 && $1 !~ /^[0-9]+$/ { print }' "$WORK_DIR/configs/fs_config-$PARTITION" \
+            > "$WORK_DIR/configs/fs_config-$PARTITION.tmp" && \
+        mv -f "$WORK_DIR/configs/fs_config-$PARTITION.tmp" "$WORK_DIR/configs/fs_config-$PARTITION"
+
+    [ -f "$WORK_DIR/configs/file_context-$PARTITION" ] && \
+        awk -v label="$DEFAULT_LABEL" 'NF == 1 { print $1 " " label; next } NF >= 2 { print }' \
+            "$WORK_DIR/configs/file_context-$PARTITION" \
+            > "$WORK_DIR/configs/file_context-$PARTITION.tmp" && \
+            mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
+}
+
+_EXYNOS9810_RESTORE_METADATA_SNAPSHOT()
+{
+    local PARTITION="$1"
+    local FS_CONFIG="$EXYNOS9810_METADATA_DIR/known_good_fs_config-$PARTITION"
+    local FILE_CONTEXT="$EXYNOS9810_METADATA_DIR/known_good_file_context-$PARTITION"
+
+    if [ ! -s "$FS_CONFIG" ] || [ ! -s "$FILE_CONTEXT" ]; then
+        return 1
+    fi
+
+    LOG "- Restoring known-booting /$PARTITION fs_config and file_context metadata"
+    cp -f "$FS_CONFIG" "$WORK_DIR/configs/fs_config-$PARTITION"
+    cp -f "$FILE_CONTEXT" "$WORK_DIR/configs/file_context-$PARTITION"
+
+    case "$PARTITION" in
+        "vendor")
+            EXYNOS9810_USED_VENDOR_METADATA_SNAPSHOT=true
+            ;;
+        "odm")
+            EXYNOS9810_USED_ODM_METADATA_SNAPSHOT=true
+            ;;
+    esac
+}
+
+_EXYNOS9810_ENSURE_TREE_METADATA()
+{
+    local PARTITION="$1"
+    local ROOT="$2"
+    local DEFAULT_LABEL="$3"
+    local DEFAULT_USER="${4:-0}"
+    local DEFAULT_GROUP="${5:-0}"
+    local FS_CONFIG="$WORK_DIR/configs/fs_config-$PARTITION"
+    local FILE_CONTEXT="$WORK_DIR/configs/file_context-$PARTITION"
+    local ENTRY
+    local MODE
+    local USER
+    local GROUP
+    local LABEL
+    local PATTERN
+
+    touch "$FS_CONFIG" "$FILE_CONTEXT"
+
+    while IFS= read -r -d '' ENTRY; do
+        ENTRY="${ENTRY#$ROOT/}"
+        [ "$ENTRY" ] || continue
+        [ "$PARTITION" != "system" ] && [[ "$ENTRY" != "$PARTITION/"* ]] && ENTRY="$PARTITION/$ENTRY"
+
+        if ! grep -q -F "$ENTRY " "$FS_CONFIG" 2> /dev/null; then
+            MODE="$(_EXYNOS9810_DEFAULT_MODE "$PARTITION" "$ENTRY" "$ROOT/${ENTRY#$PARTITION/}")"
+            USER="$DEFAULT_USER"
+            GROUP="$DEFAULT_GROUP"
+            if [ -d "$ROOT/${ENTRY#$PARTITION/}" ] && [ "$PARTITION" = "vendor" ]; then
+                GROUP=2000
+            fi
+            echo "$ENTRY $USER $GROUP $MODE capabilities=0x0" >> "$FS_CONFIG"
+        fi
+
+        PATTERN="$(_HANDLE_SPECIAL_CHARS "$ENTRY")"
+        if ! grep -q -F "/$PATTERN " "$FILE_CONTEXT" 2> /dev/null; then
+            LABEL="$(_GET_SELINUX_LABEL "$PARTITION" "/$ENTRY" 2> /dev/null || true)"
+            [ "$LABEL" ] || LABEL="$DEFAULT_LABEL"
+            echo "/$PATTERN $LABEL" >> "$FILE_CONTEXT"
+        fi
+    done < <(find "$ROOT" -mindepth 1 -print0)
+}
+
+_EXYNOS9810_RESTORE_VENDOR_BASELINE()
+{
+    LOG "- Restoring final known-booting Exynos9810 vendor baseline"
+
+    rm -rf "$WORK_DIR/vendor"
+    mkdir -p "$WORK_DIR/vendor"
+    cp -a "$EXYNOS9810_LEGACY_PORT_DIR/vendor"/. "$WORK_DIR/vendor"/
+    _EXYNOS9810_RESTORE_METADATA_SNAPSHOT "vendor" || \
+        _EXYNOS9810_ENSURE_TREE_METADATA "vendor" "$WORK_DIR/vendor" "u:object_r:vendor_file:s0" 0 0
+
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/build.prop" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fstab.samsungexynos9810" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fstab.exynos9810" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/hw" 0 0 755 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/hw/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/android.hardware.keymaster@3.0-service.rc" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/vendor.samsung.hardware.camera.provider@4.0-service.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/unica_exynos9810_trace.rc" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/selinux" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/selinux/vendor_file_contexts" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fs_config_dirs" 0 0 444 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fs_config_files" 0 0 444 "u:object_r:vendor_file:s0"
+
+    if [ -f "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" ] && \
+       [ ! -f "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc" ]; then
+        mkdir -p "$WORK_DIR/vendor/etc/init/hw"
+        cp -pf "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" \
+            "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"
+    fi
+}
+
+_EXYNOS9810_APPLY_TARGET_VENDOR_DELTA()
+{
+    local REFERENCE_VENDOR="$EXYNOS9810_DEVICE_VENDOR_DIR/star2lte/vendor"
+    local TARGET_VENDOR="$EXYNOS9810_DEVICE_VENDOR_DIR/$TARGET_CODENAME/vendor"
+    local ENTRY
+    local REL
+    local REMOVED=0
+    local COPIED=0
+
+    case "$TARGET_CODENAME" in
+        star2lte)
+            # The restored VNDK33 tree is the exact baseline proven on the S9+.
+            # Do not replace any of its hardware blobs with the older donor
+            # overlay: several camera/audio libraries intentionally differ.
+            LOG "- Keeping the proven star2lte Note10 Lite/VNDK33 vendor"
+            return 0
+            ;;
+        starlte|crownlte)
+            ;;
+        *)
+            LOGE "Unsupported Exynos9810 vendor target: $TARGET_CODENAME"
+            return 1
+            ;;
+    esac
+
+    if [ ! -d "$REFERENCE_VENDOR" ]; then
+        LOGE "Required star2lte vendor reference is missing: $REFERENCE_VENDOR"
+        return 1
+    fi
+    if [ ! -d "$TARGET_VENDOR" ]; then
+        LOGE "Required $TARGET_CODENAME vendor hardware overlay is missing: $TARGET_VENDOR"
+        return 1
+    fi
+
+    LOG "- Converting the proven VNDK33 vendor hardware layer to $TARGET_CODENAME"
+
+    # The booting baseline already contains the star2lte hardware layer. Remove
+    # only entries that came from that layer and do not exist for the selected
+    # target. This is important for starlte (single rear camera) and crownlte
+    # (different dual-camera, audio and NFC blobs), while leaving the generic
+    # Note10 Lite VNDK33 services, manifests and compatibility libraries intact.
+    while IFS= read -r -d '' ENTRY; do
+        REL="${ENTRY#$REFERENCE_VENDOR/}"
+        if [ -e "$TARGET_VENDOR/$REL" ] || [ -L "$TARGET_VENDOR/$REL" ]; then
+            continue
+        fi
+
+        rm -f "$WORK_DIR/vendor/$REL"
+        _EXYNOS9810_DELETE_METADATA "vendor" "vendor/$REL" "/vendor/$REL"
+        REMOVED=$((REMOVED + 1))
+    done < <(find "$REFERENCE_VENDOR" \( -type f -o -type l \) -print0)
+
+    # These are the original device-matched Exynos9810 hardware blobs: camera
+    # HAL/setfiles/OIS, audio DSP+mixer, sensors, NFC, TEE and the vendor RRO.
+    # They are an overlay, not a replacement vendor, so ro.vndk.version=33 and
+    # the known-booting Note10 Lite vendor core stay unchanged.
+    cp -a "$TARGET_VENDOR"/. "$WORK_DIR/vendor"/ || {
+        LOGE "Failed to apply the $TARGET_CODENAME vendor hardware overlay"
+        return 1
+    }
+
+    _EXYNOS9810_ENSURE_TREE_METADATA \
+        "vendor" "$TARGET_VENDOR" "u:object_r:vendor_file:s0" 0 0
+
+    # Fail the build instead of silently packaging a mixed-device vendor.
+    while IFS= read -r -d '' ENTRY; do
+        REL="${ENTRY#$TARGET_VENDOR/}"
+        if [ -L "$ENTRY" ]; then
+            if [ ! -L "$WORK_DIR/vendor/$REL" ] || \
+                    [ "$(readlink "$ENTRY")" != "$(readlink "$WORK_DIR/vendor/$REL")" ]; then
+                LOGE "Vendor symlink verification failed for $TARGET_CODENAME: $REL"
+                return 1
+            fi
+        elif ! cmp -s "$ENTRY" "$WORK_DIR/vendor/$REL"; then
+            LOGE "Vendor blob verification failed for $TARGET_CODENAME: $REL"
+            return 1
+        fi
+        COPIED=$((COPIED + 1))
+    done < <(find "$TARGET_VENDOR" \( -type f -o -type l \) -print0)
+
+    LOG "  - Verified $COPIED target blobs; removed $REMOVED star2lte-only blobs"
+}
+
+_EXYNOS9810_SET_BUILD_PROP()
+{
+    local FILE="$1"
+    local PROP="$2"
+    local VALUE="$3"
+
+    [ -f "$FILE" ] || return 0
+    sed -i "/^$PROP=/d" "$FILE"
+    echo "$PROP=$VALUE" >> "$FILE"
+}
+
+_EXYNOS9810_DELETE_BUILD_PROP()
+{
+    local FILE="$1"
+    local PROP="$2"
+
+    [ -f "$FILE" ] || return 0
+    sed -i "/^$PROP=/d" "$FILE"
+}
+
+_EXYNOS9810_APPLY_TARGET_VENDOR_IDENTITY()
+{
+    local MODEL
+    local NAME
+    local STOCK_INCREMENTAL
+    local FIRST_API
+    local FILE_SPEC
+    local FILE
+    local PREFIX
+    local FINGERPRINT
+
+    case "$TARGET_CODENAME" in
+        star2lte)
+            # The baseline already carries the proven G965F identity.
+            return 0
+            ;;
+        starlte)
+            MODEL="SM-G960F"
+            NAME="starltexx"
+            STOCK_INCREMENTAL="G960FXXUHFVG4"
+            FIRST_API=26
+            ;;
+        crownlte)
+            MODEL="SM-N960F"
+            NAME="crownltexx"
+            STOCK_INCREMENTAL="N960FXXUHFVG4"
+            FIRST_API=27
+            ;;
+        *)
+            LOGE "Unsupported Exynos9810 vendor identity target: $TARGET_CODENAME"
+            return 1
+            ;;
+    esac
+
+    LOG "- Applying final $TARGET_CODENAME identity to vendor, vendor_dlkm, odm_dlkm and ODM"
+    FINGERPRINT="samsung/$NAME/$TARGET_CODENAME:10/QP1A.190711.020/$STOCK_INCREMENTAL:user/release-keys"
+
+    for FILE_SPEC in \
+        "$WORK_DIR/vendor/build.prop:vendor" \
+        "$WORK_DIR/vendor/vendor_dlkm/etc/build.prop:vendor_dlkm" \
+        "$WORK_DIR/vendor/odm_dlkm/etc/build.prop:odm_dlkm" \
+        "$WORK_DIR/odm/etc/build.prop:odm"; do
+        PREFIX="${FILE_SPEC##*:}"
+        FILE="${FILE_SPEC%:*}"
+        [ -f "$FILE" ] || continue
+
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.brand" "samsung"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.device" "$TARGET_CODENAME"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.manufacturer" "samsung"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.model" "$MODEL"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.name" "$NAME"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.fingerprint" "$FINGERPRINT"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "$STOCK_INCREMENTAL"
+        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.factory.model" "$MODEL"
+    done
+
+    # Keep the Note10 Lite Android 13/VNDK33 contract that makes this vendor
+    # boot against the One UI 8 system. Only the physical-device identity and
+    # original shipping API differ between S9/S9+/Note9.
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.product.first_api_level" "$FIRST_API"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.first_api_level" "$FIRST_API"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.version.sdk" "33"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vndk.version" "33"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.api_level" "33"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.api_level" "33"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.product.board" "exynos9810"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.platform" "universal9810"
+}
+
+_EXYNOS9810_KEEP_SETUP_WIZARD_ENABLED()
+{
+    local FILE
+
+    LOG "- Keeping Samsung setup wizard enabled after vendor baseline restore"
+
+    for FILE in \
+        "$WORK_DIR/system/system/build.prop" \
+        "$WORK_DIR/system/product/etc/build.prop" \
+        "$WORK_DIR/system/system/product/etc/build.prop"; do
+        [ -f "$FILE" ] || continue
+
+        _EXYNOS9810_DELETE_BUILD_PROP "$FILE" "persist.sys.setupwizard"
+        _EXYNOS9810_DELETE_BUILD_PROP "$FILE" "persist.sys.setupwizard.user_setup_complete"
+        _EXYNOS9810_DELETE_BUILD_PROP "$FILE" "ro.setupwizard.mode"
+        _EXYNOS9810_DELETE_BUILD_PROP "$FILE" "setupwizard.feature.enable_quick_start_flow"
+    done
+
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/system/product/etc/build.prop" \
+        "ro.setupwizard.mode" "OPTIONAL"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/system/product/etc/build.prop" \
+        "setupwizard.feature.enable_quick_start_flow" "false"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/system/system/product/etc/build.prop" \
+        "ro.setupwizard.mode" "OPTIONAL"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/system/system/product/etc/build.prop" \
+        "setupwizard.feature.enable_quick_start_flow" "false"
+}
+
+_EXYNOS9810_USE_SENSORS_HAL_1_0()
+{
+    # Put the sensor stack back on the HAL 1.0 service that matches the
+    # Exynos9810's own libraries, instead of the 2.0 multihal service.
+    #
+    # Both vendor bases ship android.hardware.sensors@2.0-service.multihal, but
+    # the Exynos9810 sensor libraries are legacy HAL 1.0 modules (they export
+    # HAL_MODULE_INFO_SYM, not sensorsHalGetSubHal). multihal finds no sub-HAL
+    # entry point and registers nothing, so sensorservice reports "No Sensors on
+    # the device" -- no auto brightness, no auto rotation, no proximity.
+    #
+    # The previous attempt at this (_EXYNOS9810_FIX_SENSOR_SUBHALS) fixed the
+    # mismatch from the other end, replacing the libraries with N770F HAL 2.0
+    # sub-HALs. Two problems with that:
+    #
+    #  1. It could not work as written. Platform patches run before mods, and
+    #     _EXYNOS9810_APPLY_TARGET_VENDOR_DELTA below copies the device vendor
+    #     overlay -- which contains sensors.{sensorhub,bio,grip}.so -- over the
+    #     top afterwards, restoring the stock 1.0 libraries every time.
+    #  2. Even when force-applied by hand it introduces phantom sensors. The
+    #     N770F sub-HAL implements AutoRotation (android.sensor.device_orientation)
+    #     and an Auto Brightness Sensor that the Exynos9810 sensorhub MCU
+    #     (BCM47752KUB1G, fw BR0122072000) never populates. One UI binds to those
+    #     in preference to the working accelerometer and light sensors and then
+    #     waits forever. Measured live on star2lte: the kernel tracked a finger
+    #     over the light sensor perfectly (sysfs 175 -> 8 -> 175) while
+    #     mAmbientLux stayed pinned at 25.0, and AutoRotation sat at
+    #     active-count=2 with 0 events across a HAL restart and repeated physical
+    #     rotations.
+    #
+    # Going to 1.0 keeps the device's own libraries, so no phantom sensors exist,
+    # and it also keeps sensors.bio.so (HRM), which the N770F hals.conf drops.
+    # This is what DuhanROM does on the same hardware, where rotation works.
+    #
+    # Allowed by VINTF: the vendor declares ro.board.api_level=33, and
+    # compatibility_matrix.7.xml (Android 13) lists android.hardware.sensors
+    # <version>1.0</version>. Only matrix 8+ requires AIDL v2.
+    #
+    # The legacy vendor already carries lib{,64}/hw/android.hardware.sensors@1.0-impl.so
+    # and etc/sensors/hals.conf; only the service binary and its init entry are
+    # missing, and those come from the target's own stock firmware.
+    # TARGET_FIRMWARE is MODEL/CSC/IMEI; the extracted tree is MODEL_CSC.
+    local FW_VENDOR
+    FW_VENDOR="$FW_DIR/$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")/vendor"
+    local MISSING=false
+    local F
+
+    LOG "- Switching sensors HAL 2.0 multihal -> 1.0 service"
+
+    for F in "bin/hw/android.hardware.sensors@1.0-service" \
+             "etc/init/android.hardware.sensors@1.0-service.rc"; do
+        if [ ! -f "$FW_VENDOR/$F" ]; then
+            LOGW "Missing $F in target firmware; keeping the 2.0 multihal sensors HAL"
+            MISSING=true
+        fi
+    done
+    for F in "lib/hw/android.hardware.sensors@1.0-impl.so" \
+             "lib64/hw/android.hardware.sensors@1.0-impl.so" \
+             "etc/sensors/hals.conf"; do
+        if [ ! -f "$WORK_DIR/vendor/$F" ]; then
+            LOGW "Missing vendor/$F; keeping the 2.0 multihal sensors HAL"
+            MISSING=true
+        fi
+    done
+    $MISSING && return 0
+
+    # Service binary + init entry (service vendor.sensors-hal-1-0, class hal).
+    install -D -m 755 "$FW_VENDOR/bin/hw/android.hardware.sensors@1.0-service" \
+        "$WORK_DIR/vendor/bin/hw/android.hardware.sensors@1.0-service" || return 1
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.sensors@1.0-service" \
+        0 2000 755 "u:object_r:hal_sensors_default_exec:s0"
+
+    install -D -m 644 "$FW_VENDOR/etc/init/android.hardware.sensors@1.0-service.rc" \
+        "$WORK_DIR/vendor/etc/init/android.hardware.sensors@1.0-service.rc" || return 1
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/android.hardware.sensors@1.0-service.rc" \
+        0 0 644 "u:object_r:vendor_configs_file:s0"
+
+    # Retire the 2.0 multihal service, its init entry and its VINTF fragment.
+    for F in "bin/hw/android.hardware.sensors@2.0-service.multihal" \
+             "etc/init/android.hardware.sensors@2.0-service-multihal.rc" \
+             "etc/vintf/manifest/android.hardware.sensors@2.0-multihal.xml"; do
+        if [ -e "$WORK_DIR/vendor/$F" ]; then
+            rm -f "$WORK_DIR/vendor/$F"
+            _EXYNOS9810_DELETE_METADATA "vendor" "vendor/$F" "/vendor/$F"
+        fi
+    done
+
+    # Declare 1.0 in its place, matching the stock manifest entry verbatim.
+    cat > "$WORK_DIR/vendor/etc/vintf/manifest/android.hardware.sensors@1.0.xml" <<'EOF'
+<manifest version="1.0" type="device">
+    <hal format="hidl">
+        <name>android.hardware.sensors</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>ISensors</name>
+            <instance>default</instance>
+        </interface>
+        <fqname>@1.0::ISensors/default</fqname>
+    </hal>
+</manifest>
+EOF
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/vintf/manifest/android.hardware.sensors@1.0.xml" \
+        0 0 644 "u:object_r:vendor_configs_file:s0"
+
+    return 0
+}
+
+_EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT()
+{
+    local RC
+
+    LOG "- Applying final Exynos9810 vendor boot compat"
+
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.security_patch" "2026-05-05"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.hardware.keystore" "mdfpp"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.security.keystore.keytype" "sak"
+    sed -i '/^ro.hardware.keystore_desede=/d' "$WORK_DIR/vendor/build.prop" 2> /dev/null || true
+
+    # UN1CA RAM tuning: Samsung's Dynamic Hidden App manager (ro.slmk.dha_*) keeps
+    # up to dha_cached_max + dha_empty_max background app processes resident before
+    # it starts killing (stock 18 + 30 = 48). That is far too many for the 4GB
+    # Galaxy S9 and wastes idle RAM / causes zram thrash on all three models.
+    # Cap the background app pool lower -- more aggressively on the 4GB starlte than
+    # on the 6GB star2lte/crownlte, which have some headroom for multitasking.
+    # (All exynos9810 models sit below ro.slmk.dha_2ndprop_thMB=6144, so they all
+    # use this primary dha_* set.)
+    case "$TARGET_CODENAME" in
+        starlte)  # Galaxy S9 -- 4GB
+            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_cached_max" "10"
+            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_empty_max" "16"
+            ;;
+        *)        # Galaxy S9+ / Note9 -- 6GB
+            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_cached_max" "14"
+            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_empty_max" "24"
+            ;;
+    esac
+
+    RC="$WORK_DIR/vendor/etc/init/android.hardware.keymaster@3.0-service.rc"
+    if [ -f "$RC" ] && ! grep -q 'interface android.hardware.keymaster@3.0::IKeymasterDevice default' "$RC"; then
+        awk '
+            {
+                print
+                if ($0 ~ /^service vendor\.keymaster-3-0 /) {
+                    print "    interface android.hardware.keymaster@3.0::IKeymasterDevice default"
+                }
+            }
+        ' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
+    fi
+
+    RC="$WORK_DIR/vendor/etc/init/android.hardware.health@2.1-service-samsung.rc"
+    if [ -f "$RC" ] && ! grep -q 'interface android.hardware.health@2.1::IHealth default' "$RC"; then
+        awk '
+            {
+                print
+                if ($0 ~ /^service health-hal-2-1-samsung /) {
+                    print "    interface android.hardware.health@2.1::IHealth default"
+                }
+            }
+        ' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
+    fi
+    if [ -f "$RC" ] && ! grep -q 'interface android.hardware.health@2.0::IHealth default' "$RC"; then
+        awk '
+            {
+                print
+                if ($0 ~ /^service health-hal-2-1-samsung /) {
+                    print "    interface android.hardware.health@2.0::IHealth default"
+                }
+            }
+        ' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
+    fi
+
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/build.prop" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/android.hardware.keymaster@3.0-service.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/android.hardware.health@2.1-service-samsung.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.keymaster@3.0-service" 0 0 755 "u:object_r:hal_keymaster_default_exec:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.keymaster@4.0-service" 0 0 755 "u:object_r:hal_keymaster_default_exec:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.gatekeeper@1.0-service" 0 0 755 "u:object_r:hal_gatekeeper_default_exec:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.health@2.1-service-samsung" 0 0 755 "u:object_r:hal_health_default_exec:s0"
+
+    # lhd is the BCM4775 loader daemon: it downloads the firmware the sensorhub
+    # MCU runs. init refuses to start a service whose binary carries no domain
+    # transition, so with the generic vendor_file label it never runs, the MCU
+    # never boots, and every sensor reads zero behind an otherwise healthy HAL
+    # ("[SSPBBD]: ssp_down == true" in dmesg). That kills auto rotation and auto
+    # brightness. gpsd survives the same mislabel only because its init entry
+    # names a seclabel explicitly; label it correctly regardless.
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/lhd" 0 0 755 "u:object_r:lhd_exec:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/gpsd" 0 0 755 "u:object_r:gpsd_exec:s0"
+}
+
+_EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY()
+{
+    # Missing SELinux allow rules for this legacy exynos9810 vendor.
+    #
+    # These MUST be applied here, AFTER _EXYNOS9810_RESTORE_VENDOR_BASELINE
+    # has wiped and re-copied a pristine vendor tree. The upstream
+    # unica/patches/selinux/customize.sh runs much earlier in the module
+    # pipeline, so anything it appends to vendor_sepolicy.cil gets thrown
+    # away by the "rm -rf $WORK_DIR/vendor" in the vendor baseline restore.
+    # Re-appending here is the only place the rules survive into vendor.img.
+    #
+    # This device compiles sepolicy fresh from these .cil files at every
+    # boot (no precompiled_sepolicy blob), so appended CIL allow-rules take
+    # effect on next boot. The boot-critical rules are the vendor_init
+    # property_service sets: this legacy vendor's init.rc sets properties
+    # like ro.crypto.state directly from vendor_init, which the donor's
+    # platform/system_ext sepolicy never granted. Under permissive these
+    # are logged-but-allowed; under real enforcing they block, and a blocked
+    # ro.crypto.state set stalls whatever init.rc trigger waits on it,
+    # hanging boot at the splash screen. The remaining rules are later-boot
+    # service_manager lookups / prop sets for optional features that only
+    # fail their feature rather than blocking boot, included for completeness.
+    #
+    # Rule list captured by booting under the permissive kernel and diffing
+    # "avc: denied" tuples from logcat -b kernel against the loaded policy.
+    local CIL="$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
+    local RULE
+    local SUPPLEMENTARY_RULES="
+(allow vendor_init bootloader_prop (property_service (set)))
+(allow vendor_init build_prop (property_service (set)))
+(allow vendor_init config_prop (property_service (set)))
+(allow vendor_init default_prop (property_service (set)))
+(allow vendor_init net_dns_prop (property_service (set)))
+(allow vendor_init shell_prop (property_service (set)))
+(allow vendor_init userdebug_or_eng_prop (property_service (set)))
+(allow vendor_init vold_prop (property_service (set)))
+(allow vendor_init vold_status_prop (property_service (set)))
+(allow vendor_init wifi_prop (property_service (set)))
+(allow vendor_init mobicore_prop (file (read open getattr)))
+(allow vendor_init radio_prop (file (read open getattr)))
+(allow mobicore mobicore_prop (property_service (set)))
+(allow priv_app log_tag_prop (property_service (set)))
+(allow priv_app sqlite_log_prop (property_service (set)))
+(allow samsungpowersoundplay audio_service (service_manager (find)))
+(allow system_server default_android_service (service_manager (find)))
+(allow system_server hal_graphics_composer_service (service_manager (find)))
+(allow teed_app knoxzt_service (service_manager (find)))
+(allow mediaserver media_quality_service (service_manager (find)))
+(allow system_app tracingproxy_service (service_manager (find)))
+(allow system_app system_suspend_control_service (service_manager (find)))
+(allow system_app system_suspend_control_internal_service (service_manager (find)))
+(allow system_app logpersistd_logging_prop (property_service (set)))
+"
+
+    if [ ! -f "$CIL" ]; then
+        LOGW "Exynos9810 vendor_sepolicy.cil missing; cannot apply supplementary SELinux rules"
+        return 0
+    fi
+
+    LOG "- Applying supplementary Exynos9810 vendor SELinux allow rules"
+
+    while IFS= read -r RULE; do
+        [ "$RULE" ] || continue
+        if ! grep -q -F "$RULE" "$CIL"; then
+            echo "$RULE" >> "$CIL"
+        fi
+    done <<< "$SUPPLEMENTARY_RULES"
+}
+
+_EXYNOS9810_WRITE_FINAL_BOOT_TRACE()
+{
+    if [ "${EXYNOS9810_ENABLE_VENDOR_BOOT_TRACE:-false}" != "true" ]; then
+        # _EXYNOS9810_RESTORE_VENDOR_BASELINE (which runs before this) copies the
+        # trace rc back in from the legacy vendor source and re-adds its metadata,
+        # so an earlier device_stack removal is undone. Drop it here too, after
+        # the baseline restore, so production builds carry no boot logger.
+        if [ -e "$WORK_DIR/vendor/etc/init/unica_exynos9810_trace.rc" ]; then
+            rm -f "$WORK_DIR/vendor/etc/init/unica_exynos9810_trace.rc"
+            _EXYNOS9810_DELETE_METADATA "vendor" \
+                "vendor/etc/init/unica_exynos9810_trace.rc" \
+                "/vendor/etc/init/unica_exynos9810_trace.rc"
+        fi
+        return 0
+    fi
+
+    LOG "- Restoring final Exynos9810 boot trace"
+
+    mkdir -p "$WORK_DIR/vendor/etc/init"
+
+    cat > "$WORK_DIR/vendor/etc/init/unica_exynos9810_trace.rc" <<'EOF'
+on early-init
+    write /dev/kmsg "UN1CA-9810-TRACE: early-init"
+
+on init
+    write /dev/kmsg "UN1CA-9810-TRACE: init"
+
+on fs
+    write /dev/kmsg "UN1CA-9810-TRACE: fs"
+
+on post-fs
+    write /dev/kmsg "UN1CA-9810-TRACE: post-fs"
+
+on late-fs
+    write /dev/kmsg "UN1CA-9810-TRACE: late-fs"
+
+on post-fs-data
+    write /dev/kmsg "UN1CA-9810-TRACE: post-fs-data"
+
+on zygote-start
+    write /dev/kmsg "UN1CA-9810-TRACE: zygote-start"
+
+on boot
+    write /dev/kmsg "UN1CA-9810-TRACE: boot"
+EOF
+
+    chmod 644 "$WORK_DIR/vendor/etc/init/unica_exynos9810_trace.rc"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/unica_exynos9810_trace.rc" 0 0 644 "u:object_r:vendor_file:s0"
+}
+
+_EXYNOS9810_RESTORE_VENDOR_BIN_GROUPS()
+{
+    local ROOT="$WORK_DIR/vendor/bin"
+    local FS_CONFIG="$WORK_DIR/configs/fs_config-vendor"
+    local ENTRY
+    local REL
+    local MODE
+
+    [ -d "$ROOT" ] || return 0
+    touch "$FS_CONFIG"
+
+    while IFS= read -r -d '' ENTRY; do
+        REL="vendor/bin${ENTRY#$ROOT}"
+        MODE="$(_EXYNOS9810_DEFAULT_MODE "vendor" "$REL" "$ENTRY")"
+        _EXYNOS9810_SET_FS_CONFIG_SAFE "vendor" "$REL" 0 2000 "$MODE"
+    done < <(find "$ROOT" -mindepth 0 -print0)
+}
+
+_EXYNOS9810_RESTORE_ODM_BASELINE()
+{
+    if [ ! -d "$EXYNOS9810_LEGACY_PORT_DIR/odm" ]; then
+        LOGW "Exynos9810 boot ODM baseline missing: $EXYNOS9810_LEGACY_PORT_DIR/odm"
+        return 0
+    fi
+
+    LOG "- Restoring final known-booting Exynos9810 ODM baseline"
+
+    rm -rf "$WORK_DIR/odm"
+    mkdir -p "$WORK_DIR/odm"
+    cp -a "$EXYNOS9810_LEGACY_PORT_DIR/odm"/. "$WORK_DIR/odm"/
+    _EXYNOS9810_RESTORE_METADATA_SNAPSHOT "odm" || \
+        _EXYNOS9810_ENSURE_TREE_METADATA "odm" "$WORK_DIR/odm" "u:object_r:vendor_file:s0" 0 0
+    rm -rf "$WORK_DIR/odm/lost+found"
+
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc" 0 0 755 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/build.prop" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/selinux" 0 0 755 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/fs_config_dirs" 0 0 444 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/fs_config_files" 0 0 444 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/group" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "odm" "odm/etc/passwd" 0 0 644 "u:object_r:vendor_file:s0"
+}
+
+_EXYNOS9810_SANITIZE_RESTORED_TEXT()
+{
+    # Keep restored boot-critical props, init files, contexts, and manifests byte-for-byte
+    # aligned with the known-booting baseline. Branding belongs in non-boot assets.
+    return 0
+}
+
+_EXYNOS9810_FIX_SYSTEM_PERMISSION_CASE()
+{
+    local UPPER="$WORK_DIR/system/system/etc/Permissions"
+    local LOWER="$WORK_DIR/system/system/etc/permissions"
+
+    if [ ! -d "$UPPER" ]; then
+        return 0
+    fi
+
+    LOG "- Normalizing /system/etc/permissions directory case"
+
+    mkdir -p "$LOWER"
+    cp -a "$UPPER"/. "$LOWER"/
+    rm -rf "$UPPER"
+
+    sed -i 's|system/etc/Permissions|system/etc/permissions|g' "$WORK_DIR/configs/fs_config-system"
+    sed -i 's|/system/etc/Permissions|/system/etc/permissions|g' "$WORK_DIR/configs/file_context-system"
+}
+
+_EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
+{
+    local MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest.xml"
+    local ENTRY
+
+    if [ ! -x "$EXYNOS9810_SOFTWARE_KEYMASTER4_DIR/bin/hw/android.hardware.keymaster@4.0-service" ]; then
+        LOGE "Software Keymaster 4.0 payload is missing: $EXYNOS9810_SOFTWARE_KEYMASTER4_DIR"
+        return 1
+    fi
+
+    LOG "- Finalizing AOSP software Keymaster 4.0 security stack"
+
+    for ENTRY in \
+        "lib64/libskeymaster4device.so" \
+        "lib64/libkeymaster4_1support.so" \
+        "lib64/android.hardware.keymaster@4.1.so" \
+        "bin/cass" \
+        "bin/vaultkeeperd" \
+        "bin/vendor.samsung.hardware.security.vaultkeeper@2.0-service" \
+        "etc/init/cass.rc" \
+        "etc/init/vaultkeeper_common.rc" \
+        "etc/vintf/manifest/vaultkeeper_manifest.xml" \
+        "lib64/vendor.samsung.hardware.security.vaultkeeper@2.0.so"; do
+        rm -rf "$WORK_DIR/vendor/$ENTRY"
+        _EXYNOS9810_DELETE_METADATA "vendor" "vendor/$ENTRY" "/vendor/$ENTRY"
+    done
+
+    cp -a "$EXYNOS9810_SOFTWARE_KEYMASTER4_DIR"/. "$WORK_DIR/vendor"/
+    _EXYNOS9810_ENSURE_TREE_METADATA \
+        "vendor" "$WORK_DIR/vendor" "u:object_r:vendor_file:s0" 0 0
+
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" \
+        "vendor/bin/hw/android.hardware.keymaster@4.0-service" \
+        0 2000 755 "u:object_r:hal_keymaster_default_exec:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" \
+        "vendor/etc/init/android.hardware.keymaster@4.0-service.rc" \
+        0 0 644 "u:object_r:vendor_configs_file:s0"
+    # The TEE @3.0 keymaster opens its Trustonic session through VaultKeeper,
+    # which is removed above. Left in place it exits with status 1 and init
+    # restarts it forever ("Trustonic TEE: client_get_session: session 0 not
+    # found"), so keystore2/vold never come up and boot hangs. Software @4.0 is
+    # the sole keymaster now -- drop @3.0 (service, rc and impl) entirely.
+    for ENTRY in \
+        "bin/hw/android.hardware.keymaster@3.0-service" \
+        "etc/init/android.hardware.keymaster@3.0-service.rc" \
+        "lib/hw/android.hardware.keymaster@3.0-impl.so" \
+        "lib64/hw/android.hardware.keymaster@3.0-impl.so"; do
+        rm -rf "$WORK_DIR/vendor/$ENTRY"
+        _EXYNOS9810_DELETE_METADATA "vendor" "vendor/$ENTRY" "/vendor/$ENTRY"
+    done
+
+    if [ -f "$MANIFEST" ]; then
+        # Declare ONLY software Keymaster @4.0. The base vendor manifest ships the
+        # TEE @3.0 HIDL declaration; if @3.0 is still advertised keystore2 waits on
+        # the (now removed) @3.0 service and hangs. Drop @3.0, keep/add @4.0.
+        sed -i '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/ {
+            /<version>3\.0<\/version>/d
+            /@3\.0::IKeymasterDevice\/default/d
+        }' "$MANIFEST"
+        if ! sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
+            "$MANIFEST" | grep -q '<version>4.0</version>'; then
+            sed -i '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/ {
+                /<transport>/a\        <version>4.0</version>
+            }' "$MANIFEST"
+        fi
+        if ! sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
+            "$MANIFEST" | grep -q '@4.0::IKeymasterDevice/default'; then
+            sed -i '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/ {
+                /<\/interface>/a\        <fqname>@4.0::IKeymasterDevice/default</fqname>
+            }' "$MANIFEST"
+        fi
+    fi
+}
+
+_EXYNOS9810_VERIFY_FINAL_SECURITY_STACK()
+{
+    local MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest.xml"
+    local ENTRY
+
+    LOG "- Verifying final software Keymaster 4.0 stack after vendor restore"
+
+    for ENTRY in \
+        "bin/hw/android.hardware.keymaster@4.0-service" \
+        "etc/init/android.hardware.keymaster@4.0-service.rc" \
+        "lib64/android.hardware.keymaster@4.0.so" \
+        "lib64/libcppbor_external.so" \
+        "lib64/libcppcose_rkp.so" \
+        "lib64/libkeymaster4.so" \
+        "lib64/libkeymaster4support.so" \
+        "lib64/libkeymaster_messages.so" \
+        "lib64/libkeymaster_portable.so" \
+        "lib64/libpuresoftkeymasterdevice.so" \
+        "lib64/libsoft_attestation_cert.so"; do
+        if [ ! -f "$WORK_DIR/vendor/$ENTRY" ]; then
+            LOGE "Required software Keymaster 4.0 component is missing: /vendor/$ENTRY"
+            return 1
+        fi
+    done
+
+    if ! cmp -s \
+        "$EXYNOS9810_SOFTWARE_KEYMASTER4_DIR/bin/hw/android.hardware.keymaster@4.0-service" \
+        "$WORK_DIR/vendor/bin/hw/android.hardware.keymaster@4.0-service"; then
+        LOGE "Final vendor contains an unexpected Keymaster 4.0 service"
+        return 1
+    fi
+
+    if grep -a -q 'skeymaster4dev' \
+        "$WORK_DIR/vendor/bin/hw/android.hardware.keymaster@4.0-service"; then
+        LOGE "Final vendor contains the incompatible Trustonic Keymaster 4.0 service"
+        return 1
+    fi
+
+    for ENTRY in \
+        "lib64/libskeymaster4device.so" \
+        "bin/cass" \
+        "bin/vaultkeeperd" \
+        "bin/vendor.samsung.hardware.security.vaultkeeper@2.0-service" \
+        "etc/init/cass.rc" \
+        "etc/init/vaultkeeper_common.rc" \
+        "bin/hw/android.hardware.keymaster@3.0-service" \
+        "etc/init/android.hardware.keymaster@3.0-service.rc"; do
+        if [ -e "$WORK_DIR/vendor/$ENTRY" ]; then
+            LOGE "Incompatible legacy security component remains: /vendor/$ENTRY"
+            return 1
+        fi
+    done
+
+    # Keymaster must be advertised as software @4.0 ONLY. A lingering @3.0
+    # declaration makes keystore2 wait on the removed TEE service and hangs boot.
+    for ENTRY in \
+        '<version>4.0</version>' \
+        '@4.0::IKeymasterDevice/default'; do
+        if ! sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
+            "$MANIFEST" | grep -qF "$ENTRY"; then
+            LOGE "Final vendor manifest is missing software Keymaster declaration: $ENTRY"
+            return 1
+        fi
+    done
+    for ENTRY in \
+        '<version>3.0</version>' \
+        '@3.0::IKeymasterDevice/default'; do
+        if sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
+            "$MANIFEST" | grep -qF "$ENTRY"; then
+            LOGE "Final vendor manifest still advertises TEE Keymaster: $ENTRY"
+            return 1
+        fi
+    done
+}
+
+rm -f \
+    "$WORK_DIR/system/system/lib/libunica.so" \
+    "$WORK_DIR/system/system/lib64/libunica.so" \
+    "$WORK_DIR/vendor/lib/libunica.so" \
+    "$WORK_DIR/vendor/lib64/libunica.so"
+_EXYNOS9810_DELETE_METADATA "system" "system/lib/libunica.so" "/system/lib/libunica.so"
+_EXYNOS9810_DELETE_METADATA "system" "system/lib64/libunica.so" "/system/lib64/libunica.so"
+_EXYNOS9810_DELETE_METADATA "vendor" "vendor/lib/libunica.so" "/vendor/lib/libunica.so"
+_EXYNOS9810_DELETE_METADATA "vendor" "vendor/lib64/libunica.so" "/vendor/lib64/libunica.so"
+
+_EXYNOS9810_KEEP_SETUP_WIZARD_ENABLED
+_EXYNOS9810_RESTORE_VENDOR_BASELINE || return 1
+_EXYNOS9810_APPLY_TARGET_VENDOR_DELTA || return 1
+_EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY
+_EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT
+_EXYNOS9810_USE_SENSORS_HAL_1_0 || return 1
+_EXYNOS9810_APPLY_FINAL_SECURITY_STACK || return 1
+_EXYNOS9810_RESTORE_ODM_BASELINE || return 1
+_EXYNOS9810_APPLY_TARGET_VENDOR_IDENTITY || return 1
+_EXYNOS9810_SANITIZE_RESTORED_TEXT
+_EXYNOS9810_WRITE_FINAL_BOOT_TRACE
+if [ "$EXYNOS9810_USED_VENDOR_METADATA_SNAPSHOT" != true ]; then
+    _EXYNOS9810_RESTORE_VENDOR_BIN_GROUPS
+fi
+
+_EXYNOS9810_SET_METADATA_SAFE "system" "odm/etc/build.prop" 0 0 644 "u:object_r:system_file:s0"
+_EXYNOS9810_SET_METADATA_SAFE "system" "system/bin/unica_exynos9810_bootlog.sh" 0 2000 755 "u:object_r:system_file:s0"
+
+_EXYNOS9810_FIX_SYSTEM_PERMISSION_CASE
+_EXYNOS9810_VERIFY_FINAL_SECURITY_STACK || return 1
+
+_EXYNOS9810_DEDUP_METADATA "system"
+_EXYNOS9810_DEDUP_METADATA "vendor"
+_EXYNOS9810_DEDUP_METADATA "odm"
+_EXYNOS9810_SANITIZE_METADATA "system" "u:object_r:system_file:s0"
+_EXYNOS9810_SANITIZE_METADATA "vendor" "u:object_r:vendor_file:s0"
+_EXYNOS9810_SANITIZE_METADATA "odm" "u:object_r:vendor_file:s0"

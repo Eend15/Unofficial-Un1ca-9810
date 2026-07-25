@@ -1,0 +1,4 @@
+id=ese
+name=eSE patches
+author=salvogiangri
+description=Applies eSE patches in work dir.
