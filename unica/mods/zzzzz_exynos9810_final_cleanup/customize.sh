@@ -518,6 +518,76 @@ _EXYNOS9810_FINAL_RAM_TWEAKS()
     done
 }
 
+_EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK()
+{
+    # Keep the proven Duhan/Exynos9810 target audio as the final word.
+    local ROOT="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$TARGET_CODENAME/vendor"
+    local REL SRC DST LABEL
+
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+    [ -d "$ROOT" ] || {
+        LOGW "Target audio donor missing: $ROOT"
+        return 0
+    }
+
+    LOG "- Restoring Duhan Exynos9810 audio stack for $TARGET_CODENAME"
+    for REL in \
+        etc/mixer_gains.xml \
+        etc/mixer_paths.xml \
+        etc/SoundBoosterParam.txt \
+        firmware/APBargeIn_AUDIO_SLSI.bin \
+        firmware/APBiBF_AUDIO_SLSI.bin \
+        firmware/APDV_AUDIO_SLSI.bin \
+        firmware/AP_AUDIO_SLSI.bin \
+        firmware/SoundBoosterParam.bin \
+        lib/hw/audio.primary.exynos9810.so \
+        lib/lib_SoundBooster_ver900.so \
+        lib/libaudio_soundtrigger.so \
+        lib/libaudiodebugfs.so \
+        lib/libaudioproxy.so \
+        lib/vndk/libaudioroute.so \
+        lib64/lib_SoundBooster_ver900.so; do
+        SRC="$ROOT/$REL"
+        [ -f "$SRC" ] || continue
+        DST="$WORK_DIR/vendor/$REL"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+
+        case "$REL" in
+            etc/*) LABEL="u:object_r:vendor_configs_file:s0" ;;
+            firmware/*) LABEL="u:object_r:vendor_fw_file:s0" ;;
+            *) LABEL="u:object_r:vendor_file:s0" ;;
+        esac
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
+            "/vendor/$REL" 0 0 644 "$LABEL"
+    done
+}
+
+_EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK()
+{
+    # Re-assert device-matched camera binaries after generic camera patches.
+    local ROOT="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$TARGET_CODENAME/vendor"
+    local REL SRC DST
+
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+    [ -d "$ROOT" ] || return 0
+
+    LOG "- Restoring target-matched Exynos9810 camera HAL for $TARGET_CODENAME"
+    for REL in \
+        lib/hw/camera.exynos9810.so \
+        lib/libexynoscamera3.so \
+        lib64/hw/camera.exynos9810.so \
+        lib64/libexynoscamera3.so; do
+        SRC="$ROOT/$REL"
+        [ -f "$SRC" ] || continue
+        DST="$WORK_DIR/vendor/$REL"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
+            "/vendor/$REL" 0 0 644 "u:object_r:vendor_file:s0"
+    done
+}
+
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES()
 {
     local TABLE="$WORK_DIR/vendor/etc/default_volume_tables.xml"
@@ -528,7 +598,7 @@ _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES()
         return 0
     fi
 
-    LOG "- Reducing low and medium Exynos9810 speaker volume without lowering maximum"
+    LOG "- Applying Duhan Exynos9810 speaker calibration and safe output attenuation"
 
     python3 - "$TABLE" "$POLICY" <<'PY' || return 1
 import sys
@@ -542,9 +612,9 @@ table_path, policy_path = sys.argv[1:]
 # the final point at 0 mB so maximum media/call volume is unchanged.
 table_updates = {
     "DEFAULT_SYSTEM_VOLUME_CURVE": [(1, -4200), (33, -3000), (66, -1800), (100, -600)],
-    "DEFAULT_MEDIA_VOLUME_CURVE": [(1, -6800), (20, -5000), (60, -2300), (100, 0)],
-    "DEFAULT_DEVICE_CATEGORY_SPEAKER_VOLUME_CURVE": [(1, -6800), (20, -5000), (60, -2300), (100, 0)],
-    "DEFAULT_NON_MUTABLE_SPEAKER_VOLUME_CURVE": [(0, -6800), (20, -5000), (60, -2300), (100, 0)],
+    "DEFAULT_MEDIA_VOLUME_CURVE": [(1, -6800), (20, -5000), (60, -2300), (100, -600)],
+    "DEFAULT_DEVICE_CATEGORY_SPEAKER_VOLUME_CURVE": [(1, -6800), (20, -5000), (60, -2300), (100, -600)],
+    "DEFAULT_NON_MUTABLE_SPEAKER_VOLUME_CURVE": [(0, -6800), (20, -5000), (60, -2300), (100, -600)],
 }
 
 tree = ET.parse(table_path)
@@ -569,9 +639,9 @@ tree.write(table_path, encoding="UTF-8", xml_declaration=True)
 
 # Ring/alarm/notification speaker curves live directly in the policy file.
 policy_updates = {
-    "AUDIO_STREAM_RING": [(1, -4200), (33, -2800), (66, -1400), (100, 0)],
-    "AUDIO_STREAM_ALARM": [(0, -4200), (33, -2800), (66, -1400), (100, 0)],
-    "AUDIO_STREAM_NOTIFICATION": [(1, -4200), (33, -2800), (66, -1400), (100, 0)],
+    "AUDIO_STREAM_RING": [(1, -4200), (33, -2800), (66, -1400), (100, -600)],
+    "AUDIO_STREAM_ALARM": [(0, -4200), (33, -2800), (66, -1400), (100, -600)],
+    "AUDIO_STREAM_NOTIFICATION": [(1, -4200), (33, -2800), (66, -1400), (100, -600)]
 }
 tree = ET.parse(policy_path)
 root = tree.getroot()
@@ -3263,6 +3333,8 @@ _EXYNOS9810_FINAL_SET_HOME_LAYOUT
 _EXYNOS9810_FINAL_ENABLE_NOW_BRIEF_WIDGET
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS
+_EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK
+_EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES
 _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT
 _EXYNOS9810_FINAL_ADD_VISUAL_CLOUD_CORE
