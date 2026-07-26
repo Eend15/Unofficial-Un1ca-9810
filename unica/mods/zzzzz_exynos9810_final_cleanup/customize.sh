@@ -2210,7 +2210,14 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_SEAMLESS_ZOOM_GUARD()
 
     [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
 
-    LOG "- Guarding S22 seamless-zoom camera ID on Exynos9810"
+    # The dumpstate reproduces the crash on starlte. star2lte and crownlte
+    # already have working camera paths; leave those targets untouched.
+    if [ "$TARGET_CODENAME" != "starlte" ]; then
+        LOG "- Keeping native seamless-zoom behavior for $TARGET_CODENAME"
+        return 0
+    fi
+
+    LOG "- Guarding S22 seamless-zoom camera ID on Exynos9810 (starlte only)"
 
     python3 - "$COMMON" "$PROVIDER" <<'PY' || return 1
 from pathlib import Path
