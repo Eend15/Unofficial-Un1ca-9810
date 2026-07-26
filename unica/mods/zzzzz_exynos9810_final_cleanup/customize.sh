@@ -163,6 +163,85 @@ _EXYNOS9810_FINAL_DELETE_FOUND_DIR()
     fi
 }
 
+_EXYNOS9810_FINAL_RESTORE_DAAGENT()
+{
+    # DAAgent owns Samsung's Dual Messenger settings/provider. It is a small
+    # system app and must survive the final debloat pass.
+    local SRC="$FW_DIR/SM-S901B_EUX/system/system/app/DAAgent/DAAgent.apk"
+    local DST="$WORK_DIR/system/system/app/DAAgent/DAAgent.apk"
+
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+    [ -f "$SRC" ] || {
+        LOGW "DAAgent donor APK not found; Dual Messenger may stay unavailable"
+        return 0
+    }
+
+    if [ ! -f "$DST" ]; then
+        LOG "- Restoring DAAgent for Dual Messenger"
+        mkdir -p "$(dirname "$DST")"
+        cp -f "$SRC" "$DST" || return 1
+        chmod 0644 "$DST"
+    fi
+
+    _EXYNOS9810_FINAL_SET_METADATA "system" \
+        "system/app/DAAgent/DAAgent.apk" 0 0 644 \
+        "u:object_r:system_file:s0"
+}
+
+
+_EXYNOS9810_FINAL_RESTORE_FEATURE_APPS()
+{
+    # Restore framework-facing components after generic debloat.
+    # These power Dual Messenger, Secure Folder, Edge panels and Photo Remaster.
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+
+    local BASE="$FW_DIR/SM-S901B_EUX/system/system"
+    local REL SRC DST
+
+    for REL in \
+        "app/DAAgent/DAAgent.apk" \
+        "priv-app/SecureFolder/SecureFolder.apk" \
+        "app/ClipboardEdge/ClipboardEdge.apk" \
+        "priv-app/TaskEdgePanel_v3.2/TaskEdgePanel_v3.2.apk" \
+        "priv-app/PhotoRemasterService/PhotoRemasterService.apk"; do
+        SRC="$BASE/$REL"
+        DST="$WORK_DIR/system/system/$REL"
+        if [ -f "$SRC" ] && [ ! -f "$DST" ]; then
+            LOG "- Restoring feature app $REL"
+            mkdir -p "$(dirname "$DST")"
+            cp -f "$SRC" "$DST" || return 1
+            chmod 0644 "$DST"
+        fi
+    done
+
+    for REL in \
+        "etc/permissions/privapp-permissions-com.samsung.knox.securefolder.xml" \
+        "etc/permissions/privapp-permissions-com.samsung.android.app.taskedge.xml" \
+        "etc/permissions/privapp-permissions-com.samsung.android.app.clipboardedge.xml" \
+        "etc/permissions/privapp-permissions-com.samsung.android.photoremasterservice.xml"; do
+        SRC="$BASE/$REL"
+        DST="$WORK_DIR/system/system/$REL"
+        if [ -f "$SRC" ]; then
+            mkdir -p "$(dirname "$DST")"
+            cp -f "$SRC" "$DST" || return 1
+            chmod 0644 "$DST"
+        fi
+    done
+
+    for REL in \
+        "system/app/DAAgent/DAAgent.apk" \
+        "system/priv-app/SecureFolder/SecureFolder.apk" \
+        "system/app/ClipboardEdge/ClipboardEdge.apk" \
+        "system/priv-app/TaskEdgePanel_v3.2/TaskEdgePanel_v3.2.apk" \
+        "system/priv-app/PhotoRemasterService/PhotoRemasterService.apk" \
+        "system/etc/permissions/privapp-permissions-com.samsung.knox.securefolder.xml" \
+        "system/etc/permissions/privapp-permissions-com.samsung.android.app.taskedge.xml" \
+        "system/etc/permissions/privapp-permissions-com.samsung.android.app.clipboardedge.xml" \
+        "system/etc/permissions/privapp-permissions-com.samsung.android.photoremasterservice.xml"; do
+        _EXYNOS9810_FINAL_SET_METADATA "system" "$REL" 0 0 644 "u:object_r:system_file:s0"
+    done
+}
+
 _EXYNOS9810_FINAL_DEBLOAT()
 {
     local APP DIR REL
@@ -207,7 +286,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
         SamsungNotes \
         SamsungNotes_Removable \
         SamsungVoiceRecorder \
-        SecureFolder \
         SmartSwitchAgent \
         SmartSwitchAssistant \
         SmartSwitchStub \
@@ -252,7 +330,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
         system/priv-app/HealthService \
         system/priv-app/LinkToWindowsService \
         system/priv-app/MultiControl \
-        system/priv-app/SecureFolder \
         system/priv-app/YourPhone_Stub \
         system/etc/default-permissions/default-permission-com.samsung.android.app.smartmirroring.xml \
         system/etc/permissions/privapp-permissions-com.microsoft.appmanager.xml \
@@ -3025,6 +3102,8 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
 _EXYNOS9810_FINAL_REPATCH_APPS
 _EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED
 _EXYNOS9810_FINAL_DEBLOAT
+_EXYNOS9810_FINAL_RESTORE_DAAGENT
+_EXYNOS9810_FINAL_RESTORE_FEATURE_APPS
 _EXYNOS9810_FINAL_SET_HOME_LAYOUT
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS

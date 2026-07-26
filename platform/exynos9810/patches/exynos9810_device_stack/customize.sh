@@ -2369,6 +2369,24 @@ _EXYNOS9810_RESTORE_EXYNOS9810_RADIO_STACK()
         "vendor/etc/init/vendor.sem.rilchip.rc" \
         "/vendor/etc/init/vendor\\.sem\\.rilchip\\.rc" \
         0 0 644 "u:object_r:vendor_configs_file:s0"
+
+
+    # Preserve the S22 radio manifest fragments. Android 16 can flatten the
+    # merged manifest while dropping these fragments, making ISehChannel/imsd
+    # invisible to hwservicemanager even though rild and its libraries exist.
+    for REL in \
+        vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml \
+        vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml; do
+        SRC="$FW_DIR/SM-S901B_EUX/$REL"
+        DST="$WORK_DIR/$REL"
+        if [ -f "$SRC" ]; then
+            mkdir -p "$(dirname "$DST")"
+            EVAL "cp -a \"$SRC\" \"$DST\"" || return 1
+            _EXYNOS9810_SET_METADATA "vendor" \
+                "${REL#vendor/}" 0 0 644 "u:object_r:vendor_configs_file:s0"
+        fi
+    done
+
 }
 
 _EXYNOS9810_FIX_NETWORK_TYPES()
