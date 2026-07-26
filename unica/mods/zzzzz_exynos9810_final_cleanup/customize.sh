@@ -518,6 +518,49 @@ _EXYNOS9810_FINAL_RAM_TWEAKS()
     done
 }
 
+_EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK()
+{
+    # Keep the software Dolby DAP3 stack paired with the Exynos9810 audio HAL.
+    # The S22 donor's Dolby firmware/configuration is not interchangeable with
+    # the legacy provider and can silently disable the Atmos effect.
+    local ROOT="$EXYNOS9810_LEGACY_PORT_DIR/vendor"
+    local REL SRC DST LABEL
+
+    [ -d "$ROOT" ] || return 0
+    LOG "- Restoring Exynos9810 Dolby Atmos/DAP3 stack"
+
+    for REL in \
+        etc/audio_effects.xml \
+        etc/audio_effects_sec.xml \
+        etc/audio_effects_spatializer.xml \
+        etc/dax3_media_codecs_dolby_audio.xml \
+        etc/media_codecs_dolby_audio.xml \
+        etc/dolby/dax-default.xml \
+        lib/soundfx/libswdap.so \
+        lib64/soundfx/libswdap.so; do
+        SRC="$ROOT/$REL"
+        [ -f "$SRC" ] || continue
+        DST="$WORK_DIR/vendor/$REL"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+
+        case "$REL" in
+            etc/*) LABEL="u:object_r:vendor_configs_file:s0" ;;
+            *) LABEL="u:object_r:vendor_file:s0" ;;
+        esac
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
+            "/vendor/$REL" 0 0 644 "$LABEL"
+    done
+
+    # The legacy floating-feature baseline already advertises Dolby support;
+    # assert it here in case a target overlay replaced that XML.
+    local FEATURE="$WORK_DIR/vendor/etc/floating_feature.xml"
+    if [ -f "$FEATURE" ]; then
+        grep -q "SEC_FLOATING_FEATURE_MMFW_SUPPORT_DOLBY_AUDIO" "$FEATURE" || \
+            LOGW "Dolby feature key is absent from floating_feature.xml"
+    fi
+}
+
 _EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK()
 {
     # Keep the proven Duhan/Exynos9810 target audio as the final word.
@@ -3333,6 +3376,7 @@ _EXYNOS9810_FINAL_SET_HOME_LAYOUT
 _EXYNOS9810_FINAL_ENABLE_NOW_BRIEF_WIDGET
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS
+_EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK
 _EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK
 _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES
