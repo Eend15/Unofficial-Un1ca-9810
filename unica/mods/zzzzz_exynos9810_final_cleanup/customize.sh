@@ -300,6 +300,7 @@ _EXYNOS9810_FINAL_DEBLOAT()
         GalaxyWearable \
         GearManager \
         GearManagerStub \
+        BudsUniteManager \
         GlobalGoals \
         GoogleFeedback \
         Gmail2 \
@@ -358,6 +359,8 @@ _EXYNOS9810_FINAL_DEBLOAT()
         product/overlay/NotesRoleEnabled \
         system/preload/SBrowser \
         system/app/KidsHome_Installer \
+        system/etc/permissions/privapp-permissions-com.samsung.accessory.budsunitemgr.xml \
+        system/etc/default-permissions/default-permissions-com.samsung.accessory.budsunitemgr.xml \
         system/app/ParentalCare \
         system/priv-app/SecCalculator \
         system/priv-app/SecCalculator2 \
