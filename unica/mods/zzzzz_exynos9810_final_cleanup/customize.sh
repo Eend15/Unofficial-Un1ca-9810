@@ -2197,6 +2197,75 @@ PY
     return 0
 }
 
+_EXYNOS9810_FINAL_PATCH_CAMERA_SEAMLESS_ZOOM_GUARD()
+{
+    # The S22 One UI 8 camera asks CameraService for its synthetic
+    # BACK_SEAMLESS_ZOOM camera (ID 20). Exynos9810 only exposes the real
+    # legacy camera IDs, so the query throws from the background capture
+    # logging path and kills SamsungCamera after the shutter is pressed.
+    # The app already treats a null seamless-zoom array as "unsupported".
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
+    local COMMON="$APK_DIR/smali_classes3/com/sec/android/app/camera/engine/CommonEngine.smali"
+    local PROVIDER="$APK_DIR/smali_classes3/com/sec/android/app/camera/engine/core/CapabilityProvider.smali"
+
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
+
+    LOG "- Guarding S22 seamless-zoom camera ID on Exynos9810"
+
+    python3 - "$COMMON" "$PROVIDER" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+common = Path(sys.argv[1])
+provider = Path(sys.argv[2])
+
+common_text = common.read_text()
+common_pattern = re.compile(
+    r"(?ms)^\.method public getSeamlessZoomValueArray\(\)\[I\n.*?^\.end method"
+)
+common_method = """.method public getSeamlessZoomValueArray()[I
+    .locals 1
+
+    const-string v0, "CommonEngine"
+
+    const-string p0, "UN1CA: seamless zoom disabled for legacy Exynos9810 cameras"
+
+    invoke-static {v0, p0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+
+    const/4 p0, 0x0
+
+    return-object p0
+.end method"""
+if not common_pattern.search(common_text):
+    raise SystemExit("CommonEngine seamless zoom method not found")
+if "UN1CA: seamless zoom disabled for legacy Exynos9810 cameras" not in common_text:
+    common.write_text(common_pattern.sub(common_method, common_text, count=1))
+
+provider_text = provider.read_text()
+provider_pattern = re.compile(
+    r"(?ms)^\.method private createSeamlessZoomValueArray\(\)V\n.*?^\.end method"
+)
+provider_method = """.method private createSeamlessZoomValueArray()V
+    .locals 1
+
+    const/4 v0, 0x0
+
+    new-array v0, v0, [I
+
+    iput-object v0, p0, Lcom/sec/android/app/camera/engine/core/CapabilityProvider;->mSeamlessZoomValueArray:[I
+
+    return-void
+.end method"""
+if not provider_pattern.search(provider_text):
+    raise SystemExit("CapabilityProvider seamless zoom method not found")
+if "mSeamlessZoomValueArray:[I" in provider_text and "new-array v0, v0, [I" not in provider_text:
+    provider.write_text(provider_pattern.sub(provider_method, provider_text, count=1))
+PY
+
+    return 0
+}
+
 _EXYNOS9810_FINAL_PATCH_CAMERA_QR_POPUP_CRASH()
 {
     # Two related QR-code fixes in SamsungCamera.apk:
@@ -3119,6 +3188,7 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME
 _EXYNOS9810_FINAL_PATCH_CAMERA_PORTRAIT_RESUME
 _EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY
 _EXYNOS9810_FINAL_PATCH_CAMERA_QR_POPUP_CRASH
+_EXYNOS9810_FINAL_PATCH_CAMERA_SEAMLESS_ZOOM_GUARD
 _EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT
 _EXYNOS9810_FINAL_FIX_WALLPAPER_OBJECTCAPTURE
 _EXYNOS9810_FINAL_FIX_SNAP_IMAGETAGGER_MODEL_PAIR
