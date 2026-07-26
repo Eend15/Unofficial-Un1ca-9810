@@ -9,7 +9,6 @@ PRODUCT_DEBLOAT+="
 app/Gmail2
 app/Maps
 app/YouTube
-priv-app/Messages
 "
 
 SYSTEM_DEBLOAT+="
@@ -18,11 +17,9 @@ system/preload/SBrowser
 product/app/Gmail2
 product/app/Maps
 product/app/YouTube
-product/priv-app/Messages
 system/product/app/Gmail2
 system/product/app/Maps
 system/product/app/YouTube
-system/product/priv-app/Messages
 
 system/app/GalaxyResourceUpdater
 system/app/GearManagerStub

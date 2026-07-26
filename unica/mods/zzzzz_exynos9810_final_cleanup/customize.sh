@@ -179,7 +179,6 @@ _EXYNOS9810_FINAL_DEBLOAT()
         Calculator \
         Chrome \
         ClockPackage \
-        DAAgent \
         DuoStub \
         FamilyLinkParentalControls \
         GalaxyResourceUpdater \
@@ -241,11 +240,9 @@ _EXYNOS9810_FINAL_DEBLOAT()
         product/app/YouTube \
         system/app/Calculator \
         system/app/ClockPackage \
-        product/priv-app/Messages \
         product/overlay/GoogleHealthFitnessFrameworkOverlay.apk \
         product/overlay/NotesRoleEnabled \
         system/preload/SBrowser \
-        system/app/DAAgent \
         system/app/KidsHome_Installer \
         system/app/ParentalCare \
         system/priv-app/SecCalculator \
@@ -1168,6 +1165,19 @@ _EXYNOS9810_FINAL_REPATCH_APPS()
 
 }
 
+_EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED()
+{
+    # These packages must keep their original Samsung signatures. Stale apktool
+    # decode folders from previous builds would make the global rebuild pass
+    # platform-sign them, which blocks Galaxy Store updates.
+    LOG "- Keeping Samsung Account, Bixby and Customization Services donor-signed"
+
+    rm -rf \
+        "$APKTOOL_DIR/system/priv-app/SamsungAccount/SamsungAccount.apk" \
+        "$APKTOOL_DIR/system/priv-app/Bixby/Bixby.apk" \
+        "$APKTOOL_DIR/system/app/Personalization/Personalization.apk"
+}
+
 _EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT()
 {
     local KEYLAYOUT_DIR="$WORK_DIR/system/system/usr/keylayout"
@@ -1915,8 +1925,12 @@ _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN()
     fi
 
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_SPEN_VERSION" "40"
-    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_SUPPORT_BLE_SPEN" "TRUE"
-    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_BLE_SPEN_SPEC" "crown,button"
+    # Match the working One UI 8 Note8 UN1CA port: expose the silo S Pen stack,
+    # but do not force Samsung's newer BLE remote path. The Note9 test logs show
+    # AirCommand dying when the BLE controller factory returns null, while basic
+    # AirCommand/eject handling only needs the garage feature below.
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_SUPPORT_BLE_SPEN" --delete
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_BLE_SPEN_SPEC" --delete
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SPEN_ALERT" "TRUE"
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_SPEN_FCC_ID" "A3LEJPN960"
 
@@ -1938,17 +1952,11 @@ _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN()
     # anything else (e.g. the "position"/"tip_direction" this used to carry)
     # falls through to a default arm that just logs "parseSpec : unknown key"
     # and is otherwise a no-op, so it was dropped.
-    #   type=insert           the pen lives in a silo, same as N960F and every
-    #                         Ultra/Note (Lx1/k enum: insert/attach/inbox)
-    #   bundled=true          ships in the box with the phone
-    #   tip_type=normal       standard hard tip, not the soft/artist tip
-    #   unbundled_spec=remote BLE remote-button pen (Lx1/j enum), matches
-    #                         SEC_FLOATING_FEATURE_COMMON_CONFIG_BLE_SPEN_SPEC
-    #                         above
-    #   no_charge=partial     silo only charges once the pen is fully seated,
-    #                         not on partial insertion (Lx1/d enum: all/partial)
+    # The Note8 One UI 8 UN1CA port fixes S Pen with this minimal garage spec.
+    # Keeping it minimal avoids pushing AirCommand into unsupported BLE remote
+    # code paths on the legacy Exynos9810 vendor stack.
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_SPEN_GARAGE_SPEC" \
-        "type=insert, bundled=true, tip_type=normal, unbundled_spec=remote, no_charge=partial"
+        "type=insert, bundled=true"
 
     _EXYNOS9810_FINAL_PATCH_AIRCOMMAND_GARAGE_FALLBACK
 
@@ -2042,6 +2050,73 @@ PY
 
     # Never let a helper's exit status become this function's -- a non-zero
     # return here fails the whole module and aborts the entire build.
+    return 0
+}
+
+_EXYNOS9810_FINAL_PATCH_AIRCOMMAND_BLE_CONTROLLER_NULL()
+{
+    # Some Note9 logs from the 2026-07-26 test build show AirCommand dying
+    # later than the garage-spec path, inside AirCommandUiService creation:
+    #
+    #   java.lang.NullPointerException:
+    #     Attempt to invoke virtual method 'void U2.j.k(Context)'
+    #     at G2.j.h(...)
+    #
+    # G2.j.h asks the BLE S Pen controller factory for a U2.j instance and then
+    # immediately initializes it. On crownlte ports that factory can return null
+    # when the donor BLE-remote stack does not expose the exact modern provider
+    # AirCommand expects. Treat that as "BLE remote unavailable" instead of
+    # killing the whole AirCommand UI; silo insert/eject handling and basic Air
+    # Command are still useful without the remote-controller object.
+    [[ "$TARGET_CODENAME" == "crownlte" ]] || return 0
+
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/AirCommand/AirCommand.apk"
+    local CONTROLLER="$APK_DIR/smali/G2/j.smali"
+
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/AirCommand/AirCommand.apk" || return 0
+
+    LOG "- Hardening AirCommand BLE controller initialization"
+
+    if [ ! -f "$CONTROLLER" ]; then
+        LOGW "AirCommand BLE controller smali not found; skipping null guard"
+        return 0
+    fi
+
+    python3 - "$CONTROLLER" <<'PY' || return 0
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+old = """    iput-object p2, p0, LG2/j;->i:LU2/j;
+
+    iget-object v0, p0, LG2/j;->d:Landroid/content/Context;
+
+    invoke-virtual {p2, v0}, LU2/j;->k(Landroid/content/Context;)V
+
+    new-instance p2, Lg2/f;
+"""
+new = """    iput-object p2, p0, LG2/j;->i:LU2/j;
+
+    if-eqz p2, :unica_skip_ble_spen_controller_init
+
+    iget-object v0, p0, LG2/j;->d:Landroid/content/Context;
+
+    invoke-virtual {p2, v0}, LU2/j;->k(Landroid/content/Context;)V
+
+    :unica_skip_ble_spen_controller_init
+    new-instance p2, Lg2/f;
+"""
+if old not in text:
+    if ":unica_skip_ble_spen_controller_init" in text:
+        print("already patched")
+        raise SystemExit(0)
+    print("PATTERN_NOT_FOUND")
+    raise SystemExit(1)
+path.write_text(text.replace(old, new, 1))
+print("ok")
+PY
+
     return 0
 }
 
@@ -2948,6 +3023,7 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
 }
 
 _EXYNOS9810_FINAL_REPATCH_APPS
+_EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED
 _EXYNOS9810_FINAL_DEBLOAT
 _EXYNOS9810_FINAL_SET_HOME_LAYOUT
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
@@ -2958,6 +3034,7 @@ _EXYNOS9810_FINAL_ADD_VISUAL_CLOUD_CORE
 _EXYNOS9810_FINAL_VERIFY_PHOTO_EDITOR_STACK
 _EXYNOS9810_FINAL_ADD_VIBRATOR_AIDL_HAL
 _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN
+_EXYNOS9810_FINAL_PATCH_AIRCOMMAND_BLE_CONTROLLER_NULL
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY
 _EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME
 _EXYNOS9810_FINAL_PATCH_CAMERA_PORTRAIT_RESUME

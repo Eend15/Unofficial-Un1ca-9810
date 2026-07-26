@@ -3548,7 +3548,11 @@ _EXYNOS9810_DISABLE_SETUP_WIZARDS
 _EXYNOS9810_PATCH_SETTINGS_PROVIDER_SETUP_SKIP
 _EXYNOS9810_PATCH_INITIAL_SETUP_BRIGHTNESS
 _EXYNOS9810_PATCH_SERVICES_SP_SOFTWARE_CRYPTO
-_EXYNOS9810_PATCH_BIXBY_ACCOUNT_SOFTWARE_CRYPTO
+# Keep Samsung Account and Bixby donor-signed. Rebuilding these APKs fixes one
+# legacy keymaster path, but it also makes them platform-signed, which blocks
+# Galaxy Store from updating the Samsung-signed packages. Keymaster compatibility
+# must be handled below app-signature level on Exynos9810.
+# _EXYNOS9810_PATCH_BIXBY_ACCOUNT_SOFTWARE_CRYPTO
 _EXYNOS9810_VERIFY_SECURITY_STACK
 _EXYNOS9810_PATCH_SEMWIFI_STDP_BOOTLOOP
 _EXYNOS9810_PATCH_EXTENDED_ETHERNET_BOOTLOOP
