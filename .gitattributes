@@ -38,3 +38,6 @@ target/t2s/patches/variants/vendor/** binary
 # Prebuilt HAL binaries that have no file extension, so the "* text eol=lf"
 # default would otherwise EOL-normalise and corrupt them.
 unica.vibrator-service binary
+
+# Recovery installer is a native ARM64 ELF, never normalize it as text.
+target/*/installer/update-binary binary
