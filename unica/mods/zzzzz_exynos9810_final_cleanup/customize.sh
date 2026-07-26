@@ -457,14 +457,17 @@ _EXYNOS9810_FINAL_SET_HOME_LAYOUT()
 <favorites xmlns:launcher="http://schemas.android.com/apk/res/com.sec.android.app.launcher">
     <homeGridInfo default="4x6" />
     <home>
-        <appwidget screen="0" packageName="com.sec.android.daemonapp" className="com.sec.android.daemonapp.appwidget.WeatherAppWidget2x1" x="1" y="1" spanX="2" spanY="2" />
-        <favorite screen="0" packageName="com.sec.android.gallery3d" className="com.samsung.android.gallery.app.activity.GalleryActivity" x="0" y="5" />
-        <favorite screen="0" packageName="com.android.vending" className="com.android.vending.AssetBrowserActivity" x="1" y="5" />
-        <favorite screen="0" packageName="com.sec.android.app.myfiles" className="com.sec.android.app.myfiles.ui.MainActivity" x="2" y="5" />
+        <!-- One UI 8 first-boot layout: weather and Now Brief above the app row. -->
+        <appwidget screen="0" packageName="com.sec.android.daemonapp" className="com.sec.android.daemonapp.appwidget.WeatherAppWidget2x1" x="0" y="1" spanX="2" spanY="2" />
+        <appwidget screen="0" packageName="com.samsung.android.smartsuggestions" className="com.samsung.android.smartsuggestions.feature.aisuggestion.ui.appwidget.AiSuggestionAppWidgetReceiver" x="2" y="2" spanX="2" spanY="1" />
+        <favorite screen="0" packageName="com.sec.android.gallery3d" className="com.samsung.android.gallery.app.activity.GalleryActivity" x="0" y="4" />
+        <favorite screen="0" packageName="com.android.vending" className="com.android.vending.AssetBrowserActivity" x="1" y="4" />
+        <favorite screen="0" packageName="com.sec.android.app.myfiles" className="com.sec.android.app.myfiles.ui.MainActivity" x="2" y="4" />
+        <favorite screen="0" packageName="com.android.settings" className="com.android.settings.Settings" x="3" y="4" />
     </home>
     <hotseat>
         <favorite screen="0" packageName="com.samsung.android.dialer" className="com.samsung.android.dialer.DialtactsActivity" />
-        <favorite screen="1" packageName="com.samsung.android.app.contacts" className="com.samsung.android.contacts.contactslist.PeopleActivity" />
+        <favorite screen="1" packageName="com.samsung.android.messaging" className="com.samsung.android.messaging.ui.view.main.WithKiesActivity" />
         <favorite screen="2" packageName="com.sec.android.app.camera" className="com.sec.android.app.camera.Camera" />
     </hotseat>
 </favorites>
@@ -3214,6 +3217,42 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
     return 0
 }
 
+_EXYNOS9810_FINAL_ENABLE_NOW_BRIEF_WIDGET()
+{
+    local REL="system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
+    local DIR="$APKTOOL_DIR/system/priv-app/SamsungSmartSuggestions/SamsungSmartSuggestions.apk"
+    local MANIFEST="$DIR/AndroidManifest.xml"
+
+    [ -f "$WORK_DIR/system/$REL" ] || {
+        LOGW "Samsung Smart Suggestions missing; skipping Now Brief provider enable"
+        return 0
+    }
+    DECODE_APK "system" "$REL" || return 1
+    [ -f "$MANIFEST" ] || {
+        LOGE "Samsung Smart Suggestions manifest was not decoded"
+        return 1
+    }
+
+    LOG "- Enabling the One UI 8 Now Brief home-screen widget provider"
+    python3 - "$MANIFEST" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+pattern = re.compile(
+    r'(<receiver\s+android:enabled=")false("[^>]*android:name="'
+    r'com\.samsung\.android\.smartsuggestions\.feature\.aisuggestion\.ui\.appwidget\.AiSuggestionAppWidgetReceiver")'
+)
+new, count = pattern.subn(r'\g<1>true\g<2>', text, count=1)
+if count != 1:
+    raise SystemExit(f"expected one Now Brief receiver, patched {count}")
+path.write_text(new)
+PY
+}
+
+
 _EXYNOS9810_FINAL_REPATCH_APPS
 _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF
 _EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED
@@ -3221,6 +3260,7 @@ _EXYNOS9810_FINAL_DEBLOAT
 _EXYNOS9810_FINAL_RESTORE_DAAGENT
 _EXYNOS9810_FINAL_RESTORE_FEATURE_APPS
 _EXYNOS9810_FINAL_SET_HOME_LAYOUT
+_EXYNOS9810_FINAL_ENABLE_NOW_BRIEF_WIDGET
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES
