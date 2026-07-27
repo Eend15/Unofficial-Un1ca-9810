@@ -228,38 +228,33 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
 
 _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF()
 {
-    # The platform radio stage copies these S22 manifests before the final
-    # Exynos9810 vendor restore. That restore can replace vendor/etc/vintf,
-    # leaving the IMS radio-channel services invisible to servicemanager.
-    # Copy them again at the last stage so IMS/VoLTE and the signal/data state
-    # are backed by the same radio stack that rild loads.
+    # Keep the legacy Exynos9810 radio declaration. The S22 fragments use
+    # @1.6::IRadio and a newer channel interface which is not implemented by
+    # the Exynos9810 rild/provider; leaving them installed causes swVer=NONE,
+    # no radio services, and an unknown baseband/IMEI in Android 16.
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
 
-    local SRC_DIR="$FW_DIR/SM-S901B_EUX/vendor/etc/vintf/manifest"
-    local DST_DIR="$WORK_DIR/vendor/etc/vintf/manifest"
     local XML
-
-    [ -d "$SRC_DIR" ] || {
-        LOGW "S22 radio VINTF source directory is missing"
-        return 0
-    }
-
-    LOG "- Restoring final radio/IMS VINTF manifests"
-    mkdir -p "$DST_DIR" || return 1
+    LOG "- Removing incompatible S22 radio VINTF fragments"
 
     for XML in \
         vendor.samsung.hardware.radio_manifest_2_31.xml \
         vendor.samsung.hardware.sehradio_manifest_2_31.xml \
         vendor.samsung.hardware.radio.exclude.slsi.xml; do
-        if [ -f "$SRC_DIR/$XML" ]; then
-            cp -f "$SRC_DIR/$XML" "$DST_DIR/$XML" || return 1
-            _EXYNOS9810_FINAL_SET_METADATA "vendor" \
-                "etc/vintf/manifest/$XML" 0 0 644 \
-                "u:object_r:vendor_configs_file:s0"
-        else
-            LOGW "Missing S22 radio VINTF fragment: $XML"
-        fi
+        rm -f "$WORK_DIR/vendor/etc/vintf/manifest/$XML"
+        _EXYNOS9810_FINAL_DELETE_METADATA_PREFIX "vendor" \
+            "etc/vintf/manifest/$XML" \
+            "/vendor/etc/vintf/manifest/$XML"
     done
+
+    grep -q '@1.4::IRadio/slot1' "$WORK_DIR/vendor/etc/vintf/manifest.xml" || {
+        LOGE "Exynos9810 legacy radio manifest is missing @1.4::IRadio/slot1"
+        return 1
+    }
+    grep -q '@2.0::ISehChannel/imsd' "$WORK_DIR/vendor/etc/vintf/manifest.xml" || {
+        LOGE "Exynos9810 legacy radio manifest is missing ISehChannel/imsd"
+        return 1
+    }
 }
 
 _EXYNOS9810_FINAL_RESTORE_DAAGENT()

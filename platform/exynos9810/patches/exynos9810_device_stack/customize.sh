@@ -2371,20 +2371,18 @@ _EXYNOS9810_RESTORE_EXYNOS9810_RADIO_STACK()
         0 0 644 "u:object_r:vendor_configs_file:s0"
 
 
-    # Preserve the S22 radio manifest fragments. Android 16 can flatten the
-    # merged manifest while dropping these fragments, making ISehChannel/imsd
-    # invisible to hwservicemanager even though rild and its libraries exist.
+    # Do not add S22 radio manifest fragments here. The Exynos9810 legacy
+    # stack is declared by vendor/etc/vintf/manifest.xml with @1.4::IRadio
+    # and ISehChannel. S22's @1.6 fragment overrides that declaration and
+    # makes Android 16 request HAL instances that rild cannot provide.
     for REL in \
         vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml \
-        vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml; do
-        SRC="$FW_DIR/SM-S901B_EUX/$REL"
-        DST="$WORK_DIR/$REL"
-        if [ -f "$SRC" ]; then
-            mkdir -p "$(dirname "$DST")"
-            EVAL "cp -a \"$SRC\" \"$DST\"" || return 1
-            _EXYNOS9810_SET_METADATA "vendor" \
-                "${REL#vendor/}" 0 0 644 "u:object_r:vendor_configs_file:s0"
-        fi
+        vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml \
+        vendor/etc/vintf/manifest/vendor.samsung.hardware.radio.exclude.slsi.xml; do
+        rm -f "$WORK_DIR/$REL"
+        _EXYNOS9810_DELETE_METADATA_PREFIX "vendor" \
+            "${REL#vendor/}" \
+            "/${REL#vendor/}"
     done
 
 }
