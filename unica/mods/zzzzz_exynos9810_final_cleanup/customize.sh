@@ -591,6 +591,9 @@ _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK()
         etc/audio_effects.xml \
         etc/audio_effects_sec.xml \
         etc/audio_effects_spatializer.xml \
+        etc/audio_policy_configuration.xml \
+        etc/audio_policy_configuration_sec.xml \
+        etc/audio_policy_volumes.xml \
         etc/dax3_media_codecs_dolby_audio.xml \
         etc/media_codecs_dolby_audio.xml \
         etc/dolby/dax-default.xml \
@@ -608,6 +611,51 @@ _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK()
         esac
         _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
             "/vendor/$REL" 0 0 644 "$LABEL"
+    done
+
+    # Restore every legacy soundfx shim as a matched set. Android 16's
+    # audioserver rejects a partial effect configuration and repeatedly dies
+    # before boot_completed, leaving the device on Optimizing apps 100%.
+    for REL in \
+        lib/soundfx/libaudioeffectoffload.so \
+        lib/soundfx/libaudiopreprocessing.so \
+        lib/soundfx/libaudiosaplus_sec.so \
+        lib/soundfx/libbundlewrapper.so \
+        lib/soundfx/libdownmix.so \
+        lib/soundfx/libdynproc.so \
+        lib/soundfx/libeffectproxy.so \
+        lib/soundfx/libhapticgenerator.so \
+        lib/soundfx/libldnhncr.so \
+        lib/soundfx/libmysound.so \
+        lib/soundfx/libmyspace.so \
+        lib/soundfx/libreverbwrapper.so \
+        lib/soundfx/libsamsungSoundbooster_plus.so \
+        lib/soundfx/libswdap.so \
+        lib/soundfx/libswspatializer.so \
+        lib/soundfx/libvisualizer.so \
+        lib64/soundfx/libaudioeffectoffload.so \
+        lib64/soundfx/libaudiopreprocessing.so \
+        lib64/soundfx/libaudiosaplus_sec.so \
+        lib64/soundfx/libbundlewrapper.so \
+        lib64/soundfx/libdownmix.so \
+        lib64/soundfx/libdynproc.so \
+        lib64/soundfx/libeffectproxy.so \
+        lib64/soundfx/libhapticgenerator.so \
+        lib64/soundfx/libldnhncr.so \
+        lib64/soundfx/libmysound.so \
+        lib64/soundfx/libmyspace.so \
+        lib64/soundfx/libreverbwrapper.so \
+        lib64/soundfx/libsamsungSoundbooster_plus.so \
+        lib64/soundfx/libswdap.so \
+        lib64/soundfx/libswspatializer.so \
+        lib64/soundfx/libvisualizer.so; do
+        SRC="$ROOT/$REL"
+        [ -f "$SRC" ] || continue
+        DST="$WORK_DIR/vendor/$REL"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
+            "/vendor/$REL" 0 0 644 "u:object_r:vendor_file:s0"
     done
 
     # The legacy floating-feature baseline already advertises Dolby support;
@@ -668,12 +716,32 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK()
 {
     # Re-assert device-matched camera binaries after generic camera patches.
     local ROOT="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$TARGET_CODENAME/vendor"
+    local GLOBAL="$EXYNOS9810_LEGACY_PORT_DIR/vendor"
     local REL SRC DST
 
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
     [ -d "$ROOT" ] || return 0
 
     LOG "- Restoring target-matched Exynos9810 camera HAL for $TARGET_CODENAME"
+    for REL in \
+        bin/hw/vendor.samsung.hardware.camera.provider@4.0-service \
+        etc/init/vendor.samsung.hardware.camera.provider@4.0-service.rc \
+        lib/vendor.samsung.hardware.camera.provider@4.0-legacy.so \
+        lib/vendor.samsung.hardware.camera.provider@4.0.so \
+        lib/hw/camera.unihal.default.so \
+        lib64/hw/camera.unihal.default.so; do
+        SRC="$GLOBAL/$REL"
+        [ -f "$SRC" ] || continue
+        DST="$WORK_DIR/vendor/$REL"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+        case "$REL" in
+            bin/*) _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" "/vendor/$REL" 0 2000 755 "u:object_r:hal_camera_default_exec:s0" ;;
+            etc/*) _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" "/vendor/$REL" 0 0 644 "u:object_r:vendor_configs_file:s0" ;;
+            *) _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" "/vendor/$REL" 0 0 644 "u:object_r:vendor_file:s0" ;;
+        esac
+    done
+
     for REL in \
         lib/hw/camera.exynos9810.so \
         lib/libexynoscamera3.so \

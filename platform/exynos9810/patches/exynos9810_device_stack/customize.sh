@@ -1913,12 +1913,36 @@ _EXYNOS9810_APPLY_AUDIO6_BRIDGE()
     if [ -f "$MANIFEST" ]; then
         sed -i '/<name>android.hardware.audio<\/name>/,/<\/hal>/ {
             s/<version>5\.0<\/version>/<version>6.0<\/version>/
+            s/<version>7\.0<\/version>/<version>6.0<\/version>/
+            s/<version>7\.1<\/version>/<version>6.0<\/version>/
             s/@5\.0::IDevicesFactory/@6.0::IDevicesFactory/
+            s/@7\.0::IDevicesFactory/@6.0::IDevicesFactory/
+            s/@7\.1::IDevicesFactory/@6.0::IDevicesFactory/
         }
         /<name>android.hardware.audio.effect<\/name>/,/<\/hal>/ {
             s/<version>5\.0<\/version>/<version>6.0<\/version>/
+            s/<version>7\.0<\/version>/<version>6.0<\/version>/
+            s/<version>7\.1<\/version>/<version>6.0<\/version>/
             s/@5\.0::IEffectsFactory/@6.0::IEffectsFactory/
+            s/@7\.0::IEffectsFactory/@6.0::IEffectsFactory/
+            s/@7\.1::IEffectsFactory/@6.0::IEffectsFactory/
         }' "$MANIFEST"
+    fi
+
+    # Some donor manifests omit the legacy HIDL entries entirely. Add a
+    # fragment only in that case; avoid duplicate HAL declarations when the
+    # main manifest already contains the 6.0 bridge.
+    if [ -f "$MANIFEST" ] && \
+            ! grep -q '@6.0::IDevicesFactory/default' "$MANIFEST"; then
+        local FRAGMENT="$EXYNOS9810_PATCH_DIR/audio6/audio_exynos9810.xml"
+        if [ -f "$FRAGMENT" ]; then
+            mkdir -p "$WORK_DIR/vendor/etc/vintf/manifest"
+            cp -af "$FRAGMENT" "$WORK_DIR/vendor/etc/vintf/manifest/audio_exynos9810.xml" || return 1
+            _EXYNOS9810_SET_METADATA "vendor" \
+                "vendor/etc/vintf/manifest/audio_exynos9810.xml" \
+                "/vendor/etc/vintf/manifest/audio_exynos9810.xml" \
+                0 0 644 "u:object_r:vendor_configs_file:s0"
+        fi
     fi
 }
 
