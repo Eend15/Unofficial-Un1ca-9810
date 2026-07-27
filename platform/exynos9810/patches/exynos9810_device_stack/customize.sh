@@ -2546,11 +2546,17 @@ _EXYNOS9810_VERIFY_NETWORK_SETTINGS()
     # SecSettings already owns the correct policy: hide the preference without
     # a subscription and expose it once TelephonyUI reports a usable SIM. Keep
     # that controller intact instead of forcing the menu on without a modem.
-    if [ ! -f "$CONNECTIONS_XML" ] || \
-            ! grep -q 'key="mobile_network_settings"' "$CONNECTIONS_XML" || \
-            ! grep -q 'SecMobileNetworkPreferenceController' "$CONNECTIONS_XML"; then
-        LOGE "SecSettings mobile network preference/controller is missing"
-        return 1
+    # SecSettings is decoded later by the shared settings module. At this
+    # stage its decoded resources may not exist yet, so defer that validation
+    # instead of failing a valid build because of hook ordering.
+    if [ -f "$CONNECTIONS_XML" ]; then
+        if ! grep -q 'key="mobile_network_settings"' "$CONNECTIONS_XML" || \
+                ! grep -q 'SecMobileNetworkPreferenceController' "$CONNECTIONS_XML"; then
+            LOGE "SecSettings mobile network preference/controller is missing"
+            return 1
+        fi
+    else
+        LOG "  SecSettings not decoded yet; deferring preference validation"
     fi
 
     if [ ! -f "$TELEPHONY_APK" ]; then
