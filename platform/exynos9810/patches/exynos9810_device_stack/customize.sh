@@ -8,7 +8,10 @@ EXYNOS9810_USE_N770_HXA3_VENDOR="${EXYNOS9810_USE_N770_HXA3_VENDOR:-false}"
 EXYNOS9810_VENDOR_FIRMWARE="${EXYNOS9810_VENDOR_FIRMWARE:-SM-N770F_PHN}"
 EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY="${EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY:-false}"
 EXYNOS9810_DISABLE_SETUP_WIZARDS="${EXYNOS9810_DISABLE_SETUP_WIZARDS:-false}"
-EXYNOS9810_USE_LEGACY_RADIO_STACK="${EXYNOS9810_USE_LEGACY_RADIO_STACK:-false}"
+# Exynos9810 requires the legacy Samsung RIL bridge for SIM/IMEI/LTE. Keep it
+# enabled by default; callers can still explicitly set it to false for a
+# diagnostic build.
+EXYNOS9810_USE_LEGACY_RADIO_STACK="${EXYNOS9810_USE_LEGACY_RADIO_STACK:-true}"
 EXYNOS9810_REMOVE_LEGACY_VAULTKEEPER="${EXYNOS9810_REMOVE_LEGACY_VAULTKEEPER:-true}"
 EXYNOS9810_HXA3_VENDOR_BASE_APPLIED=false
 
@@ -2316,6 +2319,7 @@ _EXYNOS9810_RESTORE_EXYNOS9810_RADIO_STACK()
         vendor/bin/secril_config_svc \
         vendor/lib/libaudio-ril.so \
         vendor/lib/libsec_semRil.so \
+        vendor/lib/libvndsecril-client.so \
         vendor/lib/libsecril-client.so \
         vendor/lib64/android.hardware.radio.config@1.0.so \
         vendor/lib64/android.hardware.radio.config@1.1.so \
@@ -2334,6 +2338,7 @@ _EXYNOS9810_RESTORE_EXYNOS9810_RADIO_STACK()
         vendor/lib64/libSemTelephonyProps.so \
         vendor/lib64/libsec-ril.so \
         vendor/lib64/libsec_semRil.so \
+        vendor/lib64/libvndsecril-client.so \
         vendor/lib64/libsecril-client.so \
         vendor/lib64/vendor.samsung.hardware.radio.bridge@2.0.so \
         vendor/lib64/vendor.samsung.hardware.radio.bridge@2.1.so \
@@ -2527,6 +2532,55 @@ _EXYNOS9810_WRITE_TELEPHONY_FEATURES()
         "$WORK_DIR/system/system/etc/permissions/android.hardware.telephony.gsm.xml" \
         "system" "system/etc/permissions/android.hardware.telephony.gsm.xml" "/system/etc/permissions/android\\.hardware\\.telephony\\.gsm\\.xml" \
         "u:object_r:system_file:s0"
+}
+
+_EXYNOS9810_VERIFY_NETWORK_SETTINGS()
+{
+    local CONNECTIONS_XML="$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/res/xml/sec_connections_settings.xml"
+    local TELEPHONY_APK="$WORK_DIR/system/system/priv-app/TelephonyUI/TelephonyUI.apk"
+    local GSM_FEATURE="$WORK_DIR/system/system/etc/permissions/android.hardware.telephony.gsm.xml"
+    local LEGACY_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest.xml"
+
+    LOG "- Verifying SIM-conditional mobile network settings"
+
+    # SecSettings already owns the correct policy: hide the preference without
+    # a subscription and expose it once TelephonyUI reports a usable SIM. Keep
+    # that controller intact instead of forcing the menu on without a modem.
+    if [ ! -f "$CONNECTIONS_XML" ] || \
+            ! grep -q 'key="mobile_network_settings"' "$CONNECTIONS_XML" || \
+            ! grep -q 'SecMobileNetworkPreferenceController' "$CONNECTIONS_XML"; then
+        LOGE "SecSettings mobile network preference/controller is missing"
+        return 1
+    fi
+
+    if [ ! -f "$TELEPHONY_APK" ]; then
+        LOGE "TelephonyUI.apk is missing; SIM network settings cannot open"
+        return 1
+    fi
+
+    if [ ! -f "$GSM_FEATURE" ]; then
+        LOGE "GSM telephony feature declaration is missing"
+        return 1
+    fi
+
+    if [ ! -f "$LEGACY_MANIFEST" ] || \
+            ! grep -q 'android.hardware.radio@1.4::IRadio' "$LEGACY_MANIFEST"; then
+        LOGE "Legacy Exynos9810 radio manifest is missing"
+        return 1
+    fi
+
+    # IMEI/NV data stays modem/EFS-owned. This guard prevents this device
+    # stack from accidentally shipping an S22 radio declaration again.
+    for REL in \
+        vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml \
+        vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml; do
+        if [ -e "$WORK_DIR/$REL" ]; then
+            LOGE "Incompatible S22 radio manifest survived: $REL"
+            return 1
+        fi
+    done
+
+    LOG "  SIM absent: Settings may hide Mobile networks; SIM present: controller exposes it"
 }
 
 _EXYNOS9810_PATCH_TELEPHONY_SLOT_TOPOLOGY()
@@ -3579,6 +3633,7 @@ _EXYNOS9810_RESTORE_EXYNOS9810_RADIO_STACK
 _EXYNOS9810_FIX_NETWORK_TYPES
 _EXYNOS9810_WRITE_RIL_CP_AUDIO_FALLBACKS
 _EXYNOS9810_WRITE_TELEPHONY_FEATURES
+_EXYNOS9810_VERIFY_NETWORK_SETTINGS
 _EXYNOS9810_PATCH_TELEPHONY_SLOT_TOPOLOGY
 _EXYNOS9810_WRITE_WIFI_FEATURES
 _EXYNOS9810_WRITE_EXYNOS9810_FSTABS
