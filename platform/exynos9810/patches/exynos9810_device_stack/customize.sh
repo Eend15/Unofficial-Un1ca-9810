@@ -2570,7 +2570,8 @@ _EXYNOS9810_VERIFY_NETWORK_SETTINGS()
     fi
 
     if [ ! -f "$LEGACY_MANIFEST" ] || \
-            ! grep -q 'android.hardware.radio@1.4::IRadio' "$LEGACY_MANIFEST"; then
+            ! grep -q '<name>android.hardware.radio</name>' "$LEGACY_MANIFEST" || \
+            ! grep -q '@1.4::IRadio/slot1' "$LEGACY_MANIFEST"; then
         LOGE "Legacy Exynos9810 radio manifest is missing"
         return 1
     fi
