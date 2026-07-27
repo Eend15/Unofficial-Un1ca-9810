@@ -200,16 +200,16 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
         cp -af "$SRC" "$DST" || return 1
         case "$REL" in
             vendor/bin/hw/rild)
-                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" "/vendor/bin/hw/rild" \
+                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" \
                     0 2000 755 "u:object_r:rild_exec:s0" ;;
             vendor/bin/*)
-                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" "/$REL" \
+                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" \
                     0 2000 755 "u:object_r:vendor_file:s0" ;;
             vendor/etc/*)
-                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" "/$REL" \
+                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" \
                     0 0 644 "u:object_r:vendor_configs_file:s0" ;;
             *)
-                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" "/$REL" \
+                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" \
                     0 0 644 "u:object_r:vendor_file:s0" ;;
         esac
     done
@@ -221,7 +221,7 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
         cp -af "$SRC" "$DST" || return 1
         _EXYNOS9810_FINAL_SET_METADATA "vendor" \
             "vendor/etc/init/vendor.sem.rilchip.rc" \
-            "/vendor/etc/init/vendor\\.sem\\.rilchip\\.rc" \
+
             0 0 644 "u:object_r:vendor_configs_file:s0"
     fi
 }
@@ -610,7 +610,7 @@ _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK()
             *) LABEL="u:object_r:vendor_file:s0" ;;
         esac
         _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
-            "/vendor/$REL" 0 0 644 "$LABEL"
+            0 0 644 "$LABEL"
     done
 
     # Restore every legacy soundfx shim as a matched set. Android 16's
@@ -655,7 +655,7 @@ _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK()
         mkdir -p "$(dirname "$DST")"
         cp -af "$SRC" "$DST" || return 1
         _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
-            "/vendor/$REL" 0 0 644 "u:object_r:vendor_file:s0"
+            0 0 644 "u:object_r:vendor_file:s0"
     done
 
     # The legacy floating-feature baseline already advertises Dolby support;
@@ -708,7 +708,7 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK()
             *) LABEL="u:object_r:vendor_file:s0" ;;
         esac
         _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
-            "/vendor/$REL" 0 0 644 "$LABEL"
+            0 0 644 "$LABEL"
     done
 }
 
@@ -736,9 +736,9 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK()
         mkdir -p "$(dirname "$DST")"
         cp -af "$SRC" "$DST" || return 1
         case "$REL" in
-            bin/*) _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" "/vendor/$REL" 0 2000 755 "u:object_r:hal_camera_default_exec:s0" ;;
-            etc/*) _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" "/vendor/$REL" 0 0 644 "u:object_r:vendor_configs_file:s0" ;;
-            *) _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" "/vendor/$REL" 0 0 644 "u:object_r:vendor_file:s0" ;;
+            bin/*) _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" 0 2000 755 "u:object_r:hal_camera_default_exec:s0" ;;
+            etc/*) _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" 0 0 644 "u:object_r:vendor_configs_file:s0" ;;
+            *) _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" 0 0 644 "u:object_r:vendor_file:s0" ;;
         esac
     done
 
@@ -753,7 +753,7 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK()
         mkdir -p "$(dirname "$DST")"
         cp -af "$SRC" "$DST" || return 1
         _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
-            "/vendor/$REL" 0 0 644 "u:object_r:vendor_file:s0"
+            0 0 644 "u:object_r:vendor_file:s0"
     done
 }
 
