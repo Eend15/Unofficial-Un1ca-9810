@@ -163,6 +163,69 @@ _EXYNOS9810_FINAL_DELETE_FOUND_DIR()
     fi
 }
 
+_EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
+{
+    # Preserve the real Exynos9810 RIL path. Do not synthesize IMEI properties:
+    # the modem/EFS remains authoritative for the device IMEI.
+    local ROOT="$EXYNOS9810_LEGACY_PORT_DIR"
+    local REL SRC DST
+
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+    [ -d "$ROOT/vendor" ] || return 0
+    LOG "- Restoring final Exynos9810 RIL/IMEI radio stack"
+
+    for REL in \
+        vendor/bin/hw/rild \
+        vendor/bin/secril_config_svc \
+        vendor/lib/libaudio-ril.so \
+        vendor/lib/libsec_semRil.so \
+        vendor/lib/libsecril-client.so \
+        vendor/lib64/libril_sem.so \
+        vendor/lib64/librilutils.so \
+        vendor/lib64/libsec-ril.so \
+        vendor/lib64/libsec_semRil.so \
+        vendor/lib64/libsecril-client.so \
+        vendor/lib64/libSemTelephonyProps.so \
+        vendor/lib64/vendor.samsung.hardware.radio.bridge@2.0.so \
+        vendor/lib64/vendor.samsung.hardware.radio.bridge@2.1.so \
+        vendor/lib64/vendor.samsung.hardware.radio.channel@2.0.so \
+        vendor/lib64/vendor.samsung.hardware.radio@2.0.so \
+        vendor/lib64/vendor.samsung.hardware.radio@2.1.so \
+        vendor/lib64/vendor.samsung.hardware.radio@2.2.so \
+        vendor/etc/init/init.vendor.rilcommon.rc; do
+        SRC="$ROOT/$REL"
+        [ -f "$SRC" ] || continue
+        DST="$WORK_DIR/$REL"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+        case "$REL" in
+            vendor/bin/hw/rild)
+                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" "/vendor/bin/hw/rild" \
+                    0 2000 755 "u:object_r:rild_exec:s0" ;;
+            vendor/bin/*)
+                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" "/$REL" \
+                    0 2000 755 "u:object_r:vendor_file:s0" ;;
+            vendor/etc/*)
+                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" "/$REL" \
+                    0 0 644 "u:object_r:vendor_configs_file:s0" ;;
+            *)
+                _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" "/$REL" \
+                    0 0 644 "u:object_r:vendor_file:s0" ;;
+        esac
+    done
+
+    SRC="$ROOT/vendor/etc/init/vendor.samsung.rilchip.slsi.rc"
+    if [ -f "$SRC" ]; then
+        DST="$WORK_DIR/vendor/etc/init/vendor.sem.rilchip.rc"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" \
+            "vendor/etc/init/vendor.sem.rilchip.rc" \
+            "/vendor/etc/init/vendor\\.sem\\.rilchip\\.rc" \
+            0 0 644 "u:object_r:vendor_configs_file:s0"
+    fi
+}
+
 _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF()
 {
     # The platform radio stage copies these S22 manifests before the final
@@ -3367,6 +3430,7 @@ PY
 
 
 _EXYNOS9810_FINAL_REPATCH_APPS
+_EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK
 _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF
 _EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED
 _EXYNOS9810_FINAL_DEBLOAT
