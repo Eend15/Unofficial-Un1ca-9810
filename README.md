@@ -69,7 +69,7 @@ Snapdragon models are not supported.
 - Audio HAL compatibility patches and legacy audio effect backports
 - Camera feature matrices split per device, including S9 single-camera and S9+/Note9 dual-camera layouts
 - One UI 8 camera compatibility fixes for photo, video, portrait, and pro-mode paths where possible
-- Ported Motion Photo feature (motion photos on the stock camera)
+- Ported Motion Photo feature
 - Debloat profile tailored for legacy Exynos9810 memory and partition limits
 - Device-specific overlays, DVFS/SIOP policy hooks, floating features, CSC feature tuning, and framework feature declarations
 
