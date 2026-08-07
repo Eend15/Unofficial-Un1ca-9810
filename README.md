@@ -61,6 +61,7 @@ Snapdragon models are not supported.
 - Permissive and enforcing kernel package support
 - KernelSU-Next support through compatible kernel packages
 - Custom TWRP lite and large ZIP compatibility hooks for older recovery environments
+- Full EROFS support (system, vendor, odm as erofs)
 - EROFS-aware and large ZIP recovery workflow support when paired with a compatible recovery
 - Exynos9810 boot, fstab, first-stage init, metadata, keymaster, radio, and slot/IMEI compatibility fixes
 - Note10 Lite vendor vndk33 adaptation with S9/S9+/Note9 specific overlays and properties
@@ -68,6 +69,7 @@ Snapdragon models are not supported.
 - Audio HAL compatibility patches and legacy audio effect backports
 - Camera feature matrices split per device, including S9 single-camera and S9+/Note9 dual-camera layouts
 - One UI 8 camera compatibility fixes for photo, video, portrait, and pro-mode paths where possible
+- Ported Motion Photo feature (motion photos on the stock camera)
 - Debloat profile tailored for legacy Exynos9810 memory and partition limits
 - Device-specific overlays, DVFS/SIOP policy hooks, floating features, CSC feature tuning, and framework feature declarations
 
