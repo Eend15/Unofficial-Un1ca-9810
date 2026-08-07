@@ -65,11 +65,21 @@ MKE2FS="$(find_mke2fs)" || {
 
 mode="${1:-post_install}"
 
+# System/vendor/odm are erofs in this build and must not be ext4-formatted:
+# their images are flashed over the whole partition, and formatting is both
+# pointless and a needless failure point when recovery lacks mke2fs.
+SELF_DIR="$(dirname "$0")"
+FS_TYPE="$(sed -n 's/^fs_type=//p' "$SELF_DIR/fs_type.prop" 2>/dev/null)"
+
 case "$mode" in
     layout_clean)
-        format_ext4 system "$BY_NAME/SYSTEM" /system
-        format_ext4 vendor "$BY_NAME/VENDOR" /vendor
-        format_ext4 odm "$BY_NAME/ODM" /odm
+        if [ "$FS_TYPE" = "erofs" ]; then
+            ui_print "E9810: erofs build: skipping ext4 format for system/vendor/odm"
+        else
+            format_ext4 system "$BY_NAME/SYSTEM" /system
+            format_ext4 vendor "$BY_NAME/VENDOR" /vendor
+            format_ext4 odm "$BY_NAME/ODM" /odm
+        fi
         format_ext4 omr "$BY_NAME/OMR" /omr
         format_ext4 preload "$BY_NAME/HIDDEN" /preload
         ;;

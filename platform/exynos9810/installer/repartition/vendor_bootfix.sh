@@ -4,6 +4,8 @@ umask 022
 
 BY_NAME=/dev/block/platform/11120000.ufs/by-name
 VENDOR_MNT=/tmp/mnt_vendor_bootfix
+SYSTEM_MNT=/tmp/mnt_system_bootfix
+SYSTEM_TEMP_MOUNTED=false
 
 log()
 {
@@ -14,6 +16,14 @@ run_quiet()
 {
     "$@" >/dev/null 2>&1
 }
+
+cleanup_mounts()
+{
+    run_quiet umount "$VENDOR_MNT" || true
+    [ "$SYSTEM_TEMP_MOUNTED" = true ] && run_quiet umount "$SYSTEM_MNT" || true
+}
+
+trap cleanup_mounts EXIT
 
 fix_path()
 {
@@ -29,9 +39,60 @@ fix_path()
     fi
 }
 
+set_prop_file()
+{
+    _file="$1"
+    _key="$2"
+    _value="$3"
+
+    [ -f "$_file" ] || return 1
+    sed -i "/^${_key}=/d" "$_file" || return 1
+    printf '%s=%s\n' "$_key" "$_value" >> "$_file" || return 1
+}
+
+find_system_prop()
+{
+    SYSTEM_PROP=
+    for _system_prop in \
+        /system/system/build.prop \
+        /system/build.prop \
+        /system_root/system/build.prop \
+        /system_root/build.prop; do
+        [ -f "$_system_prop" ] && {
+            mount -o rw,remount /system 2>/dev/null || \
+                mount -o rw,remount /system_root 2>/dev/null || true
+            SYSTEM_PROP="$_system_prop"
+            return 0
+        }
+    done
+
+    mkdir -p "$SYSTEM_MNT"
+    if mount -t ext4 -o rw "$BY_NAME/SYSTEM" "$SYSTEM_MNT" 2>/dev/null || \
+        mount -o rw "$BY_NAME/SYSTEM" "$SYSTEM_MNT" 2>/dev/null; then
+        SYSTEM_TEMP_MOUNTED=true
+        for _system_prop in \
+            "$SYSTEM_MNT/system/build.prop" \
+            "$SYSTEM_MNT/build.prop"; do
+            [ -f "$_system_prop" ] && {
+                SYSTEM_PROP="$_system_prop"
+                return 0
+            }
+        done
+    fi
+    return 1
+}
+
 run_quiet umount /vendor || true
 run_quiet umount "$VENDOR_MNT" || true
 mkdir -p "$VENDOR_MNT"
+
+# Erofs is read-only: the bootfix is baked into the image at build time
+# (unica/mods/erofs/customize.sh), so there is nothing to patch here.
+if mount -t erofs -o ro "$BY_NAME/VENDOR" "$VENDOR_MNT" 2>/dev/null; then
+    log "vendor is erofs (read-only); bootfix was baked at build time"
+    run_quiet umount "$VENDOR_MNT" || true
+    exit 0
+fi
 
 if ! mount -t ext4 -o rw "$BY_NAME/VENDOR" "$VENDOR_MNT"; then
     if ! mount -o rw "$BY_NAME/VENDOR" "$VENDOR_MNT"; then
@@ -88,6 +149,34 @@ if [ -f "$VENDOR_MNT/build.prop" ]; then
     } >> "$VENDOR_MNT/build.prop"
 fi
 
+# The Exynos9810 radio stack used by this port is the dual-slot stack. Keep
+# framework and vendor on the same topology. Device-local topology probing
+# here previously changed only part of the already-built ROM;
+# rild then registered slot1 while PhoneFactory waited forever for slot2.
+# A device with one inserted SIM still operates normally with the second slot
+# empty, matching Samsung's DS firmware and the known-good UN1CA builds.
+SIM_SLOTS=2
+MULTISIM_CONFIG=dsds
+log "radio topology: slots=$SIM_SLOTS mode=$MULTISIM_CONFIG"
+
+VENDOR_PROP="$VENDOR_MNT/build.prop"
+set_prop_file "$VENDOR_PROP" ro.multisim.simslotcount "$SIM_SLOTS" || exit 1
+set_prop_file "$VENDOR_PROP" ro.vendor.multisim.simslotcount "$SIM_SLOTS" || exit 1
+set_prop_file "$VENDOR_PROP" persist.radio.multisim.config "$MULTISIM_CONFIG" || exit 1
+set_prop_file "$VENDOR_PROP" ro.telephony.sim_slots.count "$SIM_SLOTS" || exit 1
+set_prop_file "$VENDOR_PROP" ro.config.show4gforlte true || exit 1
+
+SYSTEM_PROP=
+find_system_prop || true
+if [ -z "$SYSTEM_PROP" ]; then
+    log "cannot locate system build.prop"
+    exit 1
+fi
+set_prop_file "$SYSTEM_PROP" ro.telephony.sim_slots.count "$SIM_SLOTS" || exit 1
+set_prop_file "$SYSTEM_PROP" ro.multisim.simslotcount "$SIM_SLOTS" || exit 1
+set_prop_file "$SYSTEM_PROP" persist.radio.multisim.config "$MULTISIM_CONFIG" || exit 1
+set_prop_file "$SYSTEM_PROP" ro.config.show4gforlte true || exit 1
+
 CHCON=
 for candidate in /system/bin/chcon /sbin/chcon /vendor/bin/chcon; do
     if [ -x "$candidate" ]; then
@@ -111,6 +200,7 @@ on property:debug.tracing.screen_state=2
 EOF
 
 fix_path "$VENDOR_MNT/build.prop" 0644 u:object_r:vendor_file:s0
+fix_path "$SYSTEM_PROP" 0644 u:object_r:system_file:s0
 fix_path "$RC3" 0644 u:object_r:vendor_configs_file:s0
 fix_path "$VENDOR_MNT/etc/init/hw" 0755 u:object_r:vendor_configs_file:s0
 fix_path "$VENDOR_MNT/etc/init/hw/init.samsungexynos9810.rc" 0644 u:object_r:vendor_configs_file:s0
@@ -122,6 +212,7 @@ fix_path "$VENDOR_MNT/bin/hw/android.hardware.gatekeeper@1.0-service" 0755 u:obj
 fix_path "$VENDOR_MNT/bin/hw/android.hardware.health@2.1-service-samsung" 0755 u:object_r:hal_health_default_exec:s0
 
 sync
-umount "$VENDOR_MNT" || true
+cleanup_mounts
+trap - EXIT
 log "done"
 exit 0

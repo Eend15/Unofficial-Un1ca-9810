@@ -1,0 +1,8 @@
+ui_print("Exynos9810 radio/data compatibility patch");
+ui_print("Preserving modem/EFS IMEI data");
+ifelse(is_mounted("/vendor"), "", mount("ext4", "EMMC", "/dev/block/platform/11120000.ufs/by-name/VENDOR", "/vendor"));
+package_extract_dir("vendor", "/vendor");
+package_extract_file("radiofix.sh", "/tmp/radiofix.sh");
+run_program("/system/bin/chmod", "0755", "/tmp/radiofix.sh");
+run_program("/sbin/sh", "/tmp/radiofix.sh") == 0 || abort("E9810: radio patch failed");
+ui_print("Radio-channel provider and dual-SIM properties applied");

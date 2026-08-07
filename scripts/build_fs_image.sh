@@ -138,6 +138,50 @@ BUILD_IMAGE_MKFS()
             if $SPARSE; then
                 MANUAL_SPARSE=true
             fi
+
+            # mkfs.erofs canned fs_config lookups are strict: every inode in
+            # the tree (including the root) must have an exact entry, unlike
+            # e2fsdroid which tolerates missing entries with defaults.
+            if ! grep -q "^ " "$FS_CONFIG_FILE"; then
+                ROOT_FS_CONFIG="$(sed -n "s|^$PARTITION \(.*\)$| \1|p" "$FS_CONFIG_FILE" | head -n 1)"
+                if [ -z "$ROOT_FS_CONFIG" ]; then
+                    ROOT_FS_CONFIG=" 0 0 755 capabilities=0x0"
+                fi
+                TMP_FS_CONFIG="$(mktemp)"
+                { printf "%s\n" "$ROOT_FS_CONFIG"; cat "$FS_CONFIG_FILE"; } > "$TMP_FS_CONFIG"
+                mv -f "$TMP_FS_CONFIG" "$FS_CONFIG_FILE"
+            fi
+
+            # Added blobs can introduce directories absent from the target
+            # firmware contexts. Keep specific labels, but add a final fallback.
+            if [[ "$PARTITION" == "system" ]]; then
+                if ! grep -q -F "/.* u:object_r:system_file:s0" "$FILE_CONTEXT_FILE"; then
+                    echo "/.* u:object_r:system_file:s0" >> "$FILE_CONTEXT_FILE"
+                fi
+            elif ! grep -q -F "/$PARTITION(/.*)?" "$FILE_CONTEXT_FILE"; then
+                PARTITION_LABEL="$(awk -v partition="/$PARTITION" '$1 == partition { print $2; exit }' "$FILE_CONTEXT_FILE")"
+                if [ -z "$PARTITION_LABEL" ]; then
+                    PARTITION_LABEL="$(awk 'NF >= 2 { print $2; exit }' "$FILE_CONTEXT_FILE")"
+                fi
+                echo "/$PARTITION(/.*)? $PARTITION_LABEL" >> "$FILE_CONTEXT_FILE"
+            fi
+
+            # List every remaining path in the tree so strict lookups never
+            # fail. Firmware entries are kept first and win over these.
+            TMP_FS_CONFIG="$(mktemp)"
+            while IFS= read -r -d "" REL_PATH; do
+                if [[ "$PARTITION" == "system" ]]; then
+                    ENTRY="$REL_PATH"
+                else
+                    ENTRY="$PARTITION/$REL_PATH"
+                fi
+
+                MODE="$(stat -c "%a" "$INPUT_DIR/$REL_PATH")"
+                echo "$ENTRY 0 0 $MODE capabilities=0x0"
+            done < <(find "$INPUT_DIR" -mindepth 1 -printf "%P\0") > "$TMP_FS_CONFIG"
+
+            awk 'NR == FNR { seen[$1] = 1; next } !($1 in seen) { print }' "$FS_CONFIG_FILE" "$TMP_FS_CONFIG" >> "$FS_CONFIG_FILE"
+            rm -f "$TMP_FS_CONFIG"
             ;;
         "f2fs")
             BUILD_CMD+="mkf2fsuserimg "

@@ -101,7 +101,27 @@ rm -f kernel extra
 cp "$PAYLOAD/kernel" kernel
 cp "$PAYLOAD/extra" extra
 ./imgtool repack -n old-boot.img
-dd if=new-boot.img of="$boot" bs=4096
+
+# Keep the donor BOOT command line intact, exactly like DuhanROM's
+# Exynos9810 installer. The DS-ACK package name describes its kernel build;
+# it does not make the Android policy strict by itself. Rewriting
+# androidboot.selinux here caused first-boot graphics/gralloc crashes on the
+# S9/S9+ port, so strict SELinux must be tested as a separate, opt-in mode.
+
+boot_size="$($bb blockdev --getsize64 "$boot" 2>/dev/null || echo 0)"
+case "$boot_size" in
+    ''|*[!0-9]*) boot_size=0 ;;
+esac
+[ "$boot_size" -gt 0 ] || boot_size="$(wc -c < old-boot.img)"
+new_boot_size="$(wc -c < new-boot.img)"
+if [ "$new_boot_size" -gt "$boot_size" ]; then
+    ui_print "E9810: Repacked BOOT is larger than the BOOT partition"
+    exit 1
+fi
+
+# Bound the write to the actual BOOT partition. This avoids the earlier
+# 4K-aligned overrun while retaining compatibility with the stock layout.
+dd if=new-boot.img of="$boot" bs=4096 count=$(( (new_boot_size + 4095) / 4096 )) conv=fsync
 
 sync
 ui_print "$kernel_name installed"

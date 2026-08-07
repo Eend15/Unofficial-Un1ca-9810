@@ -35,34 +35,67 @@ LOG "- Bundling Exynos9810 sgdisk repartitioner binary"
 cp -a "$REPARTITIONER_SGDISK_BIN" "$TMP_DIR/exynos9810/sgdisk"
 chmod 0755 "$TMP_DIR/exynos9810/sgdisk"
 
-DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Permissive-OneUI7}"
-# NOTE: this legacy exynos9810 vendor cannot run SELinux enforcing -- Samsung's
-# VaultKeeper/CASS security stack requires signed TrustZone trustlets that do not
-# exist on a custom ROM, so an enforcing kernel bootloops (proven via a clean
-# no-KSU kernel: the policy itself is complete, the reboot comes from CASS, not a
-# denial). Keep the tested permissive kernel as the default.
-DS_ACK_LOCAL_ZIP="${DS_ACK_LOCAL_ZIP:-/mnt/c/Users/Admin/Downloads/DS-ACK-V1.12-08.05.2026-Permissive-KernelSU-OneUI7.zip}"
+# The requested ROM default is the enforcing DS-ACK kernel paired with the
+# EROFS-patched DTB.
+DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Enforcing-KernelSU-OneUI7}"
+DS_ACK_LOCAL_ZIP="${DS_ACK_LOCAL_ZIP:-/mnt/c/Users/Admin/Downloads/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-erofs-dtb.zip}"
 CROWNTRAIL_KERNEL_ZIP="${CROWNTRAIL_KERNEL_ZIP:-/mnt/c/Users/Admin/Downloads/CrownTrail-v1.6-15.05.2026-OneUI7-Permissive-KSUN.zip}"
-# DS-ACK v1.12 Permissive KernelSU is the requested default. Brightness scaling
+# DS-ACK v1.12 kernel payload is the requested default. Brightness scaling
 # is selected by the legacy Samsung profile in floating_feature.xml, not by
 # replacing the kernel or its device tree.
 if [ -z "${EXYNOS9810_KERNEL_ZIP:-}" ] && [ -f "$DS_ACK_LOCAL_ZIP" ]; then
-    EXYNOS9810_KERNEL_NAME="${EXYNOS9810_KERNEL_NAME:-DS-ACK v1.12 Permissive KernelSU-Next OneUI7}"
+    EXYNOS9810_KERNEL_NAME="${EXYNOS9810_KERNEL_NAME:-DS-ACK v1.12 KernelSU-Next OneUI7 (Duhan boot flow)}"
     EXYNOS9810_KERNEL_ZIP="$DS_ACK_LOCAL_ZIP"
-elif [ -z "${EXYNOS9810_KERNEL_ZIP:-}" ] && [ -f "$CROWNTRAIL_KERNEL_ZIP" ]; then
-    EXYNOS9810_KERNEL_NAME="${EXYNOS9810_KERNEL_NAME:-CrownTrail v1.6 Permissive KernelSU-Next OneUI7}"
-    EXYNOS9810_KERNEL_ZIP="$CROWNTRAIL_KERNEL_ZIP"
+elif [ -z "${EXYNOS9810_KERNEL_ZIP:-}" ]; then
+    LOGE "Exynos9810 enforcing DS-ACK kernel package not found: $DS_ACK_LOCAL_ZIP"
+    LOGE "Provide the enforcing EROFS-DTB package at that path, or set EXYNOS9810_KERNEL_ZIP explicitly."
+    exit 1
 else
-    EXYNOS9810_KERNEL_NAME="${EXYNOS9810_KERNEL_NAME:-DS-ACK V1.12 $DS_ACK_KERNEL_VARIANT}"
-    EXYNOS9810_KERNEL_ZIP="${EXYNOS9810_KERNEL_ZIP:-$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/kernel/kernel-ksu.zip}"
-    [ -f "$EXYNOS9810_KERNEL_ZIP" ] || EXYNOS9810_KERNEL_ZIP="$SRC_DIR/prebuilts/samsung/exynos9810/ds_ack/DS-ACK-V1.12-${DS_ACK_KERNEL_VARIANT}.zip"
+    LOG "- Using explicitly requested Exynos9810 kernel zip: $EXYNOS9810_KERNEL_ZIP"
 fi
 
 if [ -f "$EXYNOS9810_KERNEL_ZIP" ]; then
+    case "$(basename "$EXYNOS9810_KERNEL_ZIP")" in
+        *[Pp]ermissive*) EXYNOS9810_KERNEL_SELINUX_MODE="permissive" ;;
+        *[Ee]nforcing*) EXYNOS9810_KERNEL_SELINUX_MODE="enforcing" ;;
+        *)
+            case "$DS_ACK_KERNEL_VARIANT" in
+                *[Ee]nforcing*) EXYNOS9810_KERNEL_SELINUX_MODE="enforcing" ;;
+                *) EXYNOS9810_KERNEL_SELINUX_MODE="permissive" ;;
+            esac
+            ;;
+    esac
+
+    # Match DuhanROM exactly: the DS-ACK kernel is installed over this
+    # untouched Samsung boot image. The enforcing kernel binary selects the
+    # strict policy; the boot header is left unchanged.
+    EXYNOS9810_DUHAN_RAMDISK_SHA256="1b059d65c342ceb41fcd32bb06545bd75265ff674337d3a0d00efcf2a2932b4d"
+    EXYNOS9810_RAMDISK_SHA256="$(sha256sum "$TMP_DIR/exynos9810/ramdisk.img" | awk '{print $1}')"
+    [ "$EXYNOS9810_RAMDISK_SHA256" = "$EXYNOS9810_DUHAN_RAMDISK_SHA256" ] || {
+        LOGE "Exynos9810 boot image differs from DuhanROM's tested ramdisk"
+        exit 1
+    }
+    strings "$TMP_DIR/exynos9810/ramdisk.img" | \
+        grep -q 'androidboot.selinux=permissive' || {
+        LOGE "Exynos9810 Duhan boot-header marker is missing"
+        exit 1
+    }
+
+    # Check the DTB for every kernel mode. An ext4 DTB with EROFS images fails
+    # in first-stage mount before SELinux or Android userspace can start.
+    EXYNOS9810_KERNEL_DTB_EROFS="$(unzip -p "$EXYNOS9810_KERNEL_ZIP" "floyd/G960F-dtb" 2>/dev/null | dd bs=1 skip=2048 2>/dev/null | strings | grep -c "erofs")"
+    [ "${EXYNOS9810_KERNEL_DTB_EROFS:-0}" -gt 0 ] || {
+        LOGE "Exynos9810 DS-ACK device tree lacks the EROFS fstab for SYSTEM/VENDOR/ODM"
+        exit 1
+    }
+
+    EXYNOS9810_KERNEL_NAME="$EXYNOS9810_KERNEL_NAME [$EXYNOS9810_KERNEL_SELINUX_MODE]"
     LOG "- Bundling $EXYNOS9810_KERNEL_NAME kernel"
     cp -a "$EXYNOS9810_KERNEL_ZIP" "$TMP_DIR/exynos9810/kernel.zip"
 
     printf '%s\n' "$EXYNOS9810_KERNEL_NAME" > "$TMP_DIR/exynos9810/kernel_name"
+    printf 'selinux_mode=%s\n' "$EXYNOS9810_KERNEL_SELINUX_MODE" > "$TMP_DIR/exynos9810/kernel_mode.prop"
+    printf 'fs_type=%s\n' "$TARGET_OS_FILE_SYSTEM_TYPE" > "$TMP_DIR/exynos9810/fs_type.prop"
 else
     LOGE "Exynos9810 kernel not found: $EXYNOS9810_KERNEL_ZIP"
     exit 1

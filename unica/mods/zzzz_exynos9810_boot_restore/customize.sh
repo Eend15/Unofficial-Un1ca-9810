@@ -223,6 +223,7 @@ _EXYNOS9810_RESTORE_VENDOR_BASELINE()
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fstab.exynos9810" 0 0 644 "u:object_r:vendor_configs_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/hw" 0 0 755 "u:object_r:vendor_configs_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/hw/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/vintf/manifest/android.hardware.health@2.1-samsung.xml" 0 0 644 "u:object_r:vendor_configs_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/android.hardware.keymaster@3.0-service.rc" 0 0 644 "u:object_r:vendor_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/vendor.samsung.hardware.camera.provider@4.0-service.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
@@ -409,6 +410,7 @@ _EXYNOS9810_APPLY_TARGET_VENDOR_IDENTITY()
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.api_level" "33"
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.api_level" "33"
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.product.board" "exynos9810"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.hardware.gralloc" "exynos9810"
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.platform" "universal9810"
 }
 
@@ -619,6 +621,7 @@ _EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT()
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.keymaster@4.0-service" 0 0 755 "u:object_r:hal_keymaster_default_exec:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.gatekeeper@1.0-service" 0 0 755 "u:object_r:hal_gatekeeper_default_exec:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/hw/android.hardware.health@2.1-service-samsung" 0 0 755 "u:object_r:hal_health_default_exec:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/bin/secril_config_svc" 0 2000 755 "u:object_r:vendor_secril_config_svc_exec:s0"
 
     # lhd is the BCM4775 loader daemon: it downloads the firmware the sensorhub
     # MCU runs. init refuses to start a service whose binary carries no domain
@@ -659,10 +662,18 @@ _EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY()
     local CIL="$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
     local RULE
     local SUPPLEMENTARY_RULES="
+(typepermissive surfaceflinger)
+(typepermissive cameraserver)
+(typepermissive mediaswcodec)
+(typepermissive hal_graphics_allocator_default)
+(typepermissive hal_graphics_composer_default)
+(typepermissive vendor_init)
 (allow vendor_init bootloader_prop (property_service (set)))
 (allow vendor_init build_prop (property_service (set)))
 (allow vendor_init config_prop (property_service (set)))
 (allow vendor_init default_prop (property_service (set)))
+(allow vendor_init property_socket (sock_file (write)))
+(allow vendor_init init (unix_stream_socket (connectto)))
 (allow vendor_init net_dns_prop (property_service (set)))
 (allow vendor_init shell_prop (property_service (set)))
 (allow vendor_init userdebug_or_eng_prop (property_service (set)))
@@ -671,7 +682,43 @@ _EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY()
 (allow vendor_init wifi_prop (property_service (set)))
 (allow vendor_init mobicore_prop (file (read open getattr)))
 (allow vendor_init radio_prop (file (read open getattr)))
+(allow vendor_init init_service_status_private_prop (file (read open getattr)))
+(allow vendor_init radio_prop (property_service (set)))
+(allow vendor_init telephony_prop (property_service (set)))
 (allow mobicore mobicore_prop (property_service (set)))
+(allow nfc default_android_service (service_manager (find)))
+(allow hwservicemanager vendor_configs_file (dir (search read open getattr)))
+(allow hwservicemanager vendor_configs_file (file (read open getattr map)))
+(allow hwservicemanager vendor_apex_file (dir (search getattr)))
+(allow hwservicemanager vendor_file (dir (search getattr)))
+(allow servicemanager vendor_configs_file (dir (search read open getattr)))
+(allow servicemanager vendor_configs_file (file (read open getattr map)))
+(allow servicemanager vendor_apex_file (dir (search getattr)))
+(allow servicemanager vendor_file (dir (search getattr)))
+(allow audioserver vendor_configs_file (dir (search read open getattr)))
+(allow audioserver vendor_configs_file (file (read open getattr map)))
+(typeattributeset same_process_hal_file_33_0 (same_process_hal_file))
+(typeattributeset hal_graphics_mapper_hwservice_33_0 (hal_graphics_mapper_hwservice))
+(typeattributeset hal_graphics_allocator_hwservice_33_0 (hal_graphics_allocator_hwservice))
+(allow domain same_process_hal_file (dir (ioctl read getattr lock open search)))
+(allow domain same_process_hal_file (file (read getattr map execute open)))
+(allow platform_app hal_graphics_mapper_hwservice (hwservice_manager (find)))
+(allow platform_app hal_graphics_allocator_hwservice (hwservice_manager (find)))
+(allow cameraserver hal_graphics_mapper_hwservice (hwservice_manager (find)))
+(allow cameraserver hal_graphics_allocator_hwservice (hwservice_manager (find)))
+(allow mediaswcodec hal_graphics_mapper_hwservice (hwservice_manager (find)))
+(allow mediaswcodec hal_graphics_allocator_hwservice (hwservice_manager (find)))
+(allow surfaceflinger_33_0 same_process_hal_file_33_0 (dir (ioctl read getattr lock open search)))
+(allow surfaceflinger_33_0 same_process_hal_file_33_0 (file (ioctl read getattr lock map execute open)))
+(allow cameraserver_33_0 same_process_hal_file_33_0 (dir (ioctl read getattr lock open search)))
+(allow cameraserver_33_0 same_process_hal_file_33_0 (file (ioctl read getattr lock map execute open)))
+(allow mediaswcodec_33_0 same_process_hal_file_33_0 (dir (ioctl read getattr lock open search)))
+(allow mediaswcodec_33_0 same_process_hal_file_33_0 (file (ioctl read getattr lock map execute open)))
+(allow surfaceflinger_33_0 graphics_config_writable_prop (file (read getattr map open)))
+(allow cameraserver_33_0 hal_graphics_mapper_hwservice_33_0 (hwservice_manager (find)))
+(allow cameraserver_33_0 hal_graphics_allocator_hwservice_33_0 (hwservice_manager (find)))
+(allow mediaswcodec_33_0 hal_graphics_mapper_hwservice_33_0 (hwservice_manager (find)))
+(allow mediaswcodec_33_0 hal_graphics_allocator_hwservice_33_0 (hwservice_manager (find)))
 (allow priv_app log_tag_prop (property_service (set)))
 (allow priv_app sqlite_log_prop (property_service (set)))
 (allow samsungpowersoundplay audio_service (service_manager (find)))
@@ -683,6 +730,7 @@ _EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY()
 (allow system_app system_suspend_control_service (service_manager (find)))
 (allow system_app system_suspend_control_internal_service (service_manager (find)))
 (allow system_app logpersistd_logging_prop (property_service (set)))
+(allow hal_audio_default hal_system_suspend_service (service_manager (find)))
 "
 
     if [ ! -f "$CIL" ]; then
@@ -698,8 +746,676 @@ _EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY()
             echo "$RULE" >> "$CIL"
         fi
     done <<< "$SUPPLEMENTARY_RULES"
+
+    # Platform-side typepermissive. Verified by booting the enforcing
+    # DS-ACK kernel with these appended to the plat CIL: without them the
+    # policy never even loads (broken set caused reboot loops), and the
+    # platform_app one is required for launcher/SystemUI to load the vendor
+    # Vulkan ICD via the sphal namespace (missing it crash-loops the UI
+    # at "Phone is starting..."). bootanim covers the boot animation.
+    local PLAT_CIL="$WORK_DIR/system/system/etc/selinux/plat_sepolicy.cil"
+    local PLAT_RULE
+    local PLAT_PERMISSIVE_RULES="
+(typepermissive init)
+(typepermissive ueventd)
+(typepermissive apexd)
+(typepermissive vold)
+(typepermissive logd)
+(typepermissive servicemanager)
+(typepermissive hwservicemanager)
+(typepermissive vndservicemanager)
+(typepermissive zygote)
+(typepermissive system_server)
+(typepermissive su)
+(typepermissive platform_app)
+(typepermissive bootanim)
+(typepermissive adbd)
+(allow appdomain vendor_file (dir (read open getattr search)))
+(allow appdomain gpu_device (chr_file (open read write ioctl getattr)))
+(allow audioserver vendor_file (dir (read open getattr search)))
+"
+
+    if [ ! -f "$PLAT_CIL" ]; then
+        LOGW "Exynos9810 plat_sepolicy.cil missing; cannot apply supplementary platform SELinux typepermissive"
+        return 0
+    fi
+
+    LOG "- Applying supplementary Exynos9810 platform SELinux typepermissive"
+
+    while IFS= read -r PLAT_RULE; do
+        [ "$PLAT_RULE" ] || continue
+        if ! grep -q -F "$PLAT_RULE" "$PLAT_CIL"; then
+            echo "$PLAT_RULE" >> "$PLAT_CIL"
+        fi
+    done <<< "$PLAT_PERMISSIVE_RULES"
+
+    # Precise allow rules derived from the FULL avc: denied set observed on
+    # this device (both the permissive-boot ring and enforcing-boot ring).
+    # Every tuple the device ever tried and got denied becomes an explicit
+    # allow so enforcing behaves like permissive for real workloads.
+    local EXTRA_CIL="$WORK_DIR/system/system/etc/selinux/plat_sepolicy.cil"
+    if [ -f "$EXTRA_CIL" ]; then
+        # The /apex mount root (vendor_apex_file) is scanned by every EGL/Vulkan
+        # loader and many daemons. Ring-buffer eviction hid some early-boot
+        # denials (permissioncontroller_app, network_stack, sgdisk, sdcardd), so
+        # grant the directory search globally instead of per-domain: a missing
+        # search here aborts EGL with "Assertion failed: !gpuCount" and kills
+        # apps (PermissionController, GMS, KSU manager). No neverallow blocks it.
+        cat >> "$EXTRA_CIL" <<'ENFORCING_ALLOW_RULES_EOF'
+(allow domain vendor_apex_file (dir (search)))
+(allow aconfigd vendor_apex_file (dir (search)))
+(allow aconfigd_mainline vendor_apex_file (dir (search)))
+(allow adbd su (process (dyntransition)))
+(allow art_boot vendor_apex_file (dir (search)))
+(allow at_distributor exported_radio_prop (file (getattr open read)))
+(allow at_distributor vendor_apex_file (dir (search)))
+(allow atrace vendor_apex_file (dir (search)))
+(allow audioserver vendor_apex_file (dir (search)))
+(allow audioserver vendor_file (dir (open read)))
+(allow auditctl vendor_apex_file (dir (search)))
+(allow bootanim vendor_file (dir (open read)))
+(allow bootchecker vendor_apex_file (dir (search)))
+(allow bootchecker vendor_file (file (getattr open read)))
+(allow bootstat vendor_apex_file (dir (search)))
+(allow boringssl_self_test vendor_apex_file (dir (search)))
+(allow bpfloader vendor_apex_file (dir (search)))
+(allow cameraserver vendor_file (dir (open read)))
+(allow connfwexe vendor_apex_file (dir (search)))
+(allow credstore vendor_apex_file (dir (search)))
+(allow ddexe vendor_apex_file (dir (search)))
+(allow derive_classpath vendor_apex_file (dir (search)))
+(allow derive_sdk vendor_apex_file (dir (search)))
+(allow dsms vendor_apex_file (dir (search)))
+(allow dumpstate trace_data_file (dir (getattr)))
+(allow dumpstate vendor_apex_file (dir (getattr search)))
+(allow dumpstate vendor_file (file (read)))
+(allow ewlogd vendor_apex_file (dir (search)))
+(allow extra_free_kbytes vendor_apex_file (dir (search)))
+(allow flags_health_check vendor_apex_file (dir (search)))
+(allow fsck fsck (capability (kill)))
+(allow fsck sysfs_scsi_host (dir (search)))
+(allow fsck sysfs_scsi_host (file (getattr)))
+(allow fsck vendor_apex_file (dir (search)))
+(allow gatekeeperd vendor_apex_file (dir (search)))
+(allow gmscore_app adbd_prop (file (read)))
+(allow gmscore_app privapp_data_file (file (ioctl)))
+(allow gmscore_app system_adbd_prop (file (read)))
+(allow gmscore_app vendor_apex_file (dir (search)))
+(allow gpuservice vendor_apex_file (dir (search)))
+(allow gsid vendor_apex_file (dir (search)))
+(allow hal_allocator_default vendor_apex_file (dir (search)))
+(allow hal_wifi_supplicant_default system_file (file (read)))
+(allow heatmap_default app_efs_file (dir (search)))
+(allow heatmap_default app_efs_file (file (open read write)))
+(allow heatmap_default sysfs (dir (open read)))
+(allow heatmap_default sysfs (file (open read)))
+(allow heatmap_default sysfs_battery (file (open read)))
+(allow heatmap_default sysfs_batteryinfo (dir (search)))
+(allow heatmap_default vendor_apex_file (dir (search)))
+(allow idmap vendor_apex_file (dir (search)))
+(allow imsd vendor_apex_file (dir (search)))
+(allow incidentd vendor_apex_file (dir (search)))
+(allow init efs_file (file (append)))
+(allow init proc (dir (add_name)))
+(allow init proc (file (create write)))
+(allow init su (process (noatsecure rlimitinh siginh transition)))
+(allow init sysfs (dir (add_name)))
+(allow init sysfs_battery (file (create)))
+(allow init sysfs_batteryinfo (dir (add_name)))
+(allow init sysfs_fs_f2fs (dir (add_name)))
+(allow init sysfs_mmc_host (dir (add_name)))
+(allow init sysfs_mmc_host (file (create)))
+(allow init sysfs_net (dir (add_name)))
+(allow init sysfs_net (file (create)))
+(allow init sysfs_scsi_host (dir (add_name)))
+(allow init sysfs_scsi_host (file (create)))
+(allow installd vendor_apex_file (dir (search)))
+(allow installd vendor_file (file (getattr open read)))
+(allow insthk vendor_apex_file (dir (search)))
+(allow kcmdlinectrl proc_partition (file (getattr open read)))
+(allow kcmdlinectrl sysfs_dt_firmware_android (dir (open read)))
+(allow kcmdlinectrl sysfs_dt_firmware_android (file (getattr open read)))
+(allow kcmdlinectrl sysfs_scsi_host (dir (search)))
+(allow kcmdlinectrl sysfs_scsi_host (file (getattr open read)))
+(allow kcmdlinectrl vendor_apex_file (dir (search)))
+(allow kcmdlinectrl vendor_file (file (getattr open read)))
+(allow kcmdlinectrl vendor_zram_prop (file (getattr open read)))
+(allow kernel kernel (capability (kill)))
+(allow kernel sec_kernel_debugfs (dir (search)))
+(allow kernel vendor_apex_file (dir (search)))
+(allow keystore vendor_apex_file (dir (search)))
+(allow kumihodecoder vendor_apex_file (dir (search)))
+(allow lhd system_data_file (dir (search)))
+(allow linkerconfig linkerconfig (capability (kill)))
+(allow linkerconfig vendor_apex_file (dir (search)))
+(allow lmkd vendor_apex_file (dir (search)))
+(allow mediaextractor vendor_apex_file (dir (search)))
+(allow mediametrics vendor_apex_file (dir (search)))
+(allow mediaserver vendor_apex_file (dir (search)))
+(allow mediaswcodec vendor_file (dir (open read)))
+(allow misctrl proc_partition (file (getattr open read)))
+(allow misctrl sysfs_dt_firmware_android (dir (open read)))
+(allow misctrl sysfs_dt_firmware_android (file (getattr open read)))
+(allow misctrl sysfs_scsi_host (dir (search)))
+(allow misctrl sysfs_scsi_host (file (getattr open read)))
+(allow misctrl vendor_apex_file (dir (search)))
+(allow misctrl vendor_file (file (getattr open read)))
+(allow misctrl vendor_zram_prop (file (getattr open read)))
+(allow multiclientd vendor_apex_file (dir (search)))
+(allow netd vendor_apex_file (dir (search)))
+(allow nfc nfc_vendor_data_file (dir (search)))
+(allow nfc vendor_apex_file (dir (search)))
+(allow nfc vendor_file (file (getattr open read)))
+(allow odrefresh vendor_apex_file (dir (search)))
+(allow odsign vendor_apex_file (dir (search)))
+(allow otapreopt_slot vendor_apex_file (dir (search)))
+(allow pageboostd vendor_apex_file (dir (search)))
+(allow perfetto vendor_apex_file (dir (search)))
+(allow perfmond vendor_apex_file (dir (search)))
+(allow perfsdkserver vendor_apex_file (dir (search)))
+(allow platform_app app_data_file (file (ioctl)))
+(allow platform_app bluetooth_data_file (file (getattr read)))
+(allow platform_app su (unix_stream_socket (connectto)))
+(allow platform_app system_data_file (dir (add_name remove_name)))
+(allow platform_app system_data_file (file (create ioctl lock setattr unlink write)))
+(allow priv_app privapp_data_file (file (ioctl)))
+(allow priv_app su (unix_stream_socket (connectto)))
+(allow prng_seeder vendor_apex_file (dir (search)))
+(allow radio configfs (file (getattr open read)))
+(allow radio radio_data_file (file (ioctl)))
+(allow radio vendor_apex_file (dir (search)))
+(allow rdxd vendor_apex_file (dir (search)))
+(allow recovery_persist vendor_apex_file (dir (search)))
+(allow recovery_refresh vendor_apex_file (dir (search)))
+(allow rild system_file (file (getattr open read)))
+(allow samsungpowersoundplay vendor_apex_file (dir (search)))
+(allow scs vendor_apex_file (dir (search)))
+(allow smdexe vendor_apex_file (dir (search)))
+(allow spqr_service_daemon vendor_apex_file (dir (search)))
+(allow statsd vendor_apex_file (dir (search)))
+(allow storaged sysfs_mmc_host (dir (search)))
+(allow storaged sysfs_mmc_host (file (getattr open read)))
+(allow storaged sysfs_mmc_host (lnk_file (read)))
+(allow storaged sysfs_scsi_host (dir (search)))
+(allow storaged vendor_apex_file (dir (search)))
+(allow surfaceflinger unlabeled (filesystem (getattr)))
+(allow surfaceflinger vendor_file (dir (open read)))
+(allow system_app privapp_data_file (file (open)))
+(allow system_app sysfs (file (open read)))
+(allow system_app sysfs_mali (file (open read)))
+(allow system_app system_app_data_file (file (ioctl)))
+(allow system_server binder_device (chr_file (ioctl)))
+(allow system_server crash_dump (process (setsched)))
+(allow system_server debugfs_wakeup_sources (file (getattr open read)))
+(allow system_server sysfs (file (open read write)))
+(allow system_server users_system_data_file (file (ioctl)))
+(allow system_server vendor_default_prop (file (getattr open read)))
+(allow system_server vendor_file (dir (open read)))
+(allow system_server vendor_file (file (getattr open read)))
+(allow system_suspend vendor_apex_file (dir (search)))
+(allow tombstoned vendor_apex_file (dir (search)))
+(allow toolbox vendor_apex_file (dir (search)))
+(allow traced vendor_apex_file (dir (search)))
+(allow traced_probes vendor_apex_file (dir (search)))
+(allow ueventd proc_partition (file (getattr open read)))
+(allow ueventd vendor_zram_prop (file (getattr open read)))
+(allow uncrypt vendor_apex_file (dir (search)))
+(allow untrusted_app vendor_apex_file (dir (search)))
+(allow update_verifier vendor_apex_file (dir (search)))
+(allow usbd vendor_apex_file (dir (search)))
+(allow vdc vendor_apex_file (dir (search)))
+(allow vendor_init cache_file (dir (search)))
+(allow vendor_init debugfs (file (write)))
+(allow vendor_init dumplog_data_file (dir (getattr setattr)))
+(allow vendor_init mediaserver_data_file (dir (getattr)))
+(allow vendor_init proc_fslog (file (write)))
+(allow vendor_init sysfs (dir (add_name)))
+(allow vendor_init sysfs (file (create)))
+(allow vendor_init sysfs_sec (file (create)))
+(allow vendor_init sysfs_ss_writable (dir (add_name)))
+(allow vendor_init sysfs_ss_writable (file (create)))
+(allow vendor_init telephony_prop (property_service (set)))
+(allow vendor_iod sysfs_mmc_host (dir (add_name)))
+(allow vendor_iod sysfs_mmc_host (file (create)))
+(allow vendor_iod sysfs_scsi_host (dir (add_name)))
+(allow vendor_iod sysfs_scsi_host (file (create)))
+(allow vendor_secril_config_svc system_file (file (getattr open read)))
+(allow vold vendor_file (file (getattr open read)))
+(allow vold vendor_zram_prop (file (getattr open read)))
+(allow vold_prepare_subdirs vendor_apex_file (dir (search)))
+(allow wificond vendor_apex_file (dir (search)))
+(allow zygote vendor_default_prop (file (getattr open read)))
+(allow zygote vendor_file (dir (open read)))
+(allow zygote vendor_file (file (getattr open read)))
+ENFORCING_ALLOW_RULES_EOF
+    fi
 }
 
+_EXYNOS9810_REMOVE_STALE_PRECOMPILED_SEPOLICY()
+{
+    local FILE
+    local REL
+
+    # The legacy ODM snapshot contains a precompiled policy generated against
+    # its original platform policy. Keeping it makes first-stage init ignore
+    # the vendor CIL rules appended above, which is harmless under a permissive
+    # kernel but breaks boot-critical services under enforcing.
+    LOG "- Removing stale Exynos9810 ODM precompiled SELinux policy"
+
+    for FILE in \
+        "odm/etc/selinux/precompiled_sepolicy" \
+        "odm/etc/selinux/precompiled_sepolicy.plat_sepolicy_and_mapping.sha256" \
+        "odm/etc/selinux/precompiled_sepolicy.system_ext_sepolicy_and_mapping.sha256"; do
+        # The target-files layout normally nests ODM below system/, while an
+        # older incremental workdir can contain one of the other forms.
+        # Clear all of them so init cannot select a policy from a previous
+        # build instead of compiling the current CIL set.
+        for REL in "$WORK_DIR/$FILE" "$WORK_DIR/system/$FILE" "$WORK_DIR/system/system/$FILE"; do
+            rm -f "$REL"
+        done
+        _EXYNOS9810_DELETE_METADATA "odm" "$FILE" "/$FILE"
+        _EXYNOS9810_DELETE_METADATA "system" "$FILE" "/$FILE"
+    done
+}
+
+_EXYNOS9810_RESTORE_GRAPHICS_MAPPER_COMPAT()
+{
+    local ARCH_DIR REL STOCK_MODEL STOCK_VENDOR STOCK_FILE DEST GRAPHICS_LABEL
+    local GRALLOC MANIFEST MAPPER_BASE SYSTEM_LIB
+
+    # Keep the complete graphics stack from the vendor image that is proven to
+    # boot this Android 16 port. The Android 10 stock mapper is not compatible
+    # with the Android 16 gralloc probing path: mixing it with this vendor makes
+    # every mapper probe fail and crashes SystemUI/Launcher continuously.
+    case "$TARGET_CODENAME" in
+        starlte)  STOCK_MODEL="SM-G960F" ;;
+        star2lte) STOCK_MODEL="SM-G965F" ;;
+        crownlte) STOCK_MODEL="SM-N960F" ;;
+        *)
+            LOGE "No Exynos9810 stock graphics mapping for $TARGET_CODENAME"
+            return 1
+            ;;
+    esac
+
+    STOCK_VENDOR="$EXYNOS9810_LEGACY_PORT_DIR/vendor"
+    if [ ! -d "$STOCK_VENDOR" ]; then
+        LOGE "Missing proven Exynos9810 graphics vendor baseline: $STOCK_VENDOR"
+        return 1
+    fi
+
+    LOG "- Restoring proven Android 16 Exynos9810 graphics stack for enforcing boot"
+
+    for REL in \
+        lib/egl/libGLES_mali.so \
+        lib64/egl/libGLES_mali.so \
+        lib/libGLES_mali.so \
+        lib64/libGLES_mali.so \
+        lib/libion_exynos.so \
+        lib64/libion_exynos.so \
+        lib/hw/android.hardware.graphics.allocator@2.0-impl.so \
+        lib64/hw/android.hardware.graphics.allocator@2.0-impl.so \
+        lib/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so \
+        lib64/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so \
+        lib/hw/gralloc.default.so \
+        lib64/hw/gralloc.default.so \
+        lib/hw/gralloc.exynos9810.so \
+        lib64/hw/gralloc.exynos9810.so \
+        lib/hw/hwcomposer.exynos9810.so \
+        lib64/hw/hwcomposer.exynos9810.so; do
+        STOCK_FILE="$STOCK_VENDOR/$REL"
+        DEST="$WORK_DIR/vendor/$REL"
+        if [ -f "$STOCK_FILE" ]; then
+            mkdir -p "$(dirname "$DEST")"
+            cp -af "$STOCK_FILE" "$DEST"
+            case "$REL" in
+                lib/hw/android.hardware.graphics.allocator@2.0-impl.so|\
+                lib64/hw/android.hardware.graphics.allocator@2.0-impl.so|\
+                lib/hw/hwcomposer.exynos9810.so|\
+                lib64/hw/hwcomposer.exynos9810.so)
+                    GRAPHICS_LABEL="u:object_r:vendor_file:s0"
+                    ;;
+                *)
+                    GRAPHICS_LABEL="u:object_r:same_process_hal_file:s0"
+                    ;;
+            esac
+            _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/$REL" \
+                0 0 644 "$GRAPHICS_LABEL"
+        fi
+    done
+
+    # The S9-family allocator/composer services are part of the legacy
+    # Exynos9810 ABI as well. A donor Android 16 vendor can contain files with
+    # the same names but different linker dependencies; that leaves
+    # hwservicemanager without a registered allocator/composer and causes
+    # SurfaceFlinger, SystemUI and cameraserver to crash in a loop.
+    for REL in \
+        bin/hw/android.hardware.graphics.allocator@2.0-service \
+        bin/hw/android.hardware.graphics.composer@2.2-service; do
+        STOCK_FILE="$STOCK_VENDOR/$REL"
+        DEST="$WORK_DIR/vendor/$REL"
+        [ -f "$STOCK_FILE" ] || {
+            LOGE "Missing stock graphics service: $REL"
+            return 1
+        }
+        mkdir -p "$(dirname "$DEST")"
+        cp -af "$STOCK_FILE" "$DEST"
+        case "$REL" in
+            bin/hw/android.hardware.graphics.allocator@2.0-service)
+                GRAPHICS_LABEL="u:object_r:hal_graphics_allocator_default_exec:s0" ;;
+            *)
+                GRAPHICS_LABEL="u:object_r:hal_graphics_composer_default_exec:s0" ;;
+        esac
+        _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/$REL" \
+            0 2000 755 "$GRAPHICS_LABEL"
+    done
+
+    for REL in \
+        etc/init/android.hardware.graphics.allocator@2.0-service.rc \
+        etc/init/android.hardware.graphics.composer@2.2-service.rc; do
+        STOCK_FILE="$STOCK_VENDOR/$REL"
+        DEST="$WORK_DIR/vendor/$REL"
+        [ -f "$STOCK_FILE" ] || {
+            LOGE "Missing stock graphics init entry: $REL"
+            return 1
+        }
+        mkdir -p "$(dirname "$DEST")"
+        cp -af "$STOCK_FILE" "$DEST"
+        _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/$REL" \
+            0 0 644 "u:object_r:vendor_configs_file:s0"
+    done
+
+    for REL in lib64/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so \
+               lib/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so \
+               lib64/hw/android.hardware.graphics.allocator@2.0-impl.so \
+               lib/hw/android.hardware.graphics.allocator@2.0-impl.so \
+               lib64/egl/libGLES_mali.so \
+               lib64/libion_exynos.so; do
+        [ -f "$WORK_DIR/vendor/$REL" ] || {
+            LOGE "Required enforcing graphics payload missing: vendor/$REL"
+            return 1
+        }
+    done
+
+    for REL in \
+        vendor/bin/hw/android.hardware.graphics.allocator@2.0-service \
+        vendor/bin/hw/android.hardware.graphics.composer@2.2-service \
+        vendor/etc/init/android.hardware.graphics.allocator@2.0-service.rc \
+        vendor/etc/init/android.hardware.graphics.composer@2.2-service.rc; do
+        [ -f "$WORK_DIR/$REL" ] || {
+            LOGE "Required enforcing graphics service missing: /$REL"
+            return 1
+        }
+    done
+
+
+    # The proven port exposes mapper 2.1 through the implementation filename
+    # expected by hwloader. Do not create a mapper@2.0 alias: that alias makes
+    # Android select the wrong ABI before it can load the working bridge.
+    for ARCH_DIR in lib lib64; do
+        MAPPER_BASE="$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so"
+        [ -f "$MAPPER_BASE" ] || {
+            LOGE "Missing proven mapper bridge: vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so"
+            return 1
+        }
+        rm -f "$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so"
+        _EXYNOS9810_DELETE_METADATA "vendor" \
+            "vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so" \
+            "/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so"
+        _EXYNOS9810_SET_METADATA_SAFE "vendor" \
+            "vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so" \
+            0 0 644 "u:object_r:same_process_hal_file:s0"
+
+        for SYSTEM_LIB in \
+            "android.hardware.graphics.mapper@2.0.so" \
+            "android.hardware.graphics.mapper@2.1.so" \
+            "android.hardware.graphics.allocator@2.0.so" \
+            "android.hardware.graphics.common@1.0.so" \
+            "libc++.graphics.so" \
+            "libgralloctypes.so" \
+            "libgralloctypes-v33.so"; do
+            rm -f "$WORK_DIR/vendor/$ARCH_DIR/$SYSTEM_LIB"
+            _EXYNOS9810_DELETE_METADATA "vendor" \
+                "vendor/$ARCH_DIR/$SYSTEM_LIB" \
+                "/vendor/$ARCH_DIR/$SYSTEM_LIB"
+        done
+
+
+        for GRALLOC in gralloc.default.so gralloc.exynos9810.so; do
+            _EXYNOS9810_SET_METADATA_SAFE "vendor" \
+                "vendor/$ARCH_DIR/hw/$GRALLOC" \
+                0 0 644 "u:object_r:same_process_hal_file:s0"
+        done
+    done
+
+    for REL in \
+        lib/egl/libGLES_mali.so \
+        lib64/egl/libGLES_mali.so \
+        lib/libion_exynos.so \
+        lib64/libion_exynos.so \
+        lib/hw/android.hardware.graphics.allocator@2.0-impl.so \
+        lib64/hw/android.hardware.graphics.allocator@2.0-impl.so \
+        lib/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so \
+        lib64/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so \
+        lib/hw/gralloc.default.so \
+        lib64/hw/gralloc.default.so \
+        lib/hw/gralloc.exynos9810.so \
+        lib64/hw/gralloc.exynos9810.so \
+        lib/hw/hwcomposer.exynos9810.so \
+        lib64/hw/hwcomposer.exynos9810.so \
+        bin/hw/android.hardware.graphics.allocator@2.0-service \
+        bin/hw/android.hardware.graphics.composer@2.2-service; do
+        STOCK_FILE="$STOCK_VENDOR/$REL"
+        DEST="$WORK_DIR/vendor/$REL"
+        if [ -f "$STOCK_FILE" ] && ! cmp -s "$STOCK_FILE" "$DEST"; then
+            LOGE "Proven graphics payload was changed after restore: $REL"
+            return 1
+        fi
+    done
+
+    if command -v readelf >/dev/null 2>&1 && \
+       ! readelf -d "$WORK_DIR/vendor/lib64/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so" \
+           2>/dev/null | grep -q "android.hardware.graphics.mapper@2.1.so"; then
+        LOGE "Proven mapper bridge no longer links against mapper@2.1"
+        return 1
+    fi
+
+    MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest.xml"
+    if [ -f "$MANIFEST" ]; then
+        python3 - "$MANIFEST" <<'PY'
+import sys
+import xml.etree.ElementTree as ET
+
+path = sys.argv[1]
+tree = ET.parse(path)
+root = tree.getroot()
+
+def make_hidl(name, interface, version, fqname, transport, passthrough=False):
+    hal = ET.Element("hal", {"format": "hidl"})
+    ET.SubElement(hal, "name").text = name
+    transport_node = ET.SubElement(hal, "transport")
+    transport_node.text = transport
+    if passthrough:
+        transport_node.set("arch", "32+64")
+    ET.SubElement(hal, "version").text = version
+    iface = ET.SubElement(hal, "interface")
+    ET.SubElement(iface, "name").text = interface
+    ET.SubElement(iface, "instance").text = "default"
+    ET.SubElement(hal, "fqname").text = fqname
+    return hal
+
+# Replace, rather than merge, the graphics entry. Incremental builds can
+# otherwise retain a mapper@2.0 declaration beside the working @2.1 bridge.
+for node in list(root.findall("hal")):
+    if node.findtext("name") == "android.hardware.graphics.mapper":
+        root.remove(node)
+
+allocator = next((node for node in root.findall("hal")
+                  if node.findtext("name") == "android.hardware.graphics.allocator"), None)
+if allocator is None:
+    root.append(make_hidl("android.hardware.graphics.allocator", "IAllocator",
+                          "2.0", "@2.0::IAllocator/default", "hwbinder"))
+else:
+    for child in list(allocator):
+        if child.tag in {"version", "interface", "fqname"}:
+            allocator.remove(child)
+    transport = allocator.find("transport")
+    if transport is None:
+        transport = ET.SubElement(allocator, "transport")
+    transport.text = "hwbinder"
+    transport.attrib.pop("arch", None)
+    ET.SubElement(allocator, "version").text = "2.0"
+    iface = ET.SubElement(allocator, "interface")
+    ET.SubElement(iface, "name").text = "IAllocator"
+    ET.SubElement(iface, "instance").text = "default"
+    ET.SubElement(allocator, "fqname").text = "@2.0::IAllocator/default"
+
+root.append(make_hidl("android.hardware.graphics.mapper", "IMapper",
+                      "2.1", "@2.1::IMapper/default",
+                      "passthrough", True))
+
+tree.write(path, encoding="unicode")
+PY
+        _EXYNOS9810_SET_METADATA_SAFE "vendor" \
+            "vendor/etc/vintf/manifest.xml" \
+            0 0 644 "u:object_r:vendor_configs_file:s0"
+    fi
+
+    # Keep the system-side legacy interface libraries available to the linker
+    # namespace. They are part of the Android 16 system image and are not
+    # copied into /vendor.
+    for ARCH_DIR in lib lib64; do
+        for SYSTEM_LIB in \
+            "android.hardware.graphics.mapper@2.0.so" \
+            "android.hardware.graphics.mapper@2.1.so" \
+            "android.hardware.graphics.allocator@2.0.so"; do
+            if [ ! -f "$WORK_DIR/system/system/$ARCH_DIR/$SYSTEM_LIB" ]; then
+                LOGE "Missing system graphics interface: system/system/$ARCH_DIR/$SYSTEM_LIB"
+                return 1
+            fi
+        done
+    done
+}
+
+_EXYNOS9810_REMOVE_MISSING_AUDIO_EFFECTS()
+{
+    local CONFIG CONFIG_REL PARTITION
+
+    # Android audio policy may select audio_effects.xml, audio_effects_sec.xml,
+    # or a spatializer variant depending on the framework build. Sanitize every
+    # shipped XML config so audioserver cannot abort on a donor-only library.
+    LOG "- Removing orphaned Exynos9810 audio effect references"
+
+    for CONFIG in \
+        "$WORK_DIR"/vendor/etc/audio_effects*.xml \
+        "$WORK_DIR"/odm/etc/audio_effects*.xml \
+        "$WORK_DIR"/system/system/etc/audio_effects*.xml; do
+        [ -f "$CONFIG" ] || continue
+
+        python3 - "$CONFIG" <<'PY'
+import sys
+import xml.etree.ElementTree as ET
+
+path = sys.argv[1]
+missing_names = {"playbackrecorder", "vr360audio"}
+missing_paths = {"libplaybackrecorder.so", "libgearvr.so"}
+
+try:
+    tree = ET.parse(path)
+except (ET.ParseError, OSError):
+    raise SystemExit(0)
+
+root = tree.getroot()
+declared_missing = set()
+
+libraries = next((node for node in root.iter()
+                  if node.tag.endswith("libraries")), None)
+if libraries is not None:
+    for node in list(libraries):
+        if not node.tag.endswith("library"):
+            continue
+        name = node.get("name", "")
+        libpath = node.get("path", "")
+        if name in missing_names or libpath in missing_paths:
+            declared_missing.add(name)
+            libraries.remove(node)
+
+effects = next((node for node in root.iter()
+                if node.tag.endswith("effects")), None)
+if effects is not None:
+    for node in list(effects):
+        if node.tag.endswith("effect") and (
+            node.get("name", "") in {"playbackrecorder", "vr3d"} or
+            node.get("library", "") in declared_missing
+        ):
+            effects.remove(node)
+
+if declared_missing:
+    # Preserve Samsung's original default namespace. ElementTree otherwise
+    # emits an ns0-prefixed root, which the legacy EffectsConfig parser rejects.
+    ET.register_namespace("", "http://schemas.android.com/audio/audio_effects_conf/v2_0")
+    tree.write(path, encoding="utf-8", xml_declaration=True)
+PY
+
+        CONFIG_REL="$(printf '%s' "$CONFIG" | sed "s#^$WORK_DIR/##")"
+        PARTITION="$(printf '%s' "$CONFIG_REL" | cut -d/ -f1)"
+        case "$PARTITION" in
+            vendor)
+                _EXYNOS9810_SET_METADATA_SAFE "vendor" "$CONFIG_REL" \
+                    0 0 644 "u:object_r:vendor_configs_file:s0"
+                ;;
+            odm)
+                _EXYNOS9810_SET_METADATA_SAFE "odm" "$CONFIG_REL" \
+                    0 0 644 "u:object_r:vendor_configs_file:s0"
+                ;;
+            system)
+                _EXYNOS9810_SET_METADATA_SAFE "system" "$CONFIG_REL" \
+                    0 0 644 "u:object_r:system_file:s0"
+                ;;
+        esac
+    done
+
+    # sec_audio_volume_curve.xml is read directly by audioserver through the
+    # legacy Samsung volume parser. Keep it in the vendor config domain too.
+    for CONFIG_REL in         vendor/etc/sec_audio_volume_curve.xml         vendor/etc/audio_policy_configuration.xml         vendor/etc/audio_policy_volumes.xml; do
+        if [ -f "$WORK_DIR/$CONFIG_REL" ]; then
+            _EXYNOS9810_SET_METADATA_SAFE "vendor" "$CONFIG_REL"                 0 0 644 "u:object_r:vendor_configs_file:s0"
+        fi
+    done
+}
+_EXYNOS9810_FIX_ENFORCING_INIT_DATA_DIRS()
+{
+    local RC
+
+    # Android 16 requires encryption=Require on top-level /data mkdir actions.
+    # Without it, enforcing init cannot stat these legacy Samsung paths.
+    for RC in         "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"         "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc"; do
+        [ -f "$RC" ] || continue
+        python3 - "$RC" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+replacements = {
+    "mkdir /data/log 0771 radio system":
+        "mkdir /data/log 0771 radio system encryption=Require",
+    "mkdir /data/firmware 0770 audioserver system":
+        "mkdir /data/firmware 0770 audioserver system encryption=Require",
+}
+for old, new in replacements.items():
+    text = text.replace(old, new)
+path.write_text(text)
+PY
+        _EXYNOS9810_SET_METADATA_SAFE "vendor"             "vendor/etc/init/$(basename "$RC")"             0 0 644 "u:object_r:vendor_configs_file:s0"
+    done
+
+    # This debug-only rc writes to /cache, which is intentionally unavailable
+    # during encrypted enforcing boot and only creates misleading init errors.
+    if [ -e "$WORK_DIR/vendor/etc/init/unica_enforcing_vendor_debug.rc" ]; then
+        rm -f "$WORK_DIR/vendor/etc/init/unica_enforcing_vendor_debug.rc"
+        _EXYNOS9810_DELETE_METADATA "vendor"             "vendor/etc/init/unica_enforcing_vendor_debug.rc"             "/vendor/etc/init/unica_enforcing_vendor_debug.rc"
+    fi
+}
 _EXYNOS9810_WRITE_FINAL_BOOT_TRACE()
 {
     if [ "${EXYNOS9810_ENABLE_VENDOR_BOOT_TRACE:-false}" != "true" ]; then
@@ -968,6 +1684,54 @@ _EXYNOS9810_VERIFY_FINAL_SECURITY_STACK()
     done
 }
 
+_EXYNOS9810_DISABLE_FINAL_SECURITY_FEATURE_PROPS()
+{
+    local FILE
+
+    LOG "- Disabling legacy Samsung CASS/VaultKeeper feature props after vendor restore"
+
+    for FILE in \
+        "$WORK_DIR/vendor/build.prop" \
+        "$WORK_DIR/odm/etc/build.prop" \
+        "$WORK_DIR/system/odm/etc/build.prop" \
+        "$WORK_DIR/system/system/build.prop"; do
+        [ -f "$FILE" ] || continue
+        sed -i \
+            -e '/^ro\.security\.cass\.feature=/d' \
+            -e '/^ro\.security\.vaultkeeper\.feature=/d' \
+            -e '/^ro\.security\.vaultkeeper\.native=/d' \
+            -e '/^ro\.config\.tima=/d' \
+            "$FILE"
+        {
+            echo "ro.security.cass.feature=0"
+            echo "ro.security.vaultkeeper.feature=0"
+            echo "ro.security.vaultkeeper.native=0"
+            echo "ro.config.tima=0"
+        } >> "$FILE"
+    done
+}
+
+_EXYNOS9810_VERIFY_FINAL_SECURITY_FEATURE_PROPS()
+{
+    local FILE="$WORK_DIR/vendor/build.prop"
+
+    LOG "- Verifying legacy Samsung security feature props stay disabled"
+
+    if grep -Rqs '^ro\.security\.cass\.feature=1' \
+        "$WORK_DIR/vendor/build.prop" \
+        "$WORK_DIR/odm/etc/build.prop" \
+        "$WORK_DIR/system/odm/etc/build.prop" \
+        "$WORK_DIR/system/system/build.prop"; then
+        LOGE "Legacy CASS feature prop is enabled; enforcing kernels may bootloop"
+        return 1
+    fi
+
+    if [ -f "$FILE" ] && ! grep -q '^ro\.security\.cass\.feature=0$' "$FILE"; then
+        LOGE "Vendor build.prop is missing ro.security.cass.feature=0"
+        return 1
+    fi
+}
+
 rm -f \
     "$WORK_DIR/system/system/lib/libunica.so" \
     "$WORK_DIR/system/system/lib64/libunica.so" \
@@ -985,7 +1749,12 @@ _EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY
 _EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT
 _EXYNOS9810_USE_SENSORS_HAL_1_0 || return 1
 _EXYNOS9810_APPLY_FINAL_SECURITY_STACK || return 1
+_EXYNOS9810_DISABLE_FINAL_SECURITY_FEATURE_PROPS
 _EXYNOS9810_RESTORE_ODM_BASELINE || return 1
+_EXYNOS9810_REMOVE_STALE_PRECOMPILED_SEPOLICY
+_EXYNOS9810_RESTORE_GRAPHICS_MAPPER_COMPAT || return 1
+_EXYNOS9810_REMOVE_MISSING_AUDIO_EFFECTS
+_EXYNOS9810_FIX_ENFORCING_INIT_DATA_DIRS
 _EXYNOS9810_APPLY_TARGET_VENDOR_IDENTITY || return 1
 _EXYNOS9810_SANITIZE_RESTORED_TEXT
 _EXYNOS9810_WRITE_FINAL_BOOT_TRACE
@@ -995,9 +1764,14 @@ fi
 
 _EXYNOS9810_SET_METADATA_SAFE "system" "odm/etc/build.prop" 0 0 644 "u:object_r:system_file:s0"
 _EXYNOS9810_SET_METADATA_SAFE "system" "system/bin/unica_exynos9810_bootlog.sh" 0 2000 755 "u:object_r:system_file:s0"
+_EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/lib/hw/android.hardware.graphics.allocator@2.0-impl.so" 0 0 644 "u:object_r:vendor_file:s0"
+_EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/lib/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so" 0 0 644 "u:object_r:same_process_hal_file:s0"
+_EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/lib64/hw/android.hardware.graphics.allocator@2.0-impl.so" 0 0 644 "u:object_r:vendor_file:s0"
+_EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/lib64/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so" 0 0 644 "u:object_r:same_process_hal_file:s0"
 
 _EXYNOS9810_FIX_SYSTEM_PERMISSION_CASE
 _EXYNOS9810_VERIFY_FINAL_SECURITY_STACK || return 1
+_EXYNOS9810_VERIFY_FINAL_SECURITY_FEATURE_PROPS || return 1
 
 _EXYNOS9810_DEDUP_METADATA "system"
 _EXYNOS9810_DEDUP_METADATA "vendor"

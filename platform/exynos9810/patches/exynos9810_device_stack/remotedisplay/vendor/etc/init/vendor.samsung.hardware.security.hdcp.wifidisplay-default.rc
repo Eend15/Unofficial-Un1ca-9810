@@ -1,0 +1,4 @@
+service hdcp_hal /vendor/bin/vendor.samsung.hardware.security.hdcp.wifidisplay-service
+    class early_hal
+    user system
+    group system

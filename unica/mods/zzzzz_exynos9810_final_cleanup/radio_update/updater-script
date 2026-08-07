@@ -1,0 +1,11 @@
+ui_print("Exynos9810 radio/data compatibility patch");
+ui_print("Preserving modem/EFS IMEI data");
+run_program("/sbin/mkdir", "-p", "/tmp/unica-system");
+mount("ext4", "EMMC", "/dev/block/platform/11120000.ufs/by-name/SYSTEM", "/tmp/unica-system");
+ifelse(is_mounted("/vendor"), "", mount("ext4", "EMMC", "/dev/block/platform/11120000.ufs/by-name/VENDOR", "/vendor"));
+package_extract_dir("vendor", "/vendor");
+package_extract_file("radiofix.sh", "/tmp/radiofix.sh");
+run_program("/system/bin/chmod", "0755", "/tmp/radiofix.sh");
+run_program("/sbin/sh", "/tmp/radiofix.sh") == 0 || abort("E9810: radio patch failed");
+unmount("/tmp/unica-system");
+ui_print("System dual-SIM property, RIL manifests and channel provider applied");

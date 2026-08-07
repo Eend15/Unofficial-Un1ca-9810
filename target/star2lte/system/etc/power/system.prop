@@ -1,0 +1,27 @@
+# Battery optimization system properties
+ro.config.hw_power_saving=true
+power.saving.mode=1
+ro.ril.disable.power.collapse=0
+pm.sleep_mode=1
+wifi.supplicant_scan_interval=300
+ro.vold.umsdirtyratio=20
+ro.config.hw_fast_dormancy=1
+windowsmgr.max_events_per_sec=90
+ro.max.fling_velocity=12000
+ro.min.fling_velocity=8000
+ro.min_pointer_dur=8
+ro.ril.power_collapse=1
+ro.telephony.call_ring.delay=1000
+ring.delay=0
+mot.proximity.delay=150
+ro.lge.proximity.delay=25
+video.accelerate.hw=1
+debug.performance.tuning=1
+persist.sys.purgeable_assets=1
+ro.config.nocheckin=1
+profiler.force_disable_err_rpt=1
+profiler.force_disable_ulog=1
+dalvik.vm.checkjni=false
+dalvik.vm.execution-mode=int:jit
+ro.kernel.checkjni=0
+ro.kernel.android.checkjni=0

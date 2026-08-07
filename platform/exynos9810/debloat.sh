@@ -31,3 +31,24 @@ system/priv-app/MobileWips
 system/priv-app/BeaconManager
 system/system_ext/priv-app/GoogleFeedback
 "
+
+# --- Additional telemetry / diagnostics agents and idle apps (user-selected) ---
+# (DAAgent kept: it is the Dual Messenger service, restored deliberately)
+# com.samsung.oda.service                 -- Samsung diagnostics agent
+# com.samsung.android.scpm                -- Samsung config/telemetry agent
+# com.samsung.android.easysetup           -- one-time device setup wizard agent
+# com.samsung.gpuwatchapp                 -- GPU usage telemetry
+# com.samsung.android.networkdiagnostic   -- Wi-Fi diagnostics
+# com.samsung.android.wifi.ai             -- Wi-Fi AI analysis service
+# com.samsung.android.mocca               -- mobile cloud client (Samsung Cloud already removed)
+# com.samsung.android.app.sketchbook      -- Samsung SketchBook drawing app
+SYSTEM_DEBLOAT+="
+system/priv-app/OdaService
+system/priv-app/SCPMAgent
+system/priv-app/EasySetup
+system/priv-app/GpuWatchApp
+system/priv-app/NetworkDiagnostic
+system/app/WifiAiService
+system/app/MoccaMobile
+system/app/SketchBook
+"

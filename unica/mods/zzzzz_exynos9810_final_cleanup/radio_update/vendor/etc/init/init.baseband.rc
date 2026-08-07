@@ -1,0 +1,40 @@
+on init
+    symlink /dev/block/platform/11120000.ufs/by-name/RADIO /dev/mbin0
+    restorecon /dev/mbin0
+
+    write /proc/sys/net/core/netdev_max_backlog 100000
+
+on fs
+    chown radio radio sys/devices/virtual/misc/multipdp/waketime
+    chmod 0660 /sys/devices/virtual/misc/umts_dm0/dm_state
+    chown radio system /sys/devices/virtual/misc/umts_dm0/dm_state
+
+    # /efs/factory.prop for Dual / Single SIM settings
+    chown radio radio /mnt/vendor/efs/factory.prop
+    chmod 0600 /mnt/vendor/efs/factory.prop
+
+on post-fs-data
+    #For cpdebug partition
+    wait /dev/block/platform/11120000.ufs/by-name/EFS
+    mkdir /mnt/vendor/efs/cpdebug
+    chown radio system /mnt/vendor/efs/cpdebug
+    chmod 0771 /mnt/vendor/efs/cpdebug
+    symlink /dev/block/platform/11120000.ufs/by-name/CP_DEBUG /mnt/vendor/efs/cpdebug/node
+    chown radio system /mnt/vendor/efs/cpdebug/node
+    chmod 0771 /mnt/vendor/efs/cpdebug/node
+
+service cpboot-daemon /vendor/bin/cbd -d -tss310 -bm -mm -P platform/11120000.ufs/by-name/RADIO -n /mnt/vendor/efs
+    class main
+    user root
+    group radio cache inet misc audio sdcard_rw log sdcard_r shell system
+    seclabel u:r:cbd:s0
+
+# SS/DS configuration
+on property:ro.vendor.multisim.simslotcount=*
+   write /sys/module/modem_ctrl_ss310ap/parameters/ds_detect ${ro.vendor.multisim.simslotcount}
+
+on property:ro.vendor.multisim.simslotcount=1
+    setprop persist.radio.multisim.config ss
+
+on property:ro.vendor.multisim.simslotcount=2
+    setprop persist.radio.multisim.config dsds

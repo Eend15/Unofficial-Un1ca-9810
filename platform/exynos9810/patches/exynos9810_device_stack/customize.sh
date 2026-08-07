@@ -412,6 +412,24 @@ EOF
     _EXYNOS9810_REPLACE_SMALI_METHOD "$SMALI" "onStart()V" "$NOOP_BODY" || return 1
 }
 
+_EXYNOS9810_PATCH_SEMWIFI_P2P_CALLBACK()
+{
+    local JAR="$WORK_DIR/system/system/framework/semwifi-service.jar"
+    local PATCHER="$SRC_DIR/platform/exynos9810/tools/patch_semwifi_p2p_callback.py"
+
+    LOG "- Preserving Android Wi-Fi Direct discovery for Smart View/Wireless DeX"
+    [ -f "$JAR" ] || {
+        LOGE "semwifi-service.jar not found for Wi-Fi Direct callback patch"
+        return 1
+    }
+    [ -f "$PATCHER" ] || {
+        LOGE "Samsung Wi-Fi Direct callback patcher is missing"
+        return 1
+    }
+
+    python3 "$PATCHER" "$JAR" || return 1
+}
+
 _EXYNOS9810_PATCH_EXTENDED_ETHERNET_BOOTLOOP()
 {
     local SMALI
@@ -610,7 +628,15 @@ _EXYNOS9810_APPLY_ROOTFS()
     while read -r entry uid gid mode; do
         [ "$entry" ] || continue
         if [ "$entry" != "system" ]; then
-            rm -rf "$WORK_DIR/system/$entry"
+            # The donor may provide legacy top-level entries such as bin as
+            # absolute symlinks (for example /system/bin). Remove links and
+            # regular files explicitly before recreating the system-as-root
+            # directory; rm -rf is not reliable for these WSL symlinks.
+            if [ -L "$WORK_DIR/system/$entry" ] || [ -f "$WORK_DIR/system/$entry" ]; then
+                rm -f -- "$WORK_DIR/system/$entry"
+            elif [ -d "$WORK_DIR/system/$entry" ]; then
+                rm -rf -- "$WORK_DIR/system/$entry"
+            fi
         fi
         mkdir -p "$WORK_DIR/system/$entry"
         sed -i "\|^$entry |d" "$WORK_DIR/configs/fs_config-system"
@@ -823,6 +849,18 @@ _EXYNOS9810_DELETE_METADATA_PREFIX()
         sed -i "\|^$ENTRY\(/\\| \)|d" "$WORK_DIR/configs/fs_config-$PARTITION"
     [ -f "$WORK_DIR/configs/file_context-$PARTITION" ] && \
         sed -i "\|^$CONTEXT\(/\\| \)|d" "$WORK_DIR/configs/file_context-$PARTITION"
+}
+
+_EXYNOS9810_DELETE_METADATA()
+{
+    local PARTITION="$1"
+    local ENTRY="$2"
+    local CONTEXT="$3"
+
+    [ -f "$WORK_DIR/configs/fs_config-$PARTITION" ] && \
+        sed -i "\\|^$ENTRY |d" "$WORK_DIR/configs/fs_config-$PARTITION"
+    [ -f "$WORK_DIR/configs/file_context-$PARTITION" ] && \
+        sed -i "\\|^$CONTEXT |d" "$WORK_DIR/configs/file_context-$PARTITION"
 }
 
 _EXYNOS9810_COPY_HXA3_VENDOR_FILE()
@@ -2400,19 +2438,9 @@ _EXYNOS9810_RESTORE_EXYNOS9810_RADIO_STACK()
         0 0 644 "u:object_r:vendor_configs_file:s0"
 
 
-    # Do not add S22 radio manifest fragments here. The Exynos9810 legacy
-    # stack is declared by vendor/etc/vintf/manifest.xml with @1.4::IRadio
-    # and ISehChannel. S22's @1.6 fragment overrides that declaration and
-    # makes Android 16 request HAL instances that rild cannot provide.
-    for REL in \
-        vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml \
-        vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml \
-        vendor/etc/vintf/manifest/vendor.samsung.hardware.radio.exclude.slsi.xml; do
-        rm -f "$WORK_DIR/$REL"
-        _EXYNOS9810_DELETE_METADATA_PREFIX "vendor" \
-            "${REL#vendor/}" \
-            "/${REL#vendor/}"
-    done
+    # Keep the legacy radio-channel declarations. The Exynos9810 provider
+    # uses the split radio/sehradio manifests and channel@2.0 for imsd/imsd2.
+    # They are restored again by the final cleanup pass after donor cleanup.
 
 }
 
@@ -2564,6 +2592,8 @@ _EXYNOS9810_VERIFY_NETWORK_SETTINGS()
     local TELEPHONY_APK="$WORK_DIR/system/system/priv-app/TelephonyUI/TelephonyUI.apk"
     local GSM_FEATURE="$WORK_DIR/system/system/etc/permissions/android.hardware.telephony.gsm.xml"
     local LEGACY_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest.xml"
+    local RADIO16_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml"
+    local SEHRADIO_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml"
 
     LOG "- Verifying SIM-conditional mobile network settings"
 
@@ -2600,16 +2630,25 @@ _EXYNOS9810_VERIFY_NETWORK_SETTINGS()
         return 1
     fi
 
-    # IMEI/NV data stays modem/EFS-owned. This guard prevents this device
-    # stack from accidentally shipping an S22 radio declaration again.
-    for REL in \
-        vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml \
-        vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml; do
-        if [ -e "$WORK_DIR/$REL" ]; then
-            LOGE "Incompatible S22 radio manifest survived: $REL"
+    # The combined 1.4 declaration remains as the legacy base. Final cleanup
+    # overlays the complete N770F RIL family and these split 1.6/channel
+    # contracts together; advertising 1.6 without matching rild/libs is fatal.
+    if [ -f "$RADIO16_MANIFEST" ]; then
+        grep -q '@1.6::IRadio/slot1' "$RADIO16_MANIFEST" && \
+            grep -q '@1.6::IRadio/slot2' "$RADIO16_MANIFEST" || {
+            LOGE "Split Exynos9810 IRadio 1.6 declarations are incomplete"
             return 1
-        fi
-    done
+        }
+        [ -f "$SEHRADIO_MANIFEST" ] && \
+            grep -q '<instance>imsd</instance>' "$SEHRADIO_MANIFEST" && \
+            grep -q '<instance>imsd2</instance>' "$SEHRADIO_MANIFEST" || {
+            LOGE "Split Exynos9810 IMS channel declarations are incomplete"
+            return 1
+        }
+        LOG "  Coherent IRadio 1.6 and IMS channel declarations present"
+    else
+        LOG "  Split IRadio 1.6 stack will be restored by final cleanup"
+    fi
 
     LOG "  SIM absent: Settings may hide Mobile networks; SIM present: controller exposes it"
 }
@@ -2619,8 +2658,16 @@ _EXYNOS9810_PATCH_TELEPHONY_SLOT_TOPOLOGY()
     local SMALI
 
     LOG "- Aligning Android 16 telephony slot topology with Exynos9810 RIL"
-    _EXYNOS9810_SET_PROP_SYSTEM "ro.telephony.sim_slots.count" "2"
+    # Keep the complete ROM dual-slot so PhoneFactory and the N770F rild expose
+    # the same services. Single-SIM devices operate with slot2 empty; changing
+    # only vendor at install time leaves Android blocked on IRadio/slot2.
+    _EXYNOS9810_SET_PROP_ALL "ro.telephony.sim_slots.count" "2"
+    # Select Samsung 4G label when Telephony reports LTE; no modem or IMEI change.
+    _EXYNOS9810_SET_PROP_ALL "ro.config.show4gforlte" "true"
+    # Keep the legacy property names in sync with the build fallback.
+    _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "ro.multisim.simslotcount" "2"
     _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "ro.vendor.multisim.simslotcount" "2"
+    _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "persist.radio.multisim.config" "dsds"
 
     DECODE_APK "system" "system/framework/telephony-common.jar" || return 1
 
@@ -2726,13 +2773,25 @@ _EXYNOS9810_PATCH_ENFORCING_COMPAT()
         persist.service.adb.enable \
         persist.service.debuggable \
         ro.logd.kernel \
+        ro.crypto.type \
         persist.log.semlevel; do
         _EXYNOS9810_DELETE_PROP_VENDOR_SIDE "$PROP"
     done
 
-    # Vendor init may only use exported vendor properties in triggers on
-    # enforcing. Keep the baseband multisim triggers intact: Exynos9810's CP
-    # needs ds_detect to be written before RIL can expose baseband/IMEI.
+    # Vendor init may only use exported vendor properties/triggers on
+    # enforcing. Exynos9810's CP needs ds_detect before RIL can expose the
+    # baseband, so use the exported vendor mirror of the slot-count property.
+    for RC in \
+        "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" \
+        "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"; do
+        if [ -f "$RC" ]; then
+            sed -i \
+                -e '/setprop ro\.crypto\.state /d' \
+                -e '/setprop ro\.crypto\.type /d' \
+                "$RC"
+        fi
+    done
+
     RC="$WORK_DIR/vendor/etc/init/pa_daemon_kinibi.rc"
     if [ -f "$RC" ]; then
         sed -i 's/^on property:sys\.mobicoredaemon\.enable=true$/on property:vendor.sys.mobicoredaemon.enable=true/' "$RC"
@@ -2762,20 +2821,31 @@ _EXYNOS9810_PATCH_ENFORCING_COMPAT()
         cat >> "$RC" <<'EOF'
 
 # SS/DS configuration
-on boot
-    write /sys/module/modem_ctrl_ss310ap/parameters/ds_detect 2
+on property:ro.vendor.multisim.simslotcount=*
+    write /sys/module/modem_ctrl_ss310ap/parameters/ds_detect ${ro.vendor.multisim.simslotcount}
+
+on property:ro.vendor.multisim.simslotcount=1
+    setprop persist.radio.multisim.config ss
+
+on property:ro.vendor.multisim.simslotcount=2
     setprop persist.radio.multisim.config dsds
 EOF
     fi
 
-    # Android 16's HIDL passthrough loader asks for the canonical mapper
-    # module name. Samsung's Exynos9810 vendor only ships the 2.1-suffixed
-    # mapper, so keep both names available like the working Exynos8895 port.
-    for SRC in \
-        "$WORK_DIR/vendor/lib/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so" \
-        "$WORK_DIR/vendor/lib64/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so"; do
-        if [ -f "$SRC" ] && [ ! -e "${SRC%-2.1.so}.so" ]; then
-            cp -a "$SRC" "${SRC%-2.1.so}.so"
+    # The proven Android 16 Exynos9810 stack exposes mapper 2.1 through the
+    # 2.1-suffixed implementation. A mapper@2.0 alias makes hwloader select the
+    # wrong ABI before the working bridge is considered, so remove stale
+    # aliases left by incremental workdirs instead of recreating them.
+    for ARCH_DIR in lib lib64; do
+        rm -f "$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so"
+        _EXYNOS9810_DELETE_METADATA "vendor" \
+            "vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so" \
+            "/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so"
+        if [ -f "$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so" ]; then
+            _EXYNOS9810_SET_METADATA "vendor" \
+                "vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so" \
+                "/vendor/$ARCH_DIR/hw/android\\.hardware\\.graphics\\.mapper@2\\.0-impl-2\\.1\\.so" \
+                0 0 644 "u:object_r:same_process_hal_file:s0"
         fi
     done
 
@@ -2825,14 +2895,6 @@ EOF
         "/vendor/lib64/hw" \
         0 2000 755 "u:object_r:same_process_hal_file:s0"
     _EXYNOS9810_SET_METADATA "vendor" \
-        "vendor/lib/hw/android.hardware.graphics.mapper@2.0-impl.so" \
-        "/vendor/lib/hw/android\\.hardware\\.graphics\\.mapper@2\\.0-impl\\.so" \
-        0 0 644 "u:object_r:same_process_hal_file:s0"
-    _EXYNOS9810_SET_METADATA "vendor" \
-        "vendor/lib64/hw/android.hardware.graphics.mapper@2.0-impl.so" \
-        "/vendor/lib64/hw/android\\.hardware\\.graphics\\.mapper@2\\.0-impl\\.so" \
-        0 0 644 "u:object_r:same_process_hal_file:s0"
-    _EXYNOS9810_SET_METADATA "vendor" \
         "vendor/bin/hw/android.hardware.health@2.1-service-samsung" \
         "/vendor/bin/hw/android\\.hardware\\.health@2\\.1-service-samsung" \
         0 0 755 "u:object_r:hal_health_default_exec:s0"
@@ -2868,12 +2930,15 @@ _EXYNOS9810_APPLY_BOOT_PROPS()
     _EXYNOS9810_SET_PROP_ALL "persist.sys.disable_rescue" "true"
     _EXYNOS9810_SET_PROP_ALL "ro.control_privapp_permissions" "disable"
     _EXYNOS9810_SET_PROP_ALL "ro.frp.pst" ""
+    _EXYNOS9810_SET_PROP_ALL "ro.security.cass.feature" "0"
     _EXYNOS9810_SET_PROP_ALL "ro.security.vaultkeeper.feature" "0"
     _EXYNOS9810_SET_PROP_ALL "ro.security.vaultkeeper.native" "0"
     _EXYNOS9810_SET_PROP_ALL "ro.config.tima" "0"
     _EXYNOS9810_SET_PROP_ALL "ro.config.dmverity" "false"
     _EXYNOS9810_SET_PROP_ALL "ro.config.kap" "false"
-    _EXYNOS9810_SET_PROP_ALL "wlan.wfd.hdcp" "disable"
+    # Keep WFD/Smart View HDCP negotiation enabled. The Exynos9810 remotedisplay
+    # stack provides its own legacy-compatible HDCP service; forcing this to
+    # "disable" prevents Smart View and Wireless DeX from completing setup.
     _EXYNOS9810_SET_PROP_ALL "ro.opa.eligible_device" "true"
     _EXYNOS9810_SET_PROP_ALL "debug.performance.tuning" "1"
     _EXYNOS9810_SET_PROP_ALL "ro.lmk.use_psi" "true"
@@ -2893,7 +2958,9 @@ _EXYNOS9810_APPLY_BOOT_PROPS()
     _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.fingerprint" "google/shiba_beta/shiba:CANARY/ZP11.260515.009/15513807:user/release-keys"
     _EXYNOS9810_SET_PROP_ALL "boot.fps" "30"
     _EXYNOS9810_SET_PROP_ALL "shutdown.fps" "30"
-    _EXYNOS9810_SET_PROP_ALL "ro.crypto.state" "encrypted"
+    _EXYNOS9810_DELETE_PROP_VENDOR_SIDE "ro.crypto.state"
+    _EXYNOS9810_DELETE_PROP_VENDOR_SIDE "ro.crypto.type"
+    _EXYNOS9810_SET_PROP_SYSTEM "ro.crypto.state" "encrypted"
     _EXYNOS9810_SET_PROP_ALL "ro.boot.flash.locked" "1"
     _EXYNOS9810_SET_PROP_ALL "ro.surface_flinger.protected_contents" "1"
     # Panel is 1440x2960 on all three, but the diagonal differs, so Samsung
@@ -3015,7 +3082,7 @@ service unica_exynos9810_bootlog /system/bin/unica_exynos9810_bootlog.sh
     group root log readproc
     disabled
     oneshot
-    seclabel u:r:su:s0
+    seclabel u:r:init:s0
 EOF
 
     cat > "$WORK_DIR/system/system/bin/unica_exynos9810_bootlog.sh" <<'EOF'
@@ -3107,7 +3174,7 @@ service unica9810_init_debug /vendor/bin/init_debug_log.sh
     group root log readproc
     disabled
     oneshot
-    seclabel u:r:su:s0
+    seclabel u:r:init:s0
 EOF
 
     cat > "$WORK_DIR/vendor/bin/init_debug_log.sh" <<'EOF'
@@ -3195,7 +3262,15 @@ _EXYNOS9810_FIX_BOOT_METADATA()
             "/vendor/etc/init/hw" 0 0 755 "u:object_r:vendor_configs_file:s0"
         _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/init/hw/init.samsungexynos9810.rc" \
             "/vendor/etc/init/hw/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+        rm -f "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc"
+        _EXYNOS9810_DELETE_METADATA_PREFIX "vendor" \
+            "vendor/etc/init/init.samsungexynos9810.rc" \
+            "/vendor/etc/init/init.samsungexynos9810.rc"
     fi
+
+    find "$WORK_DIR/vendor/etc/init" -maxdepth 2 -type f \
+        \( -name '*.enforcingbak' -o -name '*.bak' -o -name '*.bak.*' -o -name '*~' \) \
+        -delete
 
     _EXYNOS9810_SET_METADATA "odm" "odm/etc/build.prop" "/odm/etc/build.prop" 0 0 644 "u:object_r:vendor_file:s0"
 
@@ -3586,6 +3661,7 @@ _EXYNOS9810_COPY_FILE "$EXYNOS9810_LEGACY_PORT_DIR/device_port/scripts/floating_
 _EXYNOS9810_COPY_FILE "$EXYNOS9810_LEGACY_PORT_DIR/device_port/scripts/floating_feature.xml" \
     "$WORK_DIR/system/system/etc/floating_feature.xml" \
     "system" "system/etc/floating_feature.xml" "/system/etc/floating_feature.xml" "u:object_r:system_file:s0"
+
 _EXYNOS9810_PATCH_DEBLOATED_FLOATING_FEATURES
 
 _EXYNOS9810_COPY_FILE "$EXYNOS9810_LEGACY_PORT_DIR/device_port/scripts/psi/libpsi32.so" \
@@ -3612,6 +3688,28 @@ if [ "${ENABLE_LEGACY9810_ONEUI7_COMPAT_OVERLAYS:-false}" = "true" ]; then
 else
     LOGW "Skipping legacy Exynos9810 donor One UI 7 compatibility overlays. Set ENABLE_LEGACY9810_ONEUI7_COMPAT_OVERLAYS=true to force them."
 fi
+
+# Smart View/Wireless DeX needs the 64-bit Android 16 remotedisplay bridge in
+# addition to the older 32-bit compatibility files above. Keep this separate
+# from the optional legacy overlay switch so display casting is always present
+# on every Exynos9810 target while unrelated legacy overlays remain optional.
+_EXYNOS9810_COPY_SYSTEM "$SRC_DIR/platform/exynos9810/patches/exynos9810_device_stack/remotedisplay/system"
+_EXYNOS9810_COPY_VENDOR "$SRC_DIR/platform/exynos9810/patches/exynos9810_device_stack/remotedisplay/vendor"
+
+for REL in \
+    system/system/app/SmartMirroring/SmartMirroring.apk \
+    system/system/etc/default-permissions/default-permission-com.samsung.android.app.smartmirroring.xml \
+    system/system/framework/com.android.media.remotedisplay.jar \
+    system/system/lib64/libremotedisplay_wfd.so \
+    system/system/lib64/libwfds.so \
+    vendor/bin/vendor.samsung.hardware.security.hdcp.wifidisplay-service \
+    vendor/etc/init/vendor.samsung.hardware.security.hdcp.wifidisplay-default.rc \
+    vendor/lib64/omx/libOMX.Exynos.AVC.WFD.Encoder.so; do
+    [ -f "$WORK_DIR/$REL" ] || {
+        LOGE "Smart View/Wireless DeX component missing after restore: $REL"
+        return 1
+    }
+done
 
 [ "${ENABLE_EXYNOS9810_APPLOCK:-false}" = "true" ] && _EXYNOS9810_COPY_SYSTEM "$EXYNOS9810_LEGACY_PORT_DIR/device_port/patches/AppLock"
 [ "${ENABLE_EXYNOS9810_SMARTMANAGER:-false}" = "true" ] && _EXYNOS9810_COPY_SYSTEM "$EXYNOS9810_LEGACY_PORT_DIR/device_port/patches/SmartManager"
@@ -3656,6 +3754,7 @@ _EXYNOS9810_PATCH_SERVICES_SP_SOFTWARE_CRYPTO
 # _EXYNOS9810_PATCH_BIXBY_ACCOUNT_SOFTWARE_CRYPTO
 _EXYNOS9810_VERIFY_SECURITY_STACK
 _EXYNOS9810_PATCH_SEMWIFI_STDP_BOOTLOOP
+_EXYNOS9810_PATCH_SEMWIFI_P2P_CALLBACK
 _EXYNOS9810_PATCH_EXTENDED_ETHERNET_BOOTLOOP
 _EXYNOS9810_PATCH_SYSTEMUI_LAUNCHER_PERMISSIONS
 _EXYNOS9810_WRITE_SYSTEMUI_LAUNCHER_PERMISSIONS

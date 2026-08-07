@@ -10,6 +10,25 @@ SOURCE_ZIP=""
 TARGET_ZIP=""
 OUTPUT_FILE=""
 
+START_TIME="$(date +%s)"
+
+PRINT_BUILD_OUTCOME()
+{
+    local EXIT_CODE="$?"
+    local END_TIME
+    local ESTIMATED
+
+    END_TIME="$(date +%s)"
+    ESTIMATED="$((END_TIME - START_TIME))"
+
+    if [ "$EXIT_CODE" != "0" ]; then
+        echo -n -e '\n\033[1;31m'"Build failed "
+    else
+        echo -n -e '\n\033[1;32m'"Build completed "
+    fi
+    echo -e "in $((ESTIMATED / 3600))hrs $(((ESTIMATED / 60) % 60))min $((ESTIMATED % 60))sec."'\033[0m\n'
+}
+
 PREPARE_SCRIPT()
 {
     if [[ "$#" == 0 ]]; then
@@ -88,6 +107,9 @@ PRINT_USAGE()
 # ]
 
 PREPARE_SCRIPT "$@"
+
+trap 'PRINT_BUILD_OUTCOME' EXIT
+trap 'echo' INT
 
 if $INCREMENTAL; then
     "$SRC_DIR/scripts/internal/build_incremental_ota_zip.sh" "$SOURCE_ZIP" "$TARGET_ZIP" "$OUTPUT_FILE" || exit 1

@@ -45,55 +45,86 @@ fi
 EVAL "mkdir -p \"$TMP_DIR\""
 EVAL "cp -a \"$WORK_DIR/kernel/$BOOT_FILE\" \"$TMP_DIR/$BOOT_FILE\""
 
-MKBOOTIMG_ARGS="$(unpack_bootimg --boot_img "$TMP_DIR/$BOOT_FILE" --out "$TMP_DIR/out" --format mkbootimg 2>&1)"
+MKBOOTIMG_ARGS="$(unpack_bootimg --boot_img "$TMP_DIR/$BOOT_FILE" --out "$TMP_DIR/out" --format mkbootimg 2>&1 || true)"
 
-while IFS= read -r f; do
-    LOG "- Extracting $BOOT_FILE/$(basename "$f")"
+BOOT_IMAGE_SKIPPED=false
+if ! find "$TMP_DIR/out" -type f -name "*ramdisk*" 2>/dev/null | grep -q .; then
+    LOG "\033[0;33m! Could not unpack $BOOT_FILE (non-standard boot image header); boot image fstab patch skipped. Vendor fstab patch still applies.\033[0m"
+    BOOT_IMAGE_SKIPPED=true
+fi
 
-    RAMDISK_FORMAT=""
-    if [[ "$(READ_BYTES_AT "$f" "0" "2")" == "8b1f" ]]; then
-        RAMDISK_FORMAT="gz"
-    fi
-    if [[ "$(READ_BYTES_AT "$f" "0" "4")" == "184c2102" ]]; then
-        RAMDISK_FORMAT="lz4"
-    fi
-    if [ ! "$RAMDISK_FORMAT" ]; then
-        ABORT "Ramdisk format not valid\n\n$(LC_ALL=C file -b "$f")"
-    fi
+if ! $BOOT_IMAGE_SKIPPED; then
+    while IFS= read -r f; do
+        LOG "- Extracting $BOOT_FILE/$(basename "$f")"
 
-    EVAL "mkdir -p \"$TMP_DIR/out/ramdisk_extracted\""
-    if [[ "$RAMDISK_FORMAT" == "gz" ]]; then
-        EVAL "cat \"$f\" | gzip -d | cpio --quiet -i -D \"$TMP_DIR/out/ramdisk_extracted\""
-    elif [[ "$RAMDISK_FORMAT" == "lz4" ]]; then
-        EVAL "cat \"$f\" | lz4 -d | cpio --quiet -i -D \"$TMP_DIR/out/ramdisk_extracted\""
-    fi
+        RAMDISK_FORMAT=""
+        if [[ "$(READ_BYTES_AT "$f" "0" "2")" == "8b1f" ]]; then
+            RAMDISK_FORMAT="gz"
+        fi
+        if [[ "$(READ_BYTES_AT "$f" "0" "4")" == "184c2102" ]]; then
+            RAMDISK_FORMAT="lz4"
+        fi
+        if [ ! "$RAMDISK_FORMAT" ]; then
+            ABORT "Ramdisk format not valid\n\n$(LC_ALL=C file -b "$f")"
+        fi
 
-    PATCH_FSTAB "$TMP_DIR/out/ramdisk_extracted"
+        EVAL "mkdir -p \"$TMP_DIR/out/ramdisk_extracted\""
+        if [[ "$RAMDISK_FORMAT" == "gz" ]]; then
+            EVAL "cat \"$f\" | gzip -d | cpio --quiet -i -D \"$TMP_DIR/out/ramdisk_extracted\""
+        elif [[ "$RAMDISK_FORMAT" == "lz4" ]]; then
+            EVAL "cat \"$f\" | lz4 -d | cpio --quiet -i -D \"$TMP_DIR/out/ramdisk_extracted\""
+        fi
 
-    LOG "- Repacking $BOOT_FILE/$(basename "$f")"
+        PATCH_FSTAB "$TMP_DIR/out/ramdisk_extracted"
 
-    if [[ "$RAMDISK_FORMAT" == "gz" ]]; then
-        EVAL "mkbootfs \"$TMP_DIR/out/ramdisk_extracted\" | gzip > \"$f\""
-    elif [[ "$RAMDISK_FORMAT" == "lz4" ]]; then
-        EVAL "mkbootfs \"$TMP_DIR/out/ramdisk_extracted\" | lz4 -l -12 --favor-decSpeed > \"$f\""
-    fi
+        LOG "- Repacking $BOOT_FILE/$(basename "$f")"
 
-    EVAL "rm -rf \"$TMP_DIR/out/ramdisk_extracted\""
-done < <(find "$TMP_DIR/out" -type f -name "*ramdisk*" | LC_ALL=C sort)
+        if [[ "$RAMDISK_FORMAT" == "gz" ]]; then
+            EVAL "mkbootfs \"$TMP_DIR/out/ramdisk_extracted\" | gzip > \"$f\""
+        elif [[ "$RAMDISK_FORMAT" == "lz4" ]]; then
+            EVAL "mkbootfs \"$TMP_DIR/out/ramdisk_extracted\" | lz4 -l -12 --favor-decSpeed > \"$f\""
+        fi
+
+        EVAL "rm -rf \"$TMP_DIR/out/ramdisk_extracted\""
+    done < <(find "$TMP_DIR/out" -type f -name "*ramdisk*" | LC_ALL=C sort)
+fi
 
 PATCH_FSTAB "$WORK_DIR/vendor/etc"
 
-LOG "- Repacking $BOOT_FILE"
+# The flash-time vendor bootfix (platform/exynos9810/installer/repartition/
+# vendor_bootfix.sh) patches the vendor partition after flashing. Erofs is
+# read-only, so bake it here; vendor_bootfix.sh skips erofs at install time.
+# Its other changes (keystore/radio props, health interfaces,
+# etc/init/hw/init.samsungexynos9810.rc) are already baked by the ROM build.
+PANEL_WAKE_RC="$WORK_DIR/vendor/etc/init/exynos9810-panel-wake.rc"
+cat > "$PANEL_WAKE_RC" <<'EOF'
+on property:sys.boot_completed=1
+    write /sys/class/lcd/panel/alpm 0
 
-if [[ "$BOOT_FILE" == "vendor_boot.img" ]]; then
-    EVAL "mkbootimg $MKBOOTIMG_ARGS --vendor_boot \"$WORK_DIR/kernel/vendor_boot.img\""
-else
-    EVAL "mkbootimg $MKBOOTIMG_ARGS -o \"$TMP_DIR/new-boot.img\""
-    echo -n "SEANDROIDENFORCE" >> "$TMP_DIR/new-boot.img"
-    EVAL "mv -f \"$TMP_DIR/new-boot.img\" \"$WORK_DIR/kernel/boot.img\""
+on property:debug.tracing.screen_state=2
+    write /sys/class/lcd/panel/alpm 0
+EOF
+chmod 0644 "$PANEL_WAKE_RC"
+LOG "- Baking vendor bootfix: created etc/init/exynos9810-panel-wake.rc"
+
+if ! grep -q 'exynos9810-panel-wake\.rc' "$WORK_DIR/configs/file_context-vendor"; then
+    echo '/vendor/etc/init/exynos9810-panel-wake.rc u:object_r:vendor_configs_file:s0' >> "$WORK_DIR/configs/file_context-vendor"
+    LOG "- Adding exynos9810-panel-wake.rc SELinux context to file_context-vendor"
+fi
+
+if ! $BOOT_IMAGE_SKIPPED; then
+    LOG "- Repacking $BOOT_FILE"
+
+    if [[ "$BOOT_FILE" == "vendor_boot.img" ]]; then
+        EVAL "mkbootimg $MKBOOTIMG_ARGS --vendor_boot \"$WORK_DIR/kernel/vendor_boot.img\""
+    else
+        EVAL "mkbootimg $MKBOOTIMG_ARGS -o \"$TMP_DIR/new-boot.img\""
+        echo -n "SEANDROIDENFORCE" >> "$TMP_DIR/new-boot.img"
+        EVAL "mv -f \"$TMP_DIR/new-boot.img\" \"$WORK_DIR/kernel/boot.img\""
+    fi
 fi
 
 EVAL "rm -rf \"$TMP_DIR\""
 
-unset BOOT_FILE MKBOOTIMG_ARGS RAMDISK_FILE RAMDISK_FORMAT
+unset BOOT_FILE MKBOOTIMG_ARGS RAMDISK_FILE RAMDISK_FORMAT BOOT_IMAGE_SKIPPED
 unset -f _LOG PATCH_FSTAB

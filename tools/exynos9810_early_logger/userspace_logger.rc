@@ -1,0 +1,6 @@
+service unica_userspace_logger /vendor/bin/unica_userspace_logger.sh
+    class core
+    user root
+    group root log readproc
+    oneshot
+    seclabel u:r:init:s0

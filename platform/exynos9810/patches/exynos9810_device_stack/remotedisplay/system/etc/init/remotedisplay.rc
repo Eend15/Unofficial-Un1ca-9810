@@ -1,0 +1,12 @@
+service remotedisplay /system/bin/remotedisplay
+    disabled
+    class main
+    user oem_5386
+    group system inet media_rw drmrpc uhid log ext_data_rw
+    ioprio rt 4
+    writepid /dev/cpuset/foreground/tasks
+on property:secmm.wfd.running=1
+    start remotedisplay
+on property:secmm.wfd.running=0
+    stop remotedisplay
+    setprop secmm.wfd.engine 0

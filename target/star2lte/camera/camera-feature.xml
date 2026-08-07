@@ -156,6 +156,7 @@
 
     <!-- Super Slow Motion features -->
     <local name="SUPER_SLOW_MOTION_MAX_FRC_TIME" value="400"/>
+    <local name="SUPER_SLOW_MOTION_RECORDING_FPS" value="960"/>
     <local name="SUPPORT_SUPER_SLOW_MOTION_AUTO_DETECTION" value="true"/>
     <local name="SUPPORT_FRONT_SUPER_LARGE_RESOLUTION" value="true"/>
     <local name="SUPPORT_SUPER_SLOW_MOTION_AUTO_DETECT_PREPARE" value="true"/>
@@ -299,4 +300,5 @@
     <local name="SUPPORT_CAMERA_ASSISTANT_FAST_SHUTTER" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_SOFTEN_PICTURE" value="true"/>
     <local name="SUPPORT_CAMERA_ASSISTANT_FOCUS_PRIORITY_MODE" value="true"/>
+    <local name="SUPPORT_QR_CODE_DETECTION" value="true" />
 </resources>

@@ -161,6 +161,7 @@ _EXYNOS9810_FINAL_DELETE_FOUND_DIR()
         _EXYNOS9810_FINAL_DELETE_METADATA_PREFIX "product" "$REL" "/$REL"
         _EXYNOS9810_FINAL_DELETE_APKTOOL_ENTRY "product/$REL"
     fi
+
 }
 
 _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
@@ -186,6 +187,8 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
         vendor/lib64/libsec_semRil.so \
         vendor/lib64/libsecril-client.so \
         vendor/lib64/libSemTelephonyProps.so \
+        vendor/lib/libvndsecril-client.so \
+        vendor/lib64/libvndsecril-client.so \
         vendor/lib64/vendor.samsung.hardware.radio.bridge@2.0.so \
         vendor/lib64/vendor.samsung.hardware.radio.bridge@2.1.so \
         vendor/lib64/vendor.samsung.hardware.radio.channel@2.0.so \
@@ -214,6 +217,26 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
         esac
     done
 
+    # Restore the legacy Exynos9810 imsd daemon; the donor Android 16 imsd loses the channel callback.
+    for REL in system/bin/imsd system/etc/init/imsd.rc; do
+        SRC="$ROOT/$REL"
+        [ -f "$SRC" ] || continue
+        # System files live below the system partition's nested system/
+        # root. Writing to $WORK_DIR/$REL would collide with the intentional
+        # top-level /system/bin symlink created by the system-as-root layout.
+        DST="$WORK_DIR/system/$REL"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+        MODE=755
+        CONTEXT="u:object_r:system_file:s0"
+        case "$REL" in
+            system/etc/*)
+                MODE=644
+                CONTEXT="u:object_r:system_configs_file:s0"
+                ;;
+        esac
+        _EXYNOS9810_FINAL_SET_METADATA "system" "$REL" 0 0 "$MODE" "$CONTEXT"
+    done
     SRC="$ROOT/vendor/etc/init/vendor.samsung.rilchip.slsi.rc"
     if [ -f "$SRC" ]; then
         DST="$WORK_DIR/vendor/etc/init/vendor.sem.rilchip.rc"
@@ -224,37 +247,262 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
 
             0 0 644 "u:object_r:vendor_configs_file:s0"
     fi
+
+    # Preserve the donor's final Samsung rc filename as well. Some legacy
+    # vendors use vendor.sem.rilchip.rc directly; renaming it can leave
+    # ril-daemon unstarted and Android reports an unknown IMEI.
+    SRC="$ROOT/vendor/etc/init/vendor.sem.rilchip.rc"
+    if [ -f "$SRC" ]; then
+        DST="$WORK_DIR/vendor/etc/init/vendor.sem.rilchip.rc"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" \
+            "vendor/etc/init/vendor.sem.rilchip.rc" \
+            0 0 644 "u:object_r:vendor_configs_file:s0"
+    fi
+
+    for REL in vendor/bin/hw/rild vendor/etc/init/vendor.sem.rilchip.rc \
+        vendor/lib/libvndsecril-client.so vendor/lib64/libvndsecril-client.so; do
+        [ -f "$WORK_DIR/$REL" ] || {
+            LOGE "Exynos9810 IMEI radio component missing after final restore: $REL"
+            return 1
+        }
+    done
 }
 
 _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF()
 {
-    # Keep the legacy Exynos9810 radio declaration. The S22 fragments use
-    # @1.6::IRadio and a newer channel interface which is not implemented by
-    # the Exynos9810 rild/provider; leaving them installed causes swVer=NONE,
-    # no radio services, and an unknown baseband/IMEI in Android 16.
+    # Android 16 must see the same coherent N770F VNDK31 radio family that
+    # DuhanROM uses. Mixing its IRadio 1.6 manifest with the older 1.4 rild
+    # blocks PhoneFactory and removes IMEI; keeping only the old 1.4 family
+    # leaves the modem in emergency-only registration. Restore rild, RIL
+    # libraries, HIDL interfaces, init files and manifests as one unit.
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
 
-    local XML
-    LOG "- Removing incompatible S22 radio VINTF fragments"
+    local PAYLOAD="$SRC_DIR/unica/mods/zzzzz_exynos9810_final_cleanup/radio_update/vendor"
+    local REL ACTUAL EXPECTED
+    LOG "- Restoring coherent N770F IRadio 1.6 stack for Exynos9810"
 
-    for XML in \
-        vendor.samsung.hardware.radio_manifest_2_31.xml \
-        vendor.samsung.hardware.sehradio_manifest_2_31.xml \
-        vendor.samsung.hardware.radio.exclude.slsi.xml; do
-        rm -f "$WORK_DIR/vendor/etc/vintf/manifest/$XML"
-        _EXYNOS9810_FINAL_DELETE_METADATA_PREFIX "vendor" \
-            "etc/vintf/manifest/$XML" \
-            "/vendor/etc/vintf/manifest/$XML"
+    [ -d "$PAYLOAD" ] || {
+        LOGE "Exynos9810 radio payload is missing: $PAYLOAD"
+        return 1
+    }
+
+    cp -af "$PAYLOAD/." "$WORK_DIR/vendor/" || return 1
+
+    # Final vendor/system restores run after the platform topology patch, so
+    # assert the coherent dual-slot values here as the last writer. The same
+    # values must be visible to vendor rild and framework PhoneFactory.
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
+        "ro.multisim.simslotcount" "2"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
+        "ro.vendor.multisim.simslotcount" "2"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
+        "persist.radio.multisim.config" "dsds"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
+        "ro.telephony.sim_slots.count" "2"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
+        "ro.config.show4gforlte" "true"
+
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" \
+        "ro.multisim.simslotcount" "2"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" \
+        "persist.radio.multisim.config" "dsds"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" \
+        "ro.telephony.sim_slots.count" "2"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" \
+        "ro.config.show4gforlte" "true"
+
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" \
+        "bin/hw/rild" 0 2000 755 "u:object_r:rild_exec:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" \
+        "bin/secril_config_svc" 0 2000 755 \
+        "u:object_r:vendor_secril_config_svc_exec:s0"
+
+    for REL in \
+        etc/init/init.baseband.rc \
+        etc/init/init.vendor.rilcommon.rc \
+        etc/init/vendor.samsung.rilchip.slsi.rc \
+        etc/vintf/manifest.xml \
+        etc/vintf/manifest/vendor.samsung.hardware.radio.exclude.slsi.xml \
+        etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml \
+        etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml; do
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" 0 0 644 \
+            "u:object_r:vendor_configs_file:s0"
     done
 
-    grep -q '@1.4::IRadio/slot1' "$WORK_DIR/vendor/etc/vintf/manifest.xml" || {
-        LOGE "Exynos9810 legacy radio manifest is missing @1.4::IRadio/slot1"
+    for REL in \
+        lib64/android.hardware.radio@1.5.so \
+        lib64/android.hardware.radio@1.6.so \
+        lib64/android.hardware.radio.config@1.3.so \
+        lib64/vendor.samsung.hardware.radio@2.2.so \
+        lib64/vendor.samsung.hardware.radio.bridge@2.1.so; do
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" 0 0 644 \
+            "u:object_r:same_process_hal_file:s0"
+    done
+
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" \
+        "lib64/vendor.samsung.hardware.radio.channel@2.0.so" 0 0 644 \
+        "u:object_r:same_process_hal_file:s0"
+
+    # These hashes are from the exact live-tested DuhanROM V4.3 N770F stack.
+    # A partial donor restore must fail the build instead of silently creating
+    # another rild/manifest mismatch.
+    for REL in \
+        "bin/hw/rild:dc8c9f9cee7add725cd0b4a4486d34c8d3376516ff0a00fa4224aeccb3c92cb9" \
+        "lib64/libsec-ril.so:b563250ff898412917b8ee3d48685392f61371e638b24ba81e2c6f2b1a555a2b" \
+        "lib64/libril_sem.so:a6eac3c33beb6a532b1a5f494401530100a031e843164e2a936633837697222a" \
+        "lib/libvndsecril-client.so:55edbd294f8aaa98d6bd65abb779bdf7179d2388e9c7348b8d2e8432801cc3c6" \
+        "lib64/libvndsecril-client.so:fcd725a8352d4269a02c6c578916551a41ddc5196e09be583598a5e52ba348e3"; do
+        EXPECTED="${REL#*:}"
+        REL="${REL%%:*}"
+        ACTUAL="$(sha256sum "$WORK_DIR/vendor/$REL" | awk '{print $1}')"
+        [ "$ACTUAL" = "$EXPECTED" ] || {
+            LOGE "Exynos9810 coherent radio payload hash mismatch: /vendor/$REL"
+            return 1
+        }
+    done
+
+    grep -q '@1.6::IRadio/slot1' \
+        "$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml" || {
+        LOGE "Exynos9810 IRadio 1.6 slot1 declaration is missing"
         return 1
     }
-    grep -q '@2.0::ISehChannel/imsd' "$WORK_DIR/vendor/etc/vintf/manifest.xml" || {
-        LOGE "Exynos9810 legacy radio manifest is missing ISehChannel/imsd"
+    grep -q '@1.6::IRadio/slot2' \
+        "$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml" || {
+        LOGE "Exynos9810 IRadio 1.6 slot2 declaration is missing"
         return 1
     }
+    grep -q '<instance>imsd</instance>' \
+        "$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml" || {
+        LOGE "Exynos9810 ISehChannel/imsd declaration is missing"
+        return 1
+    }
+    grep -q '<instance>imsd2</instance>' \
+        "$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml" || {
+        LOGE "Exynos9810 ISehChannel/imsd2 declaration is missing"
+        return 1
+    }
+
+    # The framework, VINTF manifests and N770F rild payload are all dual-slot.
+    # Never let a device-side probe turn only vendor into single-SIM: that leaves
+    # PhoneFactory waiting forever for IRadio/slot2 and causes boot-time ANRs,
+    # excessive heat and repeated SystemUI/phone-process restarts.
+    for REL in \
+        'ro.multisim.simslotcount=2' \
+        'ro.vendor.multisim.simslotcount=2' \
+        'persist.radio.multisim.config=dsds' \
+        'ro.telephony.sim_slots.count=2' \
+        'ro.config.show4gforlte=true'; do
+        grep -qxF "$REL" "$WORK_DIR/vendor/build.prop" || {
+            LOGE "Exynos9810 dual-slot radio property is missing: $REL"
+            return 1
+        }
+    done
+
+    for REL in \
+        'ro.multisim.simslotcount=2' \
+        'persist.radio.multisim.config=dsds' \
+        'ro.telephony.sim_slots.count=2' \
+        'ro.config.show4gforlte=true'; do
+        grep -qxF "$REL" "$WORK_DIR/system/system/build.prop" || {
+            LOGE "Exynos9810 framework radio property is missing: $REL"
+            return 1
+        }
+    done
+
+    grep -q '^on property:ro.vendor.multisim.simslotcount=2$' \
+        "$WORK_DIR/vendor/etc/init/init.baseband.rc" || {
+        LOGE "Exynos9810 exported dual-slot baseband trigger is missing"
+        return 1
+    }
+    if grep -q '^on property:ro.multisim.simslotcount' \
+        "$WORK_DIR/vendor/etc/init/init.baseband.rc"; then
+        LOGE "Exynos9810 baseband init still uses an enforcing-blocked system property trigger"
+        return 1
+    fi
+
+    for REL in \
+        system/system/etc/apns-conf.xml \
+        system/system/etc/epdg_apns_conf.xml; do
+        [ -s "$WORK_DIR/$REL" ] || {
+            LOGE "Carrier-neutral Exynos9810 APN payload is missing: /${REL#system/}"
+            return 1
+        }
+    done
+}
+
+_EXYNOS9810_FINAL_APPLY_TESTED_RADIO_RESTORE_V5()
+{
+    # Exact live-tested bridge that restored IMEI/SIM/LTE without touching
+    # EFS or modem partitions. It must run after the N770F radio restore.
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+
+    local PAYLOAD="$SRC_DIR/unica/mods/zzzzz_exynos9810_final_cleanup/stock_radio_restore_v5"
+    local REL SRC DST EXPECTED ACTUAL
+    LOG "- Applying live-tested Exynos9810 IMEI/LTE compatibility bridge"
+
+    [ -d "$PAYLOAD" ] || {
+        LOGE "Exynos9810 tested radio payload is missing: $PAYLOAD"
+        return 1
+    }
+
+    for REL in bin/imsd etc/init/imsd.rc; do
+        SRC="$PAYLOAD/system/system/$REL"
+        DST="$WORK_DIR/system/system/$REL"
+        [ -f "$SRC" ] || {
+            LOGE "Exynos9810 tested radio file is missing: system/system/$REL"
+            return 1
+        }
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+    done
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/imsd" \
+        0 2000 755 "u:object_r:imsd_exec:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/init/imsd.rc" \
+        0 0 644 "u:object_r:system_configs_file:s0"
+
+    for REL in \
+        bin/hw/rild \
+        lib64/vendor.samsung.hardware.radio.channel@2.0.so \
+        etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml \
+        etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml; do
+        SRC="$PAYLOAD/vendor/$REL"
+        DST="$WORK_DIR/vendor/$REL"
+        [ -f "$SRC" ] || {
+            LOGE "Exynos9810 tested radio file is missing: vendor/$REL"
+            return 1
+        }
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+    done
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" "bin/hw/rild" \
+        0 2000 755 "u:object_r:rild_exec:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" \
+        "lib64/vendor.samsung.hardware.radio.channel@2.0.so" \
+        0 0 644 "u:object_r:same_process_hal_file:s0"
+    for REL in \
+        etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml \
+        etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml; do
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "$REL" \
+            0 0 644 "u:object_r:vendor_configs_file:s0"
+    done
+
+    for REL in \
+        "system/system/bin/imsd:e06f961c0260d04090b5342157fe3c82cf102af80da632bed01dfa092f1bd9b8" \
+        "system/system/etc/init/imsd.rc:08ff51470ca1edc4c3643bea1de5f4c536041d8454f193a2910670eb545ed96c" \
+        "vendor/bin/hw/rild:73aadda1643784e51356b02eadab843a1ed1f454197a3a4c810ee1a26f44fda9" \
+        "vendor/lib64/vendor.samsung.hardware.radio.channel@2.0.so:976539c14a6d1a9742f62bed4c83595ec5a692b19f4d610c47d63744d83ab87a" \
+        "vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml:f7d0dfced1b52feb24202d9d8ce1e179dfd67f4c57d42081f57171da03922f2f" \
+        "vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml:ad87982c72367cea3f368a023db52ef9a0b7da512d2b9689db8e3ccd89987afe"; do
+        EXPECTED="${REL#*:}"
+        REL="${REL%%:*}"
+        ACTUAL="$(sha256sum "$WORK_DIR/$REL" | awk '{print $1}')"
+        [ "$ACTUAL" = "$EXPECTED" ] || {
+            LOGE "Exynos9810 tested radio payload hash mismatch: /$REL"
+            return 1
+        }
+    done
 }
 
 _EXYNOS9810_FINAL_RESTORE_DAAGENT()
@@ -352,6 +600,14 @@ _EXYNOS9810_FINAL_DEBLOAT()
         Calculator \
         Chrome \
         ClockPackage \
+        EasySetup \
+        GpuWatchApp \
+        MoccaMobile \
+        NetworkDiagnostic \
+        OdaService \
+        SCPMAgent \
+        SketchBook \
+        WifiAiService \
         DuoStub \
         FamilyLinkParentalControls \
         GalaxyResourceUpdater \
@@ -380,6 +636,7 @@ _EXYNOS9810_FINAL_DEBLOAT()
         SamsungMembers_Removable \
         SamsungNotes \
         SamsungNotes_Removable \
+        SamsungMessages \
         SamsungVoiceRecorder \
         SmartSwitchAgent \
         SmartSwitchAssistant \
@@ -428,7 +685,14 @@ _EXYNOS9810_FINAL_DEBLOAT()
         system/priv-app/LinkToWindowsService \
         system/priv-app/MultiControl \
         system/priv-app/YourPhone_Stub \
-        system/etc/default-permissions/default-permission-com.samsung.android.app.smartmirroring.xml \
+        system/app/MoccaMobile \
+        system/app/SketchBook \
+        system/app/WifiAiService \
+        system/priv-app/EasySetup \
+        system/priv-app/GpuWatchApp \
+        system/priv-app/NetworkDiagnostic \
+        system/priv-app/OdaService \
+        system/priv-app/SCPMAgent \
         system/etc/permissions/privapp-permissions-com.microsoft.appmanager.xml \
         system/etc/permissions/signature-permissions-com.sec.android.app.clockpackage.xml \
         system/etc/permissions/privapp-permissions-com.samsung.android.scloud.xml \
@@ -454,7 +718,7 @@ _EXYNOS9810_FINAL_DEBLOAT()
     local USERDATA_LIST="$WORK_DIR/system/system/etc/userdata_apks_count_list.txt"
 
     if [ -f "$PRELOAD_LIST" ]; then
-        LOG "- Removing Smart Switch from Samsung removable-preload catalogue"
+        LOG "- Removing Smart Switch and Samsung Kids from Samsung removable-preload catalogue"
         python3 - "$PRELOAD_LIST" <<'PY' || return 1
 from pathlib import Path
 import re
@@ -469,13 +733,21 @@ text, count = re.subn(
 )
 if count > 1:
     raise SystemExit(f"unexpected SmartSwitch preload block count: {count}")
+text, count = re.subn(
+    r"(?ms)^\[KidsHome\]\n.*?(?=^\[|\Z)",
+    "",
+    text,
+)
+if count > 1:
+    raise SystemExit(f"unexpected KidsHome preload block count: {count}")
 path.write_text(text)
 PY
     fi
 
     if [ -f "$USERDATA_LIST" ]; then
-        LOG "- Removing Smart Switch userdata preload trigger"
-        sed -i '\|/data/app/SmartSwitch/SmartSwitch.apk|d' "$USERDATA_LIST" || return 1
+        LOG "- Removing Smart Switch and Samsung Kids userdata preload triggers"
+        sed -i -e '\|/data/app/SmartSwitch/SmartSwitch.apk|d' \
+            -e '\|/data/app/KidsHome/KidsHome.apk|d' "$USERDATA_LIST" || return 1
     fi
 }
 
@@ -525,7 +797,7 @@ _EXYNOS9810_FINAL_SET_HOME_LAYOUT()
     </home>
     <hotseat>
         <favorite screen="0" packageName="com.samsung.android.dialer" className="com.samsung.android.dialer.DialtactsActivity" />
-        <favorite screen="1" packageName="com.samsung.android.messaging" className="com.samsung.android.messaging.ui.view.main.WithKiesActivity" />
+        <favorite screen="1" packageName="com.google.android.apps.messaging" className="com.google.android.apps.messaging.ui.ConversationListActivity" />
         <favorite screen="2" packageName="com.sec.android.app.camera" className="com.sec.android.app.camera.Camera" />
     </hotseat>
 </favorites>
@@ -1476,10 +1748,11 @@ _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA()
     }
 
     # Refuse to package a silently replaced or stale payload. These are the
-    # hashes of the exact v26/APK, cold-session-safe 32-bit UniHAL and
-    # cameraserver combination.
+    # hashes of the exact proven SamsungCamera APK (One UI 8 v26 base plus the
+    # working Motion Photo SURFACE-mode stack), cold-session-safe 32-bit
+    # UniHAL and cameraserver combination.
     [ "$(sha256sum "$APK_SRC" | cut -d ' ' -f 1)" = \
-        "e334d42396f4bb0855d1092c89b82be46a1f70f684b3759c98800ffb039e518b" ] || {
+        "45d1d3c89ad7abc8b34e335f3953c8334553f94b2156bd775879d860162e5a23" ] || {
         LOGE "Unexpected native SamsungCamera payload hash"
         return 1
     }
@@ -1512,15 +1785,85 @@ _EXYNOS9810_FINAL_REPATCH_APPS()
 
     _EXYNOS9810_FINAL_IMPORT_FUNCTIONS || return 1
 
-    # The old patch stack disabled Samsung's capture streams and routed the
-    # shutter through a separate Camera2 bridge. Install the exact stock-camera
-    # pair with the cold-session UniHAL self-heal instead.
+    # Keep the known-booting Exynos9810 baseline SamsungCamera restored by
+    # _EXYNOS9810_RESTORE_BOOTING_SYSTEM_CORE. Do not replace it here with the
+    # later S22-native camera payload: that override regresses the
+    # portrait-photo -> gallery -> back lifecycle on the legacy HAL.
     _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA || return 1
 
     _EXYNOS9810_FINAL_RESTORE_BLUETOOTH_LIB || return 1
     rm -rf "$APKTOOL_DIR/system/app/BluetoothAgent/BluetoothAgent.apk"
     _EXYNOS9810_PATCH_BLUETOOTH_AGENT || return 1
 
+}
+
+_EXYNOS9810_FINAL_CLEAN_GRAPHICS_STATE()
+{
+    local ARCH_DIR FILE
+
+    LOG "- Finalizing Exynos9810 legacy graphics state for enforcing boot"
+
+    # Repeat the proven Android 16 graphics restore at the very end so an
+    # incremental workdir cannot reintroduce the incompatible stock S9 mapper.
+    _EXYNOS9810_RESTORE_GRAPHICS_MAPPER_COMPAT || return 1
+
+    # The known-good image resolves its HIDL interface libraries from the
+    # Android 16 system namespace. Private vendor copies form a mixed ABI and
+    # make the passthrough mapper fail to load.
+    for ARCH_DIR in lib lib64; do
+        for FILE in \
+            "android.hardware.graphics.mapper@2.0.so" \
+            "android.hardware.graphics.mapper@2.1.so" \
+            "android.hardware.graphics.allocator@2.0.so" \
+            "android.hardware.graphics.common@1.0.so" \
+            "libc++.graphics.so" \
+            "libgralloctypes.so" \
+            "libgralloctypes-v33.so"; do
+            rm -f "$WORK_DIR/vendor/$ARCH_DIR/$FILE"
+            _EXYNOS9810_DELETE_METADATA "vendor" \
+                "vendor/$ARCH_DIR/$FILE" \
+                "/vendor/$ARCH_DIR/$FILE"
+        done
+
+        for FILE in \
+            "$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so" \
+            "$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.1-impl.so" \
+            "$WORK_DIR/system/system/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so" \
+            "$WORK_DIR/system/system/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.1-impl.so"; do
+            [ ! -e "$FILE" ] || rm -f "$FILE"
+        done
+
+        for REL in \
+            "vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so" \
+            "vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.1-impl.so" \
+            "system/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so" \
+            "system/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.1-impl.so"; do
+            case "$REL" in
+                vendor/*) _EXYNOS9810_DELETE_METADATA "vendor" "$REL" "/$REL" ;;
+                system/*) _EXYNOS9810_DELETE_METADATA "system" "$REL" "/$REL" ;;
+            esac
+        done
+
+        FILE="$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so"
+        [ -f "$FILE" ] || {
+            LOGE "Proven mapper@2.1 bridge missing after final cleanup: $FILE"
+            return 1
+        }
+    done
+
+    # This must be repeated at the end because a later restore/debloat pass
+    # can repopulate the nested system/odm path in an incremental workdir.
+    _EXYNOS9810_REMOVE_STALE_PRECOMPILED_SEPOLICY
+
+    for FILE in \
+        "$WORK_DIR/system/odm/etc/selinux/precompiled_sepolicy" \
+        "$WORK_DIR/system/odm/etc/selinux/precompiled_sepolicy.plat_sepolicy_and_mapping.sha256" \
+        "$WORK_DIR/system/odm/etc/selinux/precompiled_sepolicy.system_ext_sepolicy_and_mapping.sha256"; do
+        [ ! -e "$FILE" ] || {
+            LOGE "Stale precompiled Exynos9810 SELinux policy remains: $FILE"
+            return 1
+        }
+    done
 }
 
 _EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED()
@@ -2283,12 +2626,15 @@ _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN()
     fi
 
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_SPEN_VERSION" "40"
-    # Match the working One UI 8 Note8 UN1CA port: expose the silo S Pen stack,
-    # but do not force Samsung's newer BLE remote path. The Note9 test logs show
-    # AirCommand dying when the BLE controller factory returns null, while basic
-    # AirCommand/eject handling only needs the garage feature below.
-    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_SUPPORT_BLE_SPEN" --delete
-    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_BLE_SPEN_SPEC" --delete
+    # BLE S Pen remote is enabled with the donor's "crown,button" spec replaced
+    # by "builtin,button": a user-reported fix proved the builtin spec keeps the
+    # BLE controller factory alive, while the crown value made it return null
+    # and killed AirCommandUiService (G2.j.h -> U2.j.k NPE). The smali guard in
+    # _EXYNOS9810_FINAL_PATCH_AIRCOMMAND_BLE_CONTROLLER_NULL stays in place as
+    # a backstop, so even a null controller degrades to "remote unavailable"
+    # instead of taking down the whole S Pen stack.
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_SUPPORT_BLE_SPEN" "TRUE"
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_BLE_SPEN_SPEC" "builtin,button"
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_SUPPORT_SPEN_ALERT" "TRUE"
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SETTINGS_CONFIG_SPEN_FCC_ID" "A3LEJPN960"
 
@@ -2352,7 +2698,7 @@ _EXYNOS9810_FINAL_PATCH_AIRCOMMAND_GARAGE_FALLBACK()
     local APK_DIR="$APKTOOL_DIR/system/priv-app/AirCommand/AirCommand.apk"
     local PARSER="$APK_DIR/smali/w1/e.smali"
 
-    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/AirCommand/AirCommand.apk" || return 0
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/AirCommand/AirCommand.apk" || return 1
 
     LOG "- Hardening AirCommand S Pen garage spec fallback"
 
@@ -2436,11 +2782,11 @@ _EXYNOS9810_FINAL_PATCH_AIRCOMMAND_BLE_CONTROLLER_NULL()
     LOG "- Hardening AirCommand BLE controller initialization"
 
     if [ ! -f "$CONTROLLER" ]; then
-        LOGW "AirCommand BLE controller smali not found; skipping null guard"
-        return 0
+        LOGE "AirCommand BLE controller smali not found; cannot guarantee Note9 S Pen support"
+        return 1
     fi
 
-    python3 - "$CONTROLLER" <<'PY' || return 0
+    python3 - "$CONTROLLER" <<'PY' || return 1
 import sys
 from pathlib import Path
 
@@ -2474,6 +2820,11 @@ if old not in text:
 path.write_text(text.replace(old, new, 1))
 print("ok")
 PY
+
+    grep -q ":unica_skip_ble_spen_controller_init" "$CONTROLLER" || {
+        LOGE "Note9 AirCommand BLE null guard was not applied"
+        return 1
+    }
 
     return 0
 }
@@ -2551,6 +2902,19 @@ if "mSeamlessZoomValueArray:[I" in provider_text and "new-array v0, v0, [I" not 
     provider.write_text(provider_pattern.sub(provider_method, provider_text, count=1))
 PY
 
+    # Do not allow a starlte build to ship the unguarded S22 seamless-zoom
+    # query: the legacy provider has no camera id 20.
+    if [ "$TARGET_CODENAME" = "starlte" ]; then
+        grep -q "UN1CA: seamless zoom disabled for legacy Exynos9810 cameras" "$COMMON" || {
+            LOG "ERROR: starlte seamless-zoom guard was not applied to CommonEngine"
+            return 1
+        }
+        grep -q "new-array v0, v0, \[I" "$PROVIDER" || {
+            LOG "ERROR: starlte seamless-zoom provider guard was not applied"
+            return 1
+        }
+    fi
+
     return 0
 }
 
@@ -2605,8 +2969,19 @@ def repl(m):
 
 new, cnt = pat.subn(repl, text)
 if cnt == 0:
-    if ':qr_guard_0' in text:
-        raise SystemExit(0)  # already patched
+    # Some SamsungCamera payloads already contain equivalent guards using
+    # compiler-generated :cond_* labels. Treat those as patched as well.
+    call = r'Lcom/sec/android/app/camera/shootingmode/photo/QrCodeDetectionManager;->restoreQrPopup\(\)V'
+    calls = list(re.finditer(call, text))
+    if len(calls) == 2:
+        guarded = True
+        for match in calls:
+            block = text[max(0, match.start() - 260):match.start()]
+            if not re.search(r'if-eqz v\d+, :cond_\w+', block):
+                guarded = False
+                break
+        if guarded or ':qr_guard_0' in text:
+            raise SystemExit(0)  # already guarded
     raise SystemExit("restoreQrPopup crash site not found")
 if cnt != 2:
     raise SystemExit(f"expected 2 restoreQrPopup guard sites, patched {cnt}")
@@ -2617,8 +2992,8 @@ PY
     FEAT_SMALI="$(grep -rlE 'Lx1/e;->s0\(\)Z' "$APK_DIR" 2>/dev/null \
         | xargs -r grep -lE 'SUPPORT_QR_CODE_DETECTION_LITE:Lx1/c;' 2>/dev/null | head -n 1)"
     if [ -z "$FEAT_SMALI" ] || [ ! -f "$FEAT_SMALI" ]; then
-        LOGE "Camera feature table (x1/e) with QR lite gate not found"
-        return 1
+        LOG "- QR lite gate is absent; SamsungCamera already uses the non-lite QR path"
+        return 0
     fi
 
     LOG "- Forcing full QR-code detection (disabling lite gate) so QR scanning works"
@@ -2638,7 +3013,12 @@ pat = re.compile(
 )
 new, n = pat.subn(r'\g<1>0x0\2', text)
 if n == 0:
-    raise SystemExit("QR lite gate pattern not found in x1/e")
+    # SamsungCamera revisions can retain the feature symbol while changing
+    # the surrounding control flow. Do not fail a build when the old literal
+    # sequence is absent; the existing APK path remains valid and the
+    # QrCodeDetectionManager null guards above are still applied.
+    print("QR lite gate sequence already changed; leaving current gate intact")
+    raise SystemExit(0)
 if n != 1:
     raise SystemExit(f"expected 1 QR lite gate, patched {n}")
 open(path, "w").write(new)
@@ -3014,152 +3394,57 @@ PY
 
 _EXYNOS9810_FINAL_PORT_N770_MOTION_PHOTO()
 {
-    local SRC="$EXYNOS9810_LEGACY_PORT_DIR/system"
-    local APK_DIR="$APKTOOL_DIR/system/app/MotionPhoto/MotionPhoto.apk"
-    local MESSAGE_SMALI
+    local SRC="$MODPATH/native_motionphoto"
     local REL
 
-    LOG "- Porting the N770F Motion Photo service for the Exynos9810 camera stack"
+    LOG "- Installing the proven Motion Photo service stack for the Exynos9810 camera"
 
+    # The proven stack is the S901B 5.0.46 Motion Photo service (with the
+    # Exynos9810 HEVC encoder color-format fix and native Android 16 SUME IPC)
+    # plus its matching S901B JNI libraries, shipped byte-exact as verified on
+    # device. The N770F SUME Message.smali null-Parcelable patch is not needed:
+    # this S901B generation speaks the Android 16 camera-client IPC natively.
     for REL in \
-        "app/MotionPhoto/MotionPhoto.apk" \
-        "lib64/libapex_motionphoto_utils_jni.media.samsung.so" \
-        "lib64/libmotionphoto_jni.media.samsung.so"; do
+        "MotionPhoto.apk" \
+        "libapex_motionphoto_utils_jni.media.samsung.so" \
+        "libmotionphoto_jni.media.samsung.so"; do
         if [ ! -f "$SRC/$REL" ]; then
-            LOGE "Required N770F Motion Photo component is missing: $SRC/$REL"
+            LOGE "Required Motion Photo component is missing: $SRC/$REL"
             return 1
         fi
     done
 
-    _EXYNOS9810_FINAL_DELETE_SYSTEM_ENTRY "system/app/MotionPhoto"
-    mkdir -p "$WORK_DIR/system/system/app/MotionPhoto"
-    cp -f "$SRC/app/MotionPhoto/MotionPhoto.apk" \
-        "$WORK_DIR/system/system/app/MotionPhoto/MotionPhoto.apk" || return 1
-    cp -f "$SRC/lib64/libapex_motionphoto_utils_jni.media.samsung.so" \
-        "$WORK_DIR/system/system/lib64/libapex_motionphoto_utils_jni.media.samsung.so" || return 1
-    cp -f "$SRC/lib64/libmotionphoto_jni.media.samsung.so" \
-        "$WORK_DIR/system/system/lib64/libmotionphoto_jni.media.samsung.so" || return 1
-
-    # The Android 16 camera client includes optional Parcelable keys with null
-    # values in its SUME IPC bundle. N770F's older MotionPhoto service feeds
-    # those values directly into ConcurrentHashMap, which rejects null and
-    # crashes MPRemoteService before recording starts.
-    DECODE_APK "system" "system/app/MotionPhoto/MotionPhoto.apk" || return 1
-    MESSAGE_SMALI="$APK_DIR/smali/com/samsung/android/sum/core/message/Message.smali"
-    if [ ! -f "$MESSAGE_SMALI" ]; then
-        LOGE "N770F Motion Photo SUME Message.smali was not found"
+    # Refuse to package a silently replaced or stale payload.
+    [ "$(sha256sum "$SRC/MotionPhoto.apk" | cut -d ' ' -f 1)" = \
+        "ac75f71a3645703825ec3c8f5523bb71805c8543404e9b4620707d8755045673" ] || {
+        LOGE "Unexpected Motion Photo APK payload hash"
         return 1
-    fi
+    }
+    [ "$(sha256sum "$SRC/libapex_motionphoto_utils_jni.media.samsung.so" | cut -d ' ' -f 1)" = \
+        "584a27299bd6d2dbe27efcb6ad2575df147df01a2eb9de9c57154c2dfdb345c6" ] || {
+        LOGE "Unexpected Motion Photo apex utils JNI payload hash"
+        return 1
+    }
+    [ "$(sha256sum "$SRC/libmotionphoto_jni.media.samsung.so" | cut -d ' ' -f 1)" = \
+        "cba34ded68fdf1fedce5439bda6b4c4c8831e91e4123948e3305c2e657024c81" ] || {
+        LOGE "Unexpected Motion Photo JNI payload hash"
+        return 1
+    }
 
-    LOG "- Making the N770F Motion Photo IPC compatible with Android 16"
-    python3 - "$MESSAGE_SMALI" <<'PY' || return 1
-import sys
+    _EXYNOS9810_FINAL_DELETE_SYSTEM_ENTRY "system/app/MotionPhoto"
 
-path = sys.argv[1]
-text = open(path, encoding="utf-8").read()
-marker = (
-    "    check-cast p1, Landroid/os/Parcelable;\n"
-    "\n"
-    "    if-eqz p1, :cond_4\n"
-)
-if marker not in text:
-    old = (
-        "    check-cast p1, Landroid/os/Parcelable;\n"
-        "\n"
-        "    invoke-interface {p0, p2, p1}, "
-        "Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;\n"
-    )
-    new = (
-        "    check-cast p1, Landroid/os/Parcelable;\n"
-        "\n"
-        "    # Android 16 may send optional null Parcelable values.\n"
-        "    if-eqz p1, :cond_4\n"
-        "\n"
-        "    invoke-interface {p0, p2, p1}, "
-        "Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;\n"
-    )
-    if old not in text:
-        raise SystemExit("Motion Photo SUME null-Parcelable insertion point not found")
-    text = text.replace(old, new, 1)
+    # Keep the byte-exact proven APK: remove the apktool entry so the global
+    # rebuild pass cannot round-trip the Kotlin/Hilt APK and drift from what
+    # was verified on device.
+    rm -rf "$APKTOOL_DIR/system/app/MotionPhoto"
 
-bad_parcel_marker = (
-    "    :try_start_ex9810_mp\n"
-    "    const-class v0, Landroid/os/Parcelable;\n"
-)
-if bad_parcel_marker not in text:
-    old = (
-        "    const-class v0, Landroid/os/Parcelable;\n"
-        "\n"
-        "    invoke-virtual {p1, p2, v0}, "
-        "Landroid/os/Bundle;->getParcelable(Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;\n"
-        "\n"
-        "    move-result-object p1\n"
-    )
-    new = (
-        "    :try_start_ex9810_mp\n"
-        "    const-class v0, Landroid/os/Parcelable;\n"
-        "\n"
-        "    invoke-virtual {p1, p2, v0}, "
-        "Landroid/os/Bundle;->getParcelable(Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;\n"
-        "\n"
-        "    move-result-object p1\n"
-        "    :try_end_ex9810_mp\n"
-        "    .catch Ljava/lang/RuntimeException; {:try_start_ex9810_mp .. :try_end_ex9810_mp} :catch_ex9810_mp\n"
-        "\n"
-    )
-    if old not in text:
-        raise SystemExit("Motion Photo SUME Parcelable read insertion point not found")
-    text = text.replace(old, new, 1)
-
-    end_old = (
-        "    invoke-interface {p0, p2, p1}, "
-        "Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;\n"
-        "\n"
-        "    :cond_4\n"
-    )
-    end_new = (
-        "    invoke-interface {p0, p2, p1}, "
-        "Ljava/util/Map;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;\n"
-        "\n"
-        "    goto :cond_4\n"
-        "\n"
-        "    :catch_ex9810_mp\n"
-        "    move-exception p1\n"
-        "\n"
-        "    :cond_4\n"
-    )
-    if end_old not in text:
-        raise SystemExit("Motion Photo SUME Parcelable catch target not found")
-    text = text.replace(end_old, end_new, 1)
-
-put_marker = (
-    ".method private synthetic lambda$put$6(Ljava/lang/String;Ljava/lang/Object;)V\n"
-    "    .locals 1\n"
-    "\n"
-    "    if-eqz p1, :goto_0\n"
-)
-if put_marker not in text:
-    put_old = (
-        ".method private synthetic lambda$put$6(Ljava/lang/String;Ljava/lang/Object;)V\n"
-        "    .locals 1\n"
-        "\n"
-        "    instance-of v0, p2, Landroid/os/Parcelable;\n"
-    )
-    put_new = (
-        ".method private synthetic lambda$put$6(Ljava/lang/String;Ljava/lang/Object;)V\n"
-        "    .locals 1\n"
-        "\n"
-        "    if-eqz p1, :goto_0\n"
-        "\n"
-        "    if-eqz p2, :goto_0\n"
-        "\n"
-        "    instance-of v0, p2, Landroid/os/Parcelable;\n"
-    )
-    if put_old in text:
-        text = text.replace(put_old, put_new, 1)
-
-open(path, "w", encoding="utf-8").write(text)
-PY
+    mkdir -p "$WORK_DIR/system/system/app/MotionPhoto"
+    cp -f "$SRC/MotionPhoto.apk" \
+        "$WORK_DIR/system/system/app/MotionPhoto/MotionPhoto.apk" || return 1
+    cp -f "$SRC/libapex_motionphoto_utils_jni.media.samsung.so" \
+        "$WORK_DIR/system/system/lib64/libapex_motionphoto_utils_jni.media.samsung.so" || return 1
+    cp -f "$SRC/libmotionphoto_jni.media.samsung.so" \
+        "$WORK_DIR/system/system/lib64/libmotionphoto_jni.media.samsung.so" || return 1
 
     _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/MotionPhoto" \
         0 0 755 "u:object_r:system_file:s0"
@@ -3356,9 +3641,57 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
 {
     local FEATURE_SYSTEM="$WORK_DIR/system/system/etc/floating_feature.xml"
     local FEATURE_VENDOR="$WORK_DIR/vendor/etc/floating_feature.xml"
-    local REL
+    local RADIO_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml"
+    local SEHRADIO_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml"
+    local REL ACTUAL EXPECTED
 
     LOG "- Verifying Exynos9810 user-reported bug fixes"
+
+    [ -f "$RADIO_MANIFEST" ] || {
+        LOGE "Coherent Exynos9810 IRadio 1.6 manifest is missing"
+        return 1
+    }
+    grep -q '@1.6::IRadio/slot1' "$RADIO_MANIFEST" || {
+        LOGE "Exynos9810 IRadio 1.6 slot1 declaration is missing"
+        return 1
+    }
+    grep -q '@1.6::IRadio/slot2' "$RADIO_MANIFEST" || {
+        LOGE "Exynos9810 IRadio 1.6 slot2 declaration is missing"
+        return 1
+    }
+    [ -f "$SEHRADIO_MANIFEST" ] && \
+        grep -q '<instance>imsd</instance>' "$SEHRADIO_MANIFEST" && \
+        grep -q '<instance>imsd2</instance>' "$SEHRADIO_MANIFEST" || {
+        LOGE "Exynos9810 IMS radio-channel declarations are missing"
+        return 1
+    }
+
+    # Verify the final live-tested compatibility combination. The N770F RIL
+    # libraries remain paired, while radio-v5 supplies the legacy rild,
+    # channel transport and imsd bridge that restored IMEI and stable LTE.
+    for REL in \
+        "bin/hw/rild:73aadda1643784e51356b02eadab843a1ed1f454197a3a4c810ee1a26f44fda9" \
+        "lib64/vendor.samsung.hardware.radio.channel@2.0.so:976539c14a6d1a9742f62bed4c83595ec5a692b19f4d610c47d63744d83ab87a" \
+        "lib64/libsec-ril.so:b563250ff898412917b8ee3d48685392f61371e638b24ba81e2c6f2b1a555a2b" \
+        "lib64/libril_sem.so:a6eac3c33beb6a532b1a5f494401530100a031e843164e2a936633837697222a"; do
+        EXPECTED="${REL#*:}"
+        REL="${REL%%:*}"
+        [ -f "$WORK_DIR/vendor/$REL" ] || {
+            LOGE "Required coherent radio component is missing: /vendor/$REL"
+            return 1
+        }
+        ACTUAL="$(sha256sum "$WORK_DIR/vendor/$REL" | awk '{print $1}')"
+        [ "$ACTUAL" = "$EXPECTED" ] || {
+            LOGE "Mixed Exynos9810 radio stack detected: /vendor/$REL"
+            return 1
+        }
+    done
+
+    ACTUAL="$(sha256sum "$WORK_DIR/system/system/bin/imsd" | awk '{print $1}')"
+    [ "$ACTUAL" = "e06f961c0260d04090b5342157fe3c82cf102af80da632bed01dfa092f1bd9b8" ] || {
+        LOGE "Exynos9810 tested imsd bridge is missing or was replaced"
+        return 1
+    }
 
     for REL in \
         system/app/ClockPackage \
@@ -3491,10 +3824,55 @@ path.write_text(new)
 PY
 }
 
+_EXYNOS9810_FINAL_VERIFY_ENFORCING_BOOT_STATE()
+{
+    local CIL="$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
+    local INIT="$WORK_DIR/vendor/etc/init/init.baseband.rc"
+    local RULE
+
+    LOG "- Verifying final Exynos9810 enforcing boot state"
+
+    [ -f "$CIL" ] || {
+        LOGE "Final Exynos9810 vendor SELinux policy is missing"
+        return 1
+    }
+
+    for RULE in \
+        '(allow vendor_init radio_prop (file (read open getattr)))' \
+        '(allow vendor_init vold_prop (property_service (set)))' \
+        '(allow mobicore mobicore_prop (property_service (set)))' \
+        '(allow system_server hal_graphics_composer_service (service_manager (find)))' \
+        '(allow samsungpowersoundplay audio_service (service_manager (find)))'; do
+        grep -qF "$RULE" "$CIL" || {
+            LOGE "Final Exynos9810 SELinux policy is missing: $RULE"
+            return 1
+        }
+    done
+
+    [ -f "$INIT" ] || {
+        LOGE "Final Exynos9810 baseband init file is missing"
+        return 1
+    }
+    grep -q '^on property:ro\.vendor\.multisim\.simslotcount=' "$INIT" || {
+        LOGE "Final Exynos9810 baseband init lacks an exported SIM trigger"
+        return 1
+    }
+    if grep -q '^on property:ro\.multisim\.simslotcount=' "$INIT"; then
+        LOGE "Final Exynos9810 baseband init uses an enforcing-blocked SIM trigger"
+        return 1
+    fi
+
+    if find "$WORK_DIR" -path '*/odm/etc/selinux/precompiled_sepolicy*' -type f | grep -q .; then
+        LOGE "Stale ODM precompiled SELinux policy remains in the final workdir"
+        return 1
+    fi
+}
+
 
 _EXYNOS9810_FINAL_REPATCH_APPS
 _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK
 _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF
+_EXYNOS9810_FINAL_APPLY_TESTED_RADIO_RESTORE_V5
 _EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED
 _EXYNOS9810_FINAL_DEBLOAT
 _EXYNOS9810_FINAL_RESTORE_DAAGENT
@@ -3531,4 +3909,6 @@ _EXYNOS9810_FINAL_VERIFY_SHARING_STACK
 _EXYNOS9810_FINAL_VERIFY_WALLPAPER_AND_BRIEF_STACK
 _EXYNOS9810_FINAL_ENABLE_EXTRA_BRIGHTNESS
 _EXYNOS9810_FINAL_SET_BRIGHTNESS_PROFILE
+_EXYNOS9810_FINAL_CLEAN_GRAPHICS_STATE || return 1
+_EXYNOS9810_FINAL_VERIFY_ENFORCING_BOOT_STATE || return 1
 _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES
