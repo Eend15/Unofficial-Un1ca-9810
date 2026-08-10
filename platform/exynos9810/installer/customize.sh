@@ -79,7 +79,9 @@ chmod 0755 "$TMP_DIR/exynos9810/sgdisk"
 # The requested ROM default is the enforcing DS-ACK kernel paired with the
 # EROFS-patched DTB.
 DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Enforcing-KernelSU-OneUI7}"
-DS_ACK_LOCAL_ZIP="${DS_ACK_LOCAL_ZIP:-/mnt/c/Users/Admin/Downloads/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-erofs-dtb.zip}"
+DS_ACK_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-erofs-dtb.zip"
+DS_ACK_PREBUILT_SHA256="243e08f706534cb3299cef24bdad874f27d0ffb0d2e5e9baee5d4be4fcffedba"
+DS_ACK_LOCAL_ZIP="${DS_ACK_LOCAL_ZIP:-$DS_ACK_PREBUILT_ZIP}"
 CROWNTRAIL_KERNEL_ZIP="${CROWNTRAIL_KERNEL_ZIP:-/mnt/c/Users/Admin/Downloads/CrownTrail-v1.6-15.05.2026-OneUI7-Permissive-KSUN.zip}"
 # DS-ACK v1.12 kernel payload is the requested default. Brightness scaling
 # is selected by the legacy Samsung profile in floating_feature.xml, not by
@@ -93,6 +95,16 @@ elif [ -z "${EXYNOS9810_KERNEL_ZIP:-}" ]; then
     exit 1
 else
     LOG "- Using explicitly requested Exynos9810 kernel zip: $EXYNOS9810_KERNEL_ZIP"
+fi
+
+if [ "$EXYNOS9810_KERNEL_ZIP" = "$DS_ACK_PREBUILT_ZIP" ]; then
+    DS_ACK_ACTUAL_SHA256="$(sha256sum "$EXYNOS9810_KERNEL_ZIP" | awk '{print $1}')"
+    [ "$DS_ACK_ACTUAL_SHA256" = "$DS_ACK_PREBUILT_SHA256" ] || {
+        LOGE "Exynos9810 enforcing KernelSU prebuilt failed SHA-256 verification"
+        LOGE "Expected: $DS_ACK_PREBUILT_SHA256"
+        LOGE "Actual:   $DS_ACK_ACTUAL_SHA256"
+        exit 1
+    }
 fi
 
 if [ -f "$EXYNOS9810_KERNEL_ZIP" ]; then

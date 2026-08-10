@@ -18,6 +18,7 @@
 *.qmg binary
 *.tflite binary
 *.webp binary
+*.zip binary
 
 # ROM-specific prebuilt blobs
 prebuilts/bootable/deprecated-ota/updater binary
