@@ -2920,7 +2920,7 @@ PY
 
 _EXYNOS9810_FINAL_PATCH_CAMERA_QR_POPUP_CRASH()
 {
-    # Two related QR-code fixes in SamsungCamera.apk:
+    # Three related QR-code fixes in SamsungCamera.apk:
     #
     # (1) Enable QR scanning. The camera detects QR codes entirely in software:
     #     the app-side core2 node SaivQRCodeNode runs QRBarcodeDecoder, which
@@ -2938,9 +2938,20 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_QR_POPUP_CRASH()
     #     in stopQrCodeDetectionManager()). If the manager is ever null a
     #     quick-setting toast -- e.g. toggling Motion Photo -- FCs the app. Mirror
     #     Samsung's guard at both restoreQrPopup() call sites so it can never NPE.
+    #
+    # (3) Route the Photo and QR makers around UniHAL. The One UI 8 app requests
+    #     a software preview-callback stream, but the Exynos9810 UniHAL layer
+    #     drops that stream while retaining it in the framework session. The
+    #     orphaned stream has max_buffers=0 and freezes preview after eight
+    #     seconds. Marking only these makers as non-Samsung bypasses UniHAL so
+    #     the legacy HAL receives every configured stream. Other modes retain
+    #     their stock Samsung-camera path.
     local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
     local PP_SMALI
     local FEAT_SMALI
+    local QR_CONTROLLER_SMALI
+    local MAKER_BASE_SMALI
+    local QR_MANAGER_SMALI
 
     [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
 
@@ -2986,6 +2997,241 @@ if cnt == 0:
 if cnt != 2:
     raise SystemExit(f"expected 2 restoreQrPopup guard sites, patched {cnt}")
 open(path, "w").write(new)
+PY
+
+    # Exynos9810 uses the legacy Core2 software QR node. The S22 camera's
+    # capability probe can incorrectly advertise HAL QR support when it runs
+    # against the legacy camera provider, sending the request through public
+    # HAL keys that do not exist on the 9810. Keep this controller on the
+    # private software path and use the S9/S9+ QR-only mode (2); mode 3 also
+    # asks the legacy provider for Data Matrix support and produces no result.
+    QR_CONTROLLER_SMALI="$(find "$APK_DIR" -path '*engine/QrController.smali' -print -quit)"
+    if [ -z "$QR_CONTROLLER_SMALI" ] || [ ! -f "$QR_CONTROLLER_SMALI" ]; then
+        LOGE "QrController.smali not found in SamsungCamera.apk"
+        return 1
+    fi
+
+    LOG "- Routing SamsungCamera QR detection through the Exynos9810 software node"
+    python3 - "$QR_CONTROLLER_SMALI" <<'PY' || return 1
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+hal_pattern = re.compile(
+    r"(?ms)^\.method public isQrCodeDetectionInHalAvailable\(\)Z\n.*?^\.end method"
+)
+hal_replacement = """.method public isQrCodeDetectionInHalAvailable()Z
+    .locals 1
+
+    # Exynos9810 has no One UI 8 HAL QR metadata; use Core2 software decode.
+    const/4 v0, 0x0
+
+    return v0
+.end method"""
+if "Exynos9810 has no One UI 8 HAL QR metadata" not in text:
+    text, count = hal_pattern.subn(hal_replacement, text, count=1)
+    if count != 1:
+        raise SystemExit("isQrCodeDetectionInHalAvailable method not found")
+
+mode_pattern = re.compile(
+    r"(sget-object v1, Lcom/samsung/android/camera/core2/MakerPrivateKey;->X:Lcom/samsung/android/camera/core2/MakerPrivateKey;\n\n"
+    r"    const/4 v2, )0x3(\n)"
+)
+text, count = mode_pattern.subn(r"\g<1>0x2\2", text, count=1)
+if count == 0 and "MakerPrivateKey;->X:Lcom/samsung/android/camera/core2/MakerPrivateKey;\n\n    const/4 v2, 0x2" not in text:
+    raise SystemExit("legacy QR detection mode assignment not found")
+if count > 1:
+    raise SystemExit(f"expected one legacy QR mode assignment, patched {count}")
+
+# skipQrCodeDetection(false) restores this controller-level default after a
+# photo. Keep it aligned with the throttled Photo manager; otherwise the first
+# capture silently switches software QR decoding back to the unstable 500 ms
+# cadence.
+interval_needle = (
+    "    move-result v0\n\n"
+    "    int-to-long v0, v0\n\n"
+    "    sput-wide v0, Lcom/sec/android/app/camera/engine/QrController;->QR_CODE_DETECTION_INTERVAL:J\n"
+)
+interval_replacement = (
+    "    move-result v0\n\n"
+    "    const/16 v0, 0x5dc\n\n"
+    "    int-to-long v0, v0\n\n"
+    "    sput-wide v0, Lcom/sec/android/app/camera/engine/QrController;->QR_CODE_DETECTION_INTERVAL:J\n"
+)
+if interval_replacement not in text:
+    count = text.count(interval_needle)
+    if count != 1:
+        raise SystemExit(f"expected one controller QR interval initialization, found {count}")
+    text = text.replace(interval_needle, interval_replacement, 1)
+
+path.write_text(text)
+PY
+
+    # UniHAL on the Exynos9810 omits the software QR preview-callback stream.
+    # Bypass it only for the dedicated scanner and normal Photo maker, the two
+    # sessions which feed SaivQRCodeNode. This preserves Samsung routing for
+    # video and every unrelated shooting mode.
+    MAKER_BASE_SMALI="$(find "$APK_DIR" -path '*core2/maker/MakerBase.smali' -print -quit)"
+    if [ -z "$MAKER_BASE_SMALI" ] || [ ! -f "$MAKER_BASE_SMALI" ]; then
+        LOGE "MakerBase.smali not found in SamsungCamera.apk"
+        return 1
+    fi
+
+    LOG "- Routing Photo and QR callback streams directly to the Exynos9810 HAL"
+    python3 - "$MAKER_BASE_SMALI" <<'PY' || return 1
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = "Lcom/samsung/android/camera/core2/maker/AutoBeautyPhotoMaker;"
+needle = "    sget-object v2, Lcom/samsung/android/camera/core2/PublicMetadata;->a:Ljava/util/List;\n"
+guards = """    instance-of v2, p0, Lcom/samsung/android/camera/core2/maker/QrPhotoMaker;
+
+    if-nez v2, :cond_0
+
+    instance-of v2, p0, Lcom/samsung/android/camera/core2/maker/AutoBeautyPhotoMaker;
+
+    if-nez v2, :cond_0
+
+"""
+
+if marker not in text:
+    count = text.count(needle)
+    if count != 1:
+        raise SystemExit(f"expected one Samsung-camera parameter assignment, found {count}")
+    text = text.replace(needle, guards + needle, 1)
+else:
+    qr_guard = "instance-of v2, p0, Lcom/samsung/android/camera/core2/maker/QrPhotoMaker;"
+    if qr_guard not in text:
+        raise SystemExit("AutoBeautyPhotoMaker guard exists without QrPhotoMaker guard")
+
+path.write_text(text)
+PY
+
+    # With samsungcamera=false, the legacy Exynos9810 HAL delivers standard
+    # Camera2 capture callbacks but not Samsung's shutter vendor metadata.
+    # AutoBeautyPhotoMaker still receives and saves the JPEG, then Camera's
+    # sequence controller rejects PICTURE_RECEIVED because SHUTTER_RECEIVED
+    # never happened. Synthesize that one missing callback immediately before
+    # Core2's software capture-available callback. The guard keeps every maker
+    # which still uses UniHAL on its stock callback path.
+    PHOTO_MAKER_BASE_SMALI="$(find "$APK_DIR" -path '*core2/maker/PhotoMakerBase.smali' -print -quit)"
+    if [ -z "$PHOTO_MAKER_BASE_SMALI" ] || [ ! -f "$PHOTO_MAKER_BASE_SMALI" ]; then
+        LOGE "PhotoMakerBase.smali not found in SamsungCamera.apk"
+        return 1
+    fi
+
+    LOG "- Restoring Exynos9810 Photo capture callback ordering"
+    python3 - "$PHOTO_MAKER_BASE_SMALI" <<'PY' || return 1
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = "# Exynos9810 legacy HAL does not publish Samsung shutter metadata."
+needle = """    invoke-virtual {p0}, Lcom/samsung/android/camera/core2/maker/MakerBase;->getMakerTag()Ljava/lang/String;
+
+    move-result-object v0
+
+    iget-object v1, p0, Lcom/samsung/android/camera/core2/maker/PhotoMakerBase;->mPictureCallback:Lcom/samsung/android/camera/core2/callback/PictureCallback;
+
+    iget-object p0, p0, Lcom/samsung/android/camera/core2/maker/MakerBase;->mCamDevice:Lcom/samsung/android/camera/core2/CamDevice;
+
+    invoke-static {v0, v1, p1, p2, p0}, Lcom/samsung/android/camera/core2/callback/helper/CallbackHelper$PictureCallbackHelper;->a(Ljava/lang/String;Lcom/samsung/android/camera/core2/callback/PictureCallback;ILjava/lang/Long;Lcom/samsung/android/camera/core2/CamDevice;)V
+"""
+replacement = """    # Exynos9810 legacy HAL does not publish Samsung shutter metadata.
+    instance-of v0, p0, Lcom/samsung/android/camera/core2/maker/AutoBeautyPhotoMaker;
+
+    if-eqz v0, :exynos9810_shutter_done
+
+    invoke-virtual {p0}, Lcom/samsung/android/camera/core2/maker/MakerBase;->getMakerTag()Ljava/lang/String;
+
+    move-result-object v0
+
+    iget-object v1, p0, Lcom/samsung/android/camera/core2/maker/PhotoMakerBase;->mPictureCallback:Lcom/samsung/android/camera/core2/callback/PictureCallback;
+
+    iget-object v2, p0, Lcom/samsung/android/camera/core2/maker/MakerBase;->mCamDevice:Lcom/samsung/android/camera/core2/CamDevice;
+
+    invoke-static {v0, v1, p1, p2, v2}, Lcom/samsung/android/camera/core2/callback/helper/CallbackHelper$PictureCallbackHelper;->g(Ljava/lang/String;Lcom/samsung/android/camera/core2/callback/PictureCallback;ILjava/lang/Long;Lcom/samsung/android/camera/core2/CamDevice;)V
+
+    :exynos9810_shutter_done
+    invoke-virtual {p0}, Lcom/samsung/android/camera/core2/maker/MakerBase;->getMakerTag()Ljava/lang/String;
+
+    move-result-object v0
+
+    iget-object v1, p0, Lcom/samsung/android/camera/core2/maker/PhotoMakerBase;->mPictureCallback:Lcom/samsung/android/camera/core2/callback/PictureCallback;
+
+    iget-object p0, p0, Lcom/samsung/android/camera/core2/maker/MakerBase;->mCamDevice:Lcom/samsung/android/camera/core2/CamDevice;
+
+    invoke-static {v0, v1, p1, p2, p0}, Lcom/samsung/android/camera/core2/callback/helper/CallbackHelper$PictureCallbackHelper;->a(Ljava/lang/String;Lcom/samsung/android/camera/core2/callback/PictureCallback;ILjava/lang/Long;Lcom/samsung/android/camera/core2/CamDevice;)V
+"""
+
+if marker not in text:
+    count = text.count(needle)
+    if count != 1:
+        raise SystemExit(f"expected one software capture-available callback, found {count}")
+    text = text.replace(needle, replacement, 1)
+
+path.write_text(text)
+PY
+
+    # Software decoding takes 500-850 ms on Exynos9810. The stock 500 ms Photo
+    # cadence can overlap decoder work until the legacy HAL stops returning
+    # capture results. Limit both Photo and the dedicated scanner to one frame
+    # per 1500 ms; this retains the QR popup while leaving enough headroom for
+    # screenshots and other foreground load.
+    QR_MANAGER_SMALI="$(find "$APK_DIR" -path '*shootingmode/photo/QrCodeDetectionManager.smali' -print -quit)"
+    if [ -z "$QR_MANAGER_SMALI" ] || [ ! -f "$QR_MANAGER_SMALI" ]; then
+        LOGE "QrCodeDetectionManager.smali not found in SamsungCamera.apk"
+        return 1
+    fi
+
+    LOG "- Throttling Exynos9810 Photo QR decoding to a stable 1500 ms cadence"
+    python3 - "$QR_MANAGER_SMALI" <<'PY' || return 1
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = "    const/16 v0, 0x5dc\n"
+pattern = re.compile(
+    r"(?ms)(^\.method static constructor <clinit>\(\)V\n.*?"
+    r"invoke-static \{v0\}, Li0/b;->d\(Lx1/i;\)I\n\n"
+    r"    move-result v0\n)"
+)
+if marker not in text:
+    text, count = pattern.subn(r"\g<1>\n" + marker, text, count=1)
+    if count != 1:
+        raise SystemExit("Photo QR interval initialization not found")
+
+path.write_text(text)
+PY
+
+    LOG "- Throttling Exynos9810 dedicated QR scanning to a stable 1500 ms cadence"
+    python3 - "$APK_DIR/smali_classes4/com/sec/android/app/camera/shootingmode/qr/QrPresenter.smali" <<'PY' || return 1
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text()
+pattern = re.compile(
+    r"(?ms)(^\.method private enableQrDetection\(Z\)V\n.*?const-wide/16 v0, )(?:0x64|0x1f4)(\n)"
+)
+new, count = pattern.subn(r"\g<1>0x5dc\2", text, count=1)
+if count == 0 and re.search(
+    r"(?ms)^\.method private enableQrDetection\(Z\)V\n.*?const-wide/16 v0, 0x5dc\n",
+    text,
+) is None:
+    raise SystemExit("QrPresenter detection interval assignment not found")
+if count > 1:
+    raise SystemExit(f"expected one QrPresenter interval assignment, patched {count}")
+path.write_text(new)
 PY
 
     # Force full (non-lite) QR detection so QrCodeDetectionManager is built.
