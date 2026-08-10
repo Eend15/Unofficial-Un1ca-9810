@@ -207,10 +207,9 @@ SYSTEM_DEBLOAT+="
 system/app/SamsungCalendar
 "
 
-# Samsung Clock
+# Samsung Clock APK (keep its signature permission and target sysconfig)
 SYSTEM_DEBLOAT+="
 system/app/ClockPackage
-system/etc/permissions/signature-permissions-com.sec.android.app.clockpackage.xml
 "
 
 # Samsung Free

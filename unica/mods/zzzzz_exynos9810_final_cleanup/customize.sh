@@ -584,6 +584,66 @@ _EXYNOS9810_FINAL_RESTORE_FEATURE_APPS()
     done
 }
 
+_EXYNOS9810_FINAL_RESTORE_CLOCK_STRUCTURE()
+{
+    # Keep only Clock's framework structure. The Clock APK and all Watch/
+    # accessory/Messages/EasySetup payloads are intentionally debloated.
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+
+    local BASE="$FW_DIR/SM-S901B_EUX/system/system"
+    local TARGET_FW="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+    local TARGET_BASE="$FW_DIR/$TARGET_FW/system/system"
+    local REL SRC DST
+
+    for REL in \
+        "priv-app/SmartManager_v5/SmartManager_v5.apk" \
+        "app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk"; do
+        SRC="$BASE/$REL"
+        DST="$WORK_DIR/system/system/$REL"
+        if [ -f "$SRC" ] && [ ! -f "$DST" ]; then
+            LOG "- Restoring user-facing feature app $REL"
+            mkdir -p "$(dirname "$DST")"
+            cp -f "$SRC" "$DST" || return 1
+            chmod 0644 "$DST"
+        fi
+    done
+
+    for REL in \
+        "etc/permissions/signature-permissions-com.sec.android.app.clockpackage.xml" \
+        "etc/permissions/privapp-permissions-com.samsung.android.lool.xml" \
+        "etc/permissions/signature-permissions-com.samsung.android.lool.xml" \
+        "media/battery_protection.spi"; do
+        SRC="$BASE/$REL"
+        DST="$WORK_DIR/system/system/$REL"
+        if [ -f "$SRC" ]; then
+            mkdir -p "$(dirname "$DST")"
+            cp -f "$SRC" "$DST" || return 1
+            chmod 0644 "$DST"
+        fi
+    done
+
+    # Legacy targets carry the Clock power-management allowlist; keep it even
+    # though the One UI 8 donor no longer ships a separate copy.
+    SRC="$TARGET_BASE/etc/sysconfig/clockpackageapp.xml"
+    DST="$WORK_DIR/system/system/etc/sysconfig/clockpackageapp.xml"
+    if [ -f "$SRC" ]; then
+        mkdir -p "$(dirname "$DST")"
+        cp -f "$SRC" "$DST" || return 1
+        chmod 0644 "$DST"
+    fi
+
+    for REL in \
+        "system/priv-app/SmartManager_v5/SmartManager_v5.apk" \
+        "system/app/SmartManager_v6_DeviceSecurity/SmartManager_v6_DeviceSecurity.apk" \
+        "system/etc/permissions/signature-permissions-com.sec.android.app.clockpackage.xml" \
+        "system/etc/permissions/privapp-permissions-com.samsung.android.lool.xml" \
+        "system/etc/permissions/signature-permissions-com.samsung.android.lool.xml" \
+        "system/etc/sysconfig/clockpackageapp.xml" \
+        "system/media/battery_protection.spi"; do
+        _EXYNOS9810_FINAL_SET_METADATA "system" "$REL" 0 0 644 "u:object_r:system_file:s0"
+    done
+}
+
 _EXYNOS9810_FINAL_DEBLOAT()
 {
     local APP DIR REL
@@ -669,9 +729,10 @@ _EXYNOS9810_FINAL_DEBLOAT()
         product/app/Maps \
         product/app/YouTube \
         system/app/Calculator \
-        system/app/ClockPackage \
         product/overlay/GoogleHealthFitnessFrameworkOverlay.apk \
         product/overlay/NotesRoleEnabled \
+        system/app/ClockPackage \
+        system/app/GearManagerStub \
         system/preload/SBrowser \
         system/app/KidsHome_Installer \
         system/etc/permissions/privapp-permissions-com.samsung.accessory.budsunitemgr.xml \
@@ -693,8 +754,15 @@ _EXYNOS9810_FINAL_DEBLOAT()
         system/priv-app/NetworkDiagnostic \
         system/priv-app/OdaService \
         system/priv-app/SCPMAgent \
+        system/priv-app/SamsungMessages \
+        system/etc/permissions/signature-permissions-com.samsung.android.app.watchmanager.xml \
+        system/etc/permissions/com.sec.feature.saccessorymanager.xml \
+        system/etc/permissions/com.android.future.usb.accessory.xml \
+        system/etc/default-permissions/default-permissions-com.samsung.android.messaging.xml \
+        system/etc/default-permissions/default-permissions-com.samsung.android.easysetup.xml \
+        system/etc/permissions/privapp-permissions-com.samsung.android.easysetup.xml \
+        system/framework/com.android.future.usb.accessory.jar \
         system/etc/permissions/privapp-permissions-com.microsoft.appmanager.xml \
-        system/etc/permissions/signature-permissions-com.sec.android.app.clockpackage.xml \
         system/etc/permissions/privapp-permissions-com.samsung.android.scloud.xml \
         system/etc/permissions/privapp-permissions-com.samsung.android.smartswitchassistant.xml \
         system/etc/permissions/privapp-permissions-com.samsung.knox.securefolder.xml \
@@ -2181,9 +2249,30 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY()
     # prevents the known P6 starvation; this remains a last-resort recovery
     # guard if a malformed frame still reaches the vendor failure branch.
     local LIB="$WORK_DIR/vendor/lib/libexynoscamera3.so"
-    local ORIGINAL_STAR2="43f6aa10cde9000600200349044a044b79447a447b4427f0f0ec"
-    local ORIGINAL_CROWN="43f6aa10cde9000600200349044a044b79447a447b4429f028ea"
-    local PATCHED="43f6aa10cde9000600200349044a044b79447a447b44fef71dbe"
+    local ORIGINAL
+    local PATCHED
+
+    # The assertion site and its normal cleanup target have different Thumb
+    # branch encodings in every device HAL. Keep each replacement inside the
+    # target's own function; never copy an S9+ branch into S9 or Note9 code.
+    case "$TARGET_CODENAME" in
+        starlte)
+            ORIGINAL="43f6aa10cde9000600200549064a064b79447a447b4419f0acee"
+            PATCHED="43f6aa10cde9000600200549064a064b79447a447b4499e500bf"
+            ;;
+        star2lte)
+            ORIGINAL="43f6aa10cde9000600200349044a044b79447a447b4427f0f0ec"
+            PATCHED="43f6aa10cde9000600200349044a044b79447a447b44fef71dbe"
+            ;;
+        crownlte)
+            ORIGINAL="43f6aa10cde9000600200349044a044b79447a447b4429f028ea"
+            PATCHED="43f6aa10cde9000600200349044a044b79447a447b44fef71dbe"
+            ;;
+        *)
+            LOGE "Unsupported Exynos9810 camera target: $TARGET_CODENAME"
+            return 1
+            ;;
+    esac
 
     if [ ! -f "$LIB" ]; then
         LOGW "Exynos9810 camera HAL missing for $TARGET_CODENAME, skipping reprocessing recovery"
@@ -2191,27 +2280,24 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY()
     fi
 
     local RESULT
-    RESULT="$(python3 - "$LIB" "$PATCHED" "$ORIGINAL_STAR2" "$ORIGINAL_CROWN" <<'PY'
+    RESULT="$(python3 - "$LIB" "$ORIGINAL" "$PATCHED" <<'PY'
 from pathlib import Path
 import sys
 
 path = Path(sys.argv[1])
-new = bytes.fromhex(sys.argv[2])
-originals = [bytes.fromhex(value) for value in sys.argv[3:]]
+old = bytes.fromhex(sys.argv[2])
+new = bytes.fromhex(sys.argv[3])
 data = path.read_bytes()
 
+old_count = data.count(old)
 new_count = data.count(new)
-old_counts = [(old, data.count(old)) for old in originals]
-matches = [old for old, count in old_counts if count == 1]
-multi_matches = [count for _, count in old_counts if count > 1]
-
-if len(matches) == 1 and not multi_matches and new_count == 0:
-    path.write_bytes(data.replace(matches[0], new, 1))
+if old_count == 1 and new_count == 0:
+    path.write_bytes(data.replace(old, new, 1))
     print("patched")
-elif not matches and not multi_matches and new_count == 1:
+elif old_count == 0 and new_count == 1:
     print("present")
 else:
-    print(f"unknown:{','.join(str(count) for _, count in old_counts)}:{new_count}")
+    print(f"unknown:{old_count}:{new_count}")
 PY
 )" || return 1
 
@@ -2223,7 +2309,8 @@ PY
             LOG "- Exynos9810 camera reprocessing recovery already present"
             ;;
         *)
-            LOGW "Exynos9810 reprocessing recovery byte pattern not found for $TARGET_CODENAME ($RESULT), skipping"
+            LOGE "Exynos9810 reprocessing recovery pattern mismatch for $TARGET_CODENAME ($RESULT)"
+            return 1
             ;;
     esac
 }
@@ -3848,6 +3935,52 @@ _EXYNOS9810_FINAL_VERIFY_WALLPAPER_AND_BRIEF_STACK()
     return 0
 }
 
+_EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH()
+{
+    local KEY="$1"
+    local VALUE="$2"
+    local FILE
+
+    for FILE in \
+        "$WORK_DIR/system/system/etc/floating_feature.xml" \
+        "$WORK_DIR/vendor/etc/floating_feature.xml"; do
+        [ -f "$FILE" ] || {
+            LOGE "Floating-feature file is missing: $FILE"
+            return 1
+        }
+
+        if grep -q "<$KEY>" "$FILE"; then
+            sed -i "s|<$KEY>[^<]*</$KEY>|<$KEY>$VALUE</$KEY>|" "$FILE"
+        elif grep -q "</SecFloatingFeatureSet>" "$FILE"; then
+            sed -i "/<\/SecFloatingFeatureSet>/i\\    <$KEY>$VALUE</$KEY>" "$FILE"
+        else
+            printf '    <%s>%s</%s>\n' "$KEY" "$VALUE" "$KEY" >> "$FILE"
+            printf '</SecFloatingFeatureSet>\n' >> "$FILE"
+        fi
+    done
+}
+
+_EXYNOS9810_FINAL_ENABLE_REPORTED_FEATURES()
+{
+    LOG "- Enabling Samsung user-requested Quick Panel and Smart View features"
+
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_OPTION" "TRUE" || return 1
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_FORCE_CUTOFF" "TRUE" || return 1
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_QRCODE" "TRUE" || return 1
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_COMMON_SUPPORT_HIGH_PERFORMANCE_MODE" "TRUE" || return 1
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_GAMEBOOSTER_MANUAL_ROUTINE" "TRUE" || return 1
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_MMFW_CONFIG_SMART_MIRRORING_PACKAGE_NAME" \
+        "com.samsung.android.smartmirroring" || return 1
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_SMART_VIEW_APP_CAST_SUPPORTED" "TRUE" || return 1
+}
+
 _EXYNOS9810_FINAL_ENABLE_EXTRA_BRIGHTNESS()
 {
     # The N770F vendor floating_feature already advertises Extra brightness, but
@@ -3889,7 +4022,7 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
     local FEATURE_VENDOR="$WORK_DIR/vendor/etc/floating_feature.xml"
     local RADIO_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml"
     local SEHRADIO_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml"
-    local REL ACTUAL EXPECTED
+    local REL ACTUAL EXPECTED FEATURE
 
     LOG "- Verifying Exynos9810 user-reported bug fixes"
 
@@ -3940,13 +4073,47 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
     }
 
     for REL in \
-        system/app/ClockPackage \
-        system/priv-app/ClockPackage \
-        system/etc/permissions/signature-permissions-com.sec.android.app.clockpackage.xml; do
-        if [ -e "$WORK_DIR/system/$REL" ]; then
-            LOGE "Samsung Clock debloat regression: /$REL remains"
+        system/system/etc/permissions/signature-permissions-com.sec.android.app.clockpackage.xml \
+        system/system/etc/sysconfig/clockpackageapp.xml \
+        system/system/priv-app/SmartManager_v5/SmartManager_v5.apk \
+        system/system/media/battery_protection.spi \
+        vendor/etc/fstab.ramplus \
+        vendor/etc/init/init.ramplus.rc \
+        system/system/app/SmartMirroring/SmartMirroring.apk \
+        system/system/framework/com.android.media.remotedisplay.jar \
+        system/system/lib64/libremotedisplay_wfd.so \
+        system/system/lib64/libwfds.so \
+        vendor/bin/vendor.samsung.hardware.security.hdcp.wifidisplay-service \
+        vendor/lib64/omx/libOMX.Exynos.AVC.WFD.Encoder.so; do
+        [ -f "$WORK_DIR/$REL" ] || {
+            LOGE "Required user-reported feature component is missing: /$REL"
             return 1
-        fi
+        }
+    done
+
+    for REL in \
+        system/system/app/ClockPackage \
+        system/system/priv-app/ClockPackage \
+        system/system/app/GalaxyWearable \
+        system/system/priv-app/GalaxyWearable \
+        system/system/app/GearManager \
+        system/system/priv-app/GearManager \
+        system/system/app/GearManagerStub \
+        system/system/priv-app/GearManagerStub \
+        system/system/app/SamsungMessages \
+        system/system/priv-app/SamsungMessages \
+        system/system/priv-app/EasySetup \
+        system/system/etc/permissions/signature-permissions-com.samsung.android.app.watchmanager.xml \
+        system/system/etc/permissions/com.sec.feature.saccessorymanager.xml \
+        system/system/etc/permissions/com.android.future.usb.accessory.xml \
+        system/system/etc/default-permissions/default-permissions-com.samsung.android.messaging.xml \
+        system/system/etc/default-permissions/default-permissions-com.samsung.android.easysetup.xml \
+        system/system/etc/permissions/privapp-permissions-com.samsung.android.easysetup.xml \
+        system/system/framework/com.android.future.usb.accessory.jar; do
+        [ ! -e "$WORK_DIR/$REL" ] || {
+            LOGE "Removed Watch/Messages/EasySetup/USB or Clock APK component remains: /$REL"
+            return 1
+        }
     done
 
     for REL in \
@@ -3981,6 +4148,19 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
             LOGE "Samsung screen colour modes are not enabled in $REL"
             return 1
         }
+        for FEATURE in \
+            '<SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_OPTION>TRUE</SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_OPTION>' \
+            '<SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_FORCE_CUTOFF>TRUE</SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_FORCE_CUTOFF>' \
+            '<SEC_FLOATING_FEATURE_CAMERA_SUPPORT_QRCODE>TRUE</SEC_FLOATING_FEATURE_CAMERA_SUPPORT_QRCODE>' \
+            '<SEC_FLOATING_FEATURE_COMMON_SUPPORT_HIGH_PERFORMANCE_MODE>TRUE</SEC_FLOATING_FEATURE_COMMON_SUPPORT_HIGH_PERFORMANCE_MODE>' \
+            '<SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_GAMEBOOSTER_MANUAL_ROUTINE>TRUE</SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_GAMEBOOSTER_MANUAL_ROUTINE>' \
+            '<SEC_FLOATING_FEATURE_MMFW_CONFIG_SMART_MIRRORING_PACKAGE_NAME>com.samsung.android.smartmirroring</SEC_FLOATING_FEATURE_MMFW_CONFIG_SMART_MIRRORING_PACKAGE_NAME>' \
+            '<SEC_FLOATING_FEATURE_SMART_VIEW_APP_CAST_SUPPORTED>TRUE</SEC_FLOATING_FEATURE_SMART_VIEW_APP_CAST_SUPPORTED>'; do
+            grep -qF "$FEATURE" "$REL" || {
+                LOGE "Required Quick Panel/Smart View feature is missing in $REL: $FEATURE"
+                return 1
+            }
+        done
     done
 
     grep -q '^persist.sys.unica.nativeblur=true$' "$WORK_DIR/system/system/build.prop" || {
@@ -4123,6 +4303,7 @@ _EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED
 _EXYNOS9810_FINAL_DEBLOAT
 _EXYNOS9810_FINAL_RESTORE_DAAGENT
 _EXYNOS9810_FINAL_RESTORE_FEATURE_APPS
+_EXYNOS9810_FINAL_RESTORE_CLOCK_STRUCTURE
 _EXYNOS9810_FINAL_SET_HOME_LAYOUT
 _EXYNOS9810_FINAL_ENABLE_NOW_BRIEF_WIDGET
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
@@ -4155,6 +4336,7 @@ _EXYNOS9810_FINAL_VERIFY_SHARING_STACK
 _EXYNOS9810_FINAL_VERIFY_WALLPAPER_AND_BRIEF_STACK
 _EXYNOS9810_FINAL_ENABLE_EXTRA_BRIGHTNESS
 _EXYNOS9810_FINAL_SET_BRIGHTNESS_PROFILE
+_EXYNOS9810_FINAL_ENABLE_REPORTED_FEATURES
 _EXYNOS9810_FINAL_CLEAN_GRAPHICS_STATE || return 1
 _EXYNOS9810_FINAL_VERIFY_ENFORCING_BOOT_STATE || return 1
 _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES

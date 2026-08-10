@@ -63,6 +63,7 @@ static slong cp_next = 0;     /* next append offset in CP_DEBUG */
 static slong cp_session = 0;  /* session number for this boot */
 static int sd_mounted;
 static unsigned char buffer[65536];
+static unsigned char child_stack[65536] __attribute__((aligned(16)));
 
 static slong syscall6(slong number, slong a0, slong a1, slong a2,
                       slong a3, slong a4, slong a5)
@@ -219,26 +220,61 @@ static void cp_open(void)
                           O_RDWR | O_CLOEXEC, 0, 0, 0);
     if (cp_fd < 0)
         return;
-    cp_find_next();
+    /* CP_DEBUG is a diagnostic scratch partition. Start each diagnostic
+     * boot at zero so a stale/corrupt previous record cannot delay logging. */
+    cp_session = 0;
+    cp_next = 0;
+    syscall6(SYS_LSEEK, cp_fd, 0, 0, 0, 0, 0);
+}
+
+static int write_raw_probe(void)
+{
+    static const char marker[] = "UN1CA_RAW_ENTRY\n";
+    slong fd;
+
+    syscall6(SYS_MKDIRAT, AT_FDCWD, (slong)"/dev", 0755, 0, 0, 0);
+    syscall6(SYS_MKDIRAT, AT_FDCWD, (slong)"/dev/block", 0755, 0, 0, 0);
+    syscall6(SYS_MKNODAT, AT_FDCWD, (slong)CP_DEBUG_PATH,
+             060600, CP_DEBUG_DEV, 0, 0);
+    fd = syscall6(SYS_OPENAT, AT_FDCWD, (slong)CP_DEBUG_PATH,
+                   O_WRONLY | O_CLOEXEC, 0, 0, 0);
+    if (fd < 0)
+        return -1;
+    if (write_all((int)fd, marker, sizeof(marker) - 1) < 0) {
+        syscall6(SYS_CLOSE, fd, 0, 0, 0, 0, 0);
+        return -1;
+    }
+    syscall6(SYS_FSYNC, fd, 0, 0, 0, 0, 0);
+    syscall6(SYS_CLOSE, fd, 0, 0, 0, 0, 0);
+    return 0;
 }
 
 /* ------------------------------------------------------------------ */
 /* Boot marker on the BOOT partition                                    */
 /* ------------------------------------------------------------------ */
 
-static void write_boot_marker(void)
+static int write_boot_marker(void)
 {
     static const char marker[] = "UN1CA_EARLY_INIT_MARKER\n";
-    slong fd = syscall6(SYS_OPENAT, AT_FDCWD,
-                        (slong)"/dev/block/sda10",
+    slong fd;
+
+    /* /dev may not have block nodes when this process is still PID 1. */
+    syscall6(SYS_MKDIRAT, AT_FDCWD, (slong)"/dev", 0755, 0, 0, 0);
+    syscall6(SYS_MKDIRAT, AT_FDCWD, (slong)"/dev/block", 0755, 0, 0, 0);
+    syscall6(SYS_MKNODAT, AT_FDCWD, (slong)"/dev/block/sda10",
+             060600, 0x080a, 0, 0);
+    fd = syscall6(SYS_OPENAT, AT_FDCWD, (slong)"/dev/block/sda10",
                         O_WRONLY | O_CLOEXEC, 0, 0, 0);
     if (fd < 0)
-        return;
+        return -1;
     if (syscall6(SYS_LSEEK, fd, BOOT_MARKER_OFFSET, 0, 0, 0, 0) >= 0) {
         write_all((int)fd, marker, sizeof(marker) - 1);
         syscall6(SYS_FSYNC, fd, 0, 0, 0, 0, 0);
+        syscall6(SYS_CLOSE, fd, 0, 0, 0, 0, 0);
+        return 0;
     }
     syscall6(SYS_CLOSE, fd, 0, 0, 0, 0, 0);
+    return -1;
 }
 
 /* ------------------------------------------------------------------ */
@@ -442,6 +478,15 @@ static void snapshot(void)
     dump_file("partitions=", "/proc/partitions");
     dump_file("iomem=", "/proc/iomem");
     dump_file("printk=", "/proc/sys/kernel/printk");
+    dump_file("reset_reason=", "/proc/reset_reason");
+    dump_file("reset_klog=", "/proc/reset_klog");
+    dump_file("last_kmsg=", "/proc/last_kmsg");
+    dump_file("ap_klog=", "/proc/ap_klog");
+    dump_file("sec_log=", "/proc/sec_log");
+    dump_file("boot_stat=", "/proc/boot_stat");
+    dump_file("bootchecker_status=", "/data/vendor/samsung/system/bootchecker/boot_status.rs");
+    dump_file("boot_profile=", "/data/log/1stBootProfile.log");
+    dump_file("previous_dump=", "/data/log/prev_dump.log");
     dump_kernel_log();
     dump_pstore();
     cp_log("==== end snapshot ====\n");
@@ -454,6 +499,8 @@ static void snapshot(void)
 /* ------------------------------------------------------------------ */
 
 static int kmsg_fd = -1;
+
+static void sleep_one_second(void);
 
 static void drain_kmsg(void)
 {
@@ -485,6 +532,11 @@ static __attribute__((noreturn)) void logger_child(void)
     int second;
 
     for (second = 0; second < 180; ++second) {
+        if (cp_fd < 0) {
+            write_raw_probe();
+            cp_open();
+            write_boot_marker();
+        }
         if (log_fd < 0) {
             try_mount_cache();
             if ((second % 5) == 0)
@@ -521,19 +573,31 @@ static __attribute__((noreturn)) void logger_child(void)
 
 /* ------------------------------------------------------------------ */
 
+#ifndef EXYNOS9810_LOGGER_SERVICE
+
 __attribute__((used, noreturn)) void entry(long *stack)
 {
     long argc = stack[0];
     char **argv = (char **)(stack + 1);
     char **envp = argv + argc + 1;
     slong child;
+    slong exec_result;
     int second;
 
+    /* Try the BOOT marker before the raw partition scan. This gives us a
+     * persistent proof of entry even when CP_DEBUG is not ready yet. */
+    write_raw_probe();
+    write_boot_marker();
     cp_open();
+    for (second = 0; second < 20 && cp_fd < 0; ++second) {
+        sleep_one_second();
+        write_raw_probe();
+        write_boot_marker();
+        cp_open();
+    }
     cp_log("==== UN1CA early logger v4 pid1 =====\n");
     cp_log("session=");
     cp_log_hex(cp_session);
-    write_boot_marker();
     cp_log("boot_marker_written\n");
 
     for (second = 0; second < 15 && log_fd < 0; ++second) {
@@ -549,7 +613,12 @@ __attribute__((used, noreturn)) void entry(long *stack)
     }
     snapshot();
 
-    child = syscall6(SYS_CLONE, SIGCHLD, 0, 0, 0, 0, 0);
+    /* The parent and child have independent cp_next values after clone.
+     * Record the hand-off before cloning so they never overwrite a record. */
+    cp_log("phase=exec_init_real\n");
+    child = syscall6(SYS_CLONE, SIGCHLD,
+                     (slong)(child_stack + sizeof(child_stack)),
+                     0, 0, 0, 0);
     if (child == 0)
         logger_child();
     if (child < 0) {
@@ -557,9 +626,10 @@ __attribute__((used, noreturn)) void entry(long *stack)
         cp_log_hex(child);
     }
 
-    cp_log("phase=exec_init_real\n");
-    syscall6(SYS_EXECVE, (slong)"/init.real", (slong)argv, (slong)envp, 0, 0, 0);
-    cp_log("exec_init_real_failed\n");
+    exec_result = syscall6(SYS_EXECVE, (slong)"/init.real",
+                           (slong)argv, (slong)envp, 0, 0, 0);
+    cp_log("exec_init_real_return=");
+    cp_log_hex(exec_result);
     syscall6(SYS_EXIT, 127, 0, 0, 0, 0, 0);
     for (;;)
         ;
@@ -574,3 +644,23 @@ __attribute__((naked, noreturn)) void _start(void)
             "svc #0\n"
             "b .\n");
 }
+
+#else
+
+/* A service started by init is not swept away when first-stage init hands
+ * control to second-stage init. It only logs; it must never exec init.real. */
+__attribute__((used, noreturn)) void logger_service_entry(void)
+{
+    logger_child();
+}
+
+__attribute__((naked, noreturn)) void _start(void)
+{
+    __asm__("bl logger_service_entry\n"
+            "mov x8, #93\n"
+            "mov x0, #0\n"
+            "svc #0\n"
+            "b .\n");
+}
+
+#endif

@@ -704,6 +704,58 @@ system_ext /system/system_ext
 EOF
 }
 
+_EXYNOS9810_RESTORE_SOURCE_SYSTEM_SYMLINKS()
+{
+    local MANIFEST="$SRC_DIR/platform/exynos9810/metadata/source_system_symlinks"
+    local REL
+    local TARGET
+    local DST
+    local RESTORED=0
+
+    [ -f "$MANIFEST" ] || {
+        LOGE "Missing Exynos9810 source SYSTEM symlink manifest"
+        return 1
+    }
+
+    # Firmware trees copied through Windows can retain fs_config entries while
+    # silently losing Linux symlinks. Restore only absent paths so later device
+    # overlays can still replace donor files or directories intentionally.
+    while IFS=$'\t' read -r REL TARGET; do
+        case "$REL" in
+            ""|\#*) continue ;;
+        esac
+
+        DST="$WORK_DIR/system/$REL"
+        if [ -L "$DST" ]; then
+            if [ "$(readlink "$DST")" != "$TARGET" ]; then
+                rm -f -- "$DST"
+                ln -s "$TARGET" "$DST" || return 1
+                RESTORED=$((RESTORED + 1))
+            fi
+        elif [ ! -e "$DST" ]; then
+            mkdir -p "$(dirname "$DST")"
+            ln -s "$TARGET" "$DST" || return 1
+            RESTORED=$((RESTORED + 1))
+        fi
+    done < "$MANIFEST"
+
+    LOG "- Restored $RESTORED missing source SYSTEM symlinks"
+
+    while read -r REL TARGET; do
+        DST="$WORK_DIR/system/$REL"
+        if [ ! -L "$DST" ] || [ "$(readlink "$DST")" != "$TARGET" ]; then
+            LOGE "Required SYSTEM symlink is missing: /$REL -> $TARGET"
+            return 1
+        fi
+    done <<'EOF'
+system/bin/app_process app_process64
+system/bin/getprop toolbox
+system/bin/ls toybox
+system/bin/mount toybox
+system/bin/ueventd init
+EOF
+}
+
 _EXYNOS9810_COPY_SYSTEM()
 {
     _EXYNOS9810_COPY_TREE "$1" "$WORK_DIR/system/system" "system" "system" "/system" "u:object_r:system_file:s0" 0
@@ -1688,8 +1740,11 @@ _EXYNOS9810_SET_FLOATING_FEATURE()
 
     if grep -q "<$CONFIG>" "$FILE"; then
         sed -i "s|<$CONFIG>[^<]*</$CONFIG>|<$CONFIG>$VALUE</$CONFIG>|" "$FILE"
-    else
+    elif grep -q "</SecFloatingFeatureSet>" "$FILE"; then
         sed -i "/<\/SecFloatingFeatureSet>/i\\    <$CONFIG>$VALUE</$CONFIG>" "$FILE"
+    else
+        printf '    <%s>%s</%s>\n' "$CONFIG" "$VALUE" "$CONFIG" >> "$FILE"
+        printf '</SecFloatingFeatureSet>\n' >> "$FILE"
     fi
 }
 
@@ -3512,8 +3567,25 @@ EOF
 /dev/block/zram0                                        none                    swap    defaults                                                                                 zramsize=50%,max_comp_streams=8,auto_configure
 EOF
 
+    # One UI's RAM Plus controller looks for this separate fstab and init
+    # trigger. Keep the physical-device fstabs above for early boot, then expose
+    # the same zram backend through the Samsung RAM Plus path at boot complete.
+    cat > "$WORK_DIR/vendor/etc/fstab.ramplus" <<'EOF'
+# Android fstab file for Samsung RAM Plus on Exynos9810.
+# The zram device is provided by the Exynos9810 kernel.
+/dev/block/zram0                                        none                    swap    defaults                                                                                 zramsize=2147483648,auto_configure
+EOF
+
+    cat > "$WORK_DIR/vendor/etc/init/init.ramplus.rc" <<'EOF'
+# Samsung RAM Plus late-boot activation.
+on property:sys.boot_completed=1
+    swapon_all /vendor/etc/fstab.ramplus
+EOF
+
     _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/fstab.samsungexynos9810" "/vendor/etc/fstab.samsungexynos9810" 0 0 644 "u:object_r:vendor_configs_file:s0"
     _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/fstab.exynos9810" "/vendor/etc/fstab.exynos9810" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/fstab.ramplus" "/vendor/etc/fstab.ramplus" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/init/init.ramplus.rc" "/vendor/etc/init/init.ramplus.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
 }
 
 _EXYNOS9810_PATCH_EXYNOS9810_INIT_FS()
@@ -3642,6 +3714,7 @@ case "$EXYNOS9810_DEVICE" in
 esac
 
 _EXYNOS9810_APPLY_ROOTFS
+_EXYNOS9810_RESTORE_SOURCE_SYSTEM_SYMLINKS
 _EXYNOS9810_NORMALIZE_PRODUCT_LAYOUT
 _EXYNOS9810_APPLY_FULL_VENDOR_STACK
 

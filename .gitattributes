@@ -14,6 +14,7 @@
 *.ico binary
 *.jpg binary
 *.png binary
+*.pyc binary
 *.qmg binary
 *.tflite binary
 *.webp binary

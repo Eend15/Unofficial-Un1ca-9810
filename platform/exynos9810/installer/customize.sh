@@ -1,6 +1,47 @@
 mkdir -p "$TMP_DIR/exynos9810"
 cp -a "$SRC_DIR/platform/exynos9810/installer/repartition/." "$TMP_DIR/exynos9810/"
 
+EXYNOS9810_CAMERA_MATRIX_CHECK="$SRC_DIR/tools/verify_exynos9810_camera_matrix.sh"
+[ -x "$EXYNOS9810_CAMERA_MATRIX_CHECK" ] || {
+    LOGE "Exynos9810 camera matrix verifier is missing"
+    exit 1
+}
+LOG "- Verifying camera fixes for starlte, star2lte and crownlte"
+EXYNOS9810_LEGACY_PORT_DIR="${EXYNOS9810_LEGACY_PORT_DIR:-/mnt/c/Users/Admin/Downloads/Exynos9810_LegacyPort}" \
+    "$EXYNOS9810_CAMERA_MATRIX_CHECK" || {
+    LOGE "Exynos9810 camera matrix verification failed"
+    exit 1
+}
+
+# Build a small raw-syscall logger so first-stage and early-userspace failures
+# survive the automatic reboot back to recovery.  It writes to /cache and
+# keeps a bounded in-memory buffer until CACHE becomes available.
+EXYNOS9810_BOOTLOGGER_CLANG="${EXYNOS9810_BOOTLOGGER_CLANG:-$(command -v clang 2>/dev/null || true)}"
+[ -n "$EXYNOS9810_BOOTLOGGER_CLANG" ] || {
+    LOGE "Exynos9810 boot logger requires clang"
+    exit 1
+}
+"$EXYNOS9810_BOOTLOGGER_CLANG" \
+    --target=aarch64-linux-gnu \
+    -fuse-ld=lld \
+    -nostdlib \
+    -static \
+    -fno-stack-protector \
+    -fno-builtin \
+    -ffreestanding \
+    -O2 \
+    -Wl,-e,_start \
+    -Wl,--gc-sections \
+    -o "$TMP_DIR/exynos9810/bootlogger-init" \
+    "$SRC_DIR/platform/exynos9810/installer/bootlogger_init.c" || {
+    LOGE "Failed to build Exynos9810 init logger wrapper"
+    exit 1
+}
+cp -a "$SRC_DIR/platform/exynos9810/installer/patch_bootlogger.sh" \
+    "$TMP_DIR/exynos9810/patch_bootlogger.sh"
+chmod 0755 "$TMP_DIR/exynos9810/bootlogger-init" \
+    "$TMP_DIR/exynos9810/patch_bootlogger.sh"
+
 EXYNOS9810_LEGACY_PORT_DIR="${EXYNOS9810_LEGACY_PORT_DIR:-/mnt/c/Users/Admin/Downloads/Exynos9810_LegacyPort}"
 EXYNOS9810_RAMDISK_IMG="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/kernel/ramdisk.img"
 if [ -f "$EXYNOS9810_RAMDISK_IMG" ]; then
@@ -124,5 +165,31 @@ if "Applying Exynos9810 vendor boot fixes" not in script:
     index += len(marker)
     script = script[:index] + "\n" + block + script[index:]
     path.write_text(script)
+PY
+fi
+
+if [ -f "$TMP_DIR/exynos9810/patch_bootlogger.sh" ] && [ -f "$UPDATER_SCRIPT" ]; then
+    python3 - "$UPDATER_SCRIPT" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+script = path.read_text()
+old_extract = '''run_program("/system/bin/unzip", "/tmp/exynos9810/kernel.zip", "META-INF/com/google/android/*", "-d", "/tmp/exynos9810/kernel")'''
+new_extract = '''run_program("/system/bin/unzip", "/tmp/exynos9810/kernel.zip", "-d", "/tmp/exynos9810/kernel")'''
+if old_extract in script:
+    script = script.replace(old_extract, new_extract, 1)
+
+marker = 'ui_print("Formatting cache, omr, preload and data...");'
+block = '''ui_print("Installing Exynos9810 persistent boot logger...");
+package_extract_file("exynos9810/bootlogger-init", "/tmp/exynos9810/bootlogger-init");
+package_extract_file("exynos9810/patch_bootlogger.sh", "/tmp/exynos9810/patch_bootlogger.sh");
+run_program("/system/bin/chmod", "0755", "/tmp/exynos9810/bootlogger-init", "/tmp/exynos9810/patch_bootlogger.sh");
+run_program("/sbin/sh", "/tmp/exynos9810/patch_bootlogger.sh") == 0 ||
+    abort("E9810: Failed to install persistent boot logger.");
+'''
+if marker in script and 'persistent boot logger' not in script:
+    script = script.replace(marker, block + marker, 1)
+path.write_text(script)
 PY
 fi
