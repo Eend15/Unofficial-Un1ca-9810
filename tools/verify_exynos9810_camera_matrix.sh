@@ -27,6 +27,37 @@ for TARGET_CODENAME in starlte star2lte crownlte; do
     _EXYNOS9810_SET_METADATA_SAFE() { return 0; }
 
     _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK
+
+    for rel in \
+        vendor/lib/hw/camera.exynos9810.so \
+        vendor/lib/libexynoscamera3.so \
+        vendor/lib64/hw/camera.exynos9810.so \
+        vendor/lib64/libexynoscamera3.so; do
+        [ -s "$WORK_DIR/$rel" ] || {
+            echo "Missing staged $TARGET_CODENAME camera component: $rel" >&2
+            exit 1
+        }
+    done
+
+    for rel in \
+        vendor/bin/hw/vendor.samsung.hardware.camera.provider@4.0-service \
+        vendor/etc/init/vendor.samsung.hardware.camera.provider@4.0-service.rc \
+        vendor/lib/vendor.samsung.hardware.camera.provider@4.0-legacy.so \
+        vendor/lib/vendor.samsung.hardware.camera.provider@4.0.so \
+        vendor/lib/hw/camera.unihal.default.so \
+        vendor/lib64/hw/camera.unihal.default.so; do
+        [ -s "$WORK_DIR/$rel" ] || {
+            echo "Missing staged shared camera provider component: $rel" >&2
+            exit 1
+        }
+    done
+
+    grep -qF '<local name="SUPPORT_QR_CODE_DETECTION" value="true" />' \
+        "$SRC_DIR/target/$TARGET_CODENAME/camera/camera-feature.xml" || {
+        echo "QR detection is disabled for $TARGET_CODENAME" >&2
+        exit 1
+    }
+
     for pass in 1 2; do
         _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY
         _EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME
@@ -53,6 +84,9 @@ for marker in \
     'instance-of v2, p0, Lcom/samsung/android/camera/core2/maker/QrPhotoMaker;' \
     'instance-of v2, p0, Lcom/samsung/android/camera/core2/maker/AutoBeautyPhotoMaker;' \
     'Exynos9810 legacy HAL does not publish Samsung shutter metadata.' \
+    'if-eqz v0, :exynos9810_shutter_done' \
+    'CallbackHelper$PictureCallbackHelper;->g(Ljava/lang/String;' \
+    'QrController;->QR_CODE_DETECTION_INTERVAL:J' \
     'const/16 v0, 0x5dc'; do
     grep -qF "$marker" <<< "$QR_BODY" || {
         echo "SamsungCamera QR/photo marker is missing: $marker" >&2
