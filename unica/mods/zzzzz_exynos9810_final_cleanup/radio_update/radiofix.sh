@@ -32,11 +32,36 @@ system_setprop_line() {
     fi
 }
 
-# Keep the N770F/Exynos9810 RIL and Android PhoneFactory on one topology.
-# Switching this installed dual-slot payload to one slot caused rild to expose
-# only IRadio/slot1 while the framework still created two phones.
-SIM_SLOTS=2
-MULTISIM_CONFIG=dsds
+# Keep the N770F/Exynos9810 RIL and Android PhoneFactory on the physical
+# topology of the phone being flashed. F and F/DS commonly expose the same
+# model property, so Samsung EFS factory data is the authoritative source.
+get_prop()
+{
+    getprop "$1" 2>/dev/null || true
+}
+
+DEVICE_MODEL="$(get_prop ro.boot.em.model)"
+[ -n "$DEVICE_MODEL" ] || DEVICE_MODEL="$(get_prop ro.product.model)"
+FACTORY_PROP=/efs/imei/factory.prop
+SIM_SLOTS="$(sed -n 's/^ro\.multisim\.simslotcount=//p' "$FACTORY_PROP" 2>/dev/null | head -n 1 | tr -d '\r')"
+MULTISIM_CONFIG="$(sed -n 's/^persist\.radio\.multisim\.config=//p' "$FACTORY_PROP" 2>/dev/null | head -n 1 | tr -d '\r')"
+case "$MULTISIM_CONFIG:$SIM_SLOTS" in
+    ss:1|dsds:2) SIM_SOURCE=efs_factory ;;
+    ss:*) SIM_SLOTS=1; SIM_SOURCE=efs_factory ;;
+    dsds:*) SIM_SLOTS=2; SIM_SOURCE=efs_factory ;;
+    *:1) MULTISIM_CONFIG=ss; SIM_SOURCE=efs_factory ;;
+    *:2) MULTISIM_CONFIG=dsds; SIM_SOURCE=efs_factory ;;
+    *)
+        case "$DEVICE_MODEL" in
+            SM-G960N*|SM-G965N*|SM-N960N*)
+                SIM_SLOTS=1; MULTISIM_CONFIG=ss; SIM_SOURCE=korean_model ;;
+            *)
+                echo "E9810: cannot safely determine SIM topology from EFS: $DEVICE_MODEL" >&2
+                exit 1 ;;
+        esac
+        ;;
+esac
+echo "E9810: radio topology model=$DEVICE_MODEL slots=$SIM_SLOTS mode=$MULTISIM_CONFIG source=$SIM_SOURCE"
 
 # The system property must agree with the physical topology before framework
 # telephony creates the subscriber/IMEI service.

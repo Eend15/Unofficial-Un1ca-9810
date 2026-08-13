@@ -1,20 +1,149 @@
-From 18f2ff84ad8d8cdadd8b0a30bfb20f3aec3d2286 Mon Sep 17 00:00:00 2001
-From: Eend15 <a@b.c>
-Date: Mon, 13 Jul 2026 01:15:00 +0200
-Subject: [PATCH] Dispatch Exynos9810 Bixby scan code through UN1CA selector
-
----
- .../server/policy/PhoneWindowManager.smali    | 150 +++++++++++++++++++
- 1 file changed, 150 insertions(+)
-
+diff --git a/smali_classes2/com/android/server/policy/PhoneWindowManager$UnicaBixbyRunnable.smali b/smali_classes2/com/android/server/policy/PhoneWindowManager$UnicaBixbyRunnable.smali
+new file mode 100644
+index 0000000..1a14d8a
+--- /dev/null
++++ b/smali_classes2/com/android/server/policy/PhoneWindowManager$UnicaBixbyRunnable.smali
+@@ -0,0 +1,135 @@
++.class final Lcom/android/server/policy/PhoneWindowManager$UnicaBixbyRunnable;
++.super Ljava/lang/Object;
++.source "PhoneWindowManager.java"
++
++# interfaces
++.implements Ljava/lang/Runnable;
++
++# instance fields
++.field private final mPolicy:Lcom/android/server/policy/PhoneWindowManager;
++
++# direct methods
++.method constructor <init>(Lcom/android/server/policy/PhoneWindowManager;)V
++    .locals 0
++
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    iput-object p1, p0, Lcom/android/server/policy/PhoneWindowManager$UnicaBixbyRunnable;->mPolicy:Lcom/android/server/policy/PhoneWindowManager;
++
++    return-void
++.end method
++
++# virtual methods
++.method public run()V
++    .locals 10
++
++    :try_start_0
++    const-string v0, "persist.sys.unica.bixby_action"
++
++    const/4 v1, 0x0
++
++    invoke-static {v0, v1}, Landroid/os/SystemProperties;->getInt(Ljava/lang/String;I)I
++
++    move-result v0
++
++    iget-object v2, p0, Lcom/android/server/policy/PhoneWindowManager$UnicaBixbyRunnable;->mPolicy:Lcom/android/server/policy/PhoneWindowManager;
++
++    iget-object v3, v2, Lcom/android/server/policy/PhoneWindowManager;->mContext:Landroid/content/Context;
++
++    if-nez v0, :not_bixby
++
++    new-instance v4, Landroid/content/Intent;
++
++    const-string v5, "com.samsung.android.bixby.action.WAKEUP_LAUNCH_BIXBY"
++
++    invoke-direct {v4, v5}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
++
++    const-string v5, "com.samsung.android.bixby.agent"
++
++    invoke-virtual {v4, v5}, Landroid/content/Intent;->setPackage(Ljava/lang/String;)Landroid/content/Intent;
++
++    sget-object v5, Landroid/os/UserHandle;->CURRENT:Landroid/os/UserHandle;
++
++    invoke-virtual {v3, v4, v5}, Landroid/content/Context;->sendBroadcastAsUser(Landroid/content/Intent;Landroid/os/UserHandle;)V
++
++    goto :done
++
++    :not_bixby
++    const/4 v1, 0x1
++
++    if-ne v0, v1, :not_gemini
++
++    # Keep Gemini's compact floaty overlay by using the same source flag as
++    # SystemUI's assistant gesture instead of starting VOICE_ASSIST activity.
++    new-instance v4, Lcom/android/internal/app/AssistUtils;
++
++    invoke-direct {v4, v3}, Lcom/android/internal/app/AssistUtils;-><init>(Landroid/content/Context;)V
++
++    new-instance v5, Landroid/os/Bundle;
++
++    invoke-direct {v5}, Landroid/os/Bundle;-><init>()V
++
++    const/4 v6, 0x4
++
++    const/4 v7, 0x0
++
++    const/4 v8, 0x0
++
++    const/4 v9, 0x0
++
++    invoke-virtual/range {v4 .. v9}, Lcom/android/internal/app/AssistUtils;->showSessionForActiveService(Landroid/os/Bundle;ILjava/lang/String;Lcom/android/internal/app/IVoiceInteractionSessionShowCallback;Landroid/os/IBinder;)Z
++
++    goto :done
++
++    :not_gemini
++    const/4 v1, 0x2
++
++    if-ne v0, v1, :not_camera
++
++    new-instance v4, Landroid/content/Intent;
++
++    const-string v5, "android.media.action.STILL_IMAGE_CAMERA"
++
++    invoke-direct {v4, v5}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
++
++    const/high16 v5, 0x10000000
++
++    invoke-virtual {v4, v5}, Landroid/content/Intent;->addFlags(I)Landroid/content/Intent;
++
++    sget-object v5, Landroid/os/UserHandle;->CURRENT:Landroid/os/UserHandle;
++
++    invoke-virtual {v3, v4, v5}, Landroid/content/Context;->startActivityAsUser(Landroid/content/Intent;Landroid/os/UserHandle;)V
++
++    goto :done
++
++    :not_camera
++    const/4 v1, 0x3
++
++    if-ne v0, v1, :done
++
++    # Use Samsung's stock side-key flashlight path into SystemUI.
++    iget-object v2, v2, Lcom/android/server/policy/PhoneWindowManager;->mExt:Lcom/android/server/policy/PhoneWindowManagerExt;
++
++    if-eqz v2, :done
++
++    const/16 v1, 0x1a
++
++    invoke-virtual {v2, v1}, Lcom/android/server/policy/PhoneWindowManagerExt;->onFlashlightKeyPressed(I)V
++
++    :try_end_0
++    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
++
++    :done
++    return-void
++
++    :catch_0
++    move-exception v0
++
++    const-string v1, "PhoneWindowManager"
++
++    const-string v2, "UN1CA Bixby action failed"
++
++    invoke-static {v1, v2, v0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    return-void
++.end method
 diff --git a/smali_classes2/com/android/server/policy/PhoneWindowManager.smali b/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
-index e894aa5..315ead9 100644
+index e894aa5..b8decc1 100644
 --- a/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
 +++ b/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
-@@ -12706,6 +12706,36 @@
- 
-     move/from16 v3, p2
- 
+@@ -12708,0 +12709,30 @@
 +    # Handle the Exynos9810 physical Bixby key by scan code so this does not
 +    # depend on Samsung's assistant policy and never affects a normal camera key.
 +    invoke-virtual {v2}, Landroid/view/KeyEvent;->getScanCode()I
@@ -45,111 +174,24 @@ index e894aa5..315ead9 100644
 +    return v0
 +
 +    :unica_bixby_passthrough
-     invoke-virtual {v2}, Landroid/view/KeyEvent;->getKeyCode()I
- 
-     move-result v4
-@@ -16884,6 +16914,126 @@
-     return-void
- .end method
- 
+@@ -16886,0 +16917,38 @@
 +.method static synthetic unicaBixbyRemap(Lcom/android/server/policy/PhoneWindowManager;)Z
-+    .locals 10
++    .locals 3
 +
-+    const/4 v0, 0x0
-+
-+    # UN1CA Bixby-key remap: action 0=Bixby 1=Gemini 2=Camera
-+    const-string v1, "persist.sys.unica.bixby_action"
-+
-+    invoke-static {v1, v0}, Landroid/os/SystemProperties;->getInt(Ljava/lang/String;I)I
-+
-+    move-result v3
-+
-+    iget-object v1, p0, Lcom/android/server/policy/PhoneWindowManager;->mContext:Landroid/content/Context;
-+
-+    invoke-virtual {v1}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
-+
-+    move-result-object v4
-+
-+    const/4 v5, 0x0
-+
-+    if-nez v3, :not_default
-+
-+    new-instance v5, Landroid/content/Intent;
-+
-+    const-string v6, "com.samsung.android.bixby.action.WAKEUP_LAUNCH_BIXBY"
-+
-+    invoke-direct {v5, v6}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
-+
-+    const-string v6, "com.samsung.android.bixby.agent"
-+
-+    invoke-virtual {v5, v6}, Landroid/content/Intent;->setPackage(Ljava/lang/String;)Landroid/content/Intent;
-+
-+    move-result-object v5
-+
-+    sget-object v2, Landroid/os/UserHandle;->CURRENT:Landroid/os/UserHandle;
-+
-+    invoke-virtual {v1, v5, v2}, Landroid/content/Context;->sendBroadcastAsUser(Landroid/content/Intent;Landroid/os/UserHandle;)V
-+
-+    const/4 v0, 0x1
-+
-+    return v0
-+
-+    :not_default
-+    const/4 v6, 0x1
-+
-+    if-ne v3, v6, :not_gemini
-+
-+    # Open the active VoiceInteraction session itself. Starting VOICE_ASSIST
-+    # as an Activity opens Gemini's large/full UI; this call opens Google's
-+    # compact FloatyActivity at the bottom, like the stock assistant gesture.
-+    new-instance v4, Lcom/android/internal/app/AssistUtils;
-+
-+    invoke-direct {v4, v1}, Lcom/android/internal/app/AssistUtils;-><init>(Landroid/content/Context;)V
-+
-+    new-instance v5, Landroid/os/Bundle;
-+
-+    invoke-direct {v5}, Landroid/os/Bundle;-><init>()V
-+
-+    # SHOW_SOURCE_ASSIST_GESTURE (0x4): same source flag SystemUI's
-+    # AssistManager passes for the corner-swipe gesture. Without it Gemini
-+    # renders GoogleAppVoiceAssistEntrypoint full-screen instead of the
-+    # compact floaty bar.
-+    const/4 v6, 0x4
-+
-+    const/4 v7, 0x0
-+
-+    const/4 v8, 0x0
-+
-+    const/4 v9, 0x0
-+
-+    invoke-virtual/range {v4 .. v9}, Lcom/android/internal/app/AssistUtils;->showSessionForActiveService(Landroid/os/Bundle;ILjava/lang/String;Lcom/android/internal/app/IVoiceInteractionSessionShowCallback;Landroid/os/IBinder;)Z
-+
-+    move-result v0
-+
-+    return v0
-+
-+    :not_gemini
-+    const/4 v6, 0x2
-+
-+    if-ne v3, v6, :ret_false
-+
-+    new-instance v5, Landroid/content/Intent;
-+
-+    const-string v6, "android.media.action.STILL_IMAGE_CAMERA"
-+
-+    invoke-direct {v5, v6}, Landroid/content/Intent;-><init>(Ljava/lang/String;)V
-+
-+    :have_intent
-+    if-eqz v5, :ret_false
-+
-+    const/high16 v2, 0x10000000
-+
-+    invoke-virtual {v5, v2}, Landroid/content/Intent;->addFlags(I)Landroid/content/Intent;
-+
++    # Never launch apps or assistant sessions from input dispatch. A blocked
++    # binder call here can stall system_server and trip the watchdog.
 +    :try_start_0
-+    sget-object v2, Landroid/os/UserHandle;->CURRENT:Landroid/os/UserHandle;
++    new-instance v0, Lcom/android/server/policy/PhoneWindowManager$UnicaBixbyRunnable;
 +
-+    invoke-virtual {v1, v5, v2}, Landroid/content/Context;->startActivityAsUser(Landroid/content/Intent;Landroid/os/UserHandle;)V
++    invoke-direct {v0, p0}, Lcom/android/server/policy/PhoneWindowManager$UnicaBixbyRunnable;-><init>(Lcom/android/server/policy/PhoneWindowManager;)V
++
++    new-instance v1, Ljava/lang/Thread;
++
++    const-string v2, "UN1CA-BixbyKey"
++
++    invoke-direct {v1, v0, v2}, Ljava/lang/Thread;-><init>(Ljava/lang/Runnable;Ljava/lang/String;)V
++
++    invoke-virtual {v1}, Ljava/lang/Thread;->start()V
 +    :try_end_0
 +    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
 +
@@ -158,22 +200,16 @@ index e894aa5..315ead9 100644
 +    return v0
 +
 +    :catch_0
-+    move-exception v1
++    move-exception v0
 +
 +    const-string v1, "PhoneWindowManager"
 +
-+    const-string v2, "UN1CA Bixby remap failed to launch"
++    const-string v2, "Unable to dispatch UN1CA Bixby action"
 +
-+    invoke-static {v1, v2}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
++    invoke-static {v1, v2, v0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 +
-+    :ret_false
 +    const/4 v0, 0x0
 +
 +    return v0
 +.end method
 +
- .method public final launchAssistAction(IIJLjava/lang/String;)V
-     .locals 2
- 
--- 
-2.43.0

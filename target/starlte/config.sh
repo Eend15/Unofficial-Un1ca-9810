@@ -4,7 +4,18 @@
 # Device configuration file for Galaxy S9 (Exynos) (starlte)
 TARGET_NAME="Galaxy S9 (Exynos)"
 TARGET_CODENAME="starlte"
-TARGET_ASSERT_MODEL=("SM-G960F" "SM-G960F/DS" "SM-G960FD" "SM-G960N")
+# The artifact is topology-neutral. Samsung EFS factory.prop selects single or
+# dual SIM during early boot; accept every Exynos starlte model at install.
+TARGET_SIM_VARIANT="auto"
+case "$TARGET_SIM_VARIANT" in
+    auto)
+        TARGET_ASSERT_MODEL=("SM-G960F" "SM-G960F/DS" "SM-G960FD" "SM-G960N")
+        ;;
+    *)
+        printf 'Unsupported TARGET_SIM_VARIANT for starlte: %s\n' "$TARGET_SIM_VARIANT" >&2
+        return 1
+        ;;
+esac
 TARGET_PLATFORM="exynos9810"
 TARGET_FIRMWARE="SM-G960F/PHN/352410095670563"
 # Temporarily disabled: Samsung's FUS backend currently refuses this

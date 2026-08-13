@@ -4,7 +4,18 @@
 # Device configuration file for Galaxy Note9 (Exynos) (crownlte)
 TARGET_NAME="Galaxy Note9 (Exynos)"
 TARGET_CODENAME="crownlte"
-TARGET_ASSERT_MODEL=("SM-N960F" "SM-N960F/DS" "SM-N960FD" "SM-N960N")
+# The artifact is topology-neutral. Samsung EFS factory.prop selects single or
+# dual SIM during early boot; accept every Exynos crownlte model at install.
+TARGET_SIM_VARIANT="auto"
+case "$TARGET_SIM_VARIANT" in
+    auto)
+        TARGET_ASSERT_MODEL=("SM-N960F" "SM-N960F/DS" "SM-N960FD" "SM-N960N")
+        ;;
+    *)
+        printf 'Unsupported TARGET_SIM_VARIANT for crownlte: %s\n' "$TARGET_SIM_VARIANT" >&2
+        return 1
+        ;;
+esac
 TARGET_PLATFORM="exynos9810"
 TARGET_FIRMWARE="SM-N960F/PHN/351752105470174"
 # Temporarily disabled: Samsung's FUS backend currently refuses this

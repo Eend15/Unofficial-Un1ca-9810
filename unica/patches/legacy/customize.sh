@@ -147,6 +147,136 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "34" ]; then
     fi
 fi
 
+# Android 16 still uses the Samsung AIDL face framework, while the Exynos9810
+# face stack comes from the legacy 9810 HAL. That HAL can return a zero
+# challenge during enrollment even though the credential HAT is present. The
+# Android 16 Samsung extension rejects that token before calling ISession, so
+# enrollment fails with IllegalArgumentException and the UI only shows a
+# generic camera/face error. Keep the modern enrollWithOptions path untouched
+# and use the legacy ISession.enroll path only for the known 9810 AIDL service.
+_EXYNOS9810_FACE_REPLACE_SMALI_METHOD()
+{
+    local FILE="$1"
+    local METHOD="$2"
+    local BODY="$3"
+    local TMP="$FILE.tmp"
+
+    awk -v FN="$METHOD" -v BODY="$BODY" '
+        BEGIN { inside = 0; replaced = 0; n = split(BODY, lines, "\n") }
+        /^\.method/ && index($0, FN) {
+            print
+            for (i = 1; i <= n; i++) print lines[i]
+            inside = 1
+            replaced = 1
+            next
+        }
+        inside && /^\.end method/ {
+            print
+            inside = 0
+            next
+        }
+        inside { next }
+        { print }
+        END { if (!replaced) exit 42 }
+    ' "$FILE" > "$TMP" || {
+        rm -f "$TMP"
+        LOGE "Failed to patch legacy Exynos9810 face method \"$METHOD\""
+        return 1
+    }
+
+    mv -f "$TMP" "$FILE"
+}
+
+_EXYNOS9810_PATCH_FACE_ZERO_CHALLENGE()
+{
+    case "$TARGET_CODENAME" in
+        starlte|star2lte|crownlte)
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+
+    [ "$TARGET_PLATFORM" = "exynos9810" ] || return 0
+    [ -f "$WORK_DIR/vendor/bin/hw/vendor.samsung.hardware.biometrics.face-service" ] || return 0
+
+    local SMALI
+    local BODY
+
+    DECODE_APK "system" "system/framework/services.jar" || return 1
+    SMALI="$(find "$APKTOOL_DIR/system/framework/services.jar" -type f \
+        -path "*/com/android/server/biometrics/sensors/face/aidl/SemFaceServiceExImpl.smali" | head -n 1)"
+    if [ ! -f "$SMALI" ]; then
+        LOGE "SemFaceServiceExImpl.smali not found while enabling Exynos9810 face compatibility"
+        return 1
+    fi
+
+    BODY="$(cat <<'EOF'
+    .locals 8
+
+    const-string v6, "SemFace"
+    const-string v7, "enroll BILG "
+    invoke-static {v6, v7}, Landroid/util/Slog;->i(Ljava/lang/String;Ljava/lang/String;)I
+
+    iget-object v1, p0, Lcom/android/server/biometrics/sensors/face/aidl/SemFaceServiceExImpl;->mISession:Landroid/hardware/biometrics/face/ISession;
+    if-eqz v1, :no_face_hal
+
+    if-eqz p1, :legacy_enroll
+    iget-wide v2, p1, Landroid/hardware/keymaster/HardwareAuthToken;->challenge:J
+    const-wide/16 v4, 0x0
+    cmp-long v0, v2, v4
+    if-nez v0, :modern_or_legacy
+
+    const-string v6, "SemFace"
+    const-string v7, "daemonEnroll: zero challenge from legacy Exynos9810 HAT; using ISession.enroll"
+    invoke-static {v6, v7}, Landroid/util/Slog;->w(Ljava/lang/String;Ljava/lang/String;)I
+    goto :legacy_enroll
+
+    :modern_or_legacy
+    invoke-virtual {p5}, Ljava/lang/Boolean;->booleanValue()Z
+    move-result v0
+    if-eqz v0, :legacy_enroll
+
+    new-instance v0, Landroid/hardware/biometrics/face/FaceEnrollOptions;
+    invoke-direct {v0}, Landroid/hardware/biometrics/face/FaceEnrollOptions;-><init>()V
+    iput-object p1, v0, Landroid/hardware/biometrics/face/FaceEnrollOptions;->hardwareAuthToken:Landroid/hardware/keymaster/HardwareAuthToken;
+    const/4 v4, 0x0
+    const/4 v5, 0x0
+    iput-byte v4, v0, Landroid/hardware/biometrics/face/FaceEnrollOptions;->enrollmentType:B
+    iput-object p2, v0, Landroid/hardware/biometrics/face/FaceEnrollOptions;->features:[B
+    iput-object p3, v0, Landroid/hardware/biometrics/face/FaceEnrollOptions;->nativeHandlePreview:Landroid/hardware/common/NativeHandle;
+    iput-object v5, v0, Landroid/hardware/biometrics/face/FaceEnrollOptions;->context:Landroid/hardware/biometrics/common/OperationContext;
+    iput-object p4, v0, Landroid/hardware/biometrics/face/FaceEnrollOptions;->surfacePreview:Landroid/view/Surface;
+    invoke-interface {v1, v0}, Landroid/hardware/biometrics/face/ISession;->enrollWithOptions(Landroid/hardware/biometrics/face/FaceEnrollOptions;)Landroid/hardware/biometrics/common/ICancellationSignal;
+    move-result-object v0
+    iput-object v0, p0, Lcom/android/server/biometrics/sensors/face/aidl/SemFaceServiceExImpl;->mCancellationSignal:Landroid/hardware/biometrics/common/ICancellationSignal;
+    return-object v0
+
+    :legacy_enroll
+    const/4 v4, 0x0
+    invoke-interface {v1, p1, v4, p2, p3}, Landroid/hardware/biometrics/face/ISession;->enroll(Landroid/hardware/keymaster/HardwareAuthToken;B[BLandroid/hardware/common/NativeHandle;)Landroid/hardware/biometrics/common/ICancellationSignal;
+    move-result-object v0
+    iput-object v0, p0, Lcom/android/server/biometrics/sensors/face/aidl/SemFaceServiceExImpl;->mCancellationSignal:Landroid/hardware/biometrics/common/ICancellationSignal;
+    return-object v0
+
+    :no_face_hal
+    new-instance v0, Ljava/lang/IllegalArgumentException;
+    invoke-direct {v0}, Ljava/lang/IllegalArgumentException;-><init>()V
+    throw v0
+EOF
+)"
+
+    LOG "- Adding Exynos9810 zero-challenge face enrollment compatibility to /system/system/framework/services.jar"
+    _EXYNOS9810_FACE_REPLACE_SMALI_METHOD "$SMALI" "daemonEnroll(" "$BODY" || return 1
+    if ! grep -q "zero challenge from legacy Exynos9810 HAT" "$SMALI"; then
+        LOGE "Exynos9810 face enrollment compatibility patch was not applied"
+        return 1
+    fi
+    PATCHED=true
+}
+
+_EXYNOS9810_PATCH_FACE_ZERO_CHALLENGE || return 1
+
 # Support legacy SehLights HAL (pre-API 35)
 # - Check for [lsr wD, wS, #0x18] to determine if the newer HAL is already in place
 if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "35" ]; then

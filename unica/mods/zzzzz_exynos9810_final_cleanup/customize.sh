@@ -290,26 +290,19 @@ _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF()
 
     cp -af "$PAYLOAD/." "$WORK_DIR/vendor/" || return 1
 
-    # Final vendor/system restores run after the platform topology patch, so
-    # assert the coherent dual-slot values here as the last writer. The same
-    # values must be visible to vendor rild and framework PhoneFactory.
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
-        "ro.multisim.simslotcount" "2"
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
-        "ro.vendor.multisim.simslotcount" "2"
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
-        "persist.radio.multisim.config" "dsds"
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
-        "ro.telephony.sim_slots.count" "2"
+    # Do not bake a single/dual topology into EROFS. Samsung's stock
+    # secril_config_svc reads the immutable device value from EFS during `on fs`
+    # and sets both framework and vendor slot-count properties before RIL starts.
+    for REL in \
+        ro.multisim.simslotcount \
+        ro.vendor.multisim.simslotcount \
+        persist.radio.multisim.config \
+        ro.telephony.sim_slots.count; do
+        _EXYNOS9810_FINAL_DELETE_PROP "$WORK_DIR/vendor/build.prop" "$REL"
+        _EXYNOS9810_FINAL_DELETE_PROP "$WORK_DIR/system/system/build.prop" "$REL"
+    done
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
         "ro.config.show4gforlte" "true"
-
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" \
-        "ro.multisim.simslotcount" "2"
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" \
-        "persist.radio.multisim.config" "dsds"
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" \
-        "ro.telephony.sim_slots.count" "2"
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" \
         "ro.config.show4gforlte" "true"
 
@@ -384,38 +377,42 @@ _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF()
         return 1
     }
 
-    # The framework, VINTF manifests and N770F rild payload are all dual-slot.
-    # Never let a device-side probe turn only vendor into single-SIM: that leaves
-    # PhoneFactory waiting forever for IRadio/slot2 and causes boot-time ANRs,
-    # excessive heat and repeated SystemUI/phone-process restarts.
-    for REL in \
-        'ro.multisim.simslotcount=2' \
-        'ro.vendor.multisim.simslotcount=2' \
-        'persist.radio.multisim.config=dsds' \
-        'ro.telephony.sim_slots.count=2' \
-        'ro.config.show4gforlte=true'; do
-        grep -qxF "$REL" "$WORK_DIR/vendor/build.prop" || {
-            LOGE "Exynos9810 dual-slot radio property is missing: $REL"
+    for REL in ro.multisim.simslotcount ro.vendor.multisim.simslotcount \
+            persist.radio.multisim.config ro.telephony.sim_slots.count; do
+        ! grep -q "^${REL}=" "$WORK_DIR/vendor/build.prop" || {
+            LOGE "Static vendor SIM topology survived final cleanup: $REL"
+            return 1
+        }
+        ! grep -q "^${REL}=" "$WORK_DIR/system/system/build.prop" || {
+            LOGE "Static framework SIM topology survived final cleanup: $REL"
             return 1
         }
     done
 
-    for REL in \
-        'ro.multisim.simslotcount=2' \
-        'persist.radio.multisim.config=dsds' \
-        'ro.telephony.sim_slots.count=2' \
-        'ro.config.show4gforlte=true'; do
-        grep -qxF "$REL" "$WORK_DIR/system/system/build.prop" || {
-            LOGE "Exynos9810 framework radio property is missing: $REL"
-            return 1
-        }
-    done
-
-    grep -q '^on property:ro.vendor.multisim.simslotcount=2$' \
+    grep -q '^on property:ro.vendor.multisim.simslotcount=\*$' \
         "$WORK_DIR/vendor/etc/init/init.baseband.rc" || {
-        LOGE "Exynos9810 exported dual-slot baseband trigger is missing"
+        LOGE "Exynos9810 dynamic SIM baseband trigger is missing"
         return 1
     }
+    grep -q 'exec_start sim_config' \
+        "$WORK_DIR/vendor/etc/init/init.vendor.rilcommon.rc" || {
+        LOGE "Samsung EFS SIM topology service is missing"
+        return 1
+    }
+    [ -f "$WORK_DIR/vendor/bin/secril_config_svc" ] || {
+        LOGE "Samsung EFS SIM topology binary is missing"
+        return 1
+    }
+    strings "$WORK_DIR/vendor/bin/secril_config_svc" | grep -qx '/mnt/vendor/efs/factory.prop' || {
+        LOGE "Samsung EFS SIM topology binary does not read factory.prop"
+        return 1
+    }
+    while IFS= read -r -d '' PROP_FILE; do
+        if grep -Eq '^(ro\.(vendor\.)?multisim\.simslotcount|persist\.radio\.multisim\.config|ro\.telephony\.sim_slots\.count)=' "$PROP_FILE"; then
+            LOGE "Static SIM topology survived final cleanup: $PROP_FILE"
+            return 1
+        fi
+    done < <(find "$WORK_DIR" -type f \( -name 'build.prop' -o -name 'prop.default' -o -name 'default.prop' \) -print0)
     if grep -q '^on property:ro.multisim.simslotcount' \
         "$WORK_DIR/vendor/etc/init/init.baseband.rc"; then
         LOGE "Exynos9810 baseband init still uses an enforcing-blocked system property trigger"
@@ -899,6 +896,15 @@ _EXYNOS9810_FINAL_SET_PROP()
     [ -f "$FILE" ] || return 0
     sed -i "/^$PROP=/d" "$FILE"
     echo "$PROP=$VALUE" >> "$FILE"
+}
+
+_EXYNOS9810_FINAL_DELETE_PROP()
+{
+    local FILE="$1"
+    local PROP="$2"
+
+    [ -f "$FILE" ] || return 0
+    sed -i "/^$PROP=/d" "$FILE"
 }
 
 _EXYNOS9810_FINAL_RAM_TWEAKS()
@@ -2534,6 +2540,53 @@ _EXYNOS9810_FINAL_VERIFY_PHOTO_EDITOR_STACK()
     return 0
 }
 
+_EXYNOS9810_FINAL_ENABLE_SIM_VARIANT_ACCEPTANCE()
+{
+    # The unified ROM selects the physical topology from Samsung EFS at install
+    # and first boot. Samsung's stock mismatch handler asks for a factory reset
+    # and races Setup Wizard, so it must never display on Exynos9810.
+    local DIR="$APKTOOL_DIR/system/framework/telephony-common.jar"
+    local CONTROLLER
+
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+    DECODE_APK "system" "system/framework/telephony-common.jar" || return 1
+    CONTROLLER="$(find "$DIR" -path '*/com/android/internal/telephony/uicc/UiccController.smali' | head -n 1)"
+    [ -f "$CONTROLLER" ] || {
+        LOGE "UiccController SIM mismatch class was not found"
+        return 1
+    }
+
+    LOG "- Permanently disabling Samsung's obsolete SIM reset dialog"
+    python3 - "$CONTROLLER" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+controller = Path(sys.argv[1])
+c = controller.read_text()
+pattern = re.compile(
+    r'(\.method private blacklist onSimCountMismatched\(Landroid/os/AsyncResult;\)V\n'
+    r'\s+\.locals \d+\n)(.*?)(\n\.end method)', re.S)
+match = pattern.search(c)
+if not match:
+    raise SystemExit("SIM mismatch method pattern not found")
+replacement = match.group(1) + '\n    return-void\n' + match.group(3)
+c, count = pattern.subn(replacement, c, count=1)
+if count != 1:
+    raise SystemExit("SIM mismatch method was not patched exactly once")
+controller.write_text(c)
+PY
+
+    python3 - "$CONTROLLER" <<'PY' || return 1
+from pathlib import Path
+import re, sys
+c = Path(sys.argv[1]).read_text()
+m = re.search(r'\.method private blacklist onSimCountMismatched\(Landroid/os/AsyncResult;\)V\s+\.locals \d+\s+(\S+)', c)
+if not m or m.group(1) != 'return-void':
+    raise SystemExit("SIM mismatch dialog no-op verification failed")
+PY
+}
+
 _EXYNOS9810_FINAL_ADD_VIBRATOR_AIDL_HAL()
 {
     # The 9810 vendor only ships a HIDL vibrator HAL, but the One UI 8 framework
@@ -2914,6 +2967,641 @@ PY
     }
 
     return 0
+}
+
+_EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_BLE_PROTOCOL()
+{
+    # The One UI 8 built-in S Pen driver uses the newer command protocol:
+    # stop=5, start=3 and reset=3,2. Crown's Wacom controller instead needs
+    # its charging module explicitly cycled with 0,1 before charge/reset and
+    # uses 0 to stop. Without that translation the BLE scanner works, but the
+    # pen never advertises and Air Actions ends in SCANNING_TIMEOUT/TICTOC_FAIL.
+    [[ "$TARGET_CODENAME" == "crownlte" ]] || return 0
+
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/AirCommand/AirCommand.apk"
+    local RUNNABLE="$APK_DIR/smali/j3/b.smali"
+    local WACOM_DRIVER="$APK_DIR/smali/j3/a.smali"
+    local CONTINUOUS="$APK_DIR/smali/androidx/activity/d.smali"
+    local BLE_DRIVER="$APK_DIR/smali/U2/k.smali"
+    local BUILTIN_DRIVER="$APK_DIR/smali/U2/c.smali"
+    local DEVICE_PROFILE="$APK_DIR/smali/b3/b.smali"
+    local CROWN_PROFILE="$APK_DIR/smali/b3/a.smali"
+    local APP_FEATURES="$APK_DIR/smali/a3/a.smali"
+    local TICTOC_WORKER="$APK_DIR/smali/A/j.smali"
+
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/AirCommand/AirCommand.apk" || return 1
+    [ -f "$RUNNABLE" ] || {
+        LOGE "AirCommand Wacom runnable not found; cannot apply crown BLE protocol"
+        return 1
+    }
+    [ -f "$WACOM_DRIVER" ] && [ -f "$CONTINUOUS" ] && [ -f "$BLE_DRIVER" ] && \
+        [ -f "$BUILTIN_DRIVER" ] && [ -f "$DEVICE_PROFILE" ] && [ -f "$CROWN_PROFILE" ] && \
+        [ -f "$APP_FEATURES" ] && [ -f "$TICTOC_WORKER" ] || {
+        LOGE "AirCommand built-in S Pen driver files are missing"
+        return 1
+    }
+
+    LOG "- Translating One UI 8 S Pen BLE commands to the Note9 Wacom protocol"
+    python3 - "$RUNNABLE" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+if ":unica_crown_start" in text:
+    print("already patched")
+    raise SystemExit(0)
+
+reset_old = '''    invoke-virtual {p0}, Lj3/a;->a()V
+
+    const-string v0, "3"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+
+    const-wide/16 v0, 0x2bc
+
+    invoke-static {v0, v1}, Lm5/b;->s0(J)V
+
+    const-string v0, "2"
+'''
+reset_new = '''    invoke-virtual {p0}, Lj3/a;->a()V
+
+    const-string v0, "0"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+
+    const-string v0, "1"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+
+    const-string v0, "2"
+'''
+
+stop_old = '''    const-string v0, "5"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+'''
+stop_new = '''    const-string v0, "0"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+'''
+
+start_old = '''    :pswitch_1
+    iget-object p0, p0, Lj3/b;->g:Lj3/a;
+
+    invoke-virtual {p0}, Lj3/a;->a()V
+
+    const-string v0, "3"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+'''
+start_new = '''    :pswitch_1
+    iget-object p0, p0, Lj3/b;->g:Lj3/a;
+
+    invoke-virtual {p0}, Lj3/a;->a()V
+
+    :unica_crown_start
+    const-string v0, "0"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+
+    const-string v0, "1"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+
+    const-string v0, "3"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+'''
+
+for name, old in (("reset", reset_old), ("stop", stop_old), ("start", start_old)):
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"{name} pattern count is {count}, expected 1")
+    replacement = {"reset": reset_new, "stop": stop_new, "start": start_new}[name]
+    text = text.replace(old, replacement, 1)
+
+path.write_text(text)
+print("ok")
+PY
+
+    python3 - "$CONTINUOUS" "$BLE_DRIVER" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+continuous = Path(sys.argv[1])
+driver = Path(sys.argv[2])
+
+text = continuous.read_text()
+if ":unica_crown_continuous_charge" not in text:
+    old = '''    :pswitch_2
+    iget-object p0, p0, Landroidx/activity/d;->g:Ljava/lang/Object;
+
+    check-cast p0, Lj3/a;
+
+    invoke-virtual {p0}, Lj3/a;->a()V
+
+    const-string v0, "3"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+
+    const-string v0, "4"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+'''
+    new = '''    :pswitch_2
+    iget-object p0, p0, Landroidx/activity/d;->g:Ljava/lang/Object;
+
+    check-cast p0, Lj3/a;
+
+    invoke-virtual {p0}, Lj3/a;->a()V
+
+    :unica_crown_continuous_charge
+    const-string v0, "0"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+
+    const-string v0, "1"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+
+    const-string v0, "3"
+
+    invoke-virtual {p0, v0}, Lj3/a;->h(Ljava/lang/String;)V
+'''
+    if text.count(old) != 1:
+        raise SystemExit("continuous-charge pattern mismatch")
+    continuous.write_text(text.replace(old, new, 1))
+
+text = driver.read_text()
+if ":unica_crown_legacy_button" not in text:
+    old = '''    array-length v3, v2
+
+    if-nez v3, :cond_1
+
+    goto :goto_1
+
+    :cond_1
+    aget-byte v3, v2, v5
+'''
+    new = '''    array-length v3, v2
+
+    if-nez v3, :unica_crown_check_legacy_button
+
+    goto :goto_1
+
+    :unica_crown_check_legacy_button
+    const/4 v9, 0x1
+
+    if-ne v3, v9, :cond_1
+
+    aget-byte v3, v2, v5
+
+    and-int/lit16 v3, v3, 0xff
+
+    if-eq v3, v9, :unica_crown_legacy_click
+
+    const/4 v9, 0x2
+
+    if-eq v3, v9, :unica_crown_legacy_long_click
+
+    goto :cond_1
+
+    :unica_crown_legacy_click
+    move-object/from16 v9, p0
+
+    iget-object v10, v9, LU2/j;->j:Lg2/e;
+
+    const/4 v3, 0x1
+
+    invoke-static {v3, v0, v1, v7}, LU2/j;->c(IJLjava/lang/String;)LS2/l;
+
+    move-result-object v3
+
+    invoke-virtual {v10, v3}, Lg2/e;->x(LS2/q;)V
+
+    goto/16 :cond_b
+
+    :unica_crown_legacy_long_click
+    move-object/from16 v9, p0
+
+    iget-object v10, v9, LU2/j;->j:Lg2/e;
+
+    const/4 v3, 0x2
+
+    invoke-static {v3, v0, v1, v7}, LU2/j;->c(IJLjava/lang/String;)LS2/l;
+
+    move-result-object v3
+
+    invoke-virtual {v10, v3}, Lg2/e;->x(LS2/q;)V
+
+    const/4 v3, 0x3
+
+    invoke-static {v3, v0, v1, v7}, LU2/j;->c(IJLjava/lang/String;)LS2/l;
+
+    move-result-object v3
+
+    invoke-virtual {v10, v3}, Lg2/e;->x(LS2/q;)V
+
+    goto/16 :cond_b
+
+    :cond_1
+    aget-byte v3, v2, v5
+'''
+    if text.count(old) != 1:
+        raise SystemExit("legacy button pattern mismatch")
+    driver.write_text(text.replace(old, new, 1))
+PY
+
+    # Donor built-in S Pen uses 600 ms for both limits. Stock crown uses
+    # 200 ms between transactions and 20 ms between individual sysfs writes.
+    # Keeping 600 ms stretches every 800 ms TicToc phase to roughly 2 seconds,
+    # breaks the advertisement signature and starves pairing UI callbacks.
+    python3 - "$WACOM_DRIVER" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+if "UN1CA_CROWN_STOCK_WACOM_TIMING" in text:
+    print("already patched")
+    raise SystemExit(0)
+
+transaction = '''.method public final a()V
+    .locals 4
+'''
+if transaction not in text:
+    raise SystemExit("crown transaction timing method not found")
+
+start = text.index(transaction)
+end = text.index(".end method", start)
+method = text[start:end]
+if method.count("const-wide/16 v2, 0x258") != 1:
+    raise SystemExit("transaction 600ms constant mismatch")
+method = method.replace("const-wide/16 v2, 0x258", "const-wide/16 v2, 0xc8", 1)
+method = method.replace("    .locals 4\n", "    .locals 4\n\n    # UN1CA_CROWN_STOCK_WACOM_TIMING\n", 1)
+text = text[:start] + method + text[end:]
+
+write_sig = ".method public final declared-synchronized h(Ljava/lang/String;)V"
+start = text.index(write_sig)
+end = text.index(".end method", start)
+method = text[start:end]
+if method.count("const-wide/16 v3, 0x258") != 1:
+    raise SystemExit("command 600ms constant mismatch")
+method = method.replace("const-wide/16 v3, 0x258", "const-wide/16 v3, 0x14", 1)
+text = text[:start] + method + text[end:]
+path.write_text(text)
+print("ok")
+PY
+
+    # Keep One UI 8's service/UI architecture, but describe the built-in pen
+    # as the legacy Note9 Crown device. The donor otherwise scans for Crown and
+    # then tries to discover a Sticky/Pro GATT service, advertises SPEN02, and
+    # enables motion/advanced-charge paths which the Note9 pen cannot provide.
+    python3 - "$DEVICE_PROFILE" "$CROWN_PROFILE" "$APP_FEATURES" "$BUILTIN_DRIVER" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+device, crown, features, driver = map(Path, sys.argv[1:])
+
+text = device.read_text()
+if "UN1CA_CROWN_ONEUI8_PROFILE" not in text:
+    replacements = (
+        ('const-string v0, "0000FD6C-0000-1000-8000-00805F9B34FB"',
+         'const-string v0, "EDFEC62E-9910-0BAC-5241-D8BDA6932A2F"'),
+        ('''    const/16 p0, 0x546
+
+    return p0
+
+    :pswitch_0''', '''    # UN1CA_CROWN_ONEUI8_PROFILE: no motion sensor data
+    const/4 p0, 0x0
+
+    return p0
+
+    :pswitch_0'''),
+        ('''    new-instance p0, LD0/c;
+
+    new-instance v0, LB4/i;
+
+    const/16 v1, 0x11
+
+    invoke-direct {v0, v1}, LB4/i;-><init>(I)V
+
+    invoke-direct {p0, v0}, LD0/c;-><init>(LB4/i;)V
+
+    return-object p0
+
+    :pswitch_0''', '''    # Crown advertises only its service UUID; it has no SPEN02 payload.
+    const/4 p0, 0x0
+
+    return-object p0
+
+    :pswitch_0'''),
+    )
+    for old, new in replacements:
+        if text.count(old) != 1:
+            raise SystemExit("Crown device-profile pattern mismatch")
+        text = text.replace(old, new, 1)
+
+    # Modern built-in pens expose a color characteristic and standby mode.
+    # Crown exposes neither; retaining these flags causes reads/writes against
+    # characteristics absent from the Note9 GATT service.
+    for signature, old, new in (
+        (".method public final i()Z", "    const/4 p0, 0x1", "    const/4 p0, 0x0"),
+        (".method public l()Z", "    instance-of p0, p0, Lb3/a;", "    const/4 p0, 0x0"),
+    ):
+        start = text.index(signature)
+        end = text.index(".end method", start)
+        method = text[start:end]
+        if method.count(old) != 1:
+            raise SystemExit(f"Crown capability pattern mismatch in {signature}")
+        method = method.replace(old, new, 1)
+        text = text[:start] + method + text[end:]
+    device.write_text(text)
+
+text = crown.read_text()
+if "UN1CA_CROWN_STOCK_CHARGE_DURATION" not in text:
+    old = '''    const-wide/16 v0, 0x23
+
+    invoke-virtual {p0, v0, v1}, Ljava/util/concurrent/TimeUnit;->toMillis(J)J'''
+    new = '''    # UN1CA_CROWN_STOCK_CHARGE_DURATION
+    const-wide/16 v0, 0x1e
+
+    invoke-virtual {p0, v0, v1}, Ljava/util/concurrent/TimeUnit;->toMillis(J)J'''
+    if text.count(old) != 1 or text.count('const-string p0, "builtin"') != 1:
+        raise SystemExit("Crown charge/name profile pattern mismatch")
+    text = text.replace(old, new, 1).replace('const-string p0, "builtin"', 'const-string p0, "crown"', 1)
+    crown.write_text(text)
+
+text = features.read_text()
+if "UN1CA_CROWN_APPLICATION_FEATURES" not in text:
+    for field in ("b", "c", "d", "i"):
+        old = f'''    iput-boolean v1, v0, Lb3/c;->{field}:Z'''
+        new = f'''    # UN1CA_CROWN_APPLICATION_FEATURES
+    const/4 v1, 0x0
+
+    iput-boolean v1, v0, Lb3/c;->{field}:Z
+
+    const/4 v1, 0x1'''
+        if text.count(old) != 1:
+            raise SystemExit(f"Crown application feature {field} pattern mismatch")
+        text = text.replace(old, new, 1)
+    features.write_text(text)
+
+text = driver.read_text()
+marker = "UN1CA_CROWN_OPERATION_MODE"
+if marker not in text:
+    signature = ".method public final declared-synchronized y(LS2/j;Lc3/a;)V"
+    start = text.index(signature)
+    end = text.index(".end method", start) + len(".end method")
+    method = '''.method public final declared-synchronized y(LS2/j;Lc3/a;)V
+    .locals 3
+
+    # UN1CA_CROWN_OPERATION_MODE: stock Crown only supports DEFAULT and does
+    # not write the mode characteristic for that state.
+    sget-object v0, LS2/j;->c:LS2/j;
+
+    if-ne p1, v0, :unica_crown_mode_unsupported
+
+    iput-object p1, p0, LU2/k;->y:LS2/j;
+
+    new-instance v0, LS2/e;
+
+    const/4 v1, 0x1
+
+    invoke-direct {v0, v1}, LS2/e;-><init>(I)V
+
+    goto :unica_crown_mode_done
+
+    :unica_crown_mode_unsupported
+    new-instance v0, LS2/e;
+
+    const/16 v1, 0x14
+
+    invoke-direct {v0, v1}, LS2/e;-><init>(I)V
+
+    :unica_crown_mode_done
+    const-wide/16 v1, 0x0
+
+    invoke-interface {p2, v0, v1, v2}, Lc3/a;->a(LS2/e;J)V
+
+    return-void
+.end method'''
+    text = text[:start] + method + text[end:]
+    driver.write_text(text)
+PY
+
+    # Crown's TicToc finder does not invoke the normal charge/reset routines.
+    # It toggles advertisement with one raw command per phase: 1=on, 0=off.
+    # Calling startCharge here ends in mode EB and suppresses the E9 BLE
+    # advertisement, so the scan sees zero devices even though sysfs succeeds.
+    python3 - "$TICTOC_WORKER" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+if "prepareTicToc : crown advertisement off" in text:
+    print("already patched")
+    raise SystemExit(0)
+
+prepare_old = '''    const-string v3, "WacomDriver"
+
+    const-string v4, "prepareTicToc : perform reset before TicToc"
+
+    invoke-static {v3, v4, v9}, Lk5/a;->w(Ljava/lang/String;Ljava/lang/String;Lorg/json/JSONException;)I
+
+    invoke-virtual {v2}, Lj3/a;->f()V
+
+    invoke-virtual {v2}, Lj3/a;->c()V
+
+    const-wide/16 v2, 0x1388
+
+    invoke-static {v2, v3}, Lm5/b;->s0(J)V
+
+    iget-object v2, v1, LP2/g;->p:Lj3/a;
+
+    invoke-virtual {v2}, Lj3/a;->f()V
+'''
+prepare_new = '''    const-string v3, "WacomDriver"
+
+    const-string v4, "prepareTicToc : crown advertisement off"
+
+    invoke-static {v3, v4, v9}, Lk5/a;->w(Ljava/lang/String;Ljava/lang/String;Lorg/json/JSONException;)I
+
+    const-string v3, "0"
+
+    invoke-virtual {v2, v3}, Lj3/a;->h(Ljava/lang/String;)V
+'''
+
+finish_old = '''    invoke-virtual {v0}, Lj3/a;->d()V
+'''
+finish_new = '''    const-string v2, "1"
+
+    invoke-virtual {v0, v2}, Lj3/a;->h(Ljava/lang/String;)V
+'''
+
+phase_on_old = '''    invoke-virtual {v9}, Lj3/a;->d()V
+'''
+phase_on_new = '''    const-string v11, "1"
+
+    invoke-virtual {v9, v11}, Lj3/a;->h(Ljava/lang/String;)V
+'''
+
+phase_off_old = '''    invoke-virtual {v9}, Lj3/a;->f()V
+'''
+phase_off_new = '''    const-string v11, "0"
+
+    invoke-virtual {v9, v11}, Lj3/a;->h(Ljava/lang/String;)V
+'''
+
+filter_old = '''    const/4 v7, 0x0
+
+    invoke-virtual/range {v2 .. v8}, LR2/b;->a(Landroid/content/Context;ILandroid/os/ParcelUuid;LD0/c;Ljava/lang/String;LR2/a;)V
+'''
+filter_new = '''    const/4 v7, 0x0
+
+    # Crown uses the legacy service UUID and does not emit SPEN02.
+    const/4 v6, 0x0
+
+    invoke-virtual/range {v2 .. v8}, LR2/b;->a(Landroid/content/Context;ILandroid/os/ParcelUuid;LD0/c;Ljava/lang/String;LR2/a;)V
+'''
+
+for name, old, new in (
+    ("prepare", prepare_old, prepare_new),
+    ("finish", finish_old, finish_new),
+    ("phase-on", phase_on_old, phase_on_new),
+    ("phase-off", phase_off_old, phase_off_new),
+    ("legacy-filter", filter_old, filter_new),
+):
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"crown TicToc {name} pattern count is {count}, expected 1")
+    text = text.replace(old, new, 1)
+
+path.write_text(text)
+print("ok")
+PY
+}
+
+_EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_SYSFS_BRIDGE()
+{
+    # One UI 8 routes BLE charging commands through SemInputDeviceManager and
+    # the modern sysinput HAL. Crown's stock framework writes the command
+    # directly to the Wacom sysfs node. Keep the modern route as a fallback,
+    # but restore the proven Note9 hardware bridge as the primary path.
+    [[ "$TARGET_CODENAME" == "crownlte" ]] || return 0
+
+    local JAR_DIR="$APKTOOL_DIR/system/framework/services.jar"
+    local SERVICE
+
+    DECODE_APK "system" "system/framework/services.jar" || return 1
+    SERVICE="$(find "$JAR_DIR" -path '*/com/android/server/smartclip/SpenGestureManagerService.smali' | head -n 1)"
+    [ -f "$SERVICE" ] || {
+        LOGE "SpenGestureManagerService.smali not found; cannot restore Note9 BLE sysfs bridge"
+        return 1
+    }
+
+    LOG "- Restoring the stock Note9 S Pen BLE sysfs hardware bridge"
+    python3 - "$SERVICE" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+if "UN1CA Note9 direct BLE sysfs write succeeded" in text:
+    print("already patched")
+    raise SystemExit(0)
+
+pattern = re.compile(
+    r"^\.method public final writeBleSpenCommand\(Ljava/lang/String;\)V\n.*?^\.end method$",
+    re.MULTILINE | re.DOTALL,
+)
+replacement = r'''.method public final writeBleSpenCommand(Ljava/lang/String;)V
+    .locals 4
+
+    const-string/jumbo v0, "SpenGestureManagerService"
+
+    new-instance v1, Ljava/lang/StringBuilder;
+
+    const-string/jumbo v2, "writeBleSpenCommand : "
+
+    invoke-direct {v1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+
+    invoke-virtual {v1, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object v1
+
+    invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+
+    invoke-static {}, Lcom/android/server/smartclip/SpenGestureManagerService;->checkSmartClipMetaExtractionPermission()V
+
+    :try_start_0
+    new-instance v1, Ljava/io/FileWriter;
+
+    const-string v2, "/sys/class/sec/sec_epen/epen_ble_charging_mode"
+
+    invoke-direct {v1, v2}, Ljava/io/FileWriter;-><init>(Ljava/lang/String;)V
+
+    invoke-virtual {v1, p1}, Ljava/io/FileWriter;->write(Ljava/lang/String;)V
+
+    invoke-virtual {v1}, Ljava/io/FileWriter;->close()V
+
+    const-string v1, "UN1CA Note9 direct BLE sysfs write succeeded"
+
+    invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+    :try_end_0
+    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
+
+    return-void
+
+    :catch_0
+    move-exception v1
+
+    const-string v2, "UN1CA Note9 direct BLE sysfs write failed; trying sysinput HAL"
+
+    invoke-static {v0, v2, v1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
+
+    :try_start_1
+    iget-object p0, p0, Lcom/android/server/smartclip/SpenGestureManagerService;->mBleSpenManager:Lcom/android/server/smartclip/BleSpenManager;
+
+    invoke-static {p1}, Ljava/lang/Integer;->parseInt(Ljava/lang/String;)I
+
+    move-result p1
+
+    iget-object v1, p0, Lcom/android/server/smartclip/BleSpenManager;->mSemInputDeviceManager:Lcom/samsung/android/hardware/secinputdev/SemInputDeviceManager;
+
+    invoke-virtual {v1, p1}, Lcom/samsung/android/hardware/secinputdev/SemInputDeviceManager;->setSpenBleChargeMode(I)I
+    :try_end_1
+    .catch Ljava/lang/Exception; {:try_start_1 .. :try_end_1} :catch_1
+
+    return-void
+
+    :catch_1
+    move-exception p0
+
+    const-string p1, "UN1CA Note9 BLE sysinput fallback failed"
+
+    invoke-static {v0, p1, p0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
+
+    return-void
+.end method'''
+
+text, count = pattern.subn(replacement, text, count=1)
+if count != 1:
+    raise SystemExit(f"writeBleSpenCommand pattern count is {count}, expected 1")
+path.write_text(text)
+print("ok")
+PY
+
+    grep -q "UN1CA Note9 direct BLE sysfs write succeeded" "$SERVICE" || {
+        LOGE "Note9 direct BLE sysfs bridge was not applied"
+        return 1
+    }
 }
 
 _EXYNOS9810_FINAL_PATCH_CAMERA_SEAMLESS_ZOOM_GUARD()
@@ -4268,6 +4956,7 @@ _EXYNOS9810_FINAL_VERIFY_ENFORCING_BOOT_STATE()
         '(allow vendor_init vold_prop (property_service (set)))' \
         '(allow mobicore mobicore_prop (property_service (set)))' \
         '(allow system_server hal_graphics_composer_service (service_manager (find)))' \
+        '(allow system_server sysfs_sec (file (open write getattr)))' \
         '(allow samsungpowersoundplay audio_service (service_manager (find)))'; do
         grep -qF "$RULE" "$CIL" || {
             LOGE "Final Exynos9810 SELinux policy is missing: $RULE"
@@ -4315,9 +5004,12 @@ _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES
 _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT
 _EXYNOS9810_FINAL_ADD_VISUAL_CLOUD_CORE
 _EXYNOS9810_FINAL_VERIFY_PHOTO_EDITOR_STACK
+_EXYNOS9810_FINAL_ENABLE_SIM_VARIANT_ACCEPTANCE
 _EXYNOS9810_FINAL_ADD_VIBRATOR_AIDL_HAL
 _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN
 _EXYNOS9810_FINAL_PATCH_AIRCOMMAND_BLE_CONTROLLER_NULL
+_EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_SYSFS_BRIDGE
+_EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_BLE_PROTOCOL
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY
 _EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME
 _EXYNOS9810_FINAL_PATCH_CAMERA_PORTRAIT_RESUME

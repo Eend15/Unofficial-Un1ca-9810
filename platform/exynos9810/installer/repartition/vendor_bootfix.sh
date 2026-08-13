@@ -149,15 +149,36 @@ if [ -f "$VENDOR_MNT/build.prop" ]; then
     } >> "$VENDOR_MNT/build.prop"
 fi
 
-# The Exynos9810 radio stack used by this port is the dual-slot stack. Keep
-# framework and vendor on the same topology. Device-local topology probing
-# here previously changed only part of the already-built ROM;
-# rild then registered slot1 while PhoneFactory waited forever for slot2.
-# A device with one inserted SIM still operates normally with the second slot
-# empty, matching Samsung's DS firmware and the known-good UN1CA builds.
-SIM_SLOTS=2
-MULTISIM_CONFIG=dsds
-log "radio topology: slots=$SIM_SLOTS mode=$MULTISIM_CONFIG"
+# The installer can still be used with legacy ext4 images. Detect the exact
+# Samsung EFS topology at flash time because F and F/DS commonly report the
+# same model string. Never guess the physical slot count from the codename.
+get_prop()
+{
+    getprop "$1" 2>/dev/null || true
+}
+
+DEVICE_MODEL="$(get_prop ro.boot.em.model)"
+[ -n "$DEVICE_MODEL" ] || DEVICE_MODEL="$(get_prop ro.product.model)"
+FACTORY_PROP=/efs/imei/factory.prop
+SIM_SLOTS="$(sed -n 's/^ro\.multisim\.simslotcount=//p' "$FACTORY_PROP" 2>/dev/null | head -n 1 | tr -d '\r')"
+MULTISIM_CONFIG="$(sed -n 's/^persist\.radio\.multisim\.config=//p' "$FACTORY_PROP" 2>/dev/null | head -n 1 | tr -d '\r')"
+case "$MULTISIM_CONFIG:$SIM_SLOTS" in
+    ss:1|dsds:2) SIM_SOURCE=efs_factory ;;
+    ss:*) SIM_SLOTS=1; SIM_SOURCE=efs_factory ;;
+    dsds:*) SIM_SLOTS=2; SIM_SOURCE=efs_factory ;;
+    *:1) MULTISIM_CONFIG=ss; SIM_SOURCE=efs_factory ;;
+    *:2) MULTISIM_CONFIG=dsds; SIM_SOURCE=efs_factory ;;
+    *)
+        case "$DEVICE_MODEL" in
+            SM-G960N*|SM-G965N*|SM-N960N*)
+                SIM_SLOTS=1; MULTISIM_CONFIG=ss; SIM_SOURCE=korean_model ;;
+            *)
+                log "cannot safely determine SIM topology from EFS: $DEVICE_MODEL"
+                exit 1 ;;
+        esac
+        ;;
+esac
+log "radio topology: model=$DEVICE_MODEL slots=$SIM_SLOTS mode=$MULTISIM_CONFIG source=$SIM_SOURCE"
 
 VENDOR_PROP="$VENDOR_MNT/build.prop"
 set_prop_file "$VENDOR_PROP" ro.multisim.simslotcount "$SIM_SLOTS" || exit 1

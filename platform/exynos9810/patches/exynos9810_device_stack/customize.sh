@@ -867,6 +867,25 @@ _EXYNOS9810_SET_PROP_SYSTEM()
     done
 }
 
+_EXYNOS9810_DELETE_PROP_ALL()
+{
+    local PROP="$1"
+    local FILE
+
+    for FILE in \
+        "$WORK_DIR/system/system/build.prop" \
+        "$WORK_DIR/system/system/system_ext/etc/build.prop" \
+        "$WORK_DIR/system/product/etc/build.prop" \
+        "$WORK_DIR/system/system/product/etc/build.prop" \
+        "$WORK_DIR/system/system/system_dlkm/etc/build.prop" \
+        "$WORK_DIR/vendor/build.prop" \
+        "$WORK_DIR/vendor/vendor_dlkm/etc/build.prop" \
+        "$WORK_DIR/vendor/odm_dlkm/etc/build.prop" \
+        "$WORK_DIR/odm/etc/build.prop"; do
+        _EXYNOS9810_DELETE_PROP_FILE "$FILE" "$PROP"
+    done
+}
+
 _EXYNOS9810_DELETE_PROP_VENDOR_SIDE()
 {
     local PROP="$1"
@@ -2713,16 +2732,19 @@ _EXYNOS9810_PATCH_TELEPHONY_SLOT_TOPOLOGY()
     local SMALI
 
     LOG "- Aligning Android 16 telephony slot topology with Exynos9810 RIL"
-    # Keep the complete ROM dual-slot so PhoneFactory and the N770F rild expose
-    # the same services. Single-SIM devices operate with slot2 empty; changing
-    # only vendor at install time leaves Android blocked on IRadio/slot2.
-    _EXYNOS9810_SET_PROP_ALL "ro.telephony.sim_slots.count" "2"
+    # G960F/G965F/N960F and their /DS variants share the same codenames. Do not
+    # freeze a slot count into read-only EROFS properties: Samsung's stock
+    # secril_config_svc runs during `on fs`, reads /mnt/vendor/efs/factory.prop
+    # and publishes the physical ro.multisim values before telephony starts.
+    for SMALI in \
+        ro.multisim.simslotcount \
+        ro.vendor.multisim.simslotcount \
+        persist.radio.multisim.config \
+        ro.telephony.sim_slots.count; do
+        _EXYNOS9810_DELETE_PROP_ALL "$SMALI"
+    done
     # Select Samsung 4G label when Telephony reports LTE; no modem or IMEI change.
     _EXYNOS9810_SET_PROP_ALL "ro.config.show4gforlte" "true"
-    # Keep the legacy property names in sync with the build fallback.
-    _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "ro.multisim.simslotcount" "2"
-    _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "ro.vendor.multisim.simslotcount" "2"
-    _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "persist.radio.multisim.config" "dsds"
 
     DECODE_APK "system" "system/framework/telephony-common.jar" || return 1
 

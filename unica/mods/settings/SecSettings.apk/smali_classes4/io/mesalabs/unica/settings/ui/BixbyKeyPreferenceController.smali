@@ -37,7 +37,7 @@
 
     iput-object p1, p0, Lio/mesalabs/unica/settings/ui/BixbyKeyPreferenceController;->mPreference:Landroidx/preference/SecDropDownPreference;
 
-    const/4 v0, 0x3
+    const/4 v0, 0x4
 
     new-array v1, v0, [Ljava/lang/CharSequence;
 
@@ -59,6 +59,12 @@
 
     aput-object v2, v1, v5
 
+    const-string v2, "Flashlight"
+
+    const/4 v6, 0x3
+
+    aput-object v2, v1, v6
+
     invoke-virtual {p1, v1}, Landroidx/preference/DropDownPreference;->setEntries([Ljava/lang/CharSequence;)V
 
     iget-object p1, p0, Lio/mesalabs/unica/settings/ui/BixbyKeyPreferenceController;->mPreference:Landroidx/preference/SecDropDownPreference;
@@ -77,6 +83,10 @@
 
     aput-object v1, v0, v5
 
+    const-string v1, "3"
+
+    aput-object v1, v0, v6
+
     iput-object v0, p1, Landroidx/preference/ListPreference;->mEntryValues:[Ljava/lang/CharSequence;
 
     iget-object p1, p0, Lio/mesalabs/unica/settings/ui/BixbyKeyPreferenceController;->mPreference:Landroidx/preference/SecDropDownPreference;
@@ -86,6 +96,17 @@
     invoke-static {v0, v3}, Landroid/os/SemSystemProperties;->getInt(Ljava/lang/String;I)I
 
     move-result v0
+
+    if-ltz v0, :unica_bixby_reset_value
+
+    const/4 v1, 0x4
+
+    if-lt v0, v1, :unica_bixby_value_valid
+
+    :unica_bixby_reset_value
+    const/4 v0, 0x0
+
+    :unica_bixby_value_valid
 
     invoke-virtual {p1, v0}, Landroidx/preference/DropDownPreference;->setValueIndex(I)V
 
