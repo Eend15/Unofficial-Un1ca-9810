@@ -1,6 +1,0 @@
-service unica_early_logger /bootlogger
-    class core
-    user root
-    group root log readproc
-    oneshot
-    seclabel u:r:init:s0
