@@ -1,16 +1,16 @@
-# UN1CA Exynos9810
+# Unofficial UN1CA 9810
 
 <p align="center">
-  <img src="readme-res/unofficial-un1ca-9810-series.png" alt="UN1CA Exynos9810 Series"/>
+  <img src="readme-res/unofficial-un1ca-9810-series.png" alt="Unofficial UN1CA 9810 Series"/>
 </p>
 
-UN1CA Exynos9810 is an experimental custom firmware project for Samsung Exynos9810 devices, maintained by Eend15 and based on the UN1CA build system by salvo_giangri.
+Unofficial UN1CA 9810 is an experimental custom firmware project for Samsung Exynos9810 devices, maintained by Eend15 and based on the UN1CA build system by salvo_giangri.
 
 It is designed to bring a modern, refined, and feature-rich One UI experience to the Galaxy S9, Galaxy S9+, and Galaxy Note9. The current development target is Android 16 / One UI 8.0, adapted for the legacy Exynos9810 platform.
 
 This is an unofficial community port. It is not affiliated with Samsung and is not an official release from the upstream UN1CA maintainers.
 
-## What Is UN1CA Exynos9810?
+## What Is Unofficial UN1CA 9810?
 
 UN1CA 9810 keeps the upstream UN1CA workflow: the build system extracts Samsung firmware, applies ROM patches, prepares target-specific files, and generates a flashable recovery zip.
 
