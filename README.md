@@ -82,11 +82,13 @@ ext4 for a live recovery/debug build:
 source buildenv.sh star2lte
 unica make_rom -z --fs-type erofs
 
-source buildenv.sh --fs-type ext4 starlte
-unica make_rom -z
+source buildenv.sh starlte
+unica make_rom -z --fs-type erofs
 
 source buildenv.sh crownlte
 unica make_rom -z --fs-type erofs
+
+source buildenv.sh (target) unica make_rom -z --fs-type ext4 (for ext4)
 ```
 
 Build output and extracted firmware are intentionally not tracked in git. Keep `out/` and `work/` local.
