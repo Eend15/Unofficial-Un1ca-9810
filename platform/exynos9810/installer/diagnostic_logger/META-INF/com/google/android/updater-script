@@ -1,0 +1,7 @@
+ui_print(" ");
+ui_print("UN1CA Exynos9810 safe boot logger");
+ui_print("No BOOT, vendor or system partition changes");
+package_extract_dir("logger", "/tmp/exynos9810-safe-logger");
+run_program("/sbin/sh", "/tmp/exynos9810-safe-logger/install.sh") == 0 ||
+    abort("E9810: safe logger installation failed.");
+ui_print("Safe logger installed; reboot System to capture the boot.");

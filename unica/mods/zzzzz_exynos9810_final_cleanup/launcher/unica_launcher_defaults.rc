@@ -1,0 +1,10 @@
+on property:sys.boot_completed=1
+    start unica_launcher_defaults
+
+service unica_launcher_defaults /system/bin/sh /system/bin/unica_launcher_defaults.sh
+    class late_start
+    user root
+    group root system shell
+    disabled
+    oneshot
+    seclabel u:r:su:s0

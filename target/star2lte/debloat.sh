@@ -98,58 +98,8 @@ done
 
 unset APP _EXYNOS9810_TARGET_DEBLOAT_NAMES
 
-
-# RAM & smoothness tuning - persists in future builds
-SYSTEM_TWEAK_PROP='
-ro.sys.fw.bg_apps_limit=24
-ro.sys.fw.bg_cached_ratio=0.55
-ro.config.dha_cached_max=28
-ro.config.dha_cached_min=8
-ro.config.dha_empty_max=40
-ro.config.dha_empty_min=8
-ro.config.dha_lmk_scale=0.545
-ro.config.dha_pwhitelist_enable=1
-debug.sf.latch_unsignaled=1
-'
-if [ -f "$WORK_DIR/system/system/build.prop" ]; then
-    printf "\n# RAM & smoothness tuning\n%s" "$SYSTEM_TWEAK_PROP" >> "$WORK_DIR/system/system/build.prop"
-fi
-if [ -f "$WORK_DIR/vendor/build.prop" ]; then
-    sed -i 's/debug.sf.latch_unsignaled=0/debug.sf.latch_unsignaled=1/' "$WORK_DIR/vendor/build.prop"
-fi
-mkdir -p "$WORK_DIR/system/system/etc/init"
-cat > "$WORK_DIR/system/system/etc/init/ram_tweaks.rc" << 'RCTWEAK'
-on property:sys.boot_completed=1
-    write /proc/sys/vm/swappiness 60
-    write /proc/sys/vm/vfs_cache_pressure 50
-    write /proc/sys/vm/dirty_ratio 20
-    write /proc/sys/vm/dirty_background_ratio 5
-    write /proc/sys/vm/min_free_kbytes 32768
-    start ram_tweaks
-
-service ram_tweaks /system/bin/ram_tweaks.sh
-    class late_start
-    user root
-    group root
-    seclabel u:r:init:s0
-    oneshot
-    disabled
-RCTWEAK
-cat > "$WORK_DIR/system/system/bin/ram_tweaks.sh" << 'RCSHEOF'
-#!/system/bin/sh
-# RAM & smoothness tweaks - applied once per boot
-if [ -f /sys/class/kgsl/kgsl-3d0/devfreq/governor ]; then
-    echo "simple_ondemand" > /sys/class/kgsl/kgsl-3d0/devfreq/governor 2>/dev/null
-fi
-for disk in /sys/block/sd* /sys/block/mmc*; do
-    [ -f "$disk/queue/scheduler" ] && echo "bfq" > "$disk/queue/scheduler" 2>/dev/null
-done
-echo 60 > /proc/sys/vm/swappiness 2>/dev/null
-echo 50 > /proc/sys/vm/vfs_cache_pressure 2>/dev/null
-echo 20 > /proc/sys/vm/dirty_ratio 2>/dev/null
-echo 5 > /proc/sys/vm/dirty_background_ratio 2>/dev/null
-echo 32768 > /proc/sys/vm/min_free_kbytes 2>/dev/null
-echo 0 > /proc/sys/kernel/printk 2>/dev/null
-RCSHEOF
-chmod 755 "$WORK_DIR/system/system/bin/ram_tweaks.sh"
-unset SYSTEM_TWEAK_PROP
+# Do not inject a second memory manager on top of Android/One UI's LMKD and
+# Samsung DHA profile. The previous service changed VM, I/O and GPU knobs after
+# boot and caused system-wide reclaim/ANR storms on 6 GB Exynos9810 devices.
+rm -f "$WORK_DIR/system/system/etc/init/ram_tweaks.rc" \
+    "$WORK_DIR/system/system/bin/ram_tweaks.sh"

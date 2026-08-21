@@ -23,4 +23,4 @@
 - Initial port: Android 16 / One UI 8 for Exynos9810
 - Repartition and clean install flow
 - DS-ACK/CrownTrail kernel installer support
-- TWRP lite and large ZIP compatibility hooks
+- Large EROFS ZIP build workflow for modern recovery installs

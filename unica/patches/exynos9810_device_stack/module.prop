@@ -1,0 +1,4 @@
+name=Exynos9810 Device Stack
+version=2
+author=UN1CA Exynos9810 port
+description=Exynos9810 audio, keymaster, NFC, panel, sensors and Smart View patch assets with the device-stack integration script.

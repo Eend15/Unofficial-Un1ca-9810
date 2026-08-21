@@ -7,8 +7,13 @@ fi
 
 # 2025 Audio Pack
 LOG_STEP_IN "- Adding 2025 Audio Pack"
-DELETE_FROM_WORK_DIR "system" "system/hidden/INTERNAL_SDCARD/Music/Samsung/Over_the_Horizon.mp3"
-DELETE_FROM_WORK_DIR "system" "system/hidden/INTERNAL_SDCARD/Music/Samsung/Over_the_Horizon.m4a"
+for AUDIO_FILE in \
+    "system/hidden/INTERNAL_SDCARD/Music/Samsung/Over_the_Horizon.mp3" \
+    "system/hidden/INTERNAL_SDCARD/Music/Samsung/Over_the_Horizon.m4a"; do
+    if [ -e "$WORK_DIR/$AUDIO_FILE" ]; then
+        DELETE_FROM_WORK_DIR "system" "$AUDIO_FILE"
+    fi
+done
 DELETE_FROM_WORK_DIR "system" "system/media/audio/notifications"
 DELETE_FROM_WORK_DIR "system" "system/media/audio/ringtones"
 if $TARGET_AUDIO_SUPPORT_ACH_RINGTONE; then

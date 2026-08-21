@@ -1,0 +1,6 @@
+id=zz_weather
+name=Samsung Weather 1.7.30.50
+version=1.7.30.50
+versionCode=173050100
+author=Eend15, UN1CA
+description=Replace the donor Weather package with the supplied Samsung Weather build while preserving the real One UI wallpaper stack.

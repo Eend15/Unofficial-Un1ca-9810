@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Platform configuration file for Samsung Exynos 9810 devices (exynos9810)
-# The actually-verified, known-booting/known-working camera baseline is the
-# legacy vendor port (EXYNOS9810_LEGACY_PORT_DIR), applied by default in
-# exynos9810_device_stack/customize.sh (EXYNOS9810_USE_N770_HXA3_VENDOR
-# defaults to false). Note10 Lite's own N770F vendor blobs are a *different*,
-# unverified camera HAL binary -- do not default to them without re-testing
-# every camera fix against that binary specifically.
+# The actually-verified, known-booting/known-working camera baseline is kept
+# in the repository's embedded Exynos9810 payloads. External donor paths are
+# optional development overlays only; clean builds do not require them.
+# Note10 Lite's own N770F vendor blobs are a different, unverified camera HAL
+# binary and are never selected by default.
 TARGET_BOARD_API_LEVEL="${EXYNOS9810_TARGET_BOARD_API_LEVEL:-33}"
+# Keep instrumentation opt-in for production images. The late logger can be
+# enabled explicitly while reproducing a boot failure.
 EXYNOS9810_ENABLE_SYSTEM_BOOT_DEBUG="${EXYNOS9810_ENABLE_SYSTEM_BOOT_DEBUG:-false}"
 EXYNOS9810_ENABLE_VENDOR_BOOT_TRACE="${EXYNOS9810_ENABLE_VENDOR_BOOT_TRACE:-false}"
 
@@ -27,7 +28,10 @@ TARGET_USE_DYNAMIC_PARTITIONS=false
 
 # OS
 TARGET_OS_SINGLE_SYSTEM_IMAGE="essi"
-TARGET_OS_FILE_SYSTEM_TYPE="erofs"
+# Production builds stay EROFS. Test builds may opt into ext4 with
+# EXYNOS9810_TARGET_OS_FILE_SYSTEM_TYPE=ext4 so live recovery/debug patches
+# can be applied without changing the production default.
+TARGET_OS_FILE_SYSTEM_TYPE="${EXYNOS9810_TARGET_OS_FILE_SYSTEM_TYPE:-erofs}"
 TARGET_OS_BUILD_PRODUCT_PARTITION=false
 TARGET_OS_BUILD_SYSTEM_EXT_PARTITION=false
 TARGET_DISABLE_AVB_SIGNING=true

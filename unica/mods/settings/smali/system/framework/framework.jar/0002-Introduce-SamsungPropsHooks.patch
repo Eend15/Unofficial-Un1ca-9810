@@ -38,7 +38,7 @@ new file mode 100644
 index 00000000..a0a6eb6d
 --- /dev/null
 +++ b/smali_classes6/io/mesalabs/unica/SamsungPropsHooks.smali
-@@ -0,0 +1,559 @@
+@@ -0,0 +1,593 @@
 +.class public final Lio/mesalabs/unica/SamsungPropsHooks;
 +.super Ljava/lang/Object;
 +.source "SamsungPropsHooks.java"
@@ -295,6 +295,40 @@ index 00000000..a0a6eb6d
 +    goto :goto_3
 +
 +    :cond_6
++    # Google Play must see the physical Exynos9810 target. Keep the S22 donor
++    # identity for Samsung/One UI components, but do not let Play Store or
++    # Play Services build a catalog entry for the donor device.
++    const-string p0, "com.android.vending"
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result p0
++    if-nez p0, :cond_google_identity
++    const-string p0, "com.google.android.gms"
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result p0
++    if-nez p0, :cond_google_identity
++    const-string p0, "com.google.android.gsf"
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++    move-result p0
++    if-eqz p0, :cond_generic_user_identity
++
++    :cond_google_identity
++    invoke-static {v2}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    invoke-static {v3, p0}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    invoke-static {v4, p0}, Lio/mesalabs/unica/SamsungPropsHooks;->setBuildField(Ljava/lang/String;Ljava/lang/Object;)V
++    const-string v2, "ro.product.vendor.device"
++    invoke-static {v2}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    invoke-static {v3, p0}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
++    move-result-object p0
++    const-string v2, "DEVICE"
++    invoke-static {v2, p0}, Lio/mesalabs/unica/SamsungPropsHooks;->setBuildField(Ljava/lang/String;Ljava/lang/Object;)V
++    const-string v2, "PRODUCT"
++    invoke-static {v2, p0}, Lio/mesalabs/unica/SamsungPropsHooks;->setBuildField(Ljava/lang/String;Ljava/lang/Object;)V
++    goto :goto_3
++
++    :cond_generic_user_identity
 +    sget-object p0, Landroid/os/Build;->MODEL:Ljava/lang/String;
 +
 +    const-string v1, "SM-S901"
@@ -600,4 +634,3 @@ index 00000000..a0a6eb6d
 +.end method
 -- 
 2.54.0
-

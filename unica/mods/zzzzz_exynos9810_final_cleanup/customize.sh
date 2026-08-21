@@ -3,11 +3,28 @@ SKIPUNZIP=1
 [ "$TARGET_PLATFORM" = "exynos9810" ] || return 0
 
 EXYNOS9810_KERNELSU_NEXT_APK="${EXYNOS9810_KERNELSU_NEXT_APK:-$MODPATH/kernelsu/KernelSUNext.apk}"
-EXYNOS9810_LEGACY_PORT_DIR="${EXYNOS9810_LEGACY_PORT_DIR:-/mnt/c/Users/Admin/Downloads/Exynos9810_LegacyPort}"
+EXYNOS9810_ALLOW_EXTERNAL_DONOR="${EXYNOS9810_ALLOW_EXTERNAL_DONOR:-false}"
+EXYNOS9810_EMBEDDED_PORT_DIR="$SRC_DIR/unica/patches/exynos9810_device_stack/embedded/exynos9810_legacy_port"
+EXYNOS9810_LEGACY_PORT_DIR="${EXYNOS9810_LEGACY_PORT_DIR:-}"
+EXYNOS9810_EMBEDDED_AUDIO_DIR="${EXYNOS9810_EMBEDDED_AUDIO_DIR:-$SRC_DIR/unica/mods/zzzzz_exynos9810_final_cleanup/exynos9810_audio}"
+
+if [ "$EXYNOS9810_ALLOW_EXTERNAL_DONOR" = "true" ] && \
+        [ -d "$EXYNOS9810_LEGACY_PORT_DIR/vendor" ]; then
+    LOG "Using explicitly selected Exynos9810 donor overlay"
+else
+    # Keep the clean build independent from any donor path left in the shell.
+    EXYNOS9810_LEGACY_PORT_DIR="$EXYNOS9810_EMBEDDED_PORT_DIR"
+    if [ -d "$EXYNOS9810_LEGACY_PORT_DIR/vendor" ]; then
+        LOG "Using repository-embedded Exynos9810 boot baseline"
+    else
+        EXYNOS9810_LEGACY_PORT_DIR=""
+        LOGW "Embedded Exynos9810 boot baseline is missing; donor-dependent final fixes are disabled"
+    fi
+fi
 
 _EXYNOS9810_FINAL_IMPORT_FUNCTIONS()
 {
-    local SRC="$SRC_DIR/platform/exynos9810/patches/exynos9810_device_stack/customize.sh"
+    local SRC="$SRC_DIR/unica/patches/exynos9810_device_stack/customize.sh"
     local TMP="$WORK_DIR/tmp/exynos9810_final_imports.sh"
 
     mkdir -p "$(dirname "$TMP")"
@@ -72,8 +89,13 @@ _EXYNOS9810_FINAL_DELETE_METADATA_PREFIX()
 
     RAW_CONTEXT="$CONTEXT"
     ESCAPED_CONTEXT="/$(_HANDLE_SPECIAL_CHARS "${CONTEXT#/}")"
-    awk -v raw="$RAW_CONTEXT" -v escaped="$ESCAPED_CONTEXT" \
-        '$1 != raw && index($1, raw "/") != 1 && $1 != escaped && index($1, escaped "/") != 1 { print }' \
+    RAW_CONTEXT="$RAW_CONTEXT" ESCAPED_CONTEXT="$ESCAPED_CONTEXT" awk '
+        BEGIN {
+            raw = ENVIRON["RAW_CONTEXT"]
+            escaped = ENVIRON["ESCAPED_CONTEXT"]
+        }
+        $1 != raw && index($1, raw "/") != 1 && $1 != escaped && index($1, escaped "/") != 1 { print }
+    ' \
         "$WORK_DIR/configs/file_context-$PARTITION" > "$WORK_DIR/configs/file_context-$PARTITION.tmp"
     mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
 }
@@ -169,10 +191,10 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
     # Preserve the real Exynos9810 RIL path. Do not synthesize IMEI properties:
     # the modem/EFS remains authoritative for the device IMEI.
     local ROOT="$EXYNOS9810_LEGACY_PORT_DIR"
-    local REL SRC DST
+    local REL SRC DST TARGET_SRC
 
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
-    [ -d "$ROOT/vendor" ] || return 0
+    [ -n "$ROOT" ] && [ -d "$ROOT/vendor" ] || return 0
     LOG "- Restoring final Exynos9810 RIL/IMEI radio stack"
 
     for REL in \
@@ -197,6 +219,10 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
         vendor/lib64/vendor.samsung.hardware.radio@2.2.so \
         vendor/etc/init/init.vendor.rilcommon.rc; do
         SRC="$ROOT/$REL"
+        if [ ! -f "$SRC" ]; then
+            TARGET_SRC="$ROOT/device_port/device/$TARGET_CODENAME/$REL"
+            [ -f "$TARGET_SRC" ] && SRC="$TARGET_SRC"
+        fi
         [ -f "$SRC" ] || continue
         DST="$WORK_DIR/$REL"
         mkdir -p "$(dirname "$DST")"
@@ -244,7 +270,6 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
         cp -af "$SRC" "$DST" || return 1
         _EXYNOS9810_FINAL_SET_METADATA "vendor" \
             "vendor/etc/init/vendor.sem.rilchip.rc" \
-
             0 0 644 "u:object_r:vendor_configs_file:s0"
     fi
 
@@ -272,8 +297,8 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK()
 
 _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF()
 {
-    # Android 16 must see the same coherent N770F VNDK31 radio family that
-    # DuhanROM uses. Mixing its IRadio 1.6 manifest with the older 1.4 rild
+    # Android 16 must see one coherent N770F VNDK31 radio family.
+    # Mixing its IRadio 1.6 manifest with the older 1.4 rild
     # blocks PhoneFactory and removes IMEI; keeping only the old 1.4 family
     # leaves the modem in emergency-only registration. Restore rild, RIL
     # libraries, HIDL interfaces, init files and manifests as one unit.
@@ -338,8 +363,8 @@ _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF()
         "lib64/vendor.samsung.hardware.radio.channel@2.0.so" 0 0 644 \
         "u:object_r:same_process_hal_file:s0"
 
-    # These hashes are from the exact live-tested DuhanROM V4.3 N770F stack.
-    # A partial donor restore must fail the build instead of silently creating
+    # These hashes are from the exact live-tested N770F stack.
+    # A partial restore must fail the build instead of silently creating
     # another rild/manifest mismatch.
     for REL in \
         "bin/hw/rild:dc8c9f9cee7add725cd0b4a4486d34c8d3376516ff0a00fa4224aeccb3c92cb9" \
@@ -581,6 +606,65 @@ _EXYNOS9810_FINAL_RESTORE_FEATURE_APPS()
     done
 }
 
+_EXYNOS9810_FINAL_PATCH_SECURE_FOLDER_DESKTOP_MODE()
+{
+    # The One UI 8 Secure Folder settings app assumes that every Samsung
+    # device publishes the desktopmode system service. Exynos9810 does not
+    # expose that service, so its Kotlin DI factory returns null and the
+    # lock-type preference crashes while the settings page resumes. A phone
+    # without DeX-PC support is never in that mode; bypass only this optional
+    # check and leave the rest of Secure Folder untouched.
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+
+    local APK_REL="system/priv-app/SecureFolder/SecureFolder.apk"
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/SecureFolder/SecureFolder.apk"
+    local SMALI
+
+    [ -f "$WORK_DIR/system/$APK_REL" ] || {
+        LOGW "Secure Folder APK is missing; skipping desktop-mode compatibility patch"
+        return 0
+    }
+
+    LOG "- Patching Secure Folder settings for devices without desktopmode"
+    DECODE_APK "system" "$APK_REL" || return 1
+    SMALI="$(find "$APK_DIR" -type f \
+        -path '*/com/samsung/knox/settings/securefolder/preference/data/preference/LockTypePreferenceData.smali' \
+        -print -quit)"
+    [ -n "$SMALI" ] && [ -f "$SMALI" ] || {
+        LOGE "Secure Folder LockTypePreferenceData smali not found"
+        return 1
+    }
+
+    python3 - "$SMALI" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+pattern = re.compile(
+    r"\.method private final isDexOnPcMode\(Landroid/content/Context;\)Z\n"
+    r".*?\n\.end method",
+    re.S,
+)
+replacement = """.method private final isDexOnPcMode(Landroid/content/Context;)Z
+    .locals 1
+
+    # Exynos9810 has no desktopmode system service; Secure Folder treats this
+    # optional DeX-PC state as false on a normal phone.
+    const/4 v0, 0x0
+
+    return v0
+.end method"""
+new, count = pattern.subn(replacement, text, count=1)
+if count == 0:
+    if "# Exynos9810 has no desktopmode system service" in text:
+        raise SystemExit(0)
+    raise SystemExit("Secure Folder isDexOnPcMode method not found")
+path.write_text(new)
+PY
+}
+
 _EXYNOS9810_FINAL_RESTORE_CLOCK_STRUCTURE()
 {
     # Keep only Clock's framework structure. The Clock APK and all Watch/
@@ -776,14 +860,14 @@ _EXYNOS9810_FINAL_DEBLOAT()
     done
 
     # Samsung's removable-preload catalogue and userdata APK list can make
-    # SetupWizard/Galaxy Store download Smart Switch as soon as networking is
-    # available even after every Smart Switch stub has been removed. Delete
-    # both triggers late, after all donor overlays have been restored.
+    # SetupWizard/Galaxy Store download optional packages as soon as networking
+    # is available even after their system APKs have been removed. Delete both
+    # triggers late, after all donor overlays have been restored.
     local PRELOAD_LIST="$WORK_DIR/system/system/etc/removable_preload.txt"
     local USERDATA_LIST="$WORK_DIR/system/system/etc/userdata_apks_count_list.txt"
 
     if [ -f "$PRELOAD_LIST" ]; then
-        LOG "- Removing Smart Switch and Samsung Kids from Samsung removable-preload catalogue"
+        LOG "- Removing Smart Switch, Samsung Kids and Samsung Cloud from removable-preload catalogue"
         python3 - "$PRELOAD_LIST" <<'PY' || return 1
 from pathlib import Path
 import re
@@ -791,29 +875,216 @@ import sys
 
 path = Path(sys.argv[1])
 text = path.read_text()
-text, count = re.subn(
-    r"(?ms)^\[SmartSwitch\]\n.*?(?=^\[|\Z)",
-    "",
-    text,
-)
-if count > 1:
-    raise SystemExit(f"unexpected SmartSwitch preload block count: {count}")
-text, count = re.subn(
-    r"(?ms)^\[KidsHome\]\n.*?(?=^\[|\Z)",
-    "",
-    text,
-)
-if count > 1:
-    raise SystemExit(f"unexpected KidsHome preload block count: {count}")
+for section in ("SmartSwitch", "KidsHome", "SamsungCloud", "SamsungCloudClient"):
+    text, count = re.subn(
+        rf"(?ms)^\[{re.escape(section)}\]\n.*?(?=^\[|\Z)",
+        "",
+        text,
+    )
+    if count > 1:
+        raise SystemExit(f"unexpected {section} preload block count: {count}")
 path.write_text(text)
 PY
     fi
 
     if [ -f "$USERDATA_LIST" ]; then
-        LOG "- Removing Smart Switch and Samsung Kids userdata preload triggers"
+        LOG "- Removing Smart Switch, Samsung Kids and Samsung Cloud userdata preload triggers"
         sed -i -e '\|/data/app/SmartSwitch/SmartSwitch.apk|d' \
-            -e '\|/data/app/KidsHome/KidsHome.apk|d' "$USERDATA_LIST" || return 1
+            -e '\|/data/app/KidsHome/KidsHome.apk|d' \
+            -e '/[Ss]amsung[Cc]loud/d' \
+            -e '/[Ss]cloud/d' "$USERDATA_LIST" || return 1
     fi
+}
+
+_EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT()
+{
+    local FOUND FILE
+    local -a SEARCH_ROOTS
+
+    LOG "- Verifying Samsung Cloud is optional and absent from the ROM payload"
+
+    SEARCH_ROOTS=("$WORK_DIR/system")
+    if [ -d "$WORK_DIR/product" ]; then
+        SEARCH_ROOTS+=("$WORK_DIR/product")
+    fi
+
+    FOUND="$(find "${SEARCH_ROOTS[@]}" -type d \
+        \( -iname 'SamsungCloud' -o -iname 'SamsungCloudClient' \) \
+        -print -quit)"
+    [ -z "$FOUND" ] || {
+        LOGE "Samsung Cloud APK directory remains in the final workdir: $FOUND"
+        return 1
+    }
+
+    FOUND="$(find "${SEARCH_ROOTS[@]}" -type f \
+        -iname '*scloud*' -print -quit)"
+    [ -z "$FOUND" ] || {
+        LOGE "Samsung Cloud support file remains in the final workdir: $FOUND"
+        return 1
+    }
+
+    for FILE in \
+        "$WORK_DIR/system/system/etc/removable_preload.txt" \
+        "$WORK_DIR/system/system/etc/userdata_apks_count_list.txt"; do
+        [ -f "$FILE" ] || continue
+        if grep -qi -E 'samsungcloud|scloud' "$FILE"; then
+            LOGE "Samsung Cloud preload trigger remains in $FILE"
+            return 1
+        fi
+    done
+
+    return 0
+}
+
+_EXYNOS9810_FINAL_RESTORE_BOOT_PARITY_OVERLAYS()
+{
+    # Keep the boot/service contract matched to the known-booting 12-Aug EROFS
+    # build. These are structural permission XMLs and ODM NFC SKU descriptors,
+    # not app payloads, so restoring them does not undo debloat.
+    local ROOT="$SRC_DIR/unica/patches/exynos9810_device_stack/embedded/exynos9810_legacy_port/boot_parity"
+    local PARTITION
+    local SRC_ROOT
+    local FILE
+    local REL
+    local ENTRY
+    local MODE
+    local LABEL
+
+    [ -d "$ROOT" ] || {
+        LOGE "Embedded Exynos9810 boot parity overlay is missing: $ROOT"
+        return 1
+    }
+
+    for PARTITION in system odm; do
+        SRC_ROOT="$ROOT/$PARTITION"
+        [ -d "$SRC_ROOT" ] || continue
+
+        LOG "- Restoring known-booting Exynos9810 /$PARTITION service parity overlay"
+        mkdir -p "$WORK_DIR/$PARTITION"
+        cp -a "$SRC_ROOT"/. "$WORK_DIR/$PARTITION"/ || return 1
+
+        while IFS= read -r -d '' FILE; do
+            REL="${FILE#$SRC_ROOT/}"
+            MODE=644
+            [ -x "$FILE" ] && MODE=755
+
+            case "$PARTITION:$REL" in
+                system:system/bin/*)
+                    LABEL="u:object_r:system_file:s0"
+                    ;;
+                system:system/etc/init/*)
+                    LABEL="u:object_r:system_file:s0"
+                    ;;
+                system:system/etc/permissions/*)
+                    LABEL="u:object_r:system_file:s0"
+                    ;;
+                odm:etc/permissions/*|odm:etc/vintf/*)
+                    LABEL="u:object_r:vendor_configs_file:s0"
+                    ;;
+                *)
+                    LABEL="u:object_r:vendor_file:s0"
+                    [ "$PARTITION" = "system" ] && LABEL="u:object_r:system_file:s0"
+                    ;;
+            esac
+
+            ENTRY="$REL"
+            [ "$PARTITION" = "odm" ] && ENTRY="odm/$REL"
+            _EXYNOS9810_FINAL_SET_METADATA "$PARTITION" "$ENTRY" 0 0 "$MODE" "$LABEL"
+        done < <(find "$SRC_ROOT" -type f -print0)
+    done
+
+    for FILE in \
+        "$WORK_DIR/system/system/etc/permissions/authfw.xml" \
+        "$WORK_DIR/system/system/etc/permissions/cameraservice.xml" \
+        "$WORK_DIR/system/system/etc/permissions/sec_camerax_service.xml" \
+        "$WORK_DIR/odm/etc/vintf/manifest_hcesimese.xml" \
+        "$WORK_DIR/odm/etc/permissions/sku_hcesimese/android.hardware.nfc.xml"; do
+        [ -f "$FILE" ] || {
+            LOGE "Exynos9810 boot parity component missing after restore: $FILE"
+            return 1
+        }
+    done
+}
+
+_EXYNOS9810_FINAL_DISABLE_UNSUPPORTED_ESIM()
+{
+    # S22 donor files can reintroduce an eUICC declaration after the normal
+    # debloat pass. On Exynos9810 this is false hardware advertising: One UI 8
+    # then reports the physical second slot as unsupported, skips its state
+    # update and spins forever in SIM Manager's Preferred SIM section.
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+    [ "${TARGET_COMMON_SUPPORT_EMBEDDED_SIM:-false}" = "false" ] || return 0
+
+    local REL PROP_FILE PROP_XML PARTITION ENTRY INIT
+
+    LOG "- Removing unsupported eSIM declarations from Exynos9810 build"
+
+    for REL in \
+        system/etc/permissions/privapp-permissions-com.samsung.android.app.esimkeystring.xml \
+        system/etc/permissions/privapp-permissions-com.samsung.euicc.xml \
+        system/etc/permissions/privapp-permissions-com.samsung.android.app.telephonyui.esimclient.xml \
+        system/etc/sysconfig/preinstalled-packages-com.samsung.android.app.esimkeystring.xml \
+        system/etc/sysconfig/preinstalled-packages-com.samsung.euicc.xml \
+        system/app/EsimKeyString \
+        system/app/EuiccService \
+        system/priv-app/EsimKeyString \
+        system/priv-app/EuiccService \
+        system/system_ext/etc/permissions/android.hardware.telephony.euicc.xml \
+        product/etc/permissions/android.hardware.telephony.euicc.xml; do
+        _EXYNOS9810_FINAL_DELETE_SYSTEM_ENTRY "$REL"
+    done
+
+    # Handle a feature XML placed in a real vendor/odm partition as well. The
+    # normal S22 donor puts it in the system privapp file above, but keeping
+    # this cleanup symmetric prevents a future firmware refresh reintroducing
+    # the same false eUICC capability from another partition.
+    for REL in \
+        vendor/etc/permissions/android.hardware.telephony.euicc.xml \
+        odm/etc/permissions/android.hardware.telephony.euicc.xml; do
+        rm -rf "$WORK_DIR/$REL"
+        PARTITION="${REL%%/*}"
+        ENTRY="${REL#*/}"
+        _EXYNOS9810_FINAL_DELETE_METADATA_PREFIX "$PARTITION" "$ENTRY" "/$REL"
+    done
+
+    # Do not bake the donor's TSDS/eSIM selector into any immutable property
+    # file. The init hook written by the radio setup also clears a value that
+    # survived a dirty flash in /data/property.
+    while IFS= read -r -d '' PROP_FILE; do
+        _EXYNOS9810_FINAL_DELETE_PROP "$PROP_FILE" "persist.ril.esim.slotswitch"
+    done < <(find "$WORK_DIR" -type f \( -name 'build.prop' -o -name 'prop.default' -o -name 'default.prop' \) -print0)
+
+    INIT="$WORK_DIR/system/system/etc/init/unica_exynos9810_lte_migrate.rc"
+    if [ ! -f "$INIT" ]; then
+        # The device-stack patch can be intentionally skipped when the optional
+        # legacy donor tree is unavailable. Keep the runtime eSIM reset
+        # independent from that donor so a fresh build still clears a stale
+        # Samsung TSDS selector from /data/property.
+        LOG "- Creating Exynos9810 eSIM reset hook without optional donor overlay"
+        mkdir -p "$(dirname "$INIT")"
+        cat > "$INIT" <<'EOF'
+# Exynos9810 has no eUICC. Clear a donor TSDS/eSIM selector before telephony
+# starts so SIM Manager cannot enter the unsupported eSIM path.
+on post-fs-data
+    setprop persist.ril.esim.slotswitch ""
+EOF
+        chmod 0644 "$INIT"
+        _EXYNOS9810_FINAL_SET_METADATA "system" \
+            "system/etc/init/unica_exynos9810_lte_migrate.rc" \
+            0 0 644 "u:object_r:system_file:s0"
+    fi
+
+    [ -f "$INIT" ] && grep -qF 'setprop persist.ril.esim.slotswitch ""' "$INIT" || {
+        LOGE "Exynos9810 eSIM property reset hook is missing"
+        return 1
+    }
+
+    while IFS= read -r -d '' PROP_XML; do
+        if grep -qE 'feature[[:space:]]+name="android\.hardware\.telephony\.euicc"' "$PROP_XML"; then
+            LOGE "Unsupported eSIM feature survived final cleanup: $PROP_XML"
+            return 1
+        fi
+    done < <(find "$WORK_DIR" -type f -path '*/etc/permissions/*.xml' -print0)
 }
 
 _EXYNOS9810_FINAL_SET_HOME_LAYOUT()
@@ -852,9 +1123,8 @@ _EXYNOS9810_FINAL_SET_HOME_LAYOUT()
 <favorites xmlns:launcher="http://schemas.android.com/apk/res/com.sec.android.app.launcher">
     <homeGridInfo default="4x6" />
     <home>
-        <!-- One UI 8 first-boot layout: weather and Now Brief above the app row. -->
+        <!-- One UI 8 first-boot layout: weather above the app row. -->
         <appwidget screen="0" packageName="com.sec.android.daemonapp" className="com.sec.android.daemonapp.appwidget.WeatherAppWidget2x1" x="0" y="1" spanX="2" spanY="2" />
-        <appwidget screen="0" packageName="com.samsung.android.smartsuggestions" className="com.samsung.android.smartsuggestions.feature.aisuggestion.ui.appwidget.AiSuggestionAppWidgetReceiver" x="2" y="2" spanX="2" spanY="1" />
         <favorite screen="0" packageName="com.sec.android.gallery3d" className="com.samsung.android.gallery.app.activity.GalleryActivity" x="0" y="4" />
         <favorite screen="0" packageName="com.android.vending" className="com.android.vending.AssetBrowserActivity" x="1" y="4" />
         <favorite screen="0" packageName="com.sec.android.app.myfiles" className="com.sec.android.app.myfiles.ui.MainActivity" x="2" y="4" />
@@ -875,7 +1145,7 @@ XML
 
 _EXYNOS9810_FINAL_RESTORE_BLUETOOTH_LIB()
 {
-    local PATCH="$SRC_DIR/unica/patches/bt-lib-patch/customize.sh"
+    local PATCH="$SRC_DIR/unica/patches/bluetooth/customize.sh"
 
     if [ ! -f "$PATCH" ]; then
         LOGW "Bluetooth library patcher not found: $PATCH"
@@ -907,19 +1177,294 @@ _EXYNOS9810_FINAL_DELETE_PROP()
     sed -i "/^$PROP=/d" "$FILE"
 }
 
+_EXYNOS9810_FINAL_ENSURE_TARGET_IDENTITY()
+{
+    local MODEL
+    local NAME
+    local STOCK_INCREMENTAL
+    local FIRST_API="${TARGET_PRODUCT_SHIPPING_API_LEVEL:-26}"
+    local FILE
+    local PREFIX
+
+    case "$TARGET_CODENAME" in
+        starlte)
+            MODEL="SM-G960F"
+            NAME="starltexx"
+            STOCK_INCREMENTAL="G960FXXUHFVG4"
+            ;;
+        star2lte)
+            MODEL="SM-G965F"
+            NAME="star2ltexx"
+            STOCK_INCREMENTAL="G965FXXUHFVG4"
+            ;;
+        crownlte)
+            MODEL="SM-N960F"
+            NAME="crownltexx"
+            STOCK_INCREMENTAL="N960FXXUHFVG4"
+            FIRST_API="${TARGET_PRODUCT_SHIPPING_API_LEVEL:-27}"
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+
+    LOG "- Enforcing final Exynos9810 target identity"
+
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.product.device" "$TARGET_CODENAME"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.product.model" "$MODEL"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.product.name" "$NAME"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.build.flavor" "$NAME-user"
+
+    for FILE in \
+        "$WORK_DIR/vendor/build.prop:vendor" \
+        "$WORK_DIR/vendor/vendor_dlkm/etc/build.prop:vendor_dlkm" \
+        "$WORK_DIR/vendor/odm_dlkm/etc/build.prop:odm_dlkm" \
+        "$WORK_DIR/odm/etc/build.prop:odm" \
+        "$WORK_DIR/system/odm/etc/build.prop:odm" \
+        "$WORK_DIR/system/product/etc/build.prop:product" \
+        "$WORK_DIR/system/system/product/etc/build.prop:product"; do
+        PREFIX="${FILE##*:}"
+        FILE="${FILE%:*}"
+        [ -f "$FILE" ] || continue
+
+        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.brand" "samsung"
+        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.device" "$TARGET_CODENAME"
+        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.manufacturer" "samsung"
+        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.model" "$MODEL"
+        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.name" "$NAME"
+        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.$PREFIX.build.fingerprint" \
+            "samsung/$NAME/$TARGET_CODENAME:10/QP1A.190711.020/$STOCK_INCREMENTAL:user/release-keys"
+        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "$STOCK_INCREMENTAL"
+    done
+
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.product.first_api_level" "$FIRST_API"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.board.first_api_level" "$FIRST_API"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.version.sdk" "33"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.vndk.version" "33"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.api_level" "33"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.board.api_level" "33"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.product.board" "exynos9810"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.board.platform" "universal9810"
+}
+
 _EXYNOS9810_FINAL_RAM_TWEAKS()
 {
     local FILE
+    local PROP
 
-    LOG "- Applying low-risk Exynos9810 RAM trim props"
+    LOG "- Applying requested Exynos9810 RAM profile"
 
+    # Keep the requested legacy framework profile in one property file so the
+    # Android property loader cannot see conflicting copies. The old boot-time
+    # ram_tweaks service remains disabled: it changed VM, I/O and GPU sysfs
+    # state after boot and caused reclaim storms on the 6 GB Exynos9810 build.
     for FILE in \
+        "$WORK_DIR/vendor/build.prop" \
         "$WORK_DIR/system/system/build.prop" \
         "$WORK_DIR/system/product/etc/build.prop" \
         "$WORK_DIR/system/system/product/etc/build.prop"; do
-        _EXYNOS9810_FINAL_SET_PROP "$FILE" "persist.sys.fw.trim_enable_memory" "true"
-        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.sys.fw.use_trim_settings" "true"
+        for PROP in \
+            ro.sys.fw.bg_apps_limit \
+            ro.sys.fw.bg_cached_ratio \
+            ro.config.dha_cached_max \
+            ro.config.dha_cached_min \
+            ro.config.dha_empty_max \
+            ro.config.dha_empty_min \
+            ro.config.dha_lmk_scale \
+            ro.config.dha_pwhitelist_enable \
+            persist.sys.fw.trim_enable_memory \
+            ro.sys.fw.use_trim_settings; do
+            _EXYNOS9810_FINAL_DELETE_PROP "$FILE" "$PROP"
+        done
     done
+
+    FILE="$WORK_DIR/system/system/build.prop"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.sys.fw.bg_apps_limit" "24"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.sys.fw.bg_cached_ratio" "0.55"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_cached_max" "28"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_cached_min" "8"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_empty_max" "40"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_empty_min" "8"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_lmk_scale" "0.545"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_pwhitelist_enable" "1"
+
+    rm -f "$WORK_DIR/system/system/etc/init/ram_tweaks.rc" \
+        "$WORK_DIR/system/system/bin/ram_tweaks.sh"
+}
+
+_EXYNOS9810_FINAL_ENSURE_DISPLAY_PROPS()
+{
+    # The legacy device-stack module is optional now that its runtime payloads
+    # are embedded in the ROM. Keep the compositor baseline in this final
+    # self-contained layer so a donor-free build receives the same settings.
+    LOG "- Applying embedded Exynos9810 display compatibility properties"
+
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" \
+        "persist.sys.unica.nativeblur" "true"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
+        "ro.surface_flinger.max_frame_buffer_acquired_buffers" "3"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
+        "debug.sf.disable_backpressure" "1"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
+        "debug.sf.latch_unsignaled" "0"
+}
+
+_EXYNOS9810_FINAL_RESTORE_RAMPLUS_FILES()
+{
+    local FSTAB="$WORK_DIR/vendor/etc/fstab.ramplus"
+    local INIT="$WORK_DIR/vendor/etc/init/init.ramplus.rc"
+
+    # The base vendor may not carry Samsung's legacy RAM Plus descriptors.
+    # Keep these small, device-neutral files in the ROM so the feature does
+    # not depend on an external donor tree.
+    LOG "- Restoring embedded Exynos9810 RAM Plus descriptors"
+    mkdir -p "$(dirname "$FSTAB")" "$(dirname "$INIT")"
+
+    cat > "$FSTAB" <<'EOF'
+# Android fstab file.
+#<src>                  <mnt_point>         <type>    <mnt_flags and options>                               <fs_mgr_flags>
+# The filesystem that contains the filesystem checker binary (typically /system) cannot
+# specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
+
+# SWAP
+/dev/block/zram0                                   none                swap      defaults                                              zramsize=50%,max_comp_streams=8,auto_configure
+EOF
+
+    cat > "$INIT" <<'EOF'
+# KERNEL CORE MEMORY
+on property:sys.boot_completed=1
+    swapon_all /vendor/etc/fstab.ramplus
+EOF
+
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/etc/fstab.ramplus" \
+        0 0 644 "u:object_r:vendor_configs_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/etc/init/init.ramplus.rc" \
+        0 0 644 "u:object_r:vendor_configs_file:s0"
+}
+
+_EXYNOS9810_FINAL_RESTORE_EMBEDDED_REMOTEDISPLAY()
+{
+    local ROOT="$SRC_DIR/unica/patches/exynos9810_device_stack/remotedisplay"
+    local PARTITION SRC DST ENTRY_PREFIX CONTEXT_PREFIX FILE REL MODE LABEL
+
+    LOG "- Restoring embedded Exynos9810 Smart View and Wireless DeX stack"
+
+    for PARTITION in system vendor; do
+        SRC="$ROOT/$PARTITION"
+        [ -d "$SRC" ] || {
+            LOGE "Embedded Exynos9810 remotedisplay payload is missing: $SRC"
+            return 1
+        }
+
+        if [ "$PARTITION" = "system" ]; then
+            DST="$WORK_DIR/system/system"
+            ENTRY_PREFIX="system"
+            CONTEXT_PREFIX="/system"
+        else
+            DST="$WORK_DIR/vendor"
+            ENTRY_PREFIX="vendor"
+            CONTEXT_PREFIX="/vendor"
+        fi
+
+        mkdir -p "$DST"
+        cp -a "$SRC/." "$DST/"
+
+        while IFS= read -r -d '' FILE; do
+            REL="${FILE#$SRC/}"
+            MODE="$(stat -c '%a' "$FILE")"
+            LABEL="u:object_r:${PARTITION}_file:s0"
+            case "$REL" in
+                lib/*|lib64/*|framework/*)
+                    [ "$PARTITION" = "system" ] && LABEL="u:object_r:system_lib_file:s0"
+                    ;;
+            esac
+            _EXYNOS9810_FINAL_SET_METADATA "$PARTITION" "$ENTRY_PREFIX/$REL" \
+                0 0 "$MODE" "$LABEL"
+        done < <(find "$SRC" \( -type f -o -type l \) -print0)
+    done
+}
+
+_EXYNOS9810_FINAL_RESTORE_EMBEDDED_SENSORS()
+{
+    local SRC="$SRC_DIR/unica/patches/exynos9810_device_stack/sensors2/vendor"
+    local FILE REL DST MODE USER GROUP LABEL
+
+    [ -d "$SRC" ] || {
+        LOGE "Embedded Exynos9810 sensor payload is missing: $SRC"
+        return 1
+    }
+
+    LOG "- Restoring embedded Exynos9810 sensor HAL stack"
+    mkdir -p "$WORK_DIR/vendor"
+    cp -a "$SRC/." "$WORK_DIR/vendor/"
+
+    while IFS= read -r -d '' FILE; do
+        REL="${FILE#$SRC/}"
+        DST="$WORK_DIR/vendor/$REL"
+        USER=0
+        GROUP=0
+        MODE=644
+        LABEL="u:object_r:vendor_file:s0"
+        case "$REL" in
+            bin/hw/android.hardware.sensors@1.0-service)
+                GROUP=2000
+                MODE=755
+                LABEL="u:object_r:hal_sensors_default_exec:s0"
+                ;;
+            etc/init/*.rc|etc/vintf/manifest/*.xml|etc/permissions/*.xml|etc/sensors/*)
+                MODE=644
+                LABEL="u:object_r:vendor_configs_file:s0"
+                ;;
+            lib*/hw/*.so|lib*/sensors*.so)
+                MODE=644
+                LABEL="u:object_r:vendor_file:s0"
+                ;;
+        esac
+        chmod "$MODE" "$DST" || return 1
+        chown "$USER:$GROUP" "$DST" 2>/dev/null || true
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
+            "$USER" "$GROUP" "$MODE" "$LABEL"
+    done < <(find "$SRC" \( -type f -o -type l \) -print0)
+}
+
+_EXYNOS9810_FINAL_RESTORE_BASE_MDF_STACK()
+{
+    # DeKnox replaces libmdf.so with a small stub, but the One UI 8 S22
+    # framework still calls Samsung's MDF JNI from system_server during Wi-Fi
+    # startup. Restore the source-base MDF libraries late so system_server can
+    # create WifiService without crashing in MdfUtils.isMdfEnforced().
+    local BASE="$FW_DIR/SM-S901B_EUX/system/system"
+    local REL SRC DST
+
+    [ -f "$BASE/lib64/libmdf.so" ] || {
+        LOGE "Source-base MDF library is missing: $BASE/lib64/libmdf.so"
+        return 1
+    }
+
+    LOG "- Restoring source-base Samsung MDF JNI stack"
+    for REL in \
+        lib/libmdf.so \
+        lib64/libmdf.so \
+        lib/libmdfpp_req.so \
+        lib64/libmdfpp_req.so; do
+        SRC="$BASE/$REL"
+        [ -f "$SRC" ] || {
+            LOGE "Source-base MDF component is missing: $SRC"
+            return 1
+        }
+        DST="$WORK_DIR/system/system/$REL"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+        chmod 644 "$DST" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "system" "system/$REL" \
+            0 0 644 "u:object_r:system_lib_file:s0"
+    done
+
+    strings -a "$WORK_DIR/system/system/lib64/libmdf.so" | \
+        grep -qF "Java_com_samsung_android_security_mdf_MdfUtils_isMdfEnforced" || {
+        LOGE "Final system libmdf.so lacks MdfUtils.isMdfEnforced JNI"
+        return 1
+    }
 }
 
 _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK()
@@ -930,7 +1475,7 @@ _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK()
     local ROOT="$EXYNOS9810_LEGACY_PORT_DIR/vendor"
     local REL SRC DST LABEL
 
-    [ -d "$ROOT" ] || return 0
+    [ -n "$ROOT" ] && [ -d "$ROOT" ] || return 0
     LOG "- Restoring Exynos9810 Dolby Atmos/DAP3 stack"
 
     for REL in \
@@ -1015,17 +1560,24 @@ _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK()
 
 _EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK()
 {
-    # Keep the proven Duhan/Exynos9810 target audio as the final word.
-    local ROOT="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$TARGET_CODENAME/vendor"
-    local REL SRC DST LABEL
+    # Keep the proven Exynos9810 target audio as the final word. Each device
+    # has its own mixer, firmware and SoundBooster variant in the repository,
+    # so a build never depends on a private donor checkout.
+    local ROOT="$EXYNOS9810_EMBEDDED_AUDIO_DIR/$TARGET_CODENAME"
+    local REL SRC DST LABEL BOOSTER_VERSION
 
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
     [ -d "$ROOT" ] || {
-        LOGW "Target audio donor missing: $ROOT"
-        return 0
+        LOGE "Embedded Exynos9810 audio stack missing: $ROOT"
+        return 1
     }
 
-    LOG "- Restoring Duhan Exynos9810 audio stack for $TARGET_CODENAME"
+    case "$TARGET_CODENAME" in
+        crownlte) BOOSTER_VERSION=950 ;;
+        *) BOOSTER_VERSION=900 ;;
+    esac
+
+    LOG "- Restoring embedded Exynos9810 audio stack for $TARGET_CODENAME"
     for REL in \
         etc/mixer_gains.xml \
         etc/mixer_paths.xml \
@@ -1036,14 +1588,17 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK()
         firmware/AP_AUDIO_SLSI.bin \
         firmware/SoundBoosterParam.bin \
         lib/hw/audio.primary.exynos9810.so \
-        lib/lib_SoundBooster_ver900.so \
         lib/libaudio_soundtrigger.so \
         lib/libaudiodebugfs.so \
         lib/libaudioproxy.so \
         lib/vndk/libaudioroute.so \
-        lib64/lib_SoundBooster_ver900.so; do
+        "lib/lib_SoundBooster_ver${BOOSTER_VERSION}.so" \
+        "lib64/lib_SoundBooster_ver${BOOSTER_VERSION}.so"; do
         SRC="$ROOT/$REL"
-        [ -f "$SRC" ] || continue
+        [ -f "$SRC" ] || {
+            LOGE "Embedded Exynos9810 audio component missing: vendor/$REL"
+            return 1
+        }
         DST="$WORK_DIR/vendor/$REL"
         mkdir -p "$(dirname "$DST")"
         cp -af "$SRC" "$DST" || return 1
@@ -1113,7 +1668,7 @@ _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES()
         return 0
     fi
 
-    LOG "- Applying Duhan Exynos9810 speaker calibration and safe output attenuation"
+    LOG "- Applying Exynos9810 speaker calibration and safe output attenuation"
 
     python3 - "$TABLE" "$POLICY" <<'PY' || return 1
 import sys
@@ -1121,7 +1676,7 @@ import xml.etree.ElementTree as ET
 
 table_path, policy_path = sys.argv[1:]
 
-# The legacy WM1814/WM5110 mixer is already the proven Duhan device mixer. The
+# The legacy WM1814/WM5110 mixer is already the proven Exynos9810 device mixer. The
 # One UI 8 framework, however, maps its short volume-index range onto these
 # generic curves too aggressively. Increase attenuation only below 100%; keep
 # the final point at 0 mB so maximum media/call volume is unchanged.
@@ -1129,7 +1684,6 @@ table_updates = {
     "DEFAULT_SYSTEM_VOLUME_CURVE": [(1, -4200), (33, -3000), (66, -1800), (100, -600)],
     "DEFAULT_MEDIA_VOLUME_CURVE": [(1, -6800), (20, -5000), (60, -2300), (100, -600)],
     "DEFAULT_DEVICE_CATEGORY_SPEAKER_VOLUME_CURVE": [(1, -6800), (20, -5000), (60, -2300), (100, -600)],
-    "DEFAULT_NON_MUTABLE_SPEAKER_VOLUME_CURVE": [(0, -6800), (20, -5000), (60, -2300), (100, -600)],
 }
 
 tree = ET.parse(table_path)
@@ -1238,26 +1792,56 @@ _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT()
 }
 
 
+_EXYNOS9810_FINAL_STAGE_LAUNCHER_DEFAULTS()
+{
+    # One UI Home stores the Media page/Google Discover switch in a
+    # DataStore file under /data, so a system build.prop or workspace XML
+    # cannot set its clean-install default. Install a one-shot first-boot
+    # helper that changes only that key and leaves later user choices alone.
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+
+    local SCRIPT="$WORK_DIR/system/system/bin/unica_launcher_defaults.sh"
+    local RC="$WORK_DIR/system/system/etc/init/unica_launcher_defaults.rc"
+    local SCRIPT_SRC="$MODPATH/launcher/unica_launcher_defaults.sh"
+    local RC_SRC="$MODPATH/launcher/unica_launcher_defaults.rc"
+
+    [ -f "$SCRIPT_SRC" ] && [ -f "$RC_SRC" ] || {
+        LOGE "One UI Home default helper files are missing"
+        return 1
+    }
+
+    LOG "- Disabling One UI Home Media page / Google Discover by default"
+    mkdir -p "$(dirname "$SCRIPT")" "$(dirname "$RC")"
+    cp -f "$SCRIPT_SRC" "$SCRIPT" || return 1
+    cp -f "$RC_SRC" "$RC" || return 1
+    chmod 0755 "$SCRIPT"
+    chmod 0644 "$RC"
+
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/unica_launcher_defaults.sh" \
+        0 2000 755 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/init/unica_launcher_defaults.rc" \
+        0 0 644 "u:object_r:system_file:s0"
+}
+
+
 _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV()
 {
-    # OneUI8 SamsungCamera crashes the instant you switch to the front camera:
-    # ZoomController.getFrontCropAngleZoomValue() throws InvalidOperationException
-    # ("current camera is not supporting dynamic fov") because the app assumes the
-    # S22-style front selfie-zoom (dynamic FOV) that the legacy exynos9810 front
-    # camera hardware/HAL does not have. That kills the whole camera app (unusable
-    # until force-stop). Return the app's own no-crop / native-FOV default
-    # (0x3e8 == 1000 == 1.0x) instead of throwing, so the front camera opens and
-    # the app survives the switch.
-    #
-    # NOTE: this only stops the dynamic-FOV crash on switch. The second front-camera
-    # failure -- the engine shutting down on the missing preview-callback ImageReader
-    # -- is fixed separately by _EXYNOS9810_FINAL_PATCH_CAMERA_PREVIEW_CALLBACK_GUARD.
+    # One UI 8's S22 camera exposes a front-camera FOV toggle that the legacy
+    # Exynos9810 front sensor/HAL cannot implement. On the 9810 this is a
+    # software crop choice, not a second physical front lens. Letting the app
+    # calculate the S22 dynamic-FOV value causes camera-id 1 to be reconfigured
+    # with an unsupported stream; the HAL then stops delivering frames (-110).
+    # Keep the UI route alive by always returning the camera app's native-FOV
+    # value (0x3e8 == 1000 == 1.0x). The button therefore remains harmless and
+    # the normal front preview/photo path stays on the supported stream.
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+
     local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
     local ZOOM="$APK_DIR/smali_classes3/com/sec/android/app/camera/engine/ZoomController.smali"
 
     [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
 
-    LOG "- Fixing Exynos9810 front camera crash (unsupported dynamic FOV)"
+    LOG "- Clamping unsupported Exynos9810 front-camera FOV to native 1.0x"
 
     if [ ! -f "$ZOOM" ]; then
         LOGW "ZoomController.smali not found; skipping front camera crash fix"
@@ -1265,35 +1849,36 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV()
     fi
 
     python3 - "$ZOOM" <<'PY' || return 1
+from pathlib import Path
+import re
 import sys
-p = sys.argv[1]
-s = open(p).read()
-old = (
-    '    :cond_1\n'
-    '    new-instance p0, Lcom/samsung/android/camera/core2/exception/InvalidOperationException;\n'
-    '\n'
-    '    const-string v0, "The current camera is not supporting dynamic fov."\n'
-    '\n'
-    '    invoke-direct {p0, v0}, Ljava/lang/RuntimeException;-><init>(Ljava/lang/String;)V\n'
-    '\n'
-    '    throw p0\n'
-    '.end method'
+
+path = Path(sys.argv[1])
+text = path.read_text()
+pattern = re.compile(
+    r"(?ms)^(?P<header>\.method[^\n]*getFrontCropAngleZoomValue\([^\n]*\)I\n)"
+    r".*?^\.end method"
 )
-new = (
-    '    :cond_1\n'
-    '    const/16 v0, 0x3e8\n'
-    '\n'
-    '    return v0\n'
-    '.end method'
+match = pattern.search(text)
+if not match:
+    raise SystemExit("getFrontCropAngleZoomValue()I not found")
+
+method = match.group(0)
+if "# UN1CA: native front FOV guard" in method:
+    print("already patched")
+    sys.exit(0)
+
+replacement = (
+    match.group("header")
+    + "    # UN1CA: native front FOV guard\n"
+    + "    .locals 1\n\n"
+    + "    const/16 v0, 0x3e8\n\n"
+    + "    return v0\n"
+    + ".end method"
 )
-if old not in s:
-    if 'getFrontCropAngleZoomValue' in s and 'const/16 v0, 0x3e8' in s:
-        print("already patched")
-        sys.exit(0)
-    print("PATTERN_NOT_FOUND")
-    sys.exit(1)
-open(p, "w").write(s.replace(old, new, 1))
-print("ok")
+text = text[:match.start()] + replacement + text[match.end():]
+path.write_text(text)
+print("patched")
 PY
 }
 
@@ -1871,6 +2456,174 @@ _EXYNOS9810_FINAL_REPATCH_APPS()
 
 }
 
+_EXYNOS9810_DELETE_METADATA()
+{
+    local PARTITION="$1"
+    local ENTRY="$2"
+    local CONTEXT="$3"
+    local RAW_CONTEXT
+    local ESCAPED_CONTEXT
+
+    touch "$WORK_DIR/configs/fs_config-$PARTITION" "$WORK_DIR/configs/file_context-$PARTITION"
+
+    awk -v entry="$ENTRY" '$1 != entry { print }' \
+        "$WORK_DIR/configs/fs_config-$PARTITION" > "$WORK_DIR/configs/fs_config-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/fs_config-$PARTITION.tmp" "$WORK_DIR/configs/fs_config-$PARTITION"
+
+    RAW_CONTEXT="$CONTEXT"
+    ESCAPED_CONTEXT="/$(_HANDLE_SPECIAL_CHARS "${CONTEXT#/}")"
+    awk -v raw="$RAW_CONTEXT" -v escaped="$ESCAPED_CONTEXT" \
+        '$1 != raw && $1 != escaped { print }' \
+        "$WORK_DIR/configs/file_context-$PARTITION" > "$WORK_DIR/configs/file_context-$PARTITION.tmp"
+    mv -f "$WORK_DIR/configs/file_context-$PARTITION.tmp" "$WORK_DIR/configs/file_context-$PARTITION"
+}
+
+_EXYNOS9810_REMOVE_STALE_PRECOMPILED_SEPOLICY()
+{
+    local FILE
+    local REL
+
+    LOG "- Removing stale Exynos9810 ODM precompiled SELinux policy"
+    for FILE in \
+        "odm/etc/selinux/precompiled_sepolicy" \
+        "odm/etc/selinux/precompiled_sepolicy.plat_sepolicy_and_mapping.sha256" \
+        "odm/etc/selinux/precompiled_sepolicy.system_ext_sepolicy_and_mapping.sha256"; do
+        for REL in "$WORK_DIR/$FILE" "$WORK_DIR/system/$FILE" "$WORK_DIR/system/system/$FILE"; do
+            rm -f "$REL"
+        done
+        _EXYNOS9810_DELETE_METADATA "odm" "$FILE" "/$FILE"
+        _EXYNOS9810_DELETE_METADATA "system" "$FILE" "/$FILE"
+    done
+}
+
+_EXYNOS9810_FINAL_APPLY_EMBEDDED_SEPOLICY()
+{
+    local TEMPLATE="$SRC_DIR/unica/mods/zzzz_exynos9810_boot_restore/customize.sh"
+    local VENDOR_CIL="$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
+    local PLAT_CIL="$WORK_DIR/system/system/etc/selinux/plat_sepolicy.cil"
+
+    [ -f "$TEMPLATE" ] || {
+        LOGE "Embedded Exynos9810 SELinux rule template is missing: $TEMPLATE"
+        return 1
+    }
+    [ -f "$VENDOR_CIL" ] || {
+        LOGE "Embedded Exynos9810 vendor SELinux policy is missing: $VENDOR_CIL"
+        return 1
+    }
+    [ -f "$PLAT_CIL" ] || {
+        LOGE "Embedded Exynos9810 platform SELinux policy is missing: $PLAT_CIL"
+        return 1
+    }
+
+    LOG "- Applying embedded Exynos9810 SELinux compatibility rules"
+    python3 - "$TEMPLATE" "$VENDOR_CIL" "$PLAT_CIL" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+template, vendor_cil, plat_cil = map(Path, sys.argv[1:])
+lines = template.read_text().splitlines()
+
+def quoted_block(marker):
+    start = next(i for i, line in enumerate(lines) if marker in line)
+    rules = []
+    for line in lines[start + 1:]:
+        if line.strip() == '"':
+            break
+        line = line.strip()
+        if line.startswith("("):
+            rules.append(line)
+    return rules
+
+def heredoc_block(marker):
+    start = next(i for i, line in enumerate(lines) if marker in line)
+    rules = []
+    for line in lines[start + 1:]:
+        if line.strip() == "ENFORCING_ALLOW_RULES_EOF":
+            break
+        line = line.strip()
+        if line.startswith("("):
+            rules.append(line)
+    return rules
+
+def append_unique(path, rules):
+    existing = set(path.read_text().splitlines())
+    with path.open("a", encoding="utf-8") as handle:
+        for rule in rules:
+            if rule not in existing:
+                handle.write(rule + "\n")
+                existing.add(rule)
+
+append_unique(vendor_cil, quoted_block('local SUPPLEMENTARY_RULES="'))
+append_unique(plat_cil, quoted_block('local PLAT_PERMISSIVE_RULES="'))
+append_unique(plat_cil, heredoc_block("<<'ENFORCING_ALLOW_RULES_EOF'"))
+PY
+}
+
+_EXYNOS9810_RESTORE_GRAPHICS_MAPPER_COMPAT()
+{
+    local ROOT="$SRC_DIR/unica/mods/zzzz_exynos9810_boot_restore/exynos9810_graphics"
+    local REL SRC DST LABEL
+
+    EXYNOS9810_GRAPHICS_MAPPER_BRIDGE_PRESENT=false
+    [ -d "$ROOT" ] || {
+        LOGW "Embedded Exynos9810 graphics payload is absent; keeping target-native graphics"
+        return 0
+    }
+
+    LOG "- Applying embedded Exynos9810 graphics compatibility libraries"
+
+    for REL in \
+        lib/android.hardware.graphics.mapper@2.0.so \
+        lib/android.hardware.graphics.mapper@2.1.so \
+        lib/libgralloctypes.so \
+        lib/libnativewindow.so \
+        lib64/android.hardware.graphics.mapper@2.0.so \
+        lib64/android.hardware.graphics.mapper@2.1.so \
+        lib64/libgralloctypes.so \
+        lib64/libnativewindow.so; do
+        SRC="$ROOT/system/$REL"
+        [ -f "$SRC" ] || {
+            LOGE "Embedded Exynos9810 system graphics component missing: system/$REL"
+            return 1
+        }
+        DST="$WORK_DIR/system/system/$REL"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+        case "$REL" in
+            *android.hardware.graphics.mapper*|*libgralloctypes*)
+                LABEL="u:object_r:same_process_hal_file:s0" ;;
+            *)
+                LABEL="u:object_r:system_lib_file:s0" ;;
+        esac
+        _EXYNOS9810_FINAL_SET_METADATA "system" "system/$REL" \
+            0 0 644 "$LABEL"
+    done
+
+    for REL in \
+        lib/libgralloctypes-v33.so \
+        lib64/libgralloctypes-v33.so \
+        lib64/stock-vndk29-graphics/android.hardware.graphics.allocator@2.0.so \
+        lib64/stock-vndk29-graphics/android.hardware.graphics.common@1.0.so \
+        lib64/stock-vndk29-graphics/android.hardware.graphics.mapper@2.0.so \
+        lib64/stock-vndk29-graphics/libc++.graphics.so; do
+        SRC="$ROOT/vendor/$REL"
+        [ -f "$SRC" ] || {
+            LOGE "Embedded Exynos9810 vendor graphics component missing: vendor/$REL"
+            return 1
+        }
+        DST="$WORK_DIR/vendor/$REL"
+        mkdir -p "$(dirname "$DST")"
+        cp -af "$SRC" "$DST" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
+            0 0 644 "u:object_r:vendor_file:s0"
+    done
+
+    if [ -f "$WORK_DIR/vendor/lib/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so" ] &&
+       [ -f "$WORK_DIR/vendor/lib64/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so" ]; then
+        EXYNOS9810_GRAPHICS_MAPPER_BRIDGE_PRESENT=true
+    fi
+}
+
 _EXYNOS9810_FINAL_CLEAN_GRAPHICS_STATE()
 {
     local ARCH_DIR FILE
@@ -1900,7 +2653,6 @@ _EXYNOS9810_FINAL_CLEAN_GRAPHICS_STATE()
         done
 
         for FILE in \
-            "$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so" \
             "$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.1-impl.so" \
             "$WORK_DIR/system/system/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so" \
             "$WORK_DIR/system/system/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.1-impl.so"; do
@@ -1908,7 +2660,6 @@ _EXYNOS9810_FINAL_CLEAN_GRAPHICS_STATE()
         done
 
         for REL in \
-            "vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so" \
             "vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.1-impl.so" \
             "system/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so" \
             "system/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.1-impl.so"; do
@@ -1918,11 +2669,19 @@ _EXYNOS9810_FINAL_CLEAN_GRAPHICS_STATE()
             esac
         done
 
-        FILE="$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so"
-        [ -f "$FILE" ] || {
-            LOGE "Proven mapper@2.1 bridge missing after final cleanup: $FILE"
-            return 1
-        }
+        if [ "$EXYNOS9810_GRAPHICS_MAPPER_BRIDGE_PRESENT" = true ]; then
+            FILE="$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so"
+            [ -f "$FILE" ] || {
+                LOGE "Proven mapper@2.1 bridge missing after final cleanup: $FILE"
+                return 1
+            }
+        else
+            FILE="$WORK_DIR/vendor/$ARCH_DIR/hw/android.hardware.graphics.mapper@2.0-impl.so"
+            [ -f "$FILE" ] || {
+                LOGE "Target-native mapper implementation missing after final cleanup: $FILE"
+                return 1
+            }
+        fi
     done
 
     # This must be repeated at the end because a later restore/debloat pass
@@ -1979,7 +2738,7 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY()
 {
     # zzzz_exynos9810_boot_restore fully wipes and rebuilds $WORK_DIR/vendor
     # from the pristine legacy-port source (rm -rf + cp -a), which runs
-    # *after* platform/exynos9810/patches, undoing any earlier in-place
+    # *after* the Exynos9810 device-stack patch module, undoing any earlier in-place
     # patch to a vendor file. This module runs later still, so it's the
     # place that actually survives into the final build.
     #
@@ -4116,8 +4875,8 @@ _EXYNOS9810_FINAL_FIX_SNAP_IMAGETAGGER_MODEL_PAIR()
         return 0
     }
     [ -f "$MODEL" ] || {
-        LOGE "SNAP ImageTagger model is missing: $MODEL"
-        return 1
+        LOGW "SNAP ImageTagger model is missing; keeping the donor library and skipping compatibility pairing"
+        return 0
     }
     [ -f "$SRC" ] || {
         LOGE "SNAP ImageTagger compatibility payload is missing: $SRC"
@@ -4305,7 +5064,13 @@ PY
 
     LOG "- Patching Smart Suggestions database keys for legacy Exynos9810 keymaster"
     DECODE_APK "system" "$SMART_REL" || return 1
-    SMART_SMALI="$(find "$SMART_DIR" -type f -path '*/C5/b.smali' -print -quit)"
+    # The Galaxy Store "full-global-release" flavor renamed the obfuscated
+    # provider (C5/b) to the explicit DatabaseKeyStoreImpl class in the
+    # March 2026 release. Accept both layouts.
+    SMART_SMALI="$(find "$SMART_DIR" -type f -name 'DatabaseKeyStoreImpl.smali' -print -quit)"
+    if [ -z "$SMART_SMALI" ]; then
+        SMART_SMALI="$(find "$SMART_DIR" -type f -path '*/C5/b.smali' -print -quit)"
+    fi
     [ -n "$SMART_SMALI" ] && [ -f "$SMART_SMALI" ] || {
         LOGE "Smart Suggestions database-key provider smali not found"
         return 1
@@ -4318,11 +5083,56 @@ import sys
 
 path = Path(sys.argv[1])
 text = path.read_text()
+# March 2026 release: the provider is the explicit DatabaseKeyStoreImpl
+# class and createKey is private with no Context reachable, so derive
+# the stable password from Build.MODEL plus the key name instead of
+# the legacy keymaster path.
 pattern = re.compile(
-    r"\.method public final a\(Ljava/lang/String;\)\[B\n.*?\n\.end method",
+    r"\.method private final createKey\(Ljava/lang/String;\)\[B\n.*?\n\.end method",
     re.S,
 )
-replacement = """.method public final a(Ljava/lang/String;)[B
+replacement = """.method private final createKey(Ljava/lang/String;)[B
+    .locals 3
+
+    const-string v0, "UN1CA9810-SmartSuggestions:"
+
+    sget-object v1, Landroid/os/Build;->MODEL:Ljava/lang/String;
+
+    invoke-virtual {v0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v0
+
+    invoke-virtual {v0, p1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v0
+
+    const-string v1, "SHA-256"
+
+    invoke-static {v1}, Ljava/security/MessageDigest;->getInstance(Ljava/lang/String;)Ljava/security/MessageDigest;
+
+    move-result-object v1
+
+    sget-object v2, Ljava/nio/charset/StandardCharsets;->UTF_8:Ljava/nio/charset/Charset;
+
+    invoke-virtual {v0, v2}, Ljava/lang/String;->getBytes(Ljava/nio/charset/Charset;)[B
+
+    move-result-object v0
+
+    invoke-virtual {v1, v0}, Ljava/security/MessageDigest;->digest([B)[B
+
+    move-result-object v0
+
+    return-object v0
+.end method"""
+new, count = pattern.subn(replacement, text, count=1)
+if count != 1:
+    # Older releases: obfuscated provider with a Context-accessible key
+    # derivation method.
+    pattern = re.compile(
+        r"\.method public final a\(Ljava/lang/String;\)\[B\n.*?\n\.end method",
+        re.S,
+    )
+    replacement = """.method public final a(Ljava/lang/String;)[B
     .locals 2
 
     new-instance p0, Ljava/lang/StringBuilder;
@@ -4355,7 +5165,7 @@ replacement = """.method public final a(Ljava/lang/String;)[B
 
     return-object p0
 .end method"""
-new, count = pattern.subn(replacement, text, count=1)
+    new, count = pattern.subn(replacement, text, count=1)
 if count != 1:
     raise SystemExit(f"expected one Smart Suggestions database-key method, patched {count}")
 path.write_text(new)
@@ -4479,7 +5289,7 @@ _EXYNOS9810_FINAL_PORT_N770_MOTION_PHOTO()
 
 _EXYNOS9810_FINAL_FORCE_S3NRN82_NFC()
 {
-    local NFC_ROOT="$SRC_DIR/platform/exynos9810/patches/exynos9810_device_stack/nfc"
+    local NFC_ROOT="$SRC_DIR/unica/patches/exynos9810_device_stack/nfc"
     local COMMON_ROOT="$NFC_ROOT/common"
     local TARGET_ROOT="$NFC_ROOT/$TARGET_CODENAME"
 
@@ -4623,11 +5433,117 @@ _EXYNOS9810_FINAL_VERIFY_WALLPAPER_AND_BRIEF_STACK()
     return 0
 }
 
+_EXYNOS9810_FINAL_VERIFY_WEATHER_PAYLOAD()
+{
+    local APK="$WORK_DIR/system/system/app/SamsungWeather/SamsungWeather.apk"
+    local REL
+
+    LOG "- Verifying supplied Samsung Weather payload"
+    [ -s "$APK" ] || {
+        LOGE "Samsung Weather 1.7.30.50 payload is missing"
+        return 1
+    }
+
+    for REL in \
+        system/app/Weather_SEP11.0 \
+        system/priv-app/SamsungWeather \
+        system/priv-app/Weather; do
+        [ ! -e "$WORK_DIR/system/$REL" ] || {
+            LOGE "Old Weather payload remains in the final workdir: /$REL"
+            return 1
+        }
+    done
+
+    return 0
+}
+
+_EXYNOS9810_FINAL_VERIFY_RAM_PROFILE()
+{
+    local FILE
+    local PROFILE="$WORK_DIR/system/system/build.prop"
+    local EXPECTED
+    local PROP
+    local COUNT
+
+    LOG "- Verifying requested Exynos9810 RAM profile"
+
+    [ -f "$PROFILE" ] || {
+        LOGE "System build.prop is missing while verifying the RAM profile"
+        return 1
+    }
+
+    for EXPECTED in \
+        "ro.sys.fw.bg_apps_limit=24" \
+        "ro.sys.fw.bg_cached_ratio=0.55" \
+        "ro.config.dha_cached_max=28" \
+        "ro.config.dha_cached_min=8" \
+        "ro.config.dha_empty_max=40" \
+        "ro.config.dha_empty_min=8" \
+        "ro.config.dha_lmk_scale=0.545" \
+        "ro.config.dha_pwhitelist_enable=1"; do
+        PROP="${EXPECTED%%=*}"
+        COUNT="$(grep -F -c "${PROP}=" "$PROFILE" || true)"
+        if [ "$COUNT" -ne 1 ] || ! grep -F -q "$EXPECTED" "$PROFILE"; then
+            LOGE "Requested RAM property is missing or duplicated: $EXPECTED"
+            return 1
+        fi
+    done
+
+    for FILE in \
+        "$WORK_DIR/vendor/build.prop" \
+        "$WORK_DIR/system/system/build.prop" \
+        "$WORK_DIR/system/product/etc/build.prop" \
+        "$WORK_DIR/system/system/product/etc/build.prop"; do
+        [ -f "$FILE" ] || continue
+        if grep -q -E '^(persist\.sys\.fw\.trim_enable_memory=|ro\.sys\.fw\.use_trim_settings=)' "$FILE"; then
+            LOGE "Removed trim override remains in $FILE"
+            return 1
+        fi
+    done
+
+    # Donor vendor files contain unrelated legacy ro.config.dha_* settings.
+    # Check only the exact profile properties so those valid donor settings do
+    # not look like duplicate copies of the requested profile.
+    for FILE in \
+        "$WORK_DIR/vendor/build.prop" \
+        "$WORK_DIR/system/product/etc/build.prop" \
+        "$WORK_DIR/system/system/product/etc/build.prop"; do
+        [ -f "$FILE" ] || continue
+        for PROP in \
+            ro.sys.fw.bg_apps_limit \
+            ro.sys.fw.bg_cached_ratio \
+            ro.config.dha_cached_max \
+            ro.config.dha_cached_min \
+            ro.config.dha_empty_max \
+            ro.config.dha_empty_min \
+            ro.config.dha_lmk_scale \
+            ro.config.dha_pwhitelist_enable; do
+            if grep -F -q "${PROP}=" "$FILE"; then
+                LOGE "RAM profile property is duplicated outside system/system/build.prop: ${PROP} in $FILE"
+                return 1
+            fi
+        done
+    done
+
+    [ ! -e "$WORK_DIR/system/system/etc/init/ram_tweaks.rc" ] || {
+        LOGE "Custom ram_tweaks init service remains in the final workdir"
+        return 1
+    }
+    [ ! -e "$WORK_DIR/system/system/bin/ram_tweaks.sh" ] || {
+        LOGE "Custom ram_tweaks helper remains in the final workdir"
+        return 1
+    }
+
+    return 0
+}
+
 _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH()
 {
     local KEY="$1"
     local VALUE="$2"
     local FILE
+
+    _EXYNOS9810_FINAL_RESTORE_FLOATING_FEATURE_FILES || return 1
 
     for FILE in \
         "$WORK_DIR/system/system/etc/floating_feature.xml" \
@@ -4648,9 +5564,41 @@ _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH()
     done
 }
 
+_EXYNOS9810_FINAL_RESTORE_FLOATING_FEATURE_FILES()
+{
+    local SOURCE="$EXYNOS9810_LEGACY_PORT_DIR/device_port/scripts/floating_feature.xml"
+    local PARTITION
+    local FILE
+
+    [ -f "$SOURCE" ] || {
+        LOGE "Embedded Exynos9810 floating-feature baseline is missing: $SOURCE"
+        return 1
+    }
+
+    # A late vendor restore may remove the vendor copy while retaining the
+    # system copy. Restore the same embedded baseline before applying the
+    # final feature edits so both partitions remain coherent.
+    for PARTITION in system vendor; do
+        if [ "$PARTITION" = "system" ]; then
+            FILE="$WORK_DIR/system/system/etc/floating_feature.xml"
+        else
+            FILE="$WORK_DIR/vendor/etc/floating_feature.xml"
+        fi
+        if [ ! -f "$FILE" ]; then
+            mkdir -p "$(dirname "$FILE")"
+            cp -af "$SOURCE" "$FILE" || return 1
+            _EXYNOS9810_FINAL_SET_METADATA "$PARTITION" \
+                "$PARTITION/etc/floating_feature.xml" 0 0 644 \
+                "u:object_r:${PARTITION}_file:s0"
+        fi
+    done
+}
+
 _EXYNOS9810_FINAL_ENABLE_REPORTED_FEATURES()
 {
     LOG "- Enabling Samsung user-requested Quick Panel and Smart View features"
+
+    _EXYNOS9810_FINAL_RESTORE_FLOATING_FEATURE_FILES || return 1
 
     _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
         "SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_OPTION" "TRUE" || return 1
@@ -4671,12 +5619,9 @@ _EXYNOS9810_FINAL_ENABLE_REPORTED_FEATURES()
 
 _EXYNOS9810_FINAL_ENABLE_EXTRA_BRIGHTNESS()
 {
-    # The N770F vendor floating_feature already advertises Extra brightness, but
-    # the framework (Settings/SystemUI) reads the system floating_feature, where
-    # the S22 base has no such key. Mirror it there so the toggle actually shows
-    # up under Display -- and so VERIFY_REPORTED_BUG_FIXES (which checks both
-    # files) passes.
-    SET_FLOATING_FEATURE_CONFIG \
+    # Settings and vendor display services read different copies of this file.
+    # Keep the feature identical in both partitions after every late restore.
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
         "SEC_FLOATING_FEATURE_LCD_SUPPORT_EXTRA_BRIGHTNESS" "TRUE" || return 1
     return 0
 }
@@ -4704,15 +5649,59 @@ _EXYNOS9810_FINAL_SET_BRIGHTNESS_PROFILE()
     done
 }
 
+_EXYNOS9810_FINAL_REMOVE_STALE_SYSTEM_BOOT_DEBUG()
+{
+    if [ "${EXYNOS9810_ENABLE_SYSTEM_BOOT_DEBUG:-false}" = "true" ]; then
+        return 0
+    fi
+
+    # A preserved work.dir can contain a logger from an earlier diagnostic run.
+    # Remove both payload and metadata before the production verifier runs.
+    local REL
+    for REL in \
+        system/etc/init/unica_exynos9810_debug.rc \
+        system/bin/unica_exynos9810_bootlog.sh; do
+        if [ -e "$WORK_DIR/system/$REL" ]; then
+            LOG "- Removing stale system boot logger: /$REL"
+        fi
+        _EXYNOS9810_FINAL_DELETE_SYSTEM_ENTRY "$REL"
+    done
+}
+
+_EXYNOS9810_FINAL_SERVICES_CONTAINS()
+{
+    local NEEDLE="$1"
+    local DECODED="$APKTOOL_DIR/system/framework/services.jar"
+    local JAR="$WORK_DIR/system/system/framework/services.jar"
+
+    if [ -d "$DECODED" ]; then
+        grep -R -F -q -- "$NEEDLE" "$DECODED"
+        return $?
+    fi
+
+    [ -f "$JAR" ] || return 1
+    strings -a "$JAR" | grep -qF "$NEEDLE"
+}
+
 _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
 {
     local FEATURE_SYSTEM="$WORK_DIR/system/system/etc/floating_feature.xml"
     local FEATURE_VENDOR="$WORK_DIR/vendor/etc/floating_feature.xml"
     local RADIO_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.radio_manifest_2_31.xml"
     local SEHRADIO_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml"
+    local FACE_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/face-default-sec.xml"
     local REL ACTUAL EXPECTED FEATURE
 
     LOG "- Verifying Exynos9810 user-reported bug fixes"
+
+    [ -f "$FACE_MANIFEST" ] || {
+        LOGE "Exynos9810 face HAL VINTF fragment is missing"
+        return 1
+    }
+    grep -qF '@2.0::ISehBiometricsFace/default' "$FACE_MANIFEST" || {
+        LOGE "Exynos9810 HIDL face HAL VINTF declaration is missing"
+        return 1
+    }
 
     [ -f "$RADIO_MANIFEST" ] || {
         LOGE "Coherent Exynos9810 IRadio 1.6 manifest is missing"
@@ -4806,6 +5795,7 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
 
     for REL in \
         vendor/bin/hw/android.hardware.sensors@1.0-service \
+        vendor/etc/init/android.hardware.sensors@1.0-service.rc \
         vendor/etc/vintf/manifest/android.hardware.sensors@1.0.xml \
         vendor/bin/hw/vendor.samsung.hardware.vibrator-service \
         vendor/etc/vintf/manifest/vendor.samsung.hardware.vibrator-default.xml; do
@@ -4814,6 +5804,48 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
             return 1
         }
     done
+    ACTUAL="$(stat -c '%a' "$WORK_DIR/vendor/etc/init/android.hardware.sensors@1.0-service.rc")"
+    [ "$ACTUAL" = "644" ] || {
+        LOGE "Sensors init rc has insecure mode $ACTUAL; Android init will skip it"
+        return 1
+    }
+    ACTUAL="$(stat -c '%a' "$WORK_DIR/vendor/bin/hw/android.hardware.sensors@1.0-service")"
+    [ "$ACTUAL" = "755" ] || {
+        LOGE "Sensors HAL service binary has invalid mode $ACTUAL"
+        return 1
+    }
+
+    for REL in \
+        system/system/lib/libmdf.so \
+        system/system/lib64/libmdf.so; do
+        [ -f "$WORK_DIR/$REL" ] || {
+            LOGE "Samsung MDF JNI library is missing: /$REL"
+            return 1
+        }
+        strings -a "$WORK_DIR/$REL" | \
+            grep -qF "Java_com_samsung_android_security_mdf_MdfUtils_isMdfEnforced" || {
+            LOGE "Samsung MDF JNI library lacks isMdfEnforced symbol: /$REL"
+            return 1
+        }
+    done
+    for FEATURE in \
+        'SdpManagerImpl$SdpHandler' \
+        'Native_Sdp_TestSdpIoctl' \
+        'testSdpIoctl' \
+        'SdpFileSystem'; do
+        _EXYNOS9810_FINAL_SERVICES_CONTAINS "$FEATURE" && {
+            LOGE "Final services.jar still contains boot-crashing Knox SDP bootstrap: $FEATURE"
+            return 1
+        }
+    done
+    strings -a "$WORK_DIR/system/system/framework/services.jar" | \
+        grep -qF "Lio/mesalabs/unica/PlayIntegrityHooks;" && {
+        strings -a "$WORK_DIR/system/system/framework/framework.jar" | \
+            grep -qF "io/mesalabs/unica/PlayIntegrityHooks" || {
+            LOGE "Final services.jar references PlayIntegrityHooks, but framework.jar does not provide it"
+            return 1
+        }
+    }
 
     for REL in "$FEATURE_SYSTEM" "$FEATURE_VENDOR"; do
         [ -f "$REL" ] || {
@@ -4990,16 +6022,26 @@ _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF
 _EXYNOS9810_FINAL_APPLY_TESTED_RADIO_RESTORE_V5
 _EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED
 _EXYNOS9810_FINAL_DEBLOAT
+_EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT
+_EXYNOS9810_FINAL_RESTORE_BOOT_PARITY_OVERLAYS
 _EXYNOS9810_FINAL_RESTORE_DAAGENT
 _EXYNOS9810_FINAL_RESTORE_FEATURE_APPS
+_EXYNOS9810_FINAL_DISABLE_UNSUPPORTED_ESIM
+_EXYNOS9810_FINAL_PATCH_SECURE_FOLDER_DESKTOP_MODE
 _EXYNOS9810_FINAL_RESTORE_CLOCK_STRUCTURE
 _EXYNOS9810_FINAL_SET_HOME_LAYOUT
+_EXYNOS9810_FINAL_STAGE_LAUNCHER_DEFAULTS
 _EXYNOS9810_FINAL_ENABLE_NOW_BRIEF_WIDGET
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS
+_EXYNOS9810_FINAL_ENSURE_DISPLAY_PROPS
 _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK
 _EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK
+_EXYNOS9810_FINAL_RESTORE_RAMPLUS_FILES
+_EXYNOS9810_FINAL_RESTORE_EMBEDDED_REMOTEDISPLAY
+_EXYNOS9810_FINAL_RESTORE_EMBEDDED_SENSORS
 _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK
+_EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES
 _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT
 _EXYNOS9810_FINAL_ADD_VISUAL_CLOUD_CORE
@@ -5026,9 +6068,15 @@ _EXYNOS9810_FINAL_FORCE_S3NRN82_NFC
 _EXYNOS9810_FINAL_PIN_QUICK_SHARE_STACK
 _EXYNOS9810_FINAL_VERIFY_SHARING_STACK
 _EXYNOS9810_FINAL_VERIFY_WALLPAPER_AND_BRIEF_STACK
+_EXYNOS9810_FINAL_VERIFY_WEATHER_PAYLOAD
+_EXYNOS9810_FINAL_VERIFY_RAM_PROFILE
 _EXYNOS9810_FINAL_ENABLE_EXTRA_BRIGHTNESS
 _EXYNOS9810_FINAL_SET_BRIGHTNESS_PROFILE
 _EXYNOS9810_FINAL_ENABLE_REPORTED_FEATURES
 _EXYNOS9810_FINAL_CLEAN_GRAPHICS_STATE || return 1
+_EXYNOS9810_FINAL_APPLY_EMBEDDED_SEPOLICY || return 1
+_EXYNOS9810_FINAL_ENSURE_TARGET_IDENTITY
 _EXYNOS9810_FINAL_VERIFY_ENFORCING_BOOT_STATE || return 1
+_EXYNOS9810_FINAL_REMOVE_STALE_SYSTEM_BOOT_DEBUG
+_EXYNOS9810_FINAL_RESTORE_BASE_MDF_STACK || return 1
 _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES

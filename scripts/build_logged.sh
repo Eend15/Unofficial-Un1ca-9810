@@ -23,7 +23,19 @@ cd "$REPO_DIR" || {
     exit 90
 }
 
-export UN1CA_APKTOOL_JOBS="${UN1CA_APKTOOL_JOBS:-4}"
+# Keep one durable log containing both the config phase and ROM phase. This is
+# intentionally installed before sourcing buildenv.sh, whose output is useful
+# when a host dependency or target configuration fails.
+: > "$LOG_FILE"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+# Make ordinary exits and handled signals visible in the status file. A host
+# or WSL hard reset cannot run this trap, but normal interruption is recorded.
+trap '_build_rc=$?; printf "%s\\n" "$_build_rc" > "$STATUS_FILE"' EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
+
+export UN1CA_APKTOOL_JOBS="${UN1CA_APKTOOL_JOBS:-1}"
 source buildenv.sh "$TARGET"
 rc=$?
 if [ "$rc" -eq 0 ]; then

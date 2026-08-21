@@ -36,7 +36,15 @@ COPY_SOURCE_FIRMWARE()
         if [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/$f" ]; then
             if [[ "$f" == "product" ]] && ! $TARGET_OS_BUILD_PRODUCT_PARTITION; then
                 LOG "- Copying /system/product from source firmware"
-                [ -d "$WORK_DIR/product" ] && rm -rf "$WORK_DIR/product"
+                # Product is merged into the ESSI system image.  The old
+                # cleanup used $WORK_DIR/product, but the link that is about
+                # to be created lives at $WORK_DIR/system/product; a stale
+                # directory there made every fresh build fail with EEXIST.
+                if [ -L "$WORK_DIR/system/product" ]; then
+                    rm -f "$WORK_DIR/system/product"
+                elif [ -e "$WORK_DIR/system/product" ]; then
+                    rm -rf "$WORK_DIR/system/product"
+                fi
                 [ -f "$WORK_DIR/configs/file_context-product" ] && rm -f "$WORK_DIR/configs/file_context-product"
                 [ -f "$WORK_DIR/configs/fs_config-product" ] && rm -f "$WORK_DIR/configs/fs_config-product"
                 EVAL "rsync -a --mkpath --delete \"$FW_DIR/$SOURCE_FIRMWARE_PATH/product\" \"$WORK_DIR/system/system\"" || exit 1

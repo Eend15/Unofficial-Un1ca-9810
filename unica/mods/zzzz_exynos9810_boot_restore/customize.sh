@@ -2,17 +2,32 @@ SKIPUNZIP=1
 
 [ "$TARGET_PLATFORM" = "exynos9810" ] || return 0
 
-EXYNOS9810_LEGACY_PORT_DIR="${EXYNOS9810_LEGACY_PORT_DIR:-/mnt/c/Users/Admin/Downloads/Exynos9810_LegacyPort}"
+EXYNOS9810_ALLOW_EXTERNAL_DONOR="${EXYNOS9810_ALLOW_EXTERNAL_DONOR:-false}"
 EXYNOS9810_METADATA_DIR="$SRC_DIR/platform/exynos9810/metadata"
-EXYNOS9810_DEVICE_VENDOR_DIR="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device"
-EXYNOS9810_SOFTWARE_KEYMASTER4_DIR="$SRC_DIR/platform/exynos9810/patches/exynos9810_device_stack/keymaster4/vendor"
+EXYNOS9810_EMBEDDED_PORT_DIR="$SRC_DIR/unica/patches/exynos9810_device_stack/embedded/exynos9810_legacy_port"
+EXYNOS9810_LEGACY_PORT_DIR="${EXYNOS9810_LEGACY_PORT_DIR:-}"
+EXYNOS9810_HAS_DONOR=false
+EXYNOS9810_SOFTWARE_KEYMASTER4_DIR="$SRC_DIR/unica/patches/exynos9810_device_stack/keymaster4/vendor"
 EXYNOS9810_USED_VENDOR_METADATA_SNAPSHOT=false
 EXYNOS9810_USED_ODM_METADATA_SNAPSHOT=false
 
-if [ ! -d "$EXYNOS9810_LEGACY_PORT_DIR/vendor" ]; then
-    LOGW "Exynos9810 vendor baseline missing: $EXYNOS9810_LEGACY_PORT_DIR/vendor"
-    return 0
+if [ "$EXYNOS9810_ALLOW_EXTERNAL_DONOR" = "true" ] && \
+   [ -n "$EXYNOS9810_LEGACY_PORT_DIR" ] && \
+   [ -d "$EXYNOS9810_LEGACY_PORT_DIR/vendor" ]; then
+    EXYNOS9810_HAS_DONOR=true
+    LOG "Using explicitly selected Exynos9810 donor overlay"
+else
+    EXYNOS9810_LEGACY_PORT_DIR="$EXYNOS9810_EMBEDDED_PORT_DIR"
+    if [ -d "$EXYNOS9810_LEGACY_PORT_DIR/vendor" ]; then
+        EXYNOS9810_HAS_DONOR=true
+        LOG "- Using repository-embedded Exynos9810 boot baseline"
+    else
+        EXYNOS9810_LEGACY_PORT_DIR=""
+        LOGW "Embedded Exynos9810 boot baseline is missing; donor-dependent restores are disabled"
+    fi
 fi
+EXYNOS9810_DEVICE_VENDOR_DIR="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device"
+EXYNOS9810_LEGACY_KEYMASTER_VENDOR_DIR="$EXYNOS9810_EMBEDDED_PORT_DIR/device_port/device/common/vendor"
 
 _EXYNOS9810_DELETE_METADATA()
 {
@@ -215,6 +230,23 @@ _EXYNOS9810_RESTORE_VENDOR_BASELINE()
     rm -rf "$WORK_DIR/vendor"
     mkdir -p "$WORK_DIR/vendor"
     cp -a "$EXYNOS9810_LEGACY_PORT_DIR/vendor"/. "$WORK_DIR/vendor"/
+
+    # The proven 9810 vendor is layered. The generic VNDK33 donor vendor alone
+    # is not boot-complete: Trustonic/mcRegistry, legacy sensor/keymaster bits
+    # and the physical device HALs live under device_port. A previous cleanup
+    # rebuilt vendor from only the generic tree, producing a much smaller image
+    # that bootlooped before Android could return useful logs.
+    if [ -d "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/vendor" ]; then
+        LOG "- Applying common Exynos9810 vendor boot overlay"
+        cp -a "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/vendor"/. \
+            "$WORK_DIR/vendor"/ || return 1
+    fi
+    if [ -d "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/star2lte/vendor" ]; then
+        LOG "- Applying proven star2lte Exynos9810 vendor boot overlay"
+        cp -a "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/star2lte/vendor"/. \
+            "$WORK_DIR/vendor"/ || return 1
+    fi
+
     _EXYNOS9810_RESTORE_METADATA_SNAPSHOT "vendor" || \
         _EXYNOS9810_ENSURE_TREE_METADATA "vendor" "$WORK_DIR/vendor" "u:object_r:vendor_file:s0" 0 0
 
@@ -249,6 +281,11 @@ _EXYNOS9810_APPLY_TARGET_VENDOR_DELTA()
     local REL
     local REMOVED=0
     local COPIED=0
+
+    if [ "$EXYNOS9810_HAS_DONOR" != true ]; then
+        LOG "- Keeping repository-built Exynos9810 target vendor; no external donor overlay"
+        return 0
+    fi
 
     case "$TARGET_CODENAME" in
         star2lte)
@@ -474,7 +511,7 @@ _EXYNOS9810_USE_SENSORS_HAL_1_0()
     #
     # Going to 1.0 keeps the device's own libraries, so no phantom sensors exist,
     # and it also keeps sensors.bio.so (HRM), which the N770F hals.conf drops.
-    # This is what DuhanROM does on the same hardware, where rotation works.
+    # This is the tested legacy Exynos9810 configuration, where rotation works.
     #
     # Allowed by VINTF: the vendor declares ro.board.api_level=33, and
     # compatibility_matrix.7.xml (Android 13) lists android.hardware.sensors
@@ -561,24 +598,10 @@ _EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT()
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.security.keystore.keytype" "sak"
     sed -i '/^ro.hardware.keystore_desede=/d' "$WORK_DIR/vendor/build.prop" 2> /dev/null || true
 
-    # UN1CA RAM tuning: Samsung's Dynamic Hidden App manager (ro.slmk.dha_*) keeps
-    # up to dha_cached_max + dha_empty_max background app processes resident before
-    # it starts killing (stock 18 + 30 = 48). That is far too many for the 4GB
-    # Galaxy S9 and wastes idle RAM / causes zram thrash on all three models.
-    # Cap the background app pool lower -- more aggressively on the 4GB starlte than
-    # on the 6GB star2lte/crownlte, which have some headroom for multitasking.
-    # (All exynos9810 models sit below ro.slmk.dha_2ndprop_thMB=6144, so they all
-    # use this primary dha_* set.)
-    case "$TARGET_CODENAME" in
-        starlte)  # Galaxy S9 -- 4GB
-            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_cached_max" "10"
-            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_empty_max" "16"
-            ;;
-        *)        # Galaxy S9+ / Note9 -- 6GB
-            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_cached_max" "14"
-            _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.slmk.dha_empty_max" "24"
-            ;;
-    esac
+    # Keep the donor's single, internally consistent LMKD/DHA profile. Do not
+    # add target-specific cache limits or a second boot-time VM tuning service:
+    # the 12-Aug dump showed those layers causing zram thrashing and startup
+    # ANRs across unrelated system apps. Android's defaults remain in control.
 
     RC="$WORK_DIR/vendor/etc/init/android.hardware.keymaster@3.0-service.rc"
     if [ -f "$RC" ] && ! grep -q 'interface android.hardware.keymaster@3.0::IKeymasterDevice default' "$RC"; then
@@ -1038,6 +1061,11 @@ _EXYNOS9810_RESTORE_GRAPHICS_MAPPER_COMPAT()
             ;;
     esac
 
+    if [ "$EXYNOS9810_HAS_DONOR" != true ]; then
+        LOG "- Keeping repository-built Exynos9810 graphics stack; no external donor overlay"
+        return 0
+    fi
+
     STOCK_VENDOR="$EXYNOS9810_LEGACY_PORT_DIR/vendor"
     if [ ! -d "$STOCK_VENDOR" ]; then
         LOGE "Missing proven Exynos9810 graphics vendor baseline: $STOCK_VENDOR"
@@ -1392,19 +1420,20 @@ _EXYNOS9810_FIX_ENFORCING_INIT_DATA_DIRS()
     for RC in         "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"         "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc"; do
         [ -f "$RC" ] || continue
         python3 - "$RC" <<'PY'
+import re
 import sys
 from pathlib import Path
 
 path = Path(sys.argv[1])
 text = path.read_text()
-replacements = {
-    "mkdir /data/log 0771 radio system":
-        "mkdir /data/log 0771 radio system encryption=Require",
-    "mkdir /data/firmware 0770 audioserver system":
-        "mkdir /data/firmware 0770 audioserver system encryption=Require",
-}
-for old, new in replacements.items():
-    text = text.replace(old, new)
+replacements = (
+    ("mkdir /data/log 0771 radio system", "mkdir /data/log 0771 radio system encryption=Require"),
+    ("mkdir /data/firmware 0770 audioserver system", "mkdir /data/firmware 0770 audioserver system encryption=Require"),
+)
+for old, new in replacements:
+    # work.dir is intentionally reusable; collapse stale repeated options
+    # before adding the required Android 16 encryption flag.
+    text = re.sub(r"(?m)^" + re.escape(old) + r"(?:\s+encryption=Require)*\s*$", new, text)
 path.write_text(text)
 PY
         _EXYNOS9810_SET_METADATA_SAFE "vendor"             "vendor/etc/init/$(basename "$RC")"             0 0 644 "u:object_r:vendor_configs_file:s0"
@@ -1567,6 +1596,30 @@ _EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
     _EXYNOS9810_ENSURE_TREE_METADATA \
         "vendor" "$WORK_DIR/vendor" "u:object_r:vendor_file:s0" 0 0
 
+    # The booting EROFS build retains the legacy Keymaster support libraries
+    # while removing the Trustonic service itself. Keep that exact split:
+    # software @4.0 remains the only service, but older clients can resolve
+    # the compatibility libraries.
+    local KEYMASTER_REL KEYMASTER_SRC
+    for KEYMASTER_REL in \
+        "lib/libkeymaster3device.so" \
+        "lib/libskeymaster3device.so" \
+        "lib64/libkeymaster2_mdfpp.so" \
+        "lib64/libkeymaster3device.so" \
+        "lib64/libkeymaster_helper_vendor.so" \
+        "lib64/libskeymaster3device.so" \
+        "lib64/libsoftkeymasterdevice.so"; do
+        KEYMASTER_SRC="$EXYNOS9810_LEGACY_KEYMASTER_VENDOR_DIR/$KEYMASTER_REL"
+        [ -f "$KEYMASTER_SRC" ] || {
+            LOGE "Embedded Exynos9810 Keymaster compatibility library is missing: $KEYMASTER_SRC"
+            return 1
+        }
+        mkdir -p "$(dirname "$WORK_DIR/vendor/$KEYMASTER_REL")"
+        cp -pf "$KEYMASTER_SRC" "$WORK_DIR/vendor/$KEYMASTER_REL" || return 1
+        _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/$KEYMASTER_REL" \
+            0 0 644 "u:object_r:vendor_file:s0"
+    done
+
     _EXYNOS9810_SET_METADATA_SAFE "vendor" \
         "vendor/bin/hw/android.hardware.keymaster@4.0-service" \
         0 2000 755 "u:object_r:hal_keymaster_default_exec:s0"
@@ -1628,7 +1681,14 @@ _EXYNOS9810_VERIFY_FINAL_SECURITY_STACK()
         "lib64/libkeymaster_messages.so" \
         "lib64/libkeymaster_portable.so" \
         "lib64/libpuresoftkeymasterdevice.so" \
-        "lib64/libsoft_attestation_cert.so"; do
+        "lib64/libsoft_attestation_cert.so" \
+        "lib/libkeymaster3device.so" \
+        "lib/libskeymaster3device.so" \
+        "lib64/libkeymaster2_mdfpp.so" \
+        "lib64/libkeymaster3device.so" \
+        "lib64/libkeymaster_helper_vendor.so" \
+        "lib64/libskeymaster3device.so" \
+        "lib64/libsoftkeymasterdevice.so"; do
         if [ ! -f "$WORK_DIR/vendor/$ENTRY" ]; then
             LOGE "Required software Keymaster 4.0 component is missing: /vendor/$ENTRY"
             return 1
@@ -1733,6 +1793,61 @@ _EXYNOS9810_VERIFY_FINAL_SECURITY_FEATURE_PROPS()
     fi
 }
 
+_EXYNOS9810_FINAL_WRITE_PHYSICAL_FSTABS()
+{
+    local FSTAB
+
+    LOG "- Restoring known-good Exynos9810 physical filesystem tables after vendor restore"
+    mkdir -p "$WORK_DIR/vendor/etc"
+
+    for FSTAB in fstab.samsungexynos9810 fstab.exynos9810; do
+        cat > "$WORK_DIR/vendor/etc/$FSTAB" <<'EOF'
+# Android fstab file for legacy Exynos9810 physical partitions.
+# First-stage system/vendor/odm mounts are supplied by the boot DTB.
+
+#<src>                                                  <mnt_point>             <type>  <mnt_flags and options>                                                                  <fs_mgr_flags>
+
+##/dev/block/platform/11120000.ufs/by-name/SYSTEM       /system                 ext4    ro                                                                                       wait,first_stage_mount
+##/dev/block/platform/11120000.ufs/by-name/VENDOR       /vendor                 ext4    ro                                                                                       wait,first_stage_mount
+##/dev/block/platform/11120000.ufs/by-name/ODM          /odm                    ext4    ro                                                                                       wait,first_stage_mount
+
+/dev/block/platform/11120000.ufs/by-name/CACHE          /cache                  ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic  wait,check
+/dev/block/platform/11120000.ufs/by-name/USERDATA       /data                   ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic  wait,check,quota,reservedsize=128M,length=-20480
+/dev/block/platform/11120000.ufs/by-name/USERDATA       /data                   f2fs    noatime,nosuid,nodev,discard,usrquota,grpquota,fsync_mode=nobarrier,reserve_root=32768,resgid=5678 wait,check,quota,reservedsize=128M,checkpoint=fs,length=-20480
+/dev/block/platform/11120000.ufs/by-name/EFS            /mnt/vendor/efs         ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic  wait,check
+/dev/block/platform/11120000.ufs/by-name/CPEFS          /mnt/vendor/cpefs       ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic  wait,check,nofail
+/dev/block/platform/11120000.ufs/by-name/MISC           /misc                   emmc    defaults                                                                                 defaults
+
+/dev/block/platform/11120000.ufs/by-name/HIDDEN         /preload                ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic  voldmanaged=preload:auto,check
+/devices/platform/11500000.dwmmc2/mmc_host*             auto                    vfat    defaults                                                                                 voldmanaged=sdcard:auto
+/devices/platform/10c00000.usb/10c00000.dwc3*           auto                    auto    defaults                                                                                 voldmanaged=usb:auto
+
+/dev/block/zram0                                        none                    swap    defaults                                                                                 zramsize=50%,max_comp_streams=8,auto_configure
+EOF
+        _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/$FSTAB" 0 0 644 "u:object_r:vendor_configs_file:s0"
+        if [ "$FSTAB" = "fstab.samsungexynos9810" ]; then
+            sed -i '1c\\# Android fstab file for Galaxy S9/S9+/Note9 physical partitions.' \
+                "$WORK_DIR/vendor/etc/$FSTAB"
+            sed -i '/by-name\/HIDDEN/i\# VOLD - fstab.samsungexynos9810' \
+                "$WORK_DIR/vendor/etc/$FSTAB"
+            sed -i '/^\/dev\/block\/zram0/i\# Samsung RAM Plus' \
+                "$WORK_DIR/vendor/etc/$FSTAB"
+        else
+            sed -i '2c\\# Kept in sync with fstab.samsungexynos9810 for services that request the SoC fstab name.' \
+                "$WORK_DIR/vendor/etc/$FSTAB"
+        fi
+        grep -q '/dev/block/platform/11120000.ufs/by-name/USERDATA[[:space:]]*/data[[:space:]]*f2fs' \
+            "$WORK_DIR/vendor/etc/$FSTAB" || {
+            LOGE "Final Exynos9810 $FSTAB is missing the f2fs USERDATA fallback"
+            return 1
+        }
+        if grep -q 'forceencrypt=footer' "$WORK_DIR/vendor/etc/$FSTAB"; then
+            LOGE "Final Exynos9810 $FSTAB still enables incompatible forceencrypt=footer"
+            return 1
+        fi
+    done
+}
+
 rm -f \
     "$WORK_DIR/system/system/lib/libunica.so" \
     "$WORK_DIR/system/system/lib64/libunica.so" \
@@ -1744,8 +1859,13 @@ _EXYNOS9810_DELETE_METADATA "vendor" "vendor/lib/libunica.so" "/vendor/lib/libun
 _EXYNOS9810_DELETE_METADATA "vendor" "vendor/lib64/libunica.so" "/vendor/lib64/libunica.so"
 
 _EXYNOS9810_KEEP_SETUP_WIZARD_ENABLED
-_EXYNOS9810_RESTORE_VENDOR_BASELINE || return 1
-_EXYNOS9810_APPLY_TARGET_VENDOR_DELTA || return 1
+if [ "$EXYNOS9810_HAS_DONOR" = true ]; then
+    _EXYNOS9810_RESTORE_VENDOR_BASELINE || return 1
+    _EXYNOS9810_APPLY_TARGET_VENDOR_DELTA || return 1
+else
+    LOG "- Keeping repository-built Exynos9810 vendor baseline"
+fi
+_EXYNOS9810_FINAL_WRITE_PHYSICAL_FSTABS
 _EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY
 _EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT
 _EXYNOS9810_USE_SENSORS_HAL_1_0 || return 1
@@ -1764,7 +1884,15 @@ if [ "$EXYNOS9810_USED_VENDOR_METADATA_SNAPSHOT" != true ]; then
 fi
 
 _EXYNOS9810_SET_METADATA_SAFE "system" "odm/etc/build.prop" 0 0 644 "u:object_r:system_file:s0"
-_EXYNOS9810_SET_METADATA_SAFE "system" "system/bin/unica_exynos9810_bootlog.sh" 0 2000 755 "u:object_r:system_file:s0"
+if [ "${EXYNOS9810_ENABLE_SYSTEM_BOOT_DEBUG:-false}" = "true" ] && \
+        [ -e "$WORK_DIR/system/system/bin/unica_exynos9810_bootlog.sh" ]; then
+    _EXYNOS9810_SET_METADATA_SAFE "system" "system/bin/unica_exynos9810_bootlog.sh" \
+        0 2000 755 "u:object_r:system_file:s0"
+else
+    # Do not leave metadata for a logger that is absent from production images.
+    _EXYNOS9810_DELETE_METADATA "system" "system/bin/unica_exynos9810_bootlog.sh" \
+        "/system/bin/unica_exynos9810_bootlog.sh"
+fi
 _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/lib/hw/android.hardware.graphics.allocator@2.0-impl.so" 0 0 644 "u:object_r:vendor_file:s0"
 _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/lib/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so" 0 0 644 "u:object_r:same_process_hal_file:s0"
 _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/lib64/hw/android.hardware.graphics.allocator@2.0-impl.so" 0 0 644 "u:object_r:vendor_file:s0"

@@ -186,7 +186,7 @@ PRINT_HEADER()
     echo    'ui_print(" ");'
     PRINT_SEPARATOR
     echo -n 'ui_print("'
-    echo -n "Unofficial UN1CA 9810 $ROM_VERSION for $TARGET_NAME"
+    echo -n "UN1CA Exynos9810 $ROM_VERSION for $TARGET_NAME"
     echo    '");'
     echo    'ui_print("Unofficial Exynos9810 fork based on UN1CA by salvo_giangri");'
     PRINT_SEPARATOR

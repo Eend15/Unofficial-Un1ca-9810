@@ -1,0 +1,6 @@
+id=unica_exynos9810_safe_logger
+name=UN1CA Exynos9810 Safe Boot Logger
+version=2026.08.17
+versionCode=20260817
+author=UN1CA Exynos9810
+description=Safe post-fs boot diagnostics for Exynos9810; never modifies BOOT or private key blobs.

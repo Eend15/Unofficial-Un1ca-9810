@@ -1,0 +1,4 @@
+system 0 0 755 capabilities=0x0
+system/app 0 0 755 capabilities=0x0
+system/app/SamsungWeather 0 0 755 capabilities=0x0
+system/app/SamsungWeather/SamsungWeather.apk 0 0 644 capabilities=0x0

@@ -2,8 +2,9 @@
  * Tiny early-boot logger for Exynos9810 ROM diagnostics.
  *
  * It deliberately uses raw AArch64 syscalls so it can run before /system
- * userspace is available.  The init service keeps reading /dev/kmsg and
- * stores the result on /cache, mounting CACHE itself when necessary.
+ * userspace is available. It never mounts or changes a filesystem: a
+ * diagnostic process must not compete with first-stage init for /dev or
+ * CACHE. It only opens a path after the normal boot flow has mounted it.
  */
 
 typedef unsigned long size_t;
@@ -21,7 +22,7 @@ enum {
     SYS_openat = 56,
     SYS_close = 57,
     SYS_nanosleep = 101,
-    SYS_mount = 40,
+    SYS_fsync = 82,
     SYS_exit = 93,
 };
 
@@ -105,25 +106,16 @@ static long write_all(long fd, const char *data, size_t length)
     return 0;
 }
 
-static void try_mount_cache(void)
-{
-    static const char *sources[] = {
-        "/dev/block/platform/11120000.ufs/by-name/CACHE",
-        "/dev/block/sda22",
-    };
-    static const char *options =
-        "noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered";
-    size_t index;
-
-    for (index = 0; index < sizeof(sources) / sizeof(sources[0]); ++index)
-        syscall6(SYS_mount, (long)sources[index], (long)"/cache",
-                 (long)"ext4", 0, (long)options, 0);
-}
-
 #define PENDING_SIZE 131072
 static char pending[PENDING_SIZE];
 static size_t pending_length;
 static long output_fd = -1;
+
+static void sync_output(void)
+{
+    if (output_fd >= 0)
+        syscall6(SYS_fsync, output_fd, 0, 0, 0, 0, 0);
+}
 
 static void remember_pending(const char *data, size_t length)
 {
@@ -149,10 +141,13 @@ static long find_output(void)
         "/data/bootloop-debug.log",
     };
     size_t index;
+    long fd;
 
-    try_mount_cache();
+    /* Never create the log in the init ramdisk: that disappears on reboot.
+     * CACHE may not be mounted during first-stage init; retrying these paths
+     * is safe, while mounting them here is not. */
     for (index = 0; index < sizeof(paths) / sizeof(paths[0]); ++index) {
-        long fd = open_file(paths[index], O_WRONLY | O_CREAT | O_APPEND, 0600);
+        fd = open_file(paths[index], O_WRONLY | O_CREAT | O_APPEND, 0600);
         if (fd >= 0)
             return fd;
     }
@@ -178,6 +173,7 @@ static void emit(const char *data, size_t length)
             output_fd = -1;
             remember_pending(data, length);
         }
+        sync_output();
         return;
     }
     remember_pending(data, length);
@@ -218,10 +214,20 @@ static void snapshot(void)
 {
     emit_text("\n========== BOOTLOGGER SNAPSHOT ==========\n");
     emit_file("cmdline", "/proc/cmdline");
+    emit_file("bootconfig", "/proc/bootconfig");
     emit_file("mounts", "/proc/mounts");
     emit_file("uptime", "/proc/uptime");
     emit_file("printk", "/proc/sys/kernel/printk");
+    emit_file("fstab", "/vendor/etc/fstab.samsungexynos9810");
+    emit_file("fstab", "/vendor/etc/fstab.exynos9810");
+    emit_file("fstab", "/vendor/etc/fstab.ramplus");
+    emit_file("keymaster manifest", "/vendor/etc/vintf/manifest.xml");
+    emit_file("keymaster 3 rc", "/vendor/etc/init/android.hardware.keymaster@3.0-service.rc");
+    emit_file("keymaster 4 rc", "/vendor/etc/init/android.hardware.keymaster@4.0-service.rc");
+    emit_file("gatekeeper rc", "/vendor/etc/init/android.hardware.gatekeeper@1.0-service.rc");
     emit_file("pstore", "/sys/fs/pstore/console-ramoops-0");
+    emit_file("pstore", "/sys/fs/pstore/console-ramoops");
+    emit_file("last-kmsg", "/proc/last_kmsg");
 }
 
 void bootlogger_main(void)

@@ -117,4 +117,11 @@ else
     "$SRC_DIR/scripts/internal/build_full_ota_zip.sh" "$TARGET_ZIP" "$OUTPUT_FILE" || exit 1
 fi
 
+if [ "$TARGET_PLATFORM" = "exynos9810" ]; then
+    LOG_STEP_IN true "Verifying Exynos9810 flashable zip"
+    "$SRC_DIR/scripts/internal/verify_exynos9810_flashable.sh" \
+        "$OUTPUT_FILE" "$TARGET_OS_FILE_SYSTEM_TYPE" || exit 1
+    LOG_STEP_OUT
+fi
+
 exit 0

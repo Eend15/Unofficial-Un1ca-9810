@@ -143,73 +143,47 @@ diff --git a/smali_classes2/com/android/server/policy/PhoneWindowManager.smali b
 index e894aa5..b8decc1 100644
 --- a/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
 +++ b/smali_classes2/com/android/server/policy/PhoneWindowManager.smali
-@@ -12708,0 +12709,30 @@
-+    # Handle the Exynos9810 physical Bixby key by scan code so this does not
-+    # depend on Samsung's assistant policy and never affects a normal camera key.
+@@ -11681,3 +11681,19 @@
+     move-object/from16 v2, p2
+-
++
++    # Handle the Exynos9810 physical Bixby key by scan code.
 +    invoke-virtual {v2}, Landroid/view/KeyEvent;->getScanCode()I
-+
-+    move-result v0
-+
-+    const/16 v4, 0x2bf
-+
-+    if-ne v0, v4, :unica_bixby_passthrough
-+
++    move-result v13
++    const/16 v14, 0x2bf
++    if-ne v13, v14, :unica_bixby_passthrough
 +    invoke-virtual {v2}, Landroid/view/KeyEvent;->getAction()I
-+
-+    move-result v0
-+
-+    if-nez v0, :unica_bixby_consume
-+
++    move-result v13
++    if-nez v13, :unica_bixby_consume
 +    invoke-virtual {v2}, Landroid/view/KeyEvent;->getRepeatCount()I
-+
-+    move-result v0
-+
-+    if-nez v0, :unica_bixby_consume
-+
++    move-result v13
++    if-nez v13, :unica_bixby_consume
 +    invoke-static {v1}, Lcom/android/server/policy/PhoneWindowManager;->unicaBixbyRemap(Lcom/android/server/policy/PhoneWindowManager;)Z
-+
 +    :unica_bixby_consume
-+    const/4 v0, 0x0
-+
-+    return v0
-+
++    const-wide/16 v0, 0x0
++    return-wide v0
 +    :unica_bixby_passthrough
-@@ -16886,0 +16917,38 @@
+     move/from16 v3, p3
+@@ -22153,1 +22153,22 @@
+ .end method
 +.method static synthetic unicaBixbyRemap(Lcom/android/server/policy/PhoneWindowManager;)Z
 +    .locals 3
-+
-+    # Never launch apps or assistant sessions from input dispatch. A blocked
-+    # binder call here can stall system_server and trip the watchdog.
 +    :try_start_0
 +    new-instance v0, Lcom/android/server/policy/PhoneWindowManager$UnicaBixbyRunnable;
-+
 +    invoke-direct {v0, p0}, Lcom/android/server/policy/PhoneWindowManager$UnicaBixbyRunnable;-><init>(Lcom/android/server/policy/PhoneWindowManager;)V
-+
 +    new-instance v1, Ljava/lang/Thread;
-+
 +    const-string v2, "UN1CA-BixbyKey"
-+
 +    invoke-direct {v1, v0, v2}, Ljava/lang/Thread;-><init>(Ljava/lang/Runnable;Ljava/lang/String;)V
-+
 +    invoke-virtual {v1}, Ljava/lang/Thread;->start()V
 +    :try_end_0
 +    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
-+
 +    const/4 v0, 0x1
-+
 +    return v0
-+
 +    :catch_0
 +    move-exception v0
-+
 +    const-string v1, "PhoneWindowManager"
-+
 +    const-string v2, "Unable to dispatch UN1CA Bixby action"
-+
 +    invoke-static {v1, v2, v0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
-+
 +    const/4 v0, 0x0
-+
 +    return v0
 +.end method
-+

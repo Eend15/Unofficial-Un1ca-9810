@@ -102,7 +102,7 @@ cp "$PAYLOAD/kernel" kernel
 cp "$PAYLOAD/extra" extra
 ./imgtool repack -n old-boot.img
 
-# Keep the donor BOOT command line intact, exactly like DuhanROM's
+# Keep the tested donor BOOT command line intact, exactly like the legacy
 # Exynos9810 installer. The DS-ACK package name describes its kernel build;
 # it does not make the Android policy strict by itself. Rewriting
 # androidboot.selinux here caused first-boot graphics/gralloc crashes on the

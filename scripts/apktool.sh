@@ -15,11 +15,9 @@ FILE=""
 INPUT_FILE=""
 OUTPUT_PATH=""
 
-THREAD_COUNT=$(awk -v max="$(nproc)" '/MemTotal/ {
-  tc = int(($2 + 1048575) / 2097152);
-  print (tc < 1 ? 1 : (tc > max ? max : tc));
-}' /proc/meminfo)
-
+# Apktool/aapt2 can consume several gigabytes for a single Samsung APK. Keep
+# the portable default conservative; faster hosts can opt in explicitly.
+THREAD_COUNT=1
 [ -n "$UN1CA_APKTOOL_THREADS" ] && THREAD_COUNT="$UN1CA_APKTOOL_THREADS"
 [ -n "$GITHUB_ACTIONS" ] && THREAD_COUNT=1
 

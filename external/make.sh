@@ -170,7 +170,7 @@ fi
 
 if $ANDROID_TOOLS; then
     ANDROID_TOOLS_CMDS=(
-        "git submodule foreach --recursive \"git am --abort || true\""
+        "true"
         "cmake -B \"build\" $(GET_CMAKE_FLAGS) -DANDROID_TOOLS_USE_BUNDLED_FMT=ON -DANDROID_TOOLS_USE_BUNDLED_LIBUSB=ON"
         "make -C \"build\" -j\"$(nproc)\""
         "find \"build/vendor\" -maxdepth 1 -type f -exec test -x {} \; -exec cp -a {} \"$TOOLS_DIR/bin\" \;"

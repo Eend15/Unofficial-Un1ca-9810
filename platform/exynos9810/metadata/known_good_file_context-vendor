@@ -914,7 +914,7 @@
 /vendor/lib/libdualcapture\.so u:object_r:vendor_file:s0
 /vendor/lib/libdualcapture_interface\.so u:object_r:vendor_file:s0
 /vendor/lib/libdualpreview_interface\.so u:object_r:vendor_file:s0
-/vendor/lib/libduhan\.so u:object_r:vendor_file:s0
+/vendor/lib/libexynos9810compat\.so u:object_r:vendor_file:s0
 /vendor/lib/libeffects\.so u:object_r:vendor_file:s0
 /vendor/lib/libeffectsconfig\.so u:object_r:vendor_file:s0
 /vendor/lib/libegis_fp_normal_sensor_test\.so u:object_r:vendor_file:s0
@@ -1384,7 +1384,7 @@
 /vendor/lib64/libdualcapture\.so u:object_r:vendor_file:s0
 /vendor/lib64/libdualcapture_interface\.so u:object_r:vendor_file:s0
 /vendor/lib64/libdualpreview_interface\.so u:object_r:vendor_file:s0
-/vendor/lib64/libduhan\.so u:object_r:vendor_file:s0
+/vendor/lib64/libexynos9810compat\.so u:object_r:vendor_file:s0
 /vendor/lib64/libeffects\.so u:object_r:vendor_file:s0
 /vendor/lib64/libeffectsconfig\.so u:object_r:vendor_file:s0
 /vendor/lib64/libegis_fp_normal_sensor_test\.so u:object_r:vendor_file:s0

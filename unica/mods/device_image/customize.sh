@@ -8,8 +8,8 @@
 # static-image hack this replaces fought that by force-drawing a bundled PNG.
 #
 # Instead, pin the model code the fetch uses to this device's real retail code,
-# so SCPM returns the correct S9 / S9+ / Note9 illustration -- the same path
-# DuhanROM uses to show the right image. This is the approach from the
+# so SCPM returns the correct S9 / S9+ / Note9 illustration -- the same
+# device-specific path used by the legacy port. This is the approach from the
 # MonsterROM `device_image` mod, adapted per target.
 
 MODEL_CODE=""

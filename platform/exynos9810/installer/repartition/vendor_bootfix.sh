@@ -6,6 +6,8 @@ BY_NAME=/dev/block/platform/11120000.ufs/by-name
 VENDOR_MNT=/tmp/mnt_vendor_bootfix
 SYSTEM_MNT=/tmp/mnt_system_bootfix
 SYSTEM_TEMP_MOUNTED=false
+EFS_MNT=/tmp/mnt_efs_bootfix
+EFS_TEMP_MOUNTED=false
 
 log()
 {
@@ -21,6 +23,7 @@ cleanup_mounts()
 {
     run_quiet umount "$VENDOR_MNT" || true
     [ "$SYSTEM_TEMP_MOUNTED" = true ] && run_quiet umount "$SYSTEM_MNT" || true
+    [ "$EFS_TEMP_MOUNTED" = true ] && run_quiet umount "$EFS_MNT" || true
 }
 
 trap cleanup_mounts EXIT
@@ -160,6 +163,36 @@ get_prop()
 DEVICE_MODEL="$(get_prop ro.boot.em.model)"
 [ -n "$DEVICE_MODEL" ] || DEVICE_MODEL="$(get_prop ro.product.model)"
 FACTORY_PROP=/efs/imei/factory.prop
+
+mount_efs_factory_prop()
+{
+    [ -f "$FACTORY_PROP" ] && return 0
+
+    mkdir -p "$EFS_MNT"
+    for _efs_block in \
+        "$BY_NAME/EFS" \
+        /dev/block/bootdevice/by-name/EFS \
+        /dev/block/by-name/EFS; do
+        [ -e "$_efs_block" ] || continue
+        if mount -t ext4 -o ro "$_efs_block" "$EFS_MNT" 2>/dev/null || \
+            mount -o ro "$_efs_block" "$EFS_MNT" 2>/dev/null; then
+            EFS_TEMP_MOUNTED=true
+            for _efs_prop in \
+                "$EFS_MNT/imei/factory.prop" \
+                "$EFS_MNT/factory.prop"; do
+                if [ -f "$_efs_prop" ]; then
+                    FACTORY_PROP="$_efs_prop"
+                    return 0
+                fi
+            done
+            run_quiet umount "$EFS_MNT" || true
+            EFS_TEMP_MOUNTED=false
+        fi
+    done
+    return 1
+}
+
+mount_efs_factory_prop || true
 SIM_SLOTS="$(sed -n 's/^ro\.multisim\.simslotcount=//p' "$FACTORY_PROP" 2>/dev/null | head -n 1 | tr -d '\r')"
 MULTISIM_CONFIG="$(sed -n 's/^persist\.radio\.multisim\.config=//p' "$FACTORY_PROP" 2>/dev/null | head -n 1 | tr -d '\r')"
 case "$MULTISIM_CONFIG:$SIM_SLOTS" in

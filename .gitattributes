@@ -1,8 +1,6 @@
 # Set the default behavior, in case people don't have core.autocrlf set.
 * text eol=lf
-
 # Denote all files that are truly binary and should not be modified.
-
 # Common file extensions
 *.apk binary
 *.apex binary
@@ -19,14 +17,12 @@
 *.tflite binary
 *.webp binary
 *.zip binary
-
 # ROM-specific prebuilt blobs
 prebuilts/bootable/deprecated-ota/updater binary
 prebuilts/*/*/*/** binary
 unica/mods/prophide/system/bin/rezetprop binary
 platform/exynos9810/installer/kernel_dtb/** binary
 unica/mods/zzzzz_exynos9810_final_cleanup/native_camera/cameraserver binary
-
 # Device-specific prebuilt blobs
 target/a52sxq/patches/wpss/vendor/firmware/** binary
 target/a53x/patches/*/vendor/** binary
@@ -36,10 +32,12 @@ target/o1s/patches/variants/vendor/** binary
 target/p3s/patches/variants/vendor/** binary
 target/r9s/patches/vendor/vendor/** binary
 target/t2s/patches/variants/vendor/** binary
-
 # Prebuilt HAL binaries that have no file extension, so the "* text eol=lf"
 # default would otherwise EOL-normalise and corrupt them.
 unica.vibrator-service binary
-
 # Recovery installer is a native ARM64 ELF, never normalize it as text.
 target/*/installer/update-binary binary
+unica/patches/exynos9810_device_stack/embedded/** filter=lfs diff=lfs merge=lfs -text
+platform/exynos9810/prebuilt/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-erofs-dtb.zip filter=lfs diff=lfs merge=lfs -text
+platform/exynos9810/prebuilt/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-ext4.zip filter=lfs diff=lfs merge=lfs -text
+unica/mods/zz_weather/**/*.apk filter=lfs diff=lfs merge=lfs -text

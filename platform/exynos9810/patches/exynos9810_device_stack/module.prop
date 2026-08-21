@@ -1,4 +1,0 @@
-name=Exynos9810 Device Stack
-version=1
-author=UN1CA Exynos9810 port
-description=Applies Exynos9810 hardware, camera, vendor and device overlays during build.

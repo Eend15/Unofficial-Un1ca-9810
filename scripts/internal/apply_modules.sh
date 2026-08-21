@@ -125,16 +125,54 @@ READ_AND_APPLY_PROPS()
 }
 #]
 
-if [ "$#" != "1" ]; then
-    echo "Usage: apply_modules <folder>" >&2
-    exit 1
-elif [ ! -d "$1" ]; then
-    LOGE "Folder not found: ${1//$SRC_DIR\//}"
+IS_EXCLUDED_MODULE()
+{
+    local NAME="$1"
+    local EXCLUDED
+
+    for EXCLUDED in "${EXCLUDED_MODULES[@]}"; do
+        [ "$NAME" = "$EXCLUDED" ] && return 0
+    done
+
+    return 1
+}
+
+if [ "$#" -lt "1" ]; then
+    echo "Usage: apply_modules <folder|module> [--exclude <module> ...]" >&2
     exit 1
 fi
 
-while IFS= read -r f; do
-    APPLY_MODULE "$f"
-done < <(find "$1" -mindepth 1 -maxdepth 1 -type d | LC_ALL=C sort)
+MODULE_ROOT="$1"
+shift
+EXCLUDED_MODULES=()
+while [ "$#" -gt "0" ]; do
+    case "$1" in
+        --exclude)
+            [ "$#" -ge "2" ] || {
+                echo "Missing module name after --exclude" >&2
+                exit 1
+            }
+            EXCLUDED_MODULES+=("$2")
+            shift 2
+            ;;
+        *)
+            echo "Unknown argument: $1" >&2
+            exit 1
+            ;;
+    esac
+done
+
+if [ ! -d "$MODULE_ROOT" ]; then
+    LOGE "Folder not found: ${MODULE_ROOT//$SRC_DIR\//}"
+    exit 1
+elif [ -f "$MODULE_ROOT/module.prop" ]; then
+    APPLY_MODULE "$MODULE_ROOT"
+else
+    while IFS= read -r f; do
+        MODNAME="${f##*/}"
+        IS_EXCLUDED_MODULE "$MODNAME" && continue
+        APPLY_MODULE "$f"
+    done < <(find "$MODULE_ROOT" -mindepth 1 -maxdepth 1 -type d | LC_ALL=C sort)
+fi
 
 exit 0

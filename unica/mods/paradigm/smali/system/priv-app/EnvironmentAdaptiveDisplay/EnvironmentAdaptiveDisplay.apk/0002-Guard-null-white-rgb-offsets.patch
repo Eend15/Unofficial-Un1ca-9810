@@ -1,0 +1,55 @@
+From 8d7a78b2f2d2d5571d56e93f24343e65e7d18228 Mon Sep 17 00:00:00 2001
+From: UN1CA Build <unica@localhost>
+Date: Thu, 20 Aug 2026 23:25:00 +0200
+Subject: [PATCH] Guard null white RGB offsets
+
+---
+ .../EnvironmentAdaptiveDisplayService.smali   | 26 +++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/smali/com/samsung/android/sead/EnvironmentAdaptiveDisplayService.smali b/smali/com/samsung/android/sead/EnvironmentAdaptiveDisplayService.smali
+index 9a25a9e..b7c9cf1 100644
+--- a/smali/com/samsung/android/sead/EnvironmentAdaptiveDisplayService.smali
++++ b/smali/com/samsung/android/sead/EnvironmentAdaptiveDisplayService.smali
+@@ -1939,6 +1939,20 @@
+ .method private getWhiteRGBOffsetArray([Ljava/lang/String;)[[I
+     .locals 6
+ 
++    if-eqz p1, :unica_default_white_rgb_offsets
++
++    array-length p0, p1
++
++    if-nez p0, :unica_white_rgb_offsets_ready
++
++    :unica_default_white_rgb_offsets
++    const-string p0, "255,255,255"
++
++    filled-new-array {p0}, [Ljava/lang/String;
++
++    move-result-object p1
++
++    :unica_white_rgb_offsets_ready
+     array-length p0, p1
+ 
+     const/4 v0, 0x2
+@@ -1967,6 +1979,18 @@
+ 
+     aget-object v2, p1, v0
+ 
++    if-eqz v2, :unica_default_white_rgb_entry
++
++    invoke-virtual {v2}, Ljava/lang/String;->length()I
++
++    move-result v3
++
++    if-nez v3, :unica_white_rgb_entry_ready
++
++    :unica_default_white_rgb_entry
++    const-string v2, "255,255,255"
++
++    :unica_white_rgb_entry_ready
+     const-string v3, ","
+ 
+     invoke-virtual {v2, v3}, Ljava/lang/String;->split(Ljava/lang/String;)[Ljava/lang/String;
+-- 
+2.54.0

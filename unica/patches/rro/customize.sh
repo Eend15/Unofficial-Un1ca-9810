@@ -52,7 +52,7 @@ while IFS= read -r f; do
     fi
 
     LOG_STEP_OUT
-done < <(find "$WORK_DIR/product/overlay" -maxdepth 1 -type f -name "*$SOURCE_PRODUCT_NAME*.apk")
+done < <(find "$WORK_DIR/product/overlay" -maxdepth 1 -type f -name "*$SOURCE_PRODUCT_NAME*.apk" 2> /dev/null)
 
 unset SOURCE_PRODUCT_NAME TARGET_PRODUCT_NAME
 unset -f _LOG

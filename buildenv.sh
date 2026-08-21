@@ -33,7 +33,7 @@ _GET_SRC_DIR()
 
 _PRINT_USAGE()
 {
-    echo "Usage: source buildenv.sh [--debug] <target>" >&2
+    echo "Usage: source buildenv.sh [--debug] [--fs-type <ext4|erofs>] <target>" >&2
     echo "Available devices:" >&2
     printf '%s\n' "${TARGETS[@]}" >&2
 }
@@ -101,6 +101,7 @@ unset -f _GET_SRC_DIR
 
 export DEBUG=false
 export SRC_DIR
+BUILD_FS_TYPE_OVERRIDE=""
 export OUT_DIR="$SRC_DIR/out"
 export ODIN_DIR="$OUT_DIR/odin"
 export FW_DIR="$OUT_DIR/fw"
@@ -117,6 +118,16 @@ done < <(find "$SRC_DIR/target" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" |
 while [[ "$1" == "-"* ]]; do
     if [[ "$1" == "--debug" ]]; then
         export DEBUG=true
+    elif [[ "$1" == "--fs-type" ]]; then
+        if [ "$#" -lt 2 ]; then
+            echo "Missing file system type after --fs-type. Use ext4 or erofs." >&2
+            _PRINT_USAGE
+            return 1
+        fi
+        BUILD_FS_TYPE_OVERRIDE="$2"
+        shift
+    elif [[ "$1" == "--fs-type="* ]]; then
+        BUILD_FS_TYPE_OVERRIDE="${1#*=}"
     elif [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
         _PRINT_USAGE
         return 0
@@ -127,6 +138,19 @@ while [[ "$1" == "-"* ]]; do
     fi
     shift
 done
+
+if [ "$BUILD_FS_TYPE_OVERRIDE" ]; then
+    case "$BUILD_FS_TYPE_OVERRIDE" in
+        ext4|erofs)
+            export EXYNOS9810_TARGET_OS_FILE_SYSTEM_TYPE="$BUILD_FS_TYPE_OVERRIDE"
+            ;;
+        *)
+            echo "Unsupported file system type: $BUILD_FS_TYPE_OVERRIDE. Use ext4 or erofs." >&2
+            _PRINT_USAGE
+            return 1
+            ;;
+    esac
+fi
 
 if [ "$#" -ne 1 ]; then
     echo "No target specified. Please choose from the available devices below:"

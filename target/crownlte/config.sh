@@ -29,6 +29,8 @@ TARGET_CACHE_PARTITION_SIZE=545259520
 
 # SEC Product Feature
 TARGET_DVFSAPP_CONFIG_SSRM_POLICY_FILENAME="ssrm_default"
+# Exynos9810 has physical SIM support only; keep donor eSIM capability off.
+TARGET_COMMON_SUPPORT_EMBEDDED_SIM=false
 # Stock N960F ships DYN_RESOLUTION_CONTROL=WQHD,FHD,HD and the panel is a real
 # 1440x2960 QHD+, so the switcher belongs here. It had been forced off with no
 # recorded reason while the platform default (and star2lte) are true, which left

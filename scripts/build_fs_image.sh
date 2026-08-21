@@ -31,6 +31,14 @@ BUILD_IMAGE_MKFS()
         MANUAL_SPARSE=true
     fi
 
+    # The bundled e2fsdroid can crash while populating large legacy trees
+    # directly through Android sparse I/O. Populate raw ext4 first and
+    # convert it to Android sparse after e2fsdroid has finished.
+    if $SPARSE && [[ "$FS_TYPE" == "ext4" ]]; then
+        SPARSE=false
+        MANUAL_SPARSE=true
+    fi
+
     local BUILD_CMD
 
     case "$FS_TYPE" in

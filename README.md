@@ -1,20 +1,20 @@
-# Unofficial UN1CA 9810
+# UN1CA Exynos9810
 
 <p align="center">
-  <img src="readme-res/unofficial-un1ca-9810-series.png" alt="Unofficial UN1CA 9810 Series"/>
+  <img src="readme-res/unofficial-un1ca-9810-series.png" alt="UN1CA Exynos9810 Series"/>
 </p>
 
-Unofficial UN1CA 9810 is an experimental custom firmware project for Samsung Exynos9810 devices, maintained by Eend15 and based on the UN1CA build system by salvo_giangri.
+UN1CA Exynos9810 is an experimental custom firmware project for Samsung Exynos9810 devices, maintained by Eend15 and based on the UN1CA build system by salvo_giangri.
 
 It is designed to bring a modern, refined, and feature-rich One UI experience to the Galaxy S9, Galaxy S9+, and Galaxy Note9. The current development target is Android 16 / One UI 8.0, adapted for the legacy Exynos9810 platform.
 
 This is an unofficial community port. It is not affiliated with Samsung and is not an official release from the upstream UN1CA maintainers.
 
-## What Is UN1CA 9810?
+## What Is UN1CA Exynos9810?
 
 UN1CA 9810 keeps the upstream UN1CA workflow: the build system extracts Samsung firmware, applies ROM patches, prepares target-specific files, and generates a flashable recovery zip.
 
-This fork changes the target from newer supported Samsung devices to Exynos9810 devices. It adds a dedicated platform layer, S9/S9+/Note9 targets, repartition support, recovery compatibility hooks, kernel installer support, and device-specific fixes required to boot One UI 8 on these phones.
+This fork changes the target from newer supported Samsung devices to Exynos9810 devices. It adds a dedicated platform layer, S9/S9+/Note9 targets, repartition support, large-ZIP recovery installation support, kernel installer support, and device-specific fixes required to boot One UI 8 on these phones.
 
 The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy S9 series and Note9 while keeping as much of the upstream UN1CA experience as possible.
 
@@ -57,10 +57,10 @@ Snapdragon models are not supported.
 - Dedicated `exynos9810` platform layer for legacy non-dynamic partition devices
 - Device targets for `starlte`, `star2lte`, and `crownlte`
 - Automatic Exynos9810 repartition and clean install flow integrated into the installer
-- DS-ACK/CrownTrail-compatible kernel installer support all credit goes to them: https://github.com/RestlessGoose/exynos9810-kernel , https://github.com/duhansysl/exynos9810-kernel. 
+- DS-ACK/CrownTrail-compatible kernel installer support
 - Permissive and enforcing kernel package support
 - KernelSU-Next support through compatible kernel packages
-- Custom TWRP lite and large ZIP compatibility hooks for older recovery environments
+- Large EROFS ZIP recovery workflow for modern recovery environments
 - Full EROFS support (system, vendor, odm as erofs)
 - EROFS-aware and large ZIP recovery workflow support when paired with a compatible recovery
 - Exynos9810 boot, fstab, first-stage init, metadata, keymaster, radio, and slot/IMEI compatibility fixes
@@ -75,12 +75,18 @@ Snapdragon models are not supported.
 
 ## Build
 
-Use the same build entry point as upstream UN1CA:
+Use the same build entry point as upstream UN1CA. EROFS is the default; select
+ext4 for a live recovery/debug build:
 
 ```bash
-source buildenv.sh star2lte unica make_rom -z
-source buildenv.sh starlte unica make_rom -z
-source buildenv.sh crownlte unica make_rom -z
+source buildenv.sh star2lte
+unica make_rom -z --fs-type erofs
+
+source buildenv.sh --fs-type ext4 starlte
+unica make_rom -z
+
+source buildenv.sh crownlte
+unica make_rom -z --fs-type erofs
 ```
 
 Build output and extracted firmware are intentionally not tracked in git. Keep `out/` and `work/` local.

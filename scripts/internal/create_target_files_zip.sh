@@ -112,6 +112,17 @@ fi
 
 OUTPUT_FILE="$1"
 
+if [ "${TARGET_PLATFORM:-}" = "exynos9810" ]; then
+    if [ -f "$WORK_DIR/.build_in_progress" ]; then
+        LOGE "Refusing to create target-files from incomplete Exynos9810 work_dir"
+        exit 1
+    fi
+    if [ ! -f "$WORK_DIR/.modules_applied" ] || [ ! -f "$WORK_DIR/.completed" ]; then
+        LOGE "Refusing to create target-files before Exynos9810 ROM patches and verification complete"
+        exit 1
+    fi
+fi
+
 [ -d "$TMP_DIR" ] && rm -rf "$TMP_DIR"
 mkdir -p "$TMP_DIR"
 
@@ -133,6 +144,13 @@ while IFS= read -r f; do
     fi
 done < <(find "$WORK_DIR" -maxdepth 1 -type d)
 LOG_STEP_OUT
+
+if [ "$TARGET_PLATFORM" = "exynos9810" ]; then
+    LOG_STEP_IN "- Verifying Exynos9810 filesystem images"
+    "$SRC_DIR/scripts/internal/verify_exynos9810_images.sh" \
+        "$TMP_DIR" "$TARGET_OS_FILE_SYSTEM_TYPE" || exit 1
+    LOG_STEP_OUT
+fi
 
 if $TARGET_USE_DYNAMIC_PARTITIONS; then
     LOG "- Building unsparse_super_empty.img"
