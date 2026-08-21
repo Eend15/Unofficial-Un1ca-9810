@@ -14,7 +14,7 @@ This is an unofficial community port. It is not affiliated with Samsung and is n
 
 UN1CA 9810 keeps the upstream UN1CA workflow: the build system extracts Samsung firmware, applies ROM patches, prepares target-specific files, and generates a flashable recovery zip.
 
-This fork changes the target from newer supported Samsung devices to Exynos9810 devices. It adds a dedicated platform layer, S9/S9+/Note9 targets, repartition support, large-ZIP recovery installation support, kernel installer support, and device-specific fixes required to boot One UI 8 on these phones.
+This fork changes the target from newer supported Samsung devices to Exynos9810 devices. It adds a dedicated platform layer, S9/S9+/Note9 targets, built in repartition support, large-ZIP recovery installation support, kernel installer support, and device-specific fixes required to boot One UI 8 on these phones.
 
 The goal is to provide a usable Android 16 / One UI 8 ROM for the Exynos Galaxy S9 series and Note9 while keeping as much of the upstream UN1CA experience as possible.
 
@@ -50,14 +50,14 @@ Snapdragon models are not supported.
 - Custom FlipFont font support
 - Extra CSC features such as call recording, Hiya, network speed in the status bar, and AltZLife where compatible
 - BluetoothLibraryPatcher and KnoxPatch integration from upstream UN1CA
-- UN1CA Settings with custom Bixby Button remapper! Play Integrity / PIF tooling, TrickyStore options, Hide My Applist integration, developer-options hiding, app downgrade toggle, old target SDK install toggle, secure screenshot toggle, screenshot and screen-recording detection toggle, Google Photos backup option, and games FPS unlock toggle
+- UN1CA Settings with custom Bixby Button remapper made for Exynos9810. Play Integrity / PIF tooling, TrickyStore options, Hide My Applist integration, developer-options hiding, app downgrade toggle, old target SDK install toggle, secure screenshot toggle, screenshot and screen-recording detection toggle, Google Photos backup option, and games FPS unlock toggle
 
 ## Exynos9810 Port Features
 
 - Dedicated `exynos9810` platform layer for legacy non-dynamic partition devices
 - Device targets for `starlte`, `star2lte`, and `crownlte`
 - Automatic Exynos9810 repartition and clean install flow integrated into the installer
-- DS-ACK/CrownTrail-compatible kernel installer support
+- DS-ACK-compatible kernel installer support
 - Permissive and enforcing kernel package support
 - KernelSU-Next support through compatible kernel packages
 - Large EROFS ZIP recovery workflow for modern recovery environments
@@ -69,14 +69,14 @@ Snapdragon models are not supported.
 - Audio HAL compatibility patches and legacy audio effect backports
 - Camera feature matrices split per device, including S9 single-camera and S9+/Note9 dual-camera layouts
 - One UI 8 camera compatibility fixes for photo, video, portrait, and pro-mode paths where possible
-- Ported Motion Photo feature
+- Ported Motion Photo feature from SM-S901B
 - Debloat profile tailored for legacy Exynos9810 memory and partition limits
 - Device-specific overlays, DVFS/SIOP policy hooks, floating features, CSC feature tuning, and framework feature declarations
 
 ## Build
 
 Use the same build entry point as upstream UN1CA. EROFS is the default; select
-ext4 for a live recovery/debug build:
+ext4 for a easy to debug build:
 
 ```bash
 source buildenv.sh star2lte
@@ -95,23 +95,24 @@ Build output and extracted firmware are intentionally not tracked in git. Keep `
 
 ## Installation
 
-1. Flash the custom TWRP recovery first via Download mode:
+1. Flash the custom TWRP recovery with Erofs support and 5gb+ zips support.
+2. first via Download mode:
    https://drive.google.com/drive/u/1/folders/1fHC1F6aZkXxVGCHYRtzU_RQqX51rYGtk
 
-2. Boot into the custom TWRP recovery.
+3. Boot into the custom TWRP recovery.
 
-3. Get the UN1CA zip onto the device using one of:
+4. Get the UN1CA zip onto the device using one of:
    - Copy it to your microSD card and select it from there in TWRP, or
    - Drag/copy the zip onto internal storage, or
    - Use a USB stick (OTG) plugged into the device
 
-4. In TWRP, tap Install, select the UN1CA zip, and swipe to flash.
+5. In TWRP, tap Install, select the UN1CA zip, and swipe to flash.
 
-5. Once flashing completes, go back and tap Wipe > Format Data,
+6. Once flashing completes, go back and tap Wipe > Format Data,
    then type "yes" to confirm.
    a Format Data wipe is needed. (when coming from older one ui versions)
 
-6. Reboot System.
+7. Reboot System.
 
 First boot after a Format Data wipe can take a few minutes longer patiently wait.
  — this is normal.
@@ -122,7 +123,7 @@ Notes:
 - Only flash on supported Exynos9810 models: S9 (`starlte`),
   S9+ (`star2lte`), and Note9 (`crownlte`) global, dual-SIM, or Korean variants.
   
-  Bugs and Notes:
+Official Telegram: (report bugs or wanted features)
 https://t.me/+sE1dIX31j5w1OWRk
 
 ### Accountability
