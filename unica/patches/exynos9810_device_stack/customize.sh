@@ -575,15 +575,15 @@ _EXYNOS9810_WRITE_EXYNOS9810_KEYLAYOUTS()
 key 116   POWER             WAKE
 EOF
 
-    # Bixby button = scancode 703 on starlte, star2lte and crownlte. Keep the
-    # keycode off CAMERA so Samsung's stock camera shortcut cannot also fire;
-    # PhoneWindowManager intercepts the physical scan code and dispatches the
-    # selected Bixby/Gemini/Camera/Flashlight action from UN1CA Settings.
+    # Bixby button = scancode 703 on starlte, star2lte and crownlte. CAMERA is
+    # only the framework keycode carrier; PhoneWindowManager intercepts the
+    # physical scan code first and dispatches the selected
+    # Bixby/Gemini/Camera/Flashlight action from UN1CA Settings.
     cat > "$KL_DIR/gpio_keys.kl" <<'EOF'
 key 114   VOLUME_DOWN
 key 115   VOLUME_UP
 key 116   POWER             WAKE
-key 703   ASSIST
+key 703   CAMERA
 EOF
 
     _EXYNOS9810_SET_METADATA "system" "system/usr/keylayout/wg_pwrkey.kl" \

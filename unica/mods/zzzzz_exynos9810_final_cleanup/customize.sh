@@ -2729,15 +2729,15 @@ _EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT()
     LOG "- Enabling dynamic Exynos9810 Bixby key remapping for physical key 703"
     while IFS= read -r -d "" FILE; do
         if grep -qE "^key[[:space:]]+703[[:space:]]+" "$FILE" 2>/dev/null; then
-            # Keep the physical Bixby key away from Samsung's stock CAMERA key
-            # handlers. SystemServer uses scan code 703 directly and consumes
+            # CAMERA is the proven Exynos9810 keycode carrier for the physical
+            # Bixby key. SystemServer uses scan code 703 directly and consumes
             # it before dispatching the action selected in UN1CA Settings.
-            sed -i -E "s/^(key[[:space:]]+703[[:space:]]+)[^[:space:]]+(.*)$/\1ASSIST\2/" "$FILE"
+            sed -i -E "s/^(key[[:space:]]+703[[:space:]]+)[^[:space:]]+(.*)$/\1CAMERA\2/" "$FILE"
             COUNT=$((COUNT + 1))
         fi
     done < <(find "$KEYLAYOUT_DIR" -maxdepth 1 -type f -name "*.kl" -print0)
 
-    LOG "  - Remapped key 703 in $COUNT keylayout file(s) to ASSIST"
+    LOG "  - Remapped key 703 in $COUNT keylayout file(s) to CAMERA"
 }
 
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY()
