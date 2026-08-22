@@ -2443,6 +2443,64 @@ EOF
         0 0 644 "u:object_r:system_file:s0"
 }
 
+_EXYNOS9810_PATCH_POST_SETUP_CLEANUP()
+{
+    LOG "- Adding Exynos9810 post-setup cleanup"
+
+    mkdir -p "$WORK_DIR/system/system/bin" "$WORK_DIR/system/system/etc/init"
+    cat > "$WORK_DIR/system/system/bin/unica_exynos9810_post_setup_cleanup.sh" <<'EOF'
+#!/system/bin/sh
+
+PATH=/system/bin:/system/xbin:/vendor/bin
+STAMP=/data/vendor/unica/post_setup_cleanup_v1
+
+COUNT=0
+while [ "$COUNT" -lt 90 ]; do
+    COMPLETE="$(settings get secure user_setup_complete 2>/dev/null)"
+    PROVISIONED="$(settings get global device_provisioned 2>/dev/null)"
+
+    if [ "$COMPLETE" = "1" ] && [ "$PROVISIONED" = "1" ]; then
+        am force-stop com.google.android.setupwizard >/dev/null 2>&1 || true
+        mkdir -p "$(dirname "$STAMP")"
+        touch "$STAMP"
+        log -t UN1CA-Exynos9810-Setup \
+            "Stopped completed Google SetupWizard background process"
+        exit 0
+    fi
+
+    sleep 1
+    COUNT=$((COUNT + 1))
+done
+
+exit 0
+EOF
+
+    cat > "$WORK_DIR/system/system/etc/init/unica_exynos9810_post_setup_cleanup.rc" <<'EOF'
+on property:sys.boot_completed=1
+    start unica_exynos9810_post_setup_cleanup
+
+service unica_exynos9810_post_setup_cleanup /system/bin/sh /system/bin/unica_exynos9810_post_setup_cleanup.sh
+    class late_start
+    user root
+    group root system shell
+    disabled
+    oneshot
+    seclabel u:r:su:s0
+EOF
+
+    chmod 0755 "$WORK_DIR/system/system/bin/unica_exynos9810_post_setup_cleanup.sh"
+    chmod 0644 "$WORK_DIR/system/system/etc/init/unica_exynos9810_post_setup_cleanup.rc"
+
+    _EXYNOS9810_SET_METADATA "system" \
+        "system/bin/unica_exynos9810_post_setup_cleanup.sh" \
+        "/system/bin/unica_exynos9810_post_setup_cleanup\\.sh" \
+        0 2000 755 "u:object_r:system_file:s0"
+    _EXYNOS9810_SET_METADATA "system" \
+        "system/etc/init/unica_exynos9810_post_setup_cleanup.rc" \
+        "/system/etc/init/unica_exynos9810_post_setup_cleanup\\.rc" \
+        0 0 644 "u:object_r:system_file:s0"
+}
+
 _EXYNOS9810_PRELOAD_KERNELSU_NEXT()
 {
     # The legacy KernelSU Next scanner only accepts a manager installed as a
@@ -4366,6 +4424,7 @@ _EXYNOS9810_REMOVE_N770_INIT_COLLISIONS
 _EXYNOS9810_DISABLE_SETUP_WIZARDS
 _EXYNOS9810_PATCH_SETTINGS_PROVIDER_SETUP_SKIP
 _EXYNOS9810_PATCH_INITIAL_SETUP_BRIGHTNESS
+_EXYNOS9810_PATCH_POST_SETUP_CLEANUP
 _EXYNOS9810_PATCH_SERVICES_SP_SOFTWARE_CRYPTO
 # Keep Samsung Account and Bixby donor-signed. Rebuilding these APKs fixes one
 # legacy keymaster path, but it also makes them platform-signed, which blocks
