@@ -42,8 +42,8 @@
     <!-- Recording resolution - BACK -->
     <local name="BACK_CAMERA_RECORDING_DEFAULT_RESOLUTION" value="1920x1080"/>
     <local name="BACK_CAMERA_RECORDING_MIN_RESOLUTION" value="640x480"/>
-    <local name="BACK_CAMCORDER_RESOLUTION_FEATURE_MAP_3840X2160" value="false" hdr="true" hdr10="true" preview-size="3840x2160" snapshot-support="true" snapshot-size="4032x2268" vdis="true" super-vdis="false" effect="false" object-tracking="false" seamless-zoom-support="true" external-storage-support="true" supported-mode="video,pro_video"/>
-    <local name="BACK_CAMCORDER_RESOLUTION_FEATURE_MAP_3840X2160_60FPS" value="false" hdr="true" hdr10="false" preview-size="3840x2160" snapshot-support="true" snapshot-size="4032x2268" vdis="false" effect="false" object-tracking="false" seamless-zoom-support="true" external-storage-support="false" supported-mode="video,pro_video"/>
+    <local name="BACK_CAMCORDER_RESOLUTION_FEATURE_MAP_3840X2160" value="true" hdr="true" hdr10="true" preview-size="3840x2160" snapshot-support="true" snapshot-size="4032x2268" vdis="true" super-vdis="false" effect="false" object-tracking="false" seamless-zoom-support="true" external-storage-support="true" supported-mode="video,pro_video"/>
+    <local name="BACK_CAMCORDER_RESOLUTION_FEATURE_MAP_3840X2160_60FPS" value="true" hdr="true" hdr10="false" preview-size="3840x2160" snapshot-support="true" snapshot-size="4032x2268" vdis="false" effect="false" object-tracking="false" seamless-zoom-support="true" external-storage-support="false" supported-mode="video,pro_video"/>
     <local name="BACK_CAMCORDER_RESOLUTION_FEATURE_MAP_2560X1440" value="true" hdr="true" hdr10="true" preview-size="2560x1440" snapshot-support="true" snapshot-size="4032x2268" vdis="true" super-vdis="false" effect="false" object-tracking="false" seamless-zoom-support="true" external-storage-support="true" supported-mode="video,pro_video"/>
     <local name="BACK_CAMCORDER_RESOLUTION_FEATURE_MAP_2560X1440_60FPS" value="false" hdr="true" hdr10="false" preview-size="2560x1440" snapshot-support="true" snapshot-size="4032x2268" vdis="false" super-vdis="false" effect="false" object-tracking="false" seamless-zoom-support="true" external-storage-support="false" supported-mode="video,pro_video"/>
     <local name="BACK_CAMCORDER_RESOLUTION_FEATURE_MAP_2224X1080" value="true" hdr="true" hdr10="true" preview-size="2224x1080" snapshot-support="true" snapshot-size="4032x1960" vdis="true" super-vdis="false" effect="true" object-tracking="true" seamless-zoom-support="true" external-storage-support="true" supported-mode="video,pro_video"/>
@@ -281,7 +281,7 @@
     <local name="SUPPORT_VDIS_IN_SINGLE_TAKE" value="true"/>
 
     <!-- new pro/pro video features -->
-    <local name="SUPPORT_PRO_VIDEO_RESOLUTION_SETTING" value="false"/>
+    <local name="SUPPORT_PRO_VIDEO_RESOLUTION_SETTING" value="true"/>
     <local name="SUPPORT_HISTOGRAM" value="true"/>
     <local name="SUPPORT_PRO_VIDEO_ZOOM_ROCKER" value="false"/>
     <local name="SUPPORT_PRO_VIDEO_RESET" value="false"/>

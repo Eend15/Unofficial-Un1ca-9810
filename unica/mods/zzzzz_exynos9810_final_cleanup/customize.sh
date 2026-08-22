@@ -1835,6 +1835,60 @@ _EXYNOS9810_FINAL_STAGE_LAUNCHER_DEFAULTS()
 }
 
 
+_EXYNOS9810_FINAL_ENABLE_CAMERA_UHD_60FPS()
+{
+    # The Exynos9810 camera HAL supports rear UHD/4K recording and rear UHD/4K
+    # 60 FPS on S9, S9+ and Note9. Keep this enforced after all target/donor
+    # camera-feature copies so the Camera app does not lose the menu on starlte
+    # or crownlte builds. Do not add front UHD: the 9810 front sensor exposes
+    # 1080p60, not a stable 3840x2160 stream.
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+
+    local FEATURE="$WORK_DIR/system/system/cameradata/camera-feature.xml"
+
+    [ -f "$FEATURE" ] || {
+        LOGE "camera-feature.xml not found for UHD/60 FPS camera capability patch"
+        return 1
+    }
+
+    LOG "- Enabling Exynos9810 Camera app UHD/4K and 60 FPS options"
+    python3 - "$FEATURE" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+
+enable = [
+    "BACK_CAMCORDER_RESOLUTION_FEATURE_MAP_3840X2160",
+    "BACK_CAMCORDER_RESOLUTION_FEATURE_MAP_3840X2160_60FPS",
+    "BACK_CAMCORDER_RESOLUTION_FEATURE_MAP_1920X1080_60FPS",
+    "FRONT_CAMCORDER_RESOLUTION_FEATURE_MAP_1920X1080_60FPS",
+    "SUPPORT_PRO_VIDEO_RESOLUTION_SETTING",
+    "SUPPORT_DISPLAY_FRAME_RATE_60HZ",
+]
+
+missing = []
+for name in enable:
+    pattern = rf'(<local name="{re.escape(name)}" value=")(?:true|false)(")'
+    text, count = re.subn(pattern, rf'\g<1>true\2', text)
+    if count != 1:
+        missing.append(name)
+
+front_uhd = re.compile(
+    r'(<local name="FRONT_CAMCORDER_RESOLUTION_FEATURE_MAP_3840X2160(?:_60FPS)?" value=")(?:true|false)(")'
+)
+text = front_uhd.sub(r'\1false\2', text)
+
+if missing:
+    raise SystemExit("Missing camera feature entries: " + ", ".join(missing))
+
+path.write_text(text)
+PY
+}
+
+
 _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV()
 {
     # One UI 8's S22 camera exposes a front-camera FOV toggle that the legacy
@@ -6065,6 +6119,7 @@ _EXYNOS9810_FINAL_RESTORE_RAMPLUS_FILES
 _EXYNOS9810_FINAL_RESTORE_EMBEDDED_REMOTEDISPLAY
 _EXYNOS9810_FINAL_RESTORE_EMBEDDED_SENSORS
 _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK
+_EXYNOS9810_FINAL_ENABLE_CAMERA_UHD_60FPS
 _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES
 _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT
