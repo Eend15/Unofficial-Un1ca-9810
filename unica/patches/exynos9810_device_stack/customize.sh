@@ -4307,6 +4307,18 @@ _EXYNOS9810_APPLY_FULL_VENDOR_STACK()
         "system" "optics" "/optics" "u:object_r:system_file:s0" 0
 }
 
+_EXYNOS9810_REMOVE_UNSUPPORTED_WIFI_SUPPLICANT_V14()
+{
+    # The working Exynos9810 vendor stack advertises supplicant HIDL 1.0-1.3.
+    # Android 16 selects V1_4 when this extra manifest/library is present, but
+    # the legacy wpa_supplicant does not expose an ISupplicantStaIface V1_4.
+    # Remove both artifacts even when the base vendor was assembled elsewhere.
+    LOG "- Removing unsupported Exynos9810 Wi-Fi supplicant 1.4 artifacts"
+
+    _EXYNOS9810_DELETE_VENDOR_ENTRY "etc/vintf/manifest/android.hardware.wifi.supplicant.xml"
+    _EXYNOS9810_DELETE_VENDOR_ENTRY "lib64/android.hardware.wifi.supplicant@1.4.so"
+}
+
 EXYNOS9810_DEVICE="$TARGET_CODENAME"
 case "$EXYNOS9810_DEVICE" in
     starlte|star2lte|crownlte)
@@ -4321,6 +4333,7 @@ _EXYNOS9810_APPLY_ROOTFS
 _EXYNOS9810_RESTORE_SOURCE_SYSTEM_SYMLINKS
 _EXYNOS9810_NORMALIZE_PRODUCT_LAYOUT
 _EXYNOS9810_APPLY_FULL_VENDOR_STACK
+_EXYNOS9810_REMOVE_UNSUPPORTED_WIFI_SUPPLICANT_V14
 _EXYNOS9810_VERIFY_EMBEDDED_VENDOR_BASELINE
 
 _EXYNOS9810_COPY_SYSTEM "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/system"
