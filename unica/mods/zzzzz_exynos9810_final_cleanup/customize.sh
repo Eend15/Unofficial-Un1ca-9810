@@ -1252,12 +1252,17 @@ _EXYNOS9810_FINAL_RAM_TWEAKS()
     local FILE
     local PROP
 
-    LOG "- Applying requested Exynos9810 RAM profile"
+    LOG "- Applying balanced Exynos9810 RAM profile"
 
     # Keep the requested legacy framework profile in one property file so the
     # Android property loader cannot see conflicting copies. The old boot-time
     # ram_tweaks service remains disabled: it changed VM, I/O and GPU sysfs
     # state after boot and caused reclaim storms on the 6 GB Exynos9810 build.
+    #
+    # The profile deliberately trims only cached/empty app slots. PSI LMKD,
+    # Samsung DHA whitelisting and the stock zram policy stay intact so alarms,
+    # wearables, push notifications, camera and Samsung framework services do
+    # not get killed just to make the memory meter look lower.
     for FILE in \
         "$WORK_DIR/vendor/build.prop" \
         "$WORK_DIR/system/system/build.prop" \
@@ -1279,11 +1284,11 @@ _EXYNOS9810_FINAL_RAM_TWEAKS()
     done
 
     FILE="$WORK_DIR/system/system/build.prop"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.sys.fw.bg_apps_limit" "24"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.sys.fw.bg_cached_ratio" "0.55"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_cached_max" "28"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.sys.fw.bg_apps_limit" "20"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.sys.fw.bg_cached_ratio" "0.50"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_cached_max" "24"
     _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_cached_min" "8"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_empty_max" "40"
+    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_empty_max" "32"
     _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_empty_min" "8"
     _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_lmk_scale" "0.545"
     _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_pwhitelist_enable" "1"
@@ -5472,7 +5477,7 @@ _EXYNOS9810_FINAL_VERIFY_RAM_PROFILE()
     local PROP
     local COUNT
 
-    LOG "- Verifying requested Exynos9810 RAM profile"
+    LOG "- Verifying balanced Exynos9810 RAM profile"
 
     [ -f "$PROFILE" ] || {
         LOGE "System build.prop is missing while verifying the RAM profile"
@@ -5480,11 +5485,11 @@ _EXYNOS9810_FINAL_VERIFY_RAM_PROFILE()
     }
 
     for EXPECTED in \
-        "ro.sys.fw.bg_apps_limit=24" \
-        "ro.sys.fw.bg_cached_ratio=0.55" \
-        "ro.config.dha_cached_max=28" \
+        "ro.sys.fw.bg_apps_limit=20" \
+        "ro.sys.fw.bg_cached_ratio=0.50" \
+        "ro.config.dha_cached_max=24" \
         "ro.config.dha_cached_min=8" \
-        "ro.config.dha_empty_max=40" \
+        "ro.config.dha_empty_max=32" \
         "ro.config.dha_empty_min=8" \
         "ro.config.dha_lmk_scale=0.545" \
         "ro.config.dha_pwhitelist_enable=1"; do
