@@ -1894,19 +1894,41 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV()
     # One UI 8's S22 camera exposes a front-camera FOV toggle that the legacy
     # Exynos9810 front sensor/HAL cannot implement. On the 9810 this is a
     # software crop choice, not a second physical front lens. Letting the app
-    # calculate the S22 dynamic-FOV value causes camera-id 1 to be reconfigured
-    # with an unsupported stream; the HAL then stops delivering frames (-110).
-    # Keep the UI route alive by always returning the camera app's native-FOV
-    # value (0x3e8 == 1000 == 1.0x). The button therefore remains harmless and
-    # the normal front preview/photo path stays on the supported stream.
+    # use the S22 dynamic-FOV route causes camera-id 1 to be reconfigured with
+    # an unsupported stream; the HAL then stops delivering frames (-110) and
+    # the preview freezes. Disable the feature flag so the wide/normal front
+    # toggle is not exposed, and keep the native-FOV smali clamp as a fallback
+    # if a future camera build still reaches this path.
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
 
     local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
     local ZOOM="$APK_DIR/smali_classes3/com/sec/android/app/camera/engine/ZoomController.smali"
+    local FEATURE="$WORK_DIR/system/system/cameradata/camera-feature.xml"
 
     [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
 
-    LOG "- Clamping unsupported Exynos9810 front-camera FOV to native 1.0x"
+    LOG "- Disabling unsupported Exynos9810 front-camera dynamic FOV"
+
+    if [ -f "$FEATURE" ]; then
+        python3 - "$FEATURE" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+text, count = re.subn(
+    r'(<local name="SUPPORT_FRONT_CAMERA_DYNAMIC_FOV" value=")(?:true|false)(")',
+    r'\g<1>false\2',
+    text,
+)
+if count != 1:
+    raise SystemExit("SUPPORT_FRONT_CAMERA_DYNAMIC_FOV not found")
+path.write_text(text)
+PY
+    else
+        LOGW "camera-feature.xml not found; skipping front dynamic FOV feature flag"
+    fi
 
     if [ ! -f "$ZOOM" ]; then
         LOGW "ZoomController.smali not found; skipping front camera crash fix"
