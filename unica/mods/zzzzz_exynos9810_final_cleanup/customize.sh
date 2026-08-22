@@ -1891,23 +1891,20 @@ PY
 
 _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV()
 {
-    # One UI 8's S22 camera exposes a front-camera FOV toggle that the legacy
-    # Exynos9810 front sensor/HAL cannot implement. On the 9810 this is a
-    # software crop choice, not a second physical front lens. Letting the app
-    # use the S22 dynamic-FOV route causes camera-id 1 to be reconfigured with
-    # an unsupported stream; the HAL then stops delivering frames (-110) and
-    # the preview freezes. Disable the feature flag so the wide/normal front
-    # toggle is not exposed, and keep the native-FOV smali clamp as a fallback
-    # if a future camera build still reaches this path.
+    # Exynos9810 front "wide" is the legacy Samsung crop/dynamic-FOV path, not
+    # a second ultrawide selfie sensor. Keep the feature wired to camera id 1
+    # and do not clamp ZoomController; clamping makes the One UI 8 lens button
+    # fall into the wrong S22-style route and can freeze the preview.
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
 
     local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
-    local ZOOM="$APK_DIR/smali_classes3/com/sec/android/app/camera/engine/ZoomController.smali"
+    local RECEIVER="$APK_DIR/smali_classes3/v2/q.smali"
+    local ZOOM_CONTROLLER="$APK_DIR/smali_classes3/com/sec/android/app/camera/engine/ZoomController.smali"
     local FEATURE="$WORK_DIR/system/system/cameradata/camera-feature.xml"
 
     [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
 
-    LOG "- Disabling unsupported Exynos9810 front-camera dynamic FOV"
+    LOG "- Restoring Exynos9810 front-camera dynamic FOV crop path"
 
     if [ -f "$FEATURE" ]; then
         python3 - "$FEATURE" <<'PY' || return 1
@@ -1919,54 +1916,179 @@ path = Path(sys.argv[1])
 text = path.read_text()
 text, count = re.subn(
     r'(<local name="SUPPORT_FRONT_CAMERA_DYNAMIC_FOV" value=")(?:true|false)(")',
-    r'\g<1>false\2',
+    r'\g<1>true\2',
     text,
 )
 if count != 1:
     raise SystemExit("SUPPORT_FRONT_CAMERA_DYNAMIC_FOV not found")
+text = re.sub(
+    r'(<local name="SUPPORT_FRONT_SUPER_LARGE_RESOLUTION" value=")(?:true|false)(")',
+    r'\g<1>true\2',
+    text,
+)
+text = re.sub(
+    r'(<local name="SUPPORT_MOTION_PHOTO_IN_SUPER_LARGE_RESOLUTION" value=")(?:true|false)(")',
+    r'\g<1>true\2',
+    text,
+)
+if "FRONT_DYNAMIC_FOV_CAMERA_ID" not in text:
+    text = text.replace(
+        "    <!-- Front dynamic FOV features -->",
+        '    <!-- Front dynamic FOV features -->\n    <local name="FRONT_DYNAMIC_FOV_CAMERA_ID" value="1"/>',
+        1,
+    )
+else:
+    text = re.sub(
+        r'(<local name="FRONT_DYNAMIC_FOV_CAMERA_ID" value=")[^"]+(")',
+        r'\g<1>1\2',
+        text,
+    )
+text = re.sub(
+    r'(?m)^\s*<local name="TRANSITION_(?:NORMAL_TO_WIDE|WIDE_TO_NORMAL)_ANIMATION_DURATION"[^>]*/>\s*\n?',
+    '',
+    text,
+)
 path.write_text(text)
 PY
     else
         LOGW "camera-feature.xml not found; skipping front dynamic FOV feature flag"
     fi
 
-    if [ ! -f "$ZOOM" ]; then
-        LOGW "ZoomController.smali not found; skipping front camera crash fix"
-        return 0
-    fi
-
-    python3 - "$ZOOM" <<'PY' || return 1
+    if [ -f "$RECEIVER" ]; then
+        python3 - "$RECEIVER" <<'PY' || return 1
 from pathlib import Path
-import re
 import sys
 
 path = Path(sys.argv[1])
 text = path.read_text()
-pattern = re.compile(
-    r"(?ms)^(?P<header>\.method[^\n]*getFrontCropAngleZoomValue\([^\n]*\)I\n)"
-    r".*?^\.end method"
-)
-match = pattern.search(text)
-if not match:
-    raise SystemExit("getFrontCropAngleZoomValue()I not found")
-
-method = match.group(0)
-if "# UN1CA: native front FOV guard" in method:
+marker = ":cond_un1ca_front_lens_passthrough"
+if marker in text:
     print("already patched")
     sys.exit(0)
 
-replacement = (
-    match.group("header")
-    + "    # UN1CA: native front FOV guard\n"
-    + "    .locals 1\n\n"
-    + "    const/16 v0, 0x3e8\n\n"
-    + "    return v0\n"
-    + ".end method"
-)
-text = text[:match.start()] + replacement + text[match.end():]
+needle = ".method public final onLensSelect(Lcom/sec/android/app/camera/interfaces/CommandId;)Z\n    .locals 7\n\n"
+if needle not in text:
+    raise SystemExit("onLensSelect header not found")
+
+patch = """    sget-object v0, Lcom/sec/android/app/camera/interfaces/CommandId;->FRONT_CAMERA_LENS_TYPE_WIDE:Lcom/sec/android/app/camera/interfaces/CommandId;
+
+    if-ne p1, v0, :cond_un1ca_front_lens_crop
+
+    sget-object p1, Lcom/sec/android/app/camera/interfaces/CommandId;->FRONT_CAMERA_ANGLE_FULL:Lcom/sec/android/app/camera/interfaces/CommandId;
+
+    invoke-virtual {p0, p1}, Lv2/q;->onFrontAngleSelect(Lcom/sec/android/app/camera/interfaces/CommandId;)Z
+
+    move-result p0
+
+    return p0
+
+    :cond_un1ca_front_lens_crop
+    sget-object v0, Lcom/sec/android/app/camera/interfaces/CommandId;->FRONT_CAMERA_LENS_TYPE_NORMAL:Lcom/sec/android/app/camera/interfaces/CommandId;
+
+    if-ne p1, v0, :cond_un1ca_front_lens_passthrough
+
+    sget-object p1, Lcom/sec/android/app/camera/interfaces/CommandId;->FRONT_CAMERA_ANGLE_CROP:Lcom/sec/android/app/camera/interfaces/CommandId;
+
+    invoke-virtual {p0, p1}, Lv2/q;->onFrontAngleSelect(Lcom/sec/android/app/camera/interfaces/CommandId;)Z
+
+    move-result p0
+
+    return p0
+
+    :cond_un1ca_front_lens_passthrough
+"""
+
+text = text.replace(needle, needle + patch, 1)
 path.write_text(text)
 print("patched")
 PY
+    else
+        LOGW "ZoomCommandReceiver.smali not found; skipping front lens remap"
+    fi
+
+    if [ -f "$RECEIVER" ]; then
+        python3 - "$RECEIVER" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = ":goto_un1ca_front_angle_zoom"
+if marker in text:
+    print("front angle select already routed to safe zoom")
+    sys.exit(0)
+
+needle = ".method public final onFrontAngleSelect(Lcom/sec/android/app/camera/interfaces/CommandId;)Z\n    .locals 7\n\n"
+if needle not in text:
+    raise SystemExit("onFrontAngleSelect header not found")
+
+patch = """    iget-object p0, p0, Lv2/q;->a:Lcom/sec/android/app/camera/Camera;
+
+    invoke-interface {p0}, Lcom/sec/android/app/camera/interfaces/CameraContext;->getLayerManager()Lcom/sec/android/app/camera/interfaces/LayerManager;
+
+    move-result-object p0
+
+    invoke-interface {p0}, Lcom/sec/android/app/camera/interfaces/LayerManager;->getKeyScreenLayerManager()Lcom/sec/android/app/camera/interfaces/KeyScreenLayerManager;
+
+    move-result-object p0
+
+    invoke-interface {p0}, Lcom/sec/android/app/camera/interfaces/KeyScreenLayerManager;->getZoomManager()Lcom/sec/android/app/camera/interfaces/ZoomManager;
+
+    move-result-object p0
+
+    sget-object v0, Lcom/sec/android/app/camera/interfaces/CommandId;->FRONT_CAMERA_ANGLE_CROP:Lcom/sec/android/app/camera/interfaces/CommandId;
+
+    if-ne p1, v0, :cond_un1ca_front_angle_full_zoom
+
+    const/16 p1, 0x4b0
+
+    goto :goto_un1ca_front_angle_zoom
+
+    :cond_un1ca_front_angle_full_zoom
+    const/16 p1, 0x3e8
+
+    :goto_un1ca_front_angle_zoom
+    invoke-interface {p0, p1}, Lcom/sec/android/app/camera/interfaces/ZoomManager;->startZoomTransition(I)V
+
+    const/4 p0, 0x1
+
+    return p0
+
+"""
+text = text.replace(needle, needle + patch, 1)
+path.write_text(text)
+print("front angle select routed to safe zoom")
+PY
+    fi
+
+    if [ -f "$ZOOM_CONTROLLER" ]; then
+        python3 - "$ZOOM_CONTROLLER" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = "const/16 v0, 0x4b0\n\n    return v0"
+if marker in text:
+    print("front crop zoom already fixed")
+    sys.exit(0)
+
+needle = ".method public getFrontCropAngleZoomValue()I\n    .locals 4\n\n"
+if needle not in text:
+    raise SystemExit("getFrontCropAngleZoomValue header not found")
+
+patch = """    const/16 v0, 0x4b0
+
+    return v0
+
+"""
+text = text.replace(needle, needle + patch, 1)
+path.write_text(text)
+print("front crop zoom fixed")
+PY
+    else
+        LOGW "ZoomController.smali not found; skipping front crop zoom value fix"
+    fi
 }
 
 _EXYNOS9810_FINAL_PATCH_CAMERA_NETWORK_ERRORS()

@@ -113,8 +113,6 @@
 
         <!-- Seamless camera switching related features -->
     <local name="TRANSITION_SCALE_PIVOTY_NORMAL_ASPECT_RATIO" value="0.45f" />
-    <local name="TRANSITION_NORMAL_TO_WIDE_ANIMATION_DURATION" value="600" />
-    <local name="TRANSITION_WIDE_TO_NORMAL_ANIMATION_DURATION" value="600" />
     <local name="SUPPORT_SEAMLESS_ZOOM" value="true" />
     <local name="SUPPORT_SEAMLESS_ZOOM_SINGLE_TAKE" value="false" />
 
@@ -220,7 +218,7 @@
     <local name="SUPPORT_SWITCH_FACING_WHILE_RECORDING" value="true" />
     <local name="SUPPORT_RECORDING_LENS_CHANGE" value="true" />
     <local name="SUPPORT_NIGHT_MODE_ZOOM" value="true" />
-    <local name="SUPPORT_FRONT_CAMERA_DYNAMIC_FOV" value="false" />
+    <local name="SUPPORT_FRONT_CAMERA_DYNAMIC_FOV" value="true" />
     <local name="SUPPORT_SELFIE_TONE_MODE" value="true" />
     <local name="SUPPORT_QUICK_TAKE" value="true"/>
     <local name="SUPPORT_HYPER_LAPSE_SUPER_STEADY" value="true" />
