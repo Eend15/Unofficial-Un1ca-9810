@@ -3198,7 +3198,10 @@ _EXYNOS9810_APPLY_BOOT_PROPS()
 
 _EXYNOS9810_WRITE_SYSTEM_BOOT_DEBUG()
 {
-    if [ "${EXYNOS9810_ENABLE_SYSTEM_BOOT_DEBUG:-true}" != "true" ]; then
+    # Production builds must stay quiet. A boot logger is opt-in for a
+    # diagnostic build only; leaving it enabled by default adds persistent
+    # I/O and can compete with SystemUI during late boot.
+    if [ "${EXYNOS9810_ENABLE_SYSTEM_BOOT_DEBUG:-false}" != "true" ]; then
         rm -f \
             "$WORK_DIR/system/system/etc/init/unica_exynos9810_debug.rc" \
             "$WORK_DIR/system/system/bin/unica_exynos9810_bootlog.sh"
@@ -4307,16 +4310,136 @@ _EXYNOS9810_APPLY_FULL_VENDOR_STACK()
         "system" "optics" "/optics" "u:object_r:system_file:s0" 0
 }
 
-_EXYNOS9810_REMOVE_UNSUPPORTED_WIFI_SUPPLICANT_V14()
+_EXYNOS9810_KEEP_WIFI_P2P_SUPPLICANT_V14()
 {
-    # The working Exynos9810 vendor stack advertises supplicant HIDL 1.0-1.3.
-    # Android 16 selects V1_4 when this extra manifest/library is present, but
-    # the legacy wpa_supplicant does not expose an ISupplicantStaIface V1_4.
-    # Remove both artifacts even when the base vendor was assembled elsewhere.
-    LOG "- Removing unsupported Exynos9810 Wi-Fi supplicant 1.4 artifacts"
+    # The tested Samsung P2P stack is one coherent 64-bit family: its
+    # wpa_supplicant exports HIDL 1.4 and Smart View discovery depends on that
+    # interface. Keep the One UI 8 keystore bridge, but never delete or replace
+    # these donor supplicant artifacts independently.
+    LOG "- Keeping tested Exynos9810 Wi-Fi/P2P supplicant 1.4 stack"
 
-    _EXYNOS9810_DELETE_VENDOR_ENTRY "etc/vintf/manifest/android.hardware.wifi.supplicant.xml"
-    _EXYNOS9810_DELETE_VENDOR_ENTRY "lib64/android.hardware.wifi.supplicant@1.4.so"
+    local REL
+    for REL in \
+        bin/hw/wpa_supplicant \
+        etc/vintf/manifest/android.hardware.wifi.supplicant.xml \
+        lib64/android.hardware.wifi.supplicant@1.0.so \
+        lib64/android.hardware.wifi.supplicant@1.1.so \
+        lib64/android.hardware.wifi.supplicant@1.2.so \
+        lib64/android.hardware.wifi.supplicant@1.3.so \
+        lib64/android.hardware.wifi.supplicant@1.4.so \
+        lib64/vendor.samsung.hardware.wifi.supplicant@3.0.so \
+        lib64/vendor.samsung.hardware.wifi.supplicant@3.1.so; do
+        [ -f "$WORK_DIR/vendor/$REL" ] || {
+            LOGE "Required Smart View Wi-Fi/P2P component is missing: vendor/$REL"
+            return 1
+        }
+    done
+}
+
+_EXYNOS9810_NORMALIZE_TRUSTONIC_SERVICE()
+{
+    # The legacy mcDriverDaemon aborts when init gives it a trustlet path that
+    # is not present. The old 9810 service line referenced ...0000001c.tlbin,
+    # but that trustlet is absent from every embedded target registry and is
+    # not required by the working keymaster/gatekeeper stack. Leaving the
+    # argument in place produces noisy TEE failures and repeated daemon
+    # shutdown tombstones ("Resource deadlock would occur").
+    LOG "- Normalizing the embedded Trustonic mcRegistry service list"
+
+    local RC REL
+    for RC in \
+        "$WORK_DIR/vendor/etc/init/mobicore.rc" \
+        "$WORK_DIR/vendor/etc/init/hw/mobicore.rc"; do
+        if [ -f "$RC" ]; then
+            sed -i \
+                's@[[:space:]]*-r /vendor/app/mcRegistry/ffffffffd0000000000000000000001c\.tlbin@@g' \
+                "$RC"
+        fi
+    done
+
+    if grep -R -q \
+        'ffffffffd0000000000000000000001c\.tlbin' \
+        "$WORK_DIR/vendor/etc/init" 2>/dev/null; then
+        LOGE "Unavailable Trustonic trustlet ...1c.tlbin is still referenced"
+        return 1
+    fi
+
+    for REL in \
+        FFFFFFFF000000000000000000000001.drbin \
+        ffffffffd0000000000000000000000a.tlbin \
+        ffffffffd00000000000000000000016.tlbin \
+        ffffffffd00000000000000000000045.drbin; do
+        [ -f "$WORK_DIR/vendor/app/mcRegistry/$REL" ] || {
+            LOGE "Required embedded Trustonic registry entry is missing: $REL"
+            return 1
+        }
+    done
+}
+
+_EXYNOS9810_VERIFY_WIFI_HIDL_STACK()
+{
+    # Keep the legacy Samsung Wi-Fi HAL as one ABI family. Mixing the service
+    # with a partial @2.x library set is what causes Android's linker failure
+    # for BpHwSehWifi::interfaceChain during early boot.
+    LOG "- Verifying the Exynos9810 Samsung Wi-Fi HIDL stack"
+
+    local REL
+    for REL in \
+        bin/hw/vendor.samsung.hardware.wifi@2.0-service \
+        lib64/vendor.samsung.hardware.wifi@2.0.so \
+        lib64/vendor.samsung.hardware.wifi@2.1.so \
+        lib64/vendor.samsung.hardware.wifi@2.2.so; do
+        [ -f "$WORK_DIR/vendor/$REL" ] || {
+            LOGE "Required Samsung Wi-Fi HAL component is missing: vendor/$REL"
+            return 1
+        }
+    done
+
+    local RC="$WORK_DIR/vendor/etc/init/vendor.samsung.hardware.wifi@2.0-service.rc"
+    if [ -f "$RC" ]; then
+        for REL in 2.0 2.1 2.2; do
+            grep -q "interface vendor.samsung.hardware.wifi@${REL}::ISehWifi default" "$RC" || {
+                LOGE "Samsung Wi-Fi HAL init registration is incomplete: ISehWifi ${REL}"
+                return 1
+            }
+        done
+    else
+        LOGE "Samsung Wi-Fi HAL init file is missing"
+        return 1
+    fi
+
+    _EXYNOS9810_KEEP_WIFI_P2P_SUPPLICANT_V14 || return 1
+}
+
+_EXYNOS9810_KEEP_WIFI_HIDL_BOOT_START()
+{
+    # Samsung's Wi-Fi extension is a regular class-hal service. Disabling it
+    # makes Wi-Fi appear functional while P2P callbacks and Smart View
+    # discovery remain absent.
+    local RC="$WORK_DIR/vendor/etc/init/vendor.samsung.hardware.wifi@2.0-service.rc"
+    [ -f "$RC" ] || return 0
+    sed -i '/^[[:space:]]*disabled[[:space:]]*$/d' "$RC"
+}
+
+_EXYNOS9810_FIX_MEDIAEXTRACTOR_LINK()
+{
+    # Android 16's mediaextractor loads the Samsung image converter through
+    # libimageconverter.so. That donor library references the converter AIDL
+    # proxy without declaring a DT_NEEDED entry, so the process aborts during
+    # early boot unless the matching system library is loaded globally first.
+    LOG "- Fixing the Exynos9810 mediaextractor converter link"
+
+    local RC="$WORK_DIR/system/system/etc/init/mediaextractor.rc"
+    local CONVERTER="/system/lib64/vendor.samsung.hardware.media.converter-V2-ndk.so"
+    [ -f "$RC" ] || return 0
+    [ -f "$WORK_DIR/system/system/lib64/vendor.samsung.hardware.media.converter-V2-ndk.so" ] || {
+        LOGE "Samsung media converter library is missing"
+        return 1
+    }
+
+    if ! grep -q '^[[:space:]]*setenv LD_PRELOAD /system/lib64/vendor\.samsung\.hardware\.media\.converter-V2-ndk\.so[[:space:]]*$' "$RC"; then
+        sed -i "/^service mediaextractor /a\\    setenv LD_PRELOAD $CONVERTER" "$RC"
+    fi
 }
 
 EXYNOS9810_DEVICE="$TARGET_CODENAME"
@@ -4333,7 +4456,7 @@ _EXYNOS9810_APPLY_ROOTFS
 _EXYNOS9810_RESTORE_SOURCE_SYSTEM_SYMLINKS
 _EXYNOS9810_NORMALIZE_PRODUCT_LAYOUT
 _EXYNOS9810_APPLY_FULL_VENDOR_STACK
-_EXYNOS9810_REMOVE_UNSUPPORTED_WIFI_SUPPLICANT_V14
+_EXYNOS9810_KEEP_WIFI_P2P_SUPPLICANT_V14
 _EXYNOS9810_VERIFY_EMBEDDED_VENDOR_BASELINE
 
 _EXYNOS9810_COPY_SYSTEM "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/system"
@@ -4345,6 +4468,10 @@ _EXYNOS9810_COPY_SYSTEM "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$EXYNOS9
 _EXYNOS9810_COPY_VENDOR "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$EXYNOS9810_DEVICE/vendor"
 _EXYNOS9810_COPY_PRODUCT "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$EXYNOS9810_DEVICE/product"
 _EXYNOS9810_CLEAN_PRODUCT_LAYOUT
+_EXYNOS9810_NORMALIZE_TRUSTONIC_SERVICE
+_EXYNOS9810_KEEP_WIFI_HIDL_BOOT_START
+_EXYNOS9810_VERIFY_WIFI_HIDL_STACK
+_EXYNOS9810_FIX_MEDIAEXTRACTOR_LINK
 
 _EXYNOS9810_COPY_FILE "$EXYNOS9810_LEGACY_PORT_DIR/device_port/scripts/floating_feature.xml" \
     "$WORK_DIR/vendor/etc/floating_feature.xml" \
@@ -4380,10 +4507,9 @@ else
     LOGW "Skipping legacy Exynos9810 donor One UI 7 compatibility overlays. Set ENABLE_LEGACY9810_ONEUI7_COMPAT_OVERLAYS=true to force them."
 fi
 
-# Smart View/Wireless DeX needs the 64-bit Android 16 remotedisplay bridge in
-# addition to the older 32-bit compatibility files above. Keep this separate
-# from the optional legacy overlay switch so display casting is always present
-# on every Exynos9810 target while unrelated legacy overlays remain optional.
+# Smart View/Wireless DeX needs the Android 16 framework bridge together with
+# Samsung's 32-bit Exynos WFD engine. Keep this separate from the optional
+# legacy overlay switch so casting is present on every Exynos9810 target.
 _EXYNOS9810_COPY_SYSTEM "$EXYNOS9810_PATCH_DIR/remotedisplay/system"
 _EXYNOS9810_COPY_VENDOR "$EXYNOS9810_PATCH_DIR/remotedisplay/vendor"
 
@@ -4391,8 +4517,11 @@ for REL in \
     system/system/app/SmartMirroring/SmartMirroring.apk \
     system/system/etc/default-permissions/default-permission-com.samsung.android.app.smartmirroring.xml \
     system/system/framework/com.android.media.remotedisplay.jar \
+    system/system/lib/libremotedisplay_wfd.so \
     system/system/lib64/libremotedisplay_wfd.so \
     system/system/lib64/libwfds.so \
+    vendor/lib/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so \
+    vendor/lib/hw/gralloc.exynos9810.so \
     vendor/bin/vendor.samsung.hardware.security.hdcp.wifidisplay-service \
     vendor/etc/init/vendor.samsung.hardware.security.hdcp.wifidisplay-default.rc \
     vendor/lib64/omx/libOMX.Exynos.AVC.WFD.Encoder.so; do

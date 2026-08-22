@@ -1,0 +1,14 @@
+service audiomirroring /system/bin/audiomirroring
+    class main
+    oneshot
+    disabled
+    user oem_5387
+    group system inet media_rw drmrpc uhid log ext_data_rw
+    ioprio rt 4
+    writepid /dev/cpuset/foreground/tasks
+
+on property:audio.mirroring.running=1
+    start audiomirroring
+
+on property:audio.mirroring.running=0
+    stop audiomirroring

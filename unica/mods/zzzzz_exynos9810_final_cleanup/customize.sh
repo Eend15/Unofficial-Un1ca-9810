@@ -606,6 +606,61 @@ _EXYNOS9810_FINAL_RESTORE_FEATURE_APPS()
     done
 }
 
+_EXYNOS9810_FINAL_RESTORE_ACCESSORY_STACK()
+{
+    # The generic debloat list is allowed to remove optional Samsung apps, but
+    # these framework-facing pieces are required by Galaxy Watch and Galaxy
+    # Buds/accessory pairing on the Android 16 port. Restore the exact
+    # embedded S901B donor payload after debloat, then verify it below.
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+
+    local BASE="$FW_DIR/SM-S901B_EUX/system/system"
+    local REL SRC DST
+
+    [ -d "$BASE" ] || {
+        LOGE "Embedded accessory donor is missing: $BASE"
+        return 1
+    }
+
+    for REL in \
+        "app/GearManagerStub/GearManagerStub.apk" \
+        "priv-app/BudsUniteManager/BudsUniteManager.apk" \
+        "priv-app/EasySetup/EasySetup.apk" \
+        "etc/default-permissions/default-permissions-com.samsung.accessory.budsunitemgr.xml" \
+        "etc/default-permissions/default-permissions-com.samsung.android.easysetup.xml" \
+        "etc/permissions/com.android.future.usb.accessory.xml" \
+        "etc/permissions/com.sec.feature.saccessorymanager.xml" \
+        "etc/permissions/privapp-permissions-com.samsung.accessory.budsunitemgr.xml" \
+        "etc/permissions/privapp-permissions-com.samsung.android.easysetup.xml" \
+        "etc/permissions/signature-permissions-com.samsung.android.app.watchmanager.xml" \
+        "framework/com.android.future.usb.accessory.jar"; do
+        SRC="$BASE/$REL"
+        DST="$WORK_DIR/system/system/$REL"
+        [ -f "$SRC" ] || {
+            LOGE "Embedded accessory payload is missing: $SRC"
+            return 1
+        }
+        mkdir -p "$(dirname "$DST")"
+        cp -f "$SRC" "$DST" || return 1
+        chmod 0644 "$DST"
+    done
+
+    for REL in \
+        "system/app/GearManagerStub/GearManagerStub.apk" \
+        "system/priv-app/BudsUniteManager/BudsUniteManager.apk" \
+        "system/priv-app/EasySetup/EasySetup.apk" \
+        "system/etc/default-permissions/default-permissions-com.samsung.accessory.budsunitemgr.xml" \
+        "system/etc/default-permissions/default-permissions-com.samsung.android.easysetup.xml" \
+        "system/etc/permissions/com.android.future.usb.accessory.xml" \
+        "system/etc/permissions/com.sec.feature.saccessorymanager.xml" \
+        "system/etc/permissions/privapp-permissions-com.samsung.accessory.budsunitemgr.xml" \
+        "system/etc/permissions/privapp-permissions-com.samsung.android.easysetup.xml" \
+        "system/etc/permissions/signature-permissions-com.samsung.android.app.watchmanager.xml" \
+        "system/framework/com.android.future.usb.accessory.jar"; do
+        _EXYNOS9810_FINAL_SET_METADATA "system" "$REL" 0 0 644 "u:object_r:system_file:s0"
+    done
+}
+
 _EXYNOS9810_FINAL_PATCH_SECURE_FOLDER_DESKTOP_MODE()
 {
     # The One UI 8 Secure Folder settings app assumes that every Samsung
@@ -667,8 +722,8 @@ PY
 
 _EXYNOS9810_FINAL_RESTORE_CLOCK_STRUCTURE()
 {
-    # Keep only Clock's framework structure. The Clock APK and all Watch/
-    # accessory/Messages/EasySetup payloads are intentionally debloated.
+    # Keep only Clock's framework structure. The Clock APK is intentionally
+    # debloated; Watch/Buds/accessory/EasySetup are restored separately.
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
 
     local BASE="$FW_DIR/SM-S901B_EUX/system/system"
@@ -736,40 +791,33 @@ _EXYNOS9810_FINAL_DEBLOAT()
         AREmoji \
         AREmojiEditor \
         AvatarEmojiSticker \
-        BeaconManager \
         BixbyVisionFramework3.5 \
         Calculator \
         Chrome \
         ClockPackage \
-        EasySetup \
         GpuWatchApp \
-        MoccaMobile \
-        NetworkDiagnostic \
         OdaService \
-        SCPMAgent \
         SketchBook \
-        WifiAiService \
         DuoStub \
         FamilyLinkParentalControls \
         GalaxyResourceUpdater \
-        GalaxyWearable \
-        GearManager \
-        GearManagerStub \
-        BudsUniteManager \
         GlobalGoals \
         GoogleFeedback \
         Gmail2 \
         HealthService \
         KidsHome_Installer \
-        KLMSAgent \
         LinkToWindowsService \
         Maps \
         Members \
-        MobileWips \
         MultiControl \
         MyDevice \
         ParentalCare \
         SamsungCloudClient \
+        SPPPushClient \
+        FaceService \
+        smartfaceservice \
+        SamsungMessages \
+        SmartThingsKit \
         SamsungCalculator \
         SamsungGlobalGoals \
         SamsungHealth \
@@ -777,13 +825,10 @@ _EXYNOS9810_FINAL_DEBLOAT()
         SamsungMembers_Removable \
         SamsungNotes \
         SamsungNotes_Removable \
-        SamsungMessages \
         SamsungVoiceRecorder \
         SmartSwitchAgent \
         SmartSwitchAssistant \
         SmartSwitchStub \
-        SmartThings \
-        SmartThingsKit \
         SNoteProvider \
         SoundRecorder \
         SecCalculator \
@@ -793,8 +838,7 @@ _EXYNOS9810_FINAL_DEBLOAT()
         VoiceRecorder \
         YouTube \
         YourPhone_P1_5 \
-        YourPhone_Stub \
-        knoxanalyticsagent; do
+        YourPhone_Stub; do
         while IFS= read -r -d '' DIR; do
             _EXYNOS9810_FINAL_DELETE_FOUND_DIR "$DIR"
         done < <(find "$WORK_DIR/system" "$WORK_DIR/product" -type d \
@@ -813,11 +857,8 @@ _EXYNOS9810_FINAL_DEBLOAT()
         product/overlay/GoogleHealthFitnessFrameworkOverlay.apk \
         product/overlay/NotesRoleEnabled \
         system/app/ClockPackage \
-        system/app/GearManagerStub \
         system/preload/SBrowser \
         system/app/KidsHome_Installer \
-        system/etc/permissions/privapp-permissions-com.samsung.accessory.budsunitemgr.xml \
-        system/etc/default-permissions/default-permissions-com.samsung.accessory.budsunitemgr.xml \
         system/app/ParentalCare \
         system/priv-app/SecCalculator \
         system/priv-app/SecCalculator2 \
@@ -827,24 +868,23 @@ _EXYNOS9810_FINAL_DEBLOAT()
         system/priv-app/LinkToWindowsService \
         system/priv-app/MultiControl \
         system/priv-app/YourPhone_Stub \
-        system/app/MoccaMobile \
         system/app/SketchBook \
-        system/app/WifiAiService \
-        system/priv-app/EasySetup \
         system/priv-app/GpuWatchApp \
-        system/priv-app/NetworkDiagnostic \
         system/priv-app/OdaService \
-        system/priv-app/SCPMAgent \
-        system/priv-app/SamsungMessages \
-        system/etc/permissions/signature-permissions-com.samsung.android.app.watchmanager.xml \
-        system/etc/permissions/com.sec.feature.saccessorymanager.xml \
-        system/etc/permissions/com.android.future.usb.accessory.xml \
-        system/etc/default-permissions/default-permissions-com.samsung.android.messaging.xml \
-        system/etc/default-permissions/default-permissions-com.samsung.android.easysetup.xml \
-        system/etc/permissions/privapp-permissions-com.samsung.android.easysetup.xml \
-        system/framework/com.android.future.usb.accessory.jar \
         system/etc/permissions/privapp-permissions-com.microsoft.appmanager.xml \
-        system/etc/permissions/privapp-permissions-com.samsung.android.scloud.xml \
+        system/etc/default-permissions/default-permissions-com.sec.spp.push.xml \
+        system/etc/permissions/privapp-permissions-com.sec.spp.push.xml \
+        system/etc/sysconfig/samsungpushservice.xml \
+        system/etc/permissions/com.sec.android.smartface.smart_stay.xml \
+        system/etc/permissions/privapp-permissions-com.samsung.android.smartface.xml \
+        system/etc/default-permissions/default-permissions-com.samsung.android.messaging.xml \
+        system/etc/permissions/privapp-permissions-com.samsung.android.messaging.xml \
+        system/priv-app/SPPPushClient \
+        system/priv-app/FaceService \
+        system/priv-app/smartfaceservice \
+        system/priv-app/SamsungMessages \
+        system/priv-app/SmartThingsKit \
+        system/system_ext/overlay/smartfaceservice_overlay.apk \
         system/etc/permissions/privapp-permissions-com.samsung.android.smartswitchassistant.xml \
         system/etc/permissions/privapp-permissions-com.samsung.knox.securefolder.xml \
         system/etc/permissions/privapp-permissions-com.sec.android.app.shealth.xml \
@@ -898,10 +938,10 @@ PY
 
 _EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT()
 {
-    local FOUND FILE
+    local FOUND FILE REL
     local -a SEARCH_ROOTS
 
-    LOG "- Verifying Samsung Cloud is optional and absent from the ROM payload"
+    LOG "- Verifying Samsung Cloud is optional while its shared-UID contract remains"
 
     SEARCH_ROOTS=("$WORK_DIR/system")
     if [ -d "$WORK_DIR/product" ]; then
@@ -917,9 +957,33 @@ _EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT()
     }
 
     FOUND="$(find "${SEARCH_ROOTS[@]}" -type f \
+        ! -name 'privapp-permissions-com.samsung.android.scloud.xml' \
         -iname '*scloud*' -print -quit)"
     [ -z "$FOUND" ] || {
         LOGE "Samsung Cloud support file remains in the final workdir: $FOUND"
+        return 1
+    }
+
+    for REL in \
+        system/priv-app/SCPMAgent \
+        system/etc/permissions/privapp-permissions-com.samsung.android.scloud.xml; do
+        [ -e "$WORK_DIR/system/$REL" ] || {
+            LOGE "Samsung Cloud shared-UID anchor is missing: $WORK_DIR/system/$REL"
+            return 1
+        }
+    done
+
+    FILE="$WORK_DIR/system/system/etc/sysconfig/package-shareduid-allowlist.xml"
+    [ -f "$FILE" ] || {
+        LOGE "Samsung package shared-UID allowlist is missing: $FILE"
+        return 1
+    }
+    grep -qF 'package="com.samsung.android.scloud" shareduid="android.uid.samsungcloud"' "$FILE" || {
+        LOGE "Samsung Cloud shared-UID allowlist entry is missing"
+        return 1
+    }
+    grep -qF 'package="com.samsung.android.scpm" shareduid="android.uid.samsungcloud"' "$FILE" || {
+        LOGE "SCPMAgent shared-UID allowlist entry is missing"
         return 1
     }
 
@@ -929,6 +993,53 @@ _EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT()
         [ -f "$FILE" ] || continue
         if grep -qi -E 'samsungcloud|scloud' "$FILE"; then
             LOGE "Samsung Cloud preload trigger remains in $FILE"
+            return 1
+        fi
+    done
+
+    return 0
+}
+
+_EXYNOS9810_FINAL_STAGE_SCPM_ANCHOR()
+{
+    local FILE="$WORK_DIR/system/system/etc/permissions/privapp-permissions-com.samsung.android.scpm.xml"
+    local OVERRIDE="$WORK_DIR/system/system/etc/sysconfig/unica_exynos9810_scloud_components.xml"
+
+    LOG "- Preserving the Samsung Cloud shared-UID anchor with a static receiver override"
+    [ -f "$FILE" ] || {
+        LOGE "SCPMAgent privapp-permissions file is missing: $FILE"
+        return 1
+    }
+
+    [ -f "$OVERRIDE" ] || {
+        LOGE "Samsung Cloud component override is missing: $OVERRIDE"
+        return 1
+    }
+
+    return 0
+}
+
+_EXYNOS9810_FINAL_VERIFY_REMOVED_OPTIONAL_COMPONENTS()
+{
+    local REL
+
+    LOG "- Verifying Samsung Push Service and FaceService apps are absent"
+    [ -f "$WORK_DIR/system/system/etc/permissions/android.hardware.biometrics.face.xml" ] || {
+        LOGE "Framework face feature declaration is missing; SystemUI FaceManager would be null"
+        return 1
+    }
+    for REL in \
+        system/priv-app/SPPPushClient \
+        system/priv-app/FaceService \
+        system/priv-app/smartfaceservice \
+        system/etc/default-permissions/default-permissions-com.sec.spp.push.xml \
+        system/etc/permissions/privapp-permissions-com.sec.spp.push.xml \
+        system/etc/sysconfig/samsungpushservice.xml \
+        system/etc/permissions/com.sec.android.smartface.smart_stay.xml \
+        system/etc/permissions/privapp-permissions-com.samsung.android.smartface.xml \
+        system/system_ext/overlay/smartfaceservice_overlay.apk; do
+        if [ -e "$WORK_DIR/system/$REL" ]; then
+            LOGE "Removed component remains in the final workdir: $WORK_DIR/system/$REL"
             return 1
         fi
     done
@@ -1356,7 +1467,7 @@ EOF
 _EXYNOS9810_FINAL_RESTORE_EMBEDDED_REMOTEDISPLAY()
 {
     local ROOT="$SRC_DIR/unica/patches/exynos9810_device_stack/remotedisplay"
-    local PARTITION SRC DST ENTRY_PREFIX CONTEXT_PREFIX FILE REL MODE LABEL
+    local PARTITION SRC DST ENTRY_PREFIX FILE REL USER GROUP MODE LABEL
 
     LOG "- Restoring embedded Exynos9810 Smart View and Wireless DeX stack"
 
@@ -1370,11 +1481,9 @@ _EXYNOS9810_FINAL_RESTORE_EMBEDDED_REMOTEDISPLAY()
         if [ "$PARTITION" = "system" ]; then
             DST="$WORK_DIR/system/system"
             ENTRY_PREFIX="system"
-            CONTEXT_PREFIX="/system"
         else
             DST="$WORK_DIR/vendor"
             ENTRY_PREFIX="vendor"
-            CONTEXT_PREFIX="/vendor"
         fi
 
         mkdir -p "$DST"
@@ -1382,15 +1491,45 @@ _EXYNOS9810_FINAL_RESTORE_EMBEDDED_REMOTEDISPLAY()
 
         while IFS= read -r -d '' FILE; do
             REL="${FILE#$SRC/}"
+            USER=0
+            GROUP=0
             MODE="$(stat -c '%a' "$FILE")"
             LABEL="u:object_r:${PARTITION}_file:s0"
-            case "$REL" in
-                lib/*|lib64/*|framework/*)
-                    [ "$PARTITION" = "system" ] && LABEL="u:object_r:system_lib_file:s0"
+
+            # These service executables need their domain-transition labels. A
+            # generic system_file/vendor_file label lets the files exist but
+            # prevents init from starting the screen-capture and HDCP
+            # services under the Exynos9810 SELinux policy. Audio can still
+            # connect in that state, which made the old failure misleading.
+            case "$PARTITION:$REL" in
+                system:bin/blank_screen)
+                    MODE=755
+                    LABEL="u:object_r:blank_screen_exec:s0"
+                    ;;
+                system:bin/audiomirroring)
+                    GROUP=2000
+                    MODE=755
+                    LABEL="u:object_r:audiomirroring_exec:s0"
+                    ;;
+                system:bin/remotedisplay)
+                    GROUP=2000
+                    MODE=755
+                    LABEL="u:object_r:remotedisplay_exec:s0"
+                    ;;
+                system:lib/*|system:lib64/*|system:framework/*)
+                    LABEL="u:object_r:system_lib_file:s0"
+                    ;;
+                vendor:bin/vendor.samsung.hardware.security.hdcp.wifidisplay-service)
+                    GROUP=2000
+                    MODE=755
+                    LABEL="u:object_r:hal_hdcp_default_exec:s0"
+                    ;;
+                vendor:etc/init/*|vendor:etc/vintf/manifest/*|vendor:etc/permissions/*|vendor:etc/wifi/*)
+                    LABEL="u:object_r:vendor_configs_file:s0"
                     ;;
             esac
             _EXYNOS9810_FINAL_SET_METADATA "$PARTITION" "$ENTRY_PREFIX/$REL" \
-                0 0 "$MODE" "$LABEL"
+                "$USER" "$GROUP" "$MODE" "$LABEL"
         done < <(find "$SRC" \( -type f -o -type l \) -print0)
     done
 }
@@ -5828,6 +5967,11 @@ _EXYNOS9810_FINAL_ENABLE_REPORTED_FEATURES()
         "SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_FORCE_CUTOFF" "TRUE" || return 1
     _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
         "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_QRCODE" "TRUE" || return 1
+    # SemFloatingFeature reads only /system/etc/floating_feature.xml. Without
+    # this key EdgeLightingService treats brief notification popups as
+    # unsupported even though the vendor copy contains the capability.
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_SYSTEMUI_SUPPORT_BRIEF_NOTIFICATION" "TRUE" || return 1
     _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
         "SEC_FLOATING_FEATURE_COMMON_SUPPORT_HIGH_PERFORMANCE_MODE" "TRUE" || return 1
     _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
@@ -5913,6 +6057,14 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
     local SEHRADIO_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml"
     local FACE_MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest/face-default-sec.xml"
     local REL ACTUAL EXPECTED FEATURE
+    local SYSTEM_CONTEXTS="$WORK_DIR/configs/file_context-system"
+    local SYSTEM_FS_CONFIG="$WORK_DIR/configs/fs_config-system"
+    local VENDOR_CONTEXTS="$WORK_DIR/configs/file_context-vendor"
+    local VENDOR_FS_CONFIG="$WORK_DIR/configs/fs_config-vendor"
+    local SYSTEM_CONTEXTS="$WORK_DIR/configs/file_context-system"
+    local SYSTEM_FS_CONFIG="$WORK_DIR/configs/fs_config-system"
+    local VENDOR_CONTEXTS="$WORK_DIR/configs/file_context-vendor"
+    local VENDOR_FS_CONFIG="$WORK_DIR/configs/fs_config-vendor"
 
     LOG "- Verifying Exynos9810 user-reported bug fixes"
 
@@ -5980,6 +6132,7 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
         vendor/etc/init/init.ramplus.rc \
         system/system/app/SmartMirroring/SmartMirroring.apk \
         system/system/framework/com.android.media.remotedisplay.jar \
+        system/system/lib/libremotedisplay_wfd.so \
         system/system/lib64/libremotedisplay_wfd.so \
         system/system/lib64/libwfds.so \
         vendor/bin/vendor.samsung.hardware.security.hdcp.wifidisplay-service \
@@ -5992,25 +6145,145 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
 
     for REL in \
         system/system/app/ClockPackage \
-        system/system/priv-app/ClockPackage \
-        system/system/app/GalaxyWearable \
-        system/system/priv-app/GalaxyWearable \
-        system/system/app/GearManager \
-        system/system/priv-app/GearManager \
-        system/system/app/GearManagerStub \
-        system/system/priv-app/GearManagerStub \
-        system/system/app/SamsungMessages \
-        system/system/priv-app/SamsungMessages \
-        system/system/priv-app/EasySetup \
-        system/system/etc/permissions/signature-permissions-com.samsung.android.app.watchmanager.xml \
-        system/system/etc/permissions/com.sec.feature.saccessorymanager.xml \
-        system/system/etc/permissions/com.android.future.usb.accessory.xml \
-        system/system/etc/default-permissions/default-permissions-com.samsung.android.messaging.xml \
-        system/system/etc/default-permissions/default-permissions-com.samsung.android.easysetup.xml \
-        system/system/etc/permissions/privapp-permissions-com.samsung.android.easysetup.xml \
-        system/system/framework/com.android.future.usb.accessory.jar; do
+        system/system/priv-app/ClockPackage; do
         [ ! -e "$WORK_DIR/$REL" ] || {
-            LOGE "Removed Watch/Messages/EasySetup/USB or Clock APK component remains: /$REL"
+            LOGE "Removed Clock APK component remains: /$REL"
+            return 1
+        }
+    done
+
+    for REL in \
+        system/system/app/GearManagerStub/GearManagerStub.apk \
+        system/system/priv-app/BudsUniteManager/BudsUniteManager.apk \
+        system/system/priv-app/EasySetup/EasySetup.apk \
+        system/system/etc/default-permissions/default-permissions-com.samsung.accessory.budsunitemgr.xml \
+        system/system/etc/default-permissions/default-permissions-com.samsung.android.easysetup.xml \
+        system/system/etc/permissions/com.android.future.usb.accessory.xml \
+        system/system/etc/permissions/com.sec.feature.saccessorymanager.xml \
+        system/system/etc/permissions/privapp-permissions-com.samsung.accessory.budsunitemgr.xml \
+        system/system/etc/permissions/privapp-permissions-com.samsung.android.easysetup.xml \
+        system/system/etc/permissions/signature-permissions-com.samsung.android.app.watchmanager.xml \
+        system/system/framework/com.android.future.usb.accessory.jar; do
+        [ -f "$WORK_DIR/$REL" ] || {
+            LOGE "Required Watch/Buds/EasySetup/USB component is missing: /$REL"
+            return 1
+        }
+    done
+
+    for REL in \
+        system/system/app/AllShareAware/AllShareAware.apk \
+        system/system/app/AllshareMediaShare/AllshareMediaShare.apk \
+        system/system/priv-app/AudioMirroring/AudioMirroring.apk \
+        system/system/bin/audiomirroring \
+        system/system/bin/blank_screen \
+        system/system/bin/remotedisplay \
+        system/system/etc/default-permissions/default-permissions-com.samsung.android.allshare.service.mediashare.xml \
+        system/system/etc/init/blank_screen.rc \
+        system/system/etc/init/audiomirroring.rc \
+        system/system/etc/init/remotedisplay.rc \
+        system/system/etc/permissions/privapp-permissions-com.samsung.android.audiomirroring.xml \
+        system/system/etc/permissions/signature-permissions-com.samsung.android.allshare.service.mediashare.xml \
+        system/system/etc/public.libraries-audiomirroring.samsung.txt \
+        system/system/framework/com.android.media.remotedisplay.jar \
+        system/system/lib/libremotedisplay_wfd.so \
+        system/system/lib64/libaudiomirroring.so \
+        system/system/lib64/libaudiomirroring_jni.audiomirroring.samsung.so \
+        system/system/lib64/libaudiomirroringservice.so \
+        system/system/lib64/libdowncast_rs.dylib.so \
+        system/system/lib64/libsmartviewmanager.so \
+        system/system/lib64/android.hardware.graphics.common-V5-ndk.so \
+        system/system/lib64/android.hardware.graphics.composer3-V1-ndk.so \
+        system/system/lib64/android.hardware.graphics.composer3-V3-ndk.so \
+        system/system/lib64/android.hardware.graphics.extension.composer3-V1-ndk.so \
+        system/system/lib64/libremotedisplay_wfd.so \
+        vendor/bin/vendor.samsung.hardware.security.hdcp.wifidisplay-service; do
+        [ -f "$WORK_DIR/$REL" ] || {
+            LOGE "Required Smart View screen/audio helper is missing: /$REL"
+            return 1
+        }
+    done
+
+    # Smart View must be able to transition from init into both native
+    # service domains. Merely shipping the APKs and libraries is insufficient
+    # on enforcing builds: a generic file label leaves the service present but
+    # unusable, which presents as audio-only casting.
+    grep -qF '/system/bin/remotedisplay u:object_r:remotedisplay_exec:s0' \
+        "$SYSTEM_CONTEXTS" || {
+        LOGE "Smart View remotedisplay executable label is missing"
+        return 1
+    }
+    grep -qF '/system/bin/audiomirroring u:object_r:audiomirroring_exec:s0' \
+        "$SYSTEM_CONTEXTS" || {
+        LOGE "Smart View audiomirroring executable label is missing"
+        return 1
+    }
+    grep -qF '/system/bin/blank_screen u:object_r:blank_screen_exec:s0' \
+        "$SYSTEM_CONTEXTS" || {
+        LOGE "Smart View blank_screen executable label is missing"
+        return 1
+    }
+    grep -qF 'system/bin/remotedisplay 0 2000 755' "$SYSTEM_FS_CONFIG" || {
+        LOGE "Smart View remotedisplay executable metadata is invalid"
+        return 1
+    }
+    grep -qF 'system/bin/audiomirroring 0 2000 755' "$SYSTEM_FS_CONFIG" || {
+        LOGE "Smart View audiomirroring executable metadata is invalid"
+        return 1
+    }
+    grep -qF 'system/bin/blank_screen 0 0 755' "$SYSTEM_FS_CONFIG" || {
+        LOGE "Smart View blank_screen executable metadata is invalid"
+        return 1
+    }
+    grep -q 'wifidisplay-service.*u:object_r:hal_hdcp_default_exec:s0' \
+        "$VENDOR_CONTEXTS" || {
+        LOGE "Smart View HDCP HAL executable label is missing"
+        return 1
+    }
+    grep -q 'vendor/bin/vendor\.samsung\.hardware\.security\.hdcp\.wifidisplay-service 0 2000 755' \
+        "$VENDOR_FS_CONFIG" || {
+        LOGE "Smart View HDCP HAL executable metadata is invalid"
+        return 1
+    }
+    if command -v readelf >/dev/null 2>&1; then
+        for REL in \
+            system/system/bin/audiomirroring \
+            system/system/bin/blank_screen; do
+            readelf -h "$WORK_DIR/$REL" | grep -q 'Class:.*ELF64' || {
+                LOGE "Smart View native service is not 64-bit: /$REL"
+                return 1
+            }
+            readelf -h "$WORK_DIR/$REL" | grep -q 'AArch64' || {
+                LOGE "Smart View native service is not ARM64: /$REL"
+                return 1
+            }
+        done
+
+        REL=system/system/bin/remotedisplay
+        readelf -h "$WORK_DIR/$REL" | grep -q 'Class:.*ELF32' || {
+            LOGE "Smart View remotedisplay engine is not 32-bit: /$REL"
+            return 1
+        }
+        readelf -h "$WORK_DIR/$REL" | grep -q 'Machine:.*ARM' || {
+            LOGE "Smart View remotedisplay engine is not ARM32: /$REL"
+            return 1
+        }
+    fi
+
+    for CHECK in \
+        "system/system/bin/remotedisplay:dd2ccf09bb7b288c812b8076244a8eb93ffb31ad7d4c3fe8eda74ffb54cc4e48" \
+        "system/system/lib/libremotedisplay_wfd.so:7b5f41b12333f3d41496274d38e823f9c38e0f42886fdf87bedd9b108d089e06" \
+        "vendor/lib/hw/android.hardware.graphics.mapper@2.0-impl-2.1.so:d6b8d6a58b67046a774be2763cb8d7e778507d598271e318a0852a6908ac2966" \
+        "vendor/lib/hw/gralloc.exynos9810.so:f73a893521941e732e6e473d05aa68295250b799437be22df6e14e8bc27b17d0" \
+        "vendor/bin/hw/vendor.samsung.hardware.wifi@2.0-service:2f864ba0ab655a3fd2f0f02038b768c62718657fa53b862096e06f4a61a5a4e8" \
+        "vendor/bin/hw/wpa_supplicant:b49018ab1b5dc04e2b49466c8968ed666a9856c8b4c15a32b25bb2848385c015" \
+        "vendor/etc/init/vendor.samsung.hardware.wifi@2.0-service.rc:19d1fff62fa598a895ad5dc8d03148c2caf4f76415fe2f31a2153bb999d0df84" \
+        "vendor/etc/vintf/manifest/android.hardware.wifi.supplicant.xml:5495ed30c5f5a99a306db5e4fa4a9ddf3180f22a691f0098590fc52d27c3b4be" \
+        "vendor/lib64/android.hardware.wifi.supplicant@1.4.so:1ad4b9dac19c0081e454e462cafa1fe34a8be53392321d7ef0907d0721a0e3d8"; do
+        REL="${CHECK%%:*}"
+        EXPECTED="${CHECK#*:}"
+        ACTUAL="$(sha256sum "$WORK_DIR/$REL" | awk '{print $1}')"
+        [ "$ACTUAL" = "$EXPECTED" ] || {
+            LOGE "Smart View Android 16 compatibility payload mismatch: /$REL"
             return 1
         }
     done
@@ -6094,6 +6367,7 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
             '<SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_OPTION>TRUE</SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_OPTION>' \
             '<SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_FORCE_CUTOFF>TRUE</SEC_FLOATING_FEATURE_BATTERY_SUPPORT_LONGLIFE_FORCE_CUTOFF>' \
             '<SEC_FLOATING_FEATURE_CAMERA_SUPPORT_QRCODE>TRUE</SEC_FLOATING_FEATURE_CAMERA_SUPPORT_QRCODE>' \
+            '<SEC_FLOATING_FEATURE_SYSTEMUI_SUPPORT_BRIEF_NOTIFICATION>TRUE</SEC_FLOATING_FEATURE_SYSTEMUI_SUPPORT_BRIEF_NOTIFICATION>' \
             '<SEC_FLOATING_FEATURE_COMMON_SUPPORT_HIGH_PERFORMANCE_MODE>TRUE</SEC_FLOATING_FEATURE_COMMON_SUPPORT_HIGH_PERFORMANCE_MODE>' \
             '<SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_GAMEBOOSTER_MANUAL_ROUTINE>TRUE</SEC_FLOATING_FEATURE_GRAPHICS_SUPPORT_GAMEBOOSTER_MANUAL_ROUTINE>' \
             '<SEC_FLOATING_FEATURE_MMFW_CONFIG_SMART_MIRRORING_PACKAGE_NAME>com.samsung.android.smartmirroring</SEC_FLOATING_FEATURE_MMFW_CONFIG_SMART_MIRRORING_PACKAGE_NAME>' \
@@ -6244,7 +6518,10 @@ _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF
 _EXYNOS9810_FINAL_APPLY_TESTED_RADIO_RESTORE_V5
 _EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED
 _EXYNOS9810_FINAL_DEBLOAT
+_EXYNOS9810_FINAL_RESTORE_ACCESSORY_STACK || return 1
+_EXYNOS9810_FINAL_STAGE_SCPM_ANCHOR || return 1
 _EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT
+_EXYNOS9810_FINAL_VERIFY_REMOVED_OPTIONAL_COMPONENTS
 _EXYNOS9810_FINAL_RESTORE_BOOT_PARITY_OVERLAYS
 _EXYNOS9810_FINAL_RESTORE_DAAGENT
 _EXYNOS9810_FINAL_RESTORE_FEATURE_APPS

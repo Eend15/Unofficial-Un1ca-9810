@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-SRC_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+SRC_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 CUSTOMIZE="$SRC_DIR/unica/mods/zzzzz_exynos9810_final_cleanup/customize.sh"
 
 for TARGET_CODENAME in starlte star2lte crownlte; do

@@ -212,6 +212,42 @@ SYSTEM_DEBLOAT+="
 system/app/ClockPackage
 "
 
+# Samsung Cloud is optional. Remove only the ROM-bundled client; retain its
+# permission metadata and SCPMAgent shared-UID anchor so a Galaxy Store
+# install under /data/app remains valid across reboots.
+SYSTEM_DEBLOAT+="
+system/priv-app/SamsungCloudClient
+"
+
+# Samsung Push Service is not part of this ROM's notification stack.
+SYSTEM_DEBLOAT+="
+system/etc/default-permissions/default-permissions-com.sec.spp.push.xml
+system/etc/permissions/privapp-permissions-com.sec.spp.push.xml
+system/etc/sysconfig/samsungpushservice.xml
+system/priv-app/SPPPushClient
+"
+
+# Samsung Messages and SmartThingsKit are intentionally optional/debloated.
+# Keep the Bluetooth/Buds accessory stack below; it does not depend on the
+# Samsung Messages APK being present.
+SYSTEM_DEBLOAT+="
+system/etc/default-permissions/default-permissions-com.samsung.android.messaging.xml
+system/etc/permissions/privapp-permissions-com.samsung.android.messaging.xml
+system/priv-app/SamsungMessages
+system/priv-app/SmartThingsKit
+"
+
+# Face unlock is intentionally disabled. Keep camera face-detection libraries
+# and the framework feature declaration because SystemUI obtains FaceManager
+# even when the broken Samsung face apps are absent.
+SYSTEM_DEBLOAT+="
+system/etc/permissions/com.sec.android.smartface.smart_stay.xml
+system/etc/permissions/privapp-permissions-com.samsung.android.smartface.xml
+system/priv-app/FaceService
+system/priv-app/smartfaceservice
+system/system_ext/overlay/smartfaceservice_overlay.apk
+"
+
 # Samsung Free
 SYSTEM_DEBLOAT+="
 system/app/MinusOnePage

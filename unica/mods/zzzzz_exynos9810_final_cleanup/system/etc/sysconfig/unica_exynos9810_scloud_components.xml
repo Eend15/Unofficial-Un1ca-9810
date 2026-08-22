@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+    <!-- The One UI 8 SCPMAgent receiver calls UserManager without a compatible
+         privileged permission on Exynos9810. Keep the package installed as the
+         Samsung Cloud shared-UID anchor, but leave this receiver disabled. -->
+    <component-override package="com.samsung.android.scpm">
+        <component class=".app.ScpmReceiver" enabled="false" />
+    </component-override>
+</config>

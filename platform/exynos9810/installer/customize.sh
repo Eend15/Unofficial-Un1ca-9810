@@ -12,7 +12,7 @@ mkdir -p "$TMP_DIR/addon.d"
 cp -a "$EXYNOS9810_BUNDLED_BATTERY_TWEAKS" "$TMP_DIR/addon.d/battery_tweaks.sh"
 chmod 0755 "$TMP_DIR/addon.d/battery_tweaks.sh"
 
-EXYNOS9810_CAMERA_MATRIX_CHECK="$SRC_DIR/tools/verify_exynos9810_camera_matrix.sh"
+EXYNOS9810_CAMERA_MATRIX_CHECK="$SRC_DIR/scripts/internal/verify_exynos9810_camera_matrix.sh"
 [ -x "$EXYNOS9810_CAMERA_MATRIX_CHECK" ] || {
     LOGE "Exynos9810 camera matrix verifier is missing"
     exit 1
