@@ -353,7 +353,11 @@ fi
 # Ensure Knox Matrix support
 # - Check if target firmware runs on One UI 5.1.1 or above
 TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
-if [ "$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/build.prop" "ro.build.version.oneui")" -lt "50101" ]; then
+TARGET_ONEUI_VERSION="$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/build.prop" "ro.build.version.oneui")"
+if [ -z "$TARGET_ONEUI_VERSION" ]; then
+    TARGET_ONEUI_VERSION="$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/build.prop" "ro.build.version.oneui")"
+fi
+if [ "${TARGET_ONEUI_VERSION:-0}" -lt "50101" ]; then
     PATCHED=true
     DELETE_FROM_WORK_DIR "system" "system/bin/fabric_crypto"
     DELETE_FROM_WORK_DIR "system" "system/etc/init/fabric_crypto.rc"
@@ -524,18 +528,21 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
     write /dev/stune/nnapi-hal/schedtune.prefer_idle 1\" \"$WORK_DIR/system/system/etc/init/hw/init.rc\""
         fi
 
-        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
-            "system/etc/task_profiles/cgroups_28.json" 0 0 644 "u:object_r:cgroup_desc_file:s0"
-        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
-            "system/etc/task_profiles/cgroups_29.json" 0 0 644 "u:object_r:cgroup_desc_file:s0"
-        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
-            "system/etc/task_profiles/cgroups_30.json" 0 0 644 "u:object_r:cgroup_desc_file:s0"
-        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
-            "system/etc/task_profiles/task_profiles_28.json" 0 0 644 "u:object_r:task_profiles_file:s0"
-        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
-            "system/etc/task_profiles/task_profiles_29.json" 0 0 644 "u:object_r:task_profiles_file:s0"
-        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
-            "system/etc/task_profiles/task_profiles_30.json" 0 0 644 "u:object_r:task_profiles_file:s0"
+        TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+        if [ -f "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/etc/task_profiles/cgroups_28.json" ]; then
+            ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+                "system/etc/task_profiles/cgroups_28.json" 0 0 644 "u:object_r:cgroup_desc_file:s0"
+            ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+                "system/etc/task_profiles/cgroups_29.json" 0 0 644 "u:object_r:cgroup_desc_file:s0"
+            ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+                "system/etc/task_profiles/cgroups_30.json" 0 0 644 "u:object_r:cgroup_desc_file:s0"
+            ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+                "system/etc/task_profiles/task_profiles_28.json" 0 0 644 "u:object_r:task_profiles_file:s0"
+            ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+                "system/etc/task_profiles/task_profiles_29.json" 0 0 644 "u:object_r:task_profiles_file:s0"
+            ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+                "system/etc/task_profiles/task_profiles_30.json" 0 0 644 "u:object_r:task_profiles_file:s0"
+        fi
     fi
 
     unset KERNEL_VERSION LEGACY_KERNEL
