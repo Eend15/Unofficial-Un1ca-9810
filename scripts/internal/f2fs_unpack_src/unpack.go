@@ -247,15 +247,9 @@ func main() {
 				capability: cap,
 			})
 		} else {
-			data, err := reader.readFile(nid, -1)
-			if err != nil {
+			if err := reader.extractFile(nid, outPath); err != nil {
 				return err
 			}
-			_ = os.MkdirAll(filepath.Dir(outPath), 0755)
-			if err := os.WriteFile(outPath, data, os.FileMode(in.IMode&07777)); err != nil {
-				return err
-			}
-			_ = os.Chmod(outPath, os.FileMode(in.IMode&07777))
 
 			entries = append(entries, MetaEntry{
 				fsPath:     fsPath,

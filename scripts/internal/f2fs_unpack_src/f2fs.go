@@ -6,13 +6,21 @@
 
 package main
 
+/*
+#cgo LDFLAGS: -llz4
+#include <lz4.h>
+*/
+import "C"
+
 import (
 	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode/utf16"
+	"unsafe"
 )
 
 const (
@@ -306,6 +314,10 @@ func (r *F2FSReader) parseInode(data []byte) *Inode {
 			in.numAddrs = 0
 		}
 	}
+	// If compressed, address slots in inode are rounded down to multiple of cluster size (4)
+	if in.IFlags&0x00000004 != 0 {
+		in.numAddrs &^= 3
+	}
 	in.IAddr = make([]uint32, in.numAddrs)
 	for i := range in.IAddr {
 		in.IAddr[i] = le32(data, in.addrStart+i*4)
@@ -357,7 +369,6 @@ func (r *F2FSReader) readDentryBlock(data []byte) []DirEntry {
 }
 
 func (r *F2FSReader) readInlineDentry(in *Inode) []DirEntry {
-	// Account for the 4-byte reserved i_addr[0] slot
 	available := in.numAddrs*4 - 4
 	if available <= 0 {
 		return nil
@@ -416,33 +427,82 @@ func (r *F2FSReader) readInlineDentry(in *Inode) []DirEntry {
 	return entries
 }
 
-func (r *F2FSReader) getDataBlocks(in *Inode) []uint32 {
+func (r *F2FSReader) getRawDataBlocks(in *Inode) []uint32 {
+	isCompressed := (in.IFlags & 0x00000004) != 0
+	nodeAddrs := 1018
+	if isCompressed {
+		// Clusters do not cross node block boundaries; 1018 rounded down to multiple of 4 is 1016
+		nodeAddrs = 1016
+	}
+
 	var blocks []uint32
-	toAddr := func(a uint32) uint32 {
-		if a == NullAddr || a == NewAddr || a == CompressAddr {
-			return ^uint32(0)
+	blocks = append(blocks, in.IAddr...)
+
+	// Direct nodes
+	for idx := 0; idx < 2; idx++ {
+		if in.INID[idx] == 0 {
+			continue
 		}
-		return a
+		if nodeData, err := r.readNode(in.INID[idx]); err == nil {
+			for i := 0; i < nodeAddrs; i++ {
+				blocks = append(blocks, le32(nodeData, i*4))
+			}
+		}
 	}
-	for _, a := range in.IAddr {
-		blocks = append(blocks, toAddr(a))
-	}
-	for idx := 0; idx < 4; idx++ {
+
+	// Indirect nodes
+	for idx := 2; idx < 4; idx++ {
 		if in.INID[idx] == 0 {
 			continue
 		}
 		if nodeData, err := r.readNode(in.INID[idx]); err == nil {
 			for i := 0; i < 1018; i++ {
-				if idx < 2 {
-					blocks = append(blocks, toAddr(le32(nodeData, i*4)))
-				} else if childNID := le32(nodeData, i*4); childNID != 0 {
+				childNID := le32(nodeData, i*4)
+				if childNID != 0 {
 					if childData, err := r.readNode(childNID); err == nil {
-						for j := 0; j < 1018; j++ {
-							blocks = append(blocks, toAddr(le32(childData, j*4)))
+						for j := 0; j < nodeAddrs; j++ {
+							blocks = append(blocks, le32(childData, j*4))
 						}
 					}
 				}
 			}
+		}
+	}
+
+	// Double indirect node
+	if in.INID[4] != 0 {
+		if dData, err := r.readNode(in.INID[4]); err == nil {
+			for i := 0; i < 1018; i++ {
+				indNID := le32(dData, i*4)
+				if indNID != 0 {
+					if indData, err := r.readNode(indNID); err == nil {
+						for j := 0; j < 1018; j++ {
+							dirNID := le32(indData, j*4)
+							if dirNID != 0 {
+								if dirData, err := r.readNode(dirNID); err == nil {
+									for k := 0; k < nodeAddrs; k++ {
+										blocks = append(blocks, le32(dirData, k*4))
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return blocks
+}
+
+func (r *F2FSReader) getDataBlocks(in *Inode) []uint32 {
+	raw := r.getRawDataBlocks(in)
+	blocks := make([]uint32, len(raw))
+	for i, a := range raw {
+		if a == NullAddr || a == NewAddr || a == CompressAddr {
+			blocks[i] = ^uint32(0)
+		} else {
+			blocks[i] = a
 		}
 	}
 	return blocks
@@ -471,6 +531,146 @@ func (r *F2FSReader) listDir(nid uint32) ([]DirEntry, error) {
 	return entries, nil
 }
 
+func (r *F2FSReader) extractFile(nid uint32, outPath string) error {
+	in, err := r.getInode(nid)
+	if err != nil {
+		return err
+	}
+	fileSize := int64(in.ISize)
+
+	if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
+		return err
+	}
+	outF, err := os.OpenFile(outPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.FileMode(in.IMode&07777))
+	if err != nil {
+		return err
+	}
+	defer outF.Close()
+
+	if fileSize == 0 {
+		return os.Chmod(outPath, os.FileMode(in.IMode&07777))
+	}
+
+	// Inline Data
+	if in.IInline&F2FSInlineData != 0 {
+		inlineStart := in.addrStart + 4
+		available := int64(in.numAddrs*4 - 4)
+		if fileSize > available {
+			fileSize = available
+		}
+		if _, err := outF.Write(in.raw[inlineStart : inlineStart+int(fileSize)]); err != nil {
+			return err
+		}
+		return os.Chmod(outPath, os.FileMode(in.IMode&07777))
+	}
+
+	rawBlocks := r.getRawDataBlocks(in)
+	isCompressed := (in.IFlags & 0x00000004) != 0
+	clusterSize := 4
+	if isCompressed {
+		if in.addrStart > 393 {
+			clusterSize = 1 << in.raw[393]
+		}
+		if clusterSize <= 1 {
+			clusterSize = 4
+		}
+	}
+
+	zeroBlock := make([]byte, r.blockSize)
+	decompBuf := make([]byte, clusterSize*r.blockSize)
+	remaining := fileSize
+
+	for i := 0; i < len(rawBlocks) && remaining > 0; {
+		if isCompressed && (i%clusterSize == 0) && rawBlocks[i] == CompressAddr {
+			end := i + clusterSize
+			if end > len(rawBlocks) {
+				end = len(rawBlocks)
+			}
+
+			var clusterBytes []byte
+			for blkIdx := i + 1; blkIdx < end; blkIdx++ {
+				blkAddr := rawBlocks[blkIdx]
+				if blkAddr != NullAddr && blkAddr != NewAddr && blkAddr != CompressAddr {
+					data, err := r.readBlock(blkAddr)
+					if err != nil {
+						return fmt.Errorf("read compressed block %d: %w", blkAddr, err)
+					}
+					clusterBytes = append(clusterBytes, data...)
+				}
+			}
+
+			clusterUncompressedSize := int64(clusterSize * r.blockSize)
+			if clusterUncompressedSize > remaining {
+				clusterUncompressedSize = remaining
+			}
+
+			if len(clusterBytes) >= 24 {
+				clen := int(binary.LittleEndian.Uint32(clusterBytes[0:4]))
+				if 24+clen <= len(clusterBytes) {
+					ret := C.LZ4_decompress_safe(
+						(*C.char)(unsafe.Pointer(&clusterBytes[24])),
+						(*C.char)(unsafe.Pointer(&decompBuf[0])),
+						C.int(clen),
+						C.int(len(decompBuf)),
+					)
+					if ret > 0 {
+						toTake := clusterUncompressedSize
+						if int64(ret) < toTake {
+							toTake = int64(ret)
+						}
+						if _, err := outF.Write(decompBuf[:toTake]); err != nil {
+							return err
+						}
+						remaining -= toTake
+						i += clusterSize
+						continue
+					} else {
+						return fmt.Errorf("LZ4 decompression failed at block %d (clen=%d, ret=%d)", i, clen, ret)
+					}
+				}
+			}
+
+			// Fallback if header is corrupt or empty: append zeroes
+			if _, err := outF.Write(make([]byte, clusterUncompressedSize)); err != nil {
+				return err
+			}
+			remaining -= clusterUncompressedSize
+			i += clusterSize
+			continue
+		}
+
+		blkAddr := rawBlocks[i]
+		chunk := int64(r.blockSize)
+		if chunk > remaining {
+			chunk = remaining
+		}
+
+		if blkAddr == NullAddr || blkAddr == NewAddr || blkAddr == CompressAddr {
+			if _, err := outF.Write(zeroBlock[:chunk]); err != nil {
+				return err
+			}
+		} else {
+			data, err := r.readBlock(blkAddr)
+			if err != nil {
+				return err
+			}
+			if _, err := outF.Write(data[:chunk]); err != nil {
+				return err
+			}
+		}
+		remaining -= chunk
+		i++
+	}
+
+	if remaining > 0 {
+		if _, err := outF.Write(make([]byte, remaining)); err != nil {
+			return err
+		}
+	}
+
+	return os.Chmod(outPath, os.FileMode(in.IMode&07777))
+}
+
 func (r *F2FSReader) readFile(nid uint32, maxSize int64) ([]byte, error) {
 	in, err := r.getInode(nid)
 	if err != nil {
@@ -481,42 +681,110 @@ func (r *F2FSReader) readFile(nid uint32, maxSize int64) ([]byte, error) {
 		fileSize = maxSize
 	}
 
-	// Handle Inline Data
 	if in.IInline&F2FSInlineData != 0 {
-		// F2FS Quirk: Inline data starts 4 bytes AFTER the address array start.
-		// i_addr[0] is reserved by the filesystem.
 		inlineStart := in.addrStart + 4
 		available := int64(in.numAddrs*4 - 4)
-
 		if fileSize > available {
 			fileSize = available
 		}
-
 		out := make([]byte, fileSize)
 		copy(out, in.raw[inlineStart:inlineStart+int(fileSize)])
 		return out, nil
 	}
 
-	// Handle Standard Block-based Data
+	rawBlocks := r.getRawDataBlocks(in)
+	isCompressed := (in.IFlags & 0x00000004) != 0
+	clusterSize := 4
+	if isCompressed {
+		if in.addrStart > 393 {
+			clusterSize = 1 << in.raw[393]
+		}
+		if clusterSize <= 1 {
+			clusterSize = 4
+		}
+	}
+
 	result := make([]byte, 0, fileSize)
 	remaining := fileSize
-	for _, blkAddr := range r.getDataBlocks(in) {
-		if remaining <= 0 {
-			break
+
+	for i := 0; i < len(rawBlocks) && remaining > 0; {
+		if isCompressed && (i%clusterSize == 0) && rawBlocks[i] == CompressAddr {
+			end := i + clusterSize
+			if end > len(rawBlocks) {
+				end = len(rawBlocks)
+			}
+
+			var clusterBytes []byte
+			for blkIdx := i + 1; blkIdx < end; blkIdx++ {
+				blkAddr := rawBlocks[blkIdx]
+				if blkAddr != NullAddr && blkAddr != NewAddr && blkAddr != CompressAddr {
+					data, err := r.readBlock(blkAddr)
+					if err != nil {
+						return nil, fmt.Errorf("read compressed block %d: %w", blkAddr, err)
+					}
+					clusterBytes = append(clusterBytes, data...)
+				}
+			}
+
+			clusterUncompressedSize := int64(clusterSize * r.blockSize)
+			if clusterUncompressedSize > remaining {
+				clusterUncompressedSize = remaining
+			}
+
+			if len(clusterBytes) >= 24 {
+				clen := int(binary.LittleEndian.Uint32(clusterBytes[0:4]))
+				if 24+clen <= len(clusterBytes) {
+					decompBuf := make([]byte, clusterSize*r.blockSize)
+					ret := C.LZ4_decompress_safe(
+						(*C.char)(unsafe.Pointer(&clusterBytes[24])),
+						(*C.char)(unsafe.Pointer(&decompBuf[0])),
+						C.int(clen),
+						C.int(len(decompBuf)),
+					)
+					if ret > 0 {
+						toTake := clusterUncompressedSize
+						if int64(ret) < toTake {
+							toTake = int64(ret)
+						}
+						result = append(result, decompBuf[:toTake]...)
+						remaining -= toTake
+						i += clusterSize
+						continue
+					} else {
+						return nil, fmt.Errorf("LZ4 decompression failed at block %d (clen=%d, ret=%d)", i, clen, ret)
+					}
+				}
+			}
+
+			result = append(result, make([]byte, clusterUncompressedSize)...)
+			remaining -= clusterUncompressedSize
+			i += clusterSize
+			continue
 		}
+
+		blkAddr := rawBlocks[i]
 		chunk := int64(r.blockSize)
 		if chunk > remaining {
 			chunk = remaining
 		}
-		if blkAddr == ^uint32(0) {
+
+		if blkAddr == NullAddr || blkAddr == NewAddr || blkAddr == CompressAddr {
 			result = append(result, make([]byte, chunk)...)
-		} else if data, err := r.readBlock(blkAddr); err == nil {
-			result = append(result, data[:chunk]...)
 		} else {
-			return result, err
+			data, err := r.readBlock(blkAddr)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, data[:chunk]...)
 		}
 		remaining -= chunk
+		i++
 	}
+
+	if remaining > 0 {
+		result = append(result, make([]byte, remaining)...)
+	}
+
 	return result, nil
 }
 
