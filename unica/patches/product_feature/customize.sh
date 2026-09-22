@@ -5,7 +5,7 @@ GET_FINGERPRINT_SENSOR_TYPE()
         echo "ultrasonic"
     elif [[ "$1" == *"optical"* ]]; then
         echo "optical"
-    elif [[ "$1" == *"side"* ]]; then
+    elif [[ "$1" == *"side"* ]] || [[ "$1" == *"rear"* ]]; then
         echo "side"
     else
         ABORT "Unknown fingerprint sensor type: \"$1\". Aborting"
