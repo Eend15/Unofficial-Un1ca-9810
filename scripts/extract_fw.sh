@@ -101,6 +101,13 @@ EXTRACT_OS_PARTITIONS()
 
         [ -f "$FW_DIR/${MODEL}_${CSC}/$f" ] || continue
 
+        if [[ "$(GET_IMAGE_FILE_SYSTEM "$FW_DIR/${MODEL}_${CSC}/$f")" == "f2fs" ]] && [ -x "$SRC_DIR/scripts/internal/f2fs_unpack" ]; then
+            LOG "- Unpacking $(basename "$f") using f2fs_unpack..."
+            EVAL "\"$SRC_DIR/scripts/internal/f2fs_unpack\" \"$FW_DIR/${MODEL}_${CSC}/$f\" \"$FW_DIR/${MODEL}_${CSC}/$PARTITION\" \"$PARTITION\"" || exit 1
+            rm -f "$FW_DIR/${MODEL}_${CSC}/$f"
+            continue
+        fi
+
         if ! sudo -n -v &> /dev/null; then
             LOG "\033[0;33m! Asking user for sudo password\033[0m"
             if ! sudo -v 2> /dev/null; then
@@ -366,8 +373,12 @@ for i in "${FIRMWARES[@]}"; do
 
     LATEST_FIRMWARE="$(GET_LATEST_FIRMWARE "$MODEL" "$CSC")"
     if [ ! "$LATEST_FIRMWARE" ]; then
-        LOGE "Latest available firmware could not be fetched"
-        exit 1
+        if [ -f "$ODIN_DIR/${MODEL}_${CSC}/.downloaded" ]; then
+            LATEST_FIRMWARE="$(cat "$ODIN_DIR/${MODEL}_${CSC}/.downloaded")"
+        else
+            LOGE "Latest available firmware could not be fetched"
+            exit 1
+        fi
     fi
 
     LOG_STEP_IN "- Processing $MODEL firmware with $CSC CSC"
