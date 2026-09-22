@@ -7,8 +7,6 @@ GET_FINGERPRINT_SENSOR_TYPE()
         echo "optical"
     elif [[ "$1" == *"side"* ]]; then
         echo "side"
-    elif [[ "$1" == *"rear"* ]]; then
-        echo "side"
     else
         ABORT "Unknown fingerprint sensor type: \"$1\". Aborting"
     fi
@@ -120,8 +118,8 @@ else
 fi
 
 # SEC_PRODUCT_FEATURE_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND
-if $SOURCE_AUDIO_SUPPORT_VIRTUAL_VIBRATION; then
-    if ! $TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION; then
+if $SOURCE_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND; then
+    if ! $TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND; then
         APPLY_PATCH "system" "system/framework/framework.jar" \
             "$MODPATH/audio/virtual_vib/framework.jar/0001-Disable-virtual-vibration-support.patch"
         APPLY_PATCH "system" "system/framework/services.jar" \
@@ -139,9 +137,9 @@ if $SOURCE_AUDIO_SUPPORT_VIRTUAL_VIBRATION; then
             "$MODPATH/audio/virtual_vib/SettingsProvider.apk/0001-Disable-virtual-vibration-support.patch"
     fi
 else
-    if $TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION; then
+    if $TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND; then
         # TODO handle this condition
-        LOG_MISSING_PATCHES "SOURCE_AUDIO_SUPPORT_VIRTUAL_VIBRATION" "TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION"
+        LOG_MISSING_PATCHES "SOURCE_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND" "TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND"
     fi
 fi
 
@@ -169,6 +167,15 @@ if ! $SOURCE_COMMON_SUPPORT_DYN_RESOLUTION_CONTROL; then
             "system" "system/bin/bootanimation" 0 2000 755 "u:object_r:bootanim_exec:s0"
         ADD_TO_WORK_DIR "$([[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "qssi" ]] && echo "b0qxxx" || echo "b0sxxx")" \
             "system" "system/bin/surfaceflinger" 0 2000 755 "u:object_r:surfaceflinger_exec:s0"
+        # Ensure IQtiComposer support (pre-API 36)
+        # Check unica/patches/legacy/customize.sh for more info.
+        if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
+            if [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "qssi" ]] && \
+                    ! grep -q -r "IQtiComposer" "$WORK_DIR/vendor/etc/vintf"; then
+                # [b.lt #0x72b2b0] -> [nop]
+                HEX_PATCH "$WORK_DIR/system/system/bin/surfaceflinger" "9f8a00712b03005400068052" "9f8a00711f2003d500068052"
+            fi
+        fi
         ADD_TO_WORK_DIR "b0qxxx" "system" "system/media/battery_error.spi" 0 0 644 "u:object_r:system_file:s0"
         ADD_TO_WORK_DIR "b0qxxx" "system" "system/media/battery_low.spi" 0 0 644 "u:object_r:system_file:s0"
         ADD_TO_WORK_DIR "b0qxxx" "system" "system/media/battery_protection.spi" 0 0 644 "u:object_r:system_file:s0"
@@ -296,6 +303,14 @@ if [[ "$SOURCE_FINGERPRINT_CONFIG_SENSOR" != "$TARGET_FINGERPRINT_CONFIG_SENSOR"
 
                 if [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "qssi" ]]; then
                     ADD_TO_WORK_DIR "r9qxxx" "system" "system/bin/surfaceflinger" 0 2000 755 "u:object_r:surfaceflinger_exec:s0"
+                    # Ensure IQtiComposer support (pre-API 36)
+                    # Check unica/patches/legacy/customize.sh for more info.
+                    if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
+                        if ! grep -q -r "IQtiComposer" "$WORK_DIR/vendor/etc/vintf"; then
+                            # [b.lt #0x72914c] -> [nop]
+                            HEX_PATCH "$WORK_DIR/system/system/bin/surfaceflinger" "9f8a00712b03005400068052" "9f8a00711f2003d500068052"
+                        fi
+                    fi
                     ADD_TO_WORK_DIR "r9qxxx" "system" "system/lib/libgui.so" 0 0 644 "u:object_r:system_lib_file:s0"
                     ADD_TO_WORK_DIR "r9qxxx" "system" "system/lib/libui.so" 0 0 644 "u:object_r:system_lib_file:s0"
                     ADD_TO_WORK_DIR "r9qxxx" "system" "system/lib64/libgui.so" 0 0 644 "u:object_r:system_lib_file:s0"
@@ -806,8 +821,6 @@ if $SOURCE_WLAN_SUPPORT_80211AX; then
             ABORT "TARGET_WLAN_SUPPORT_80211AX is required by TARGET_WLAN_SUPPORT_80211AX_6GHZ"
         fi
         if ! $SOURCE_WLAN_SUPPORT_80211AX_6GHZ; then
-            APPLY_PATCH "system" "system/framework/semwifi-service.jar" \
-                "$MODPATH/wifi/80211ax/semwifi-service.jar/0001-Disable-80211AX-support.patch"
             APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
                 "$MODPATH/wifi/80211ax/SecSettings.apk/0001-Disable-80211AX-support.patch"
             APPLY_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
@@ -913,6 +926,32 @@ elif $SOURCE_WLAN_SUPPORT_MBO && ! $TARGET_WLAN_SUPPORT_MBO; then
         "smali/com/samsung/android/server/wifi/SemFrameworkFacade.smali" "return" \
         "isMBOSupported()Z" \
         "false"
+fi
+
+# SEC_PRODUCT_FEATURE_WLAN_SUPPORT_MIMO
+if ! $SOURCE_WLAN_SUPPORT_MIMO && $TARGET_WLAN_SUPPORT_MIMO; then
+    SMALI_PATCH "system" "system/framework/semwifi-service.jar" \
+        "smali/com/samsung/android/server/wifi/SemWifiServiceImpl.smali" "return" \
+        "getNumOfWifiAnt()I" \
+        "2"
+elif $SOURCE_WLAN_SUPPORT_MIMO && ! $TARGET_WLAN_SUPPORT_MIMO; then
+    SMALI_PATCH "system" "system/framework/semwifi-service.jar" \
+        "smali/com/samsung/android/server/wifi/SemWifiServiceImpl.smali" "return" \
+        "getNumOfWifiAnt()I" \
+        "1"
+fi
+
+# SEC_PRODUCT_FEATURE_WLAN_SUPPORT_MOBILEAP_11AX
+if $SOURCE_WLAN_SUPPORT_MOBILEAP_11AX; then
+    if ! $TARGET_WLAN_SUPPORT_MOBILEAP_11AX; then
+        APPLY_PATCH "system" "system/framework/semwifi-service.jar" \
+            "$MODPATH/wifi/80211ax/semwifi-service.jar/0001-Disable-MOBILEAP_11AX-support.patch"
+    fi
+else
+    if $TARGET_WLAN_SUPPORT_MOBILEAP_11AX; then
+        # TODO handle this condition
+        LOG_MISSING_PATCHES "SOURCE_WLAN_SUPPORT_MOBILEAP_11AX" "TARGET_WLAN_SUPPORT_MOBILEAP_11AX"
+    fi
 fi
 
 # SEC_PRODUCT_FEATURE_WLAN_SUPPORT_MOBILEAP_5G_BASEDON_COUNTRY

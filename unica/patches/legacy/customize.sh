@@ -1,3 +1,6 @@
+# shellcheck disable=SC2034
+SKIPUNZIP=1
+
 # [
 BACKPORT_SF_PROPS()
 {
@@ -72,15 +75,15 @@ EXTRACT_KERNEL_IMAGE() {
     if [ -d "$TMP_DIR" ]; then
         EVAL "rm -rf \"$TMP_DIR\""
     fi
-    EVAL "mkdir -p \"$TMP_DIR\"" || return 1
-    EVAL "cp -a \"$WORK_DIR/kernel/boot.img\" \"$TMP_DIR/boot.img\"" || return 1
+    EVAL "mkdir -p \"$TMP_DIR\""
+    EVAL "cp -a \"$WORK_DIR/kernel/boot.img\" \"$TMP_DIR/boot.img\""
 
-    EVAL "unpack_bootimg --boot_img \"$TMP_DIR/boot.img\" --out \"$TMP_DIR/out\" 2>&1" || return 1
+    EVAL "unpack_bootimg --boot_img \"$TMP_DIR/boot.img\" --out \"$TMP_DIR/out\" 2>&1"
 
-    EVAL "rm \"$TMP_DIR/boot.img\"" || return 1
+    EVAL "rm \"$TMP_DIR/boot.img\""
 
     if [[ "$(READ_BYTES_AT "$TMP_DIR/out/kernel" "0" "2")" == "8b1f" ]]; then
-        EVAL "cat \"$TMP_DIR/out/kernel\" | gzip -d > \"$TMP_DIR/out/tmp\" && mv -f \"$TMP_DIR/out/tmp\" \"$TMP_DIR/out/kernel\"" || return 1
+        EVAL "cat \"$TMP_DIR/out/kernel\" | gzip -d > \"$TMP_DIR/out/tmp\" && mv -f \"$TMP_DIR/out/tmp\" \"$TMP_DIR/out/kernel\""
     fi
 }
 
@@ -115,6 +118,28 @@ PATCHED=false
 # - Add debug.sf.show_refresh_rate_overlay_render_rate if missing
 # - Add ro.surface_flinger.game_default_frame_rate_override if missing
 BACKPORT_SF_PROPS
+
+# Pre-API 34
+# - Revert commit b0551be: "Camera: Remove GPS_LOCATION if set is called with null"
+#   (https://android.googlesource.com/platform/frameworks/base/+/b0551beb8dab6e399179fcc6525407237fc8ee56%5E%21/#F0)
+#
+# Pre-API 35
+# - Add back SECOND_PICTURE_CONFIG camera feature support
+if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "34" ]; then
+    PATCHED=true
+    APPLY_PATCH "system" "system/framework/framework.jar" \
+        "$MODPATH/camera/framework.jar/0001-Backport-legacy-CameraMetadataNative-code.patch"
+fi
+if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "35" ]; then
+    PATCHED=true
+    if $TARGET_CAMERA_SUPPORT_MASS_APP_FLAVOR; then
+        APPLY_PATCH "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" \
+            "$MODPATH/camera_mass/SamsungCamera.apk/0001-Backport-CONTROL_AVAILABLE_FEATURE_SECOND_PICTURE_CO.patch"
+    else
+        APPLY_PATCH "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" \
+            "$MODPATH/camera/SamsungCamera.apk/0001-Backport-CONTROL_AVAILABLE_FEATURE_SECOND_PICTURE_CO.patch"
+    fi
+fi
 
 # Support legacy Face HAL (pre-API 34)
 if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "34" ]; then
@@ -304,15 +329,12 @@ fi
 # https://android.googlesource.com/platform/system/vold/+/refs/tags/android-16.0.0_r2/fs/Vfat.cpp#150
 # - Check for 'bogus directory:' to determine if newer sdFAT drivers are in place
 if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "35" ]; then
-    if EXTRACT_KERNEL_IMAGE; then
-        if grep -q "SDFAT" "$TMP_DIR/out/kernel" && \
-            ! grep -q "bogus directory:" "$TMP_DIR/out/kernel"; then
-            PATCHED=true
-            # ",time_offset=%d" -> "NUL"
-            HEX_PATCH "$WORK_DIR/system/system/bin/vold" "2c74696d655f6f66667365743d2564" "000000000000000000000000000000"
-        fi
-    else
-        LOGW "Skipping legacy sdFAT kernel check because boot.img could not be parsed"
+    EXTRACT_KERNEL_IMAGE
+    if grep -q "SDFAT" "$TMP_DIR/out/kernel" && \
+        ! grep -q "bogus directory:" "$TMP_DIR/out/kernel"; then
+        PATCHED=true
+        # ",time_offset=%d" -> "NUL"
+        HEX_PATCH "$WORK_DIR/system/system/bin/vold" "2c74696d655f6f66667365743d2564" "000000000000000000000000000000"
     fi
 fi
 
@@ -329,11 +351,7 @@ fi
 # Ensure Knox Matrix support
 # - Check if target firmware runs on One UI 5.1.1 or above
 TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
-TARGET_ONEUI_VERSION="$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/build.prop" "ro.build.version.oneui")"
-if [ -z "$TARGET_ONEUI_VERSION" ]; then
-    TARGET_ONEUI_VERSION="$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/build.prop" "ro.build.version.oneui")"
-fi
-if [ "${TARGET_ONEUI_VERSION:-0}" -lt "50101" ]; then
+if [ "$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/build.prop" "ro.build.version.oneui")" -lt "50101" ]; then
     PATCHED=true
     DELETE_FROM_WORK_DIR "system" "system/bin/fabric_crypto"
     DELETE_FROM_WORK_DIR "system" "system/etc/init/fabric_crypto.rc"
@@ -347,12 +365,55 @@ if [ "${TARGET_ONEUI_VERSION:-0}" -lt "50101" ]; then
     DELETE_FROM_WORK_DIR "system" "system/priv-app/KmxService"
 fi
 
+# Ensure Heatmap support
+# - GKI: check for samsung,sec_auth_sle956681/samsung,sec_auth_ds28e30 kernel drivers
+# - Non-GKI: unsupported
+if [ -f "$WORK_DIR/kernel/vendor_boot.img" ]; then
+    EXTRACT_KERNEL_MODULES
+    if ! grep -q "samsung,sec_auth" "$TMP_DIR/out/vendor_ramdisk"*; then
+        PATCHED=true
+        DELETE_FROM_WORK_DIR "system" "system/bin/heatmap"
+        DELETE_FROM_WORK_DIR "system" "system/etc/init/init.sec-heatmap.rc"
+        DELETE_FROM_WORK_DIR "system" "system/lib64/libectcore.so"
+        DELETE_FROM_WORK_DIR "system" "system/lib64/libparam_A55_250328.so"
+    fi
+else
+    PATCHED=true
+    DELETE_FROM_WORK_DIR "system" "system/bin/heatmap"
+    DELETE_FROM_WORK_DIR "system" "system/etc/init/init.sec-heatmap.rc"
+    DELETE_FROM_WORK_DIR "system" "system/lib64/libectcore.so"
+    DELETE_FROM_WORK_DIR "system" "system/lib64/libparam_A55_250328.so"
+fi
+
+# Support camera light sensor
+TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+if [ -f "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/priv-app/CameraLightSensor/CameraLightSensor.apk" ]; then
+    PATCHED=true
+    ADD_TO_WORK_DIR "$MODPATH" "system" \
+        "system/etc/permissions/privapp-permissions-com.samsung.adaptivebrightnessgo.cameralightsensor.xml" 0 0 644 "u:object_r:system_file:s0"
+    if [ -f "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/etc/ev_lux_map_config.xml" ]; then
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+            "system/etc/ev_lux_map_config.xml" 0 0 644 "u:object_r:system_file:s0"
+    elif [ ! -f "$FW_DIR/$TARGET_FIRMWARE_PATH/vendor/etc/ev_lux_map_config.xml" ]; then
+        DECODE_APK "system" "system/framework/motionrecognitionservice.jar"
+        LOG "- Replacing Build.MODEL with \"$(GET_PROP "vendor" "ro.product.vendor.model")\" in /system/system/framework/motionrecognitionservice.jar/smali/com/samsung/android/gesture/ExposureToLuxMapping.smali"
+        SMALI_PATCH "system" "system/framework/motionrecognitionservice.jar" \
+            "smali/com/samsung/android/gesture/ExposureToLuxMapping.smali" "replaceall" \
+            "sget-object v0, Landroid/os/Build;->MODEL:Ljava/lang/String;" \
+            "const-string v0, \\\"$(GET_PROP "vendor" "ro.product.vendor.model")\\\"" \
+            > /dev/null
+    fi
+    ADD_TO_WORK_DIR "$MODPATH" "system" \
+        "system/priv-app/CameraLightSensor/CameraLightSensor.apk" 0 0 644 "u:object_r:system_file:s0"
+fi
+
 # Ensure KSMBD support in kernel
 # - 4.19.x and below: unsupported
 # - 5.4.x-5.10.x: backport (https://github.com/namjaejeon/ksmbd.git)
 # - 5.15.x and above: supported
 if [ -f "$WORK_DIR/system/system/priv-app/StorageShare/StorageShare.apk" ]; then
-    if ! EXTRACT_KERNEL_IMAGE || ! grep -q "ksmbd" "$TMP_DIR/out/kernel"; then
+    EXTRACT_KERNEL_IMAGE
+    if ! grep -q "ksmbd" "$TMP_DIR/out/kernel"; then
         PATCHED=true
         DELETE_FROM_WORK_DIR "system" "system/bin/ksmbd.addshare"
         DELETE_FROM_WORK_DIR "system" "system/bin/ksmbd.adduser"
@@ -372,18 +433,110 @@ fi
 # - Check for TARGET_PLATFORM_SDK_VERSION < 35 as 4.14 kernel support has been deprecated in Android V
 # - Disable "ro.kernel.version" == "4.14" leftover checks, 4.14 needs eBPF kernel backports anyway
 if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "35" ]; then
-    if EXTRACT_KERNEL_IMAGE; then
-        if grep -q "Linux version 4.14" "$TMP_DIR/out/kernel"; then
-            PATCHED=true
-            # [b.eq #0xXXXXXX] -> [nop]
-            # - android::net::MobileBBController::hotspotOn(const std::string)
-            HEX_PATCH "$WORK_DIR/system/system/bin/netd" "1f01096be0010054" "1f01096b1f2003d5"
-            # - android::net::MobileBBController::isMBBPathsPresent()
-            HEX_PATCH "$WORK_DIR/system/system/bin/netd" "1f01096b20010054" "1f01096b1f2003d5"
-        fi
-    else
-        LOGW "Skipping Sem eBPF Smart Hotspot kernel version check because boot.img could not be parsed"
+    EXTRACT_KERNEL_IMAGE
+    if grep -q "Linux version 4.14" "$TMP_DIR/out/kernel"; then
+        PATCHED=true
+        # [b.eq #0xXXXXXX] -> [nop]
+        # - android::net::MobileBBController::hotspotOn(const std::string)
+        HEX_PATCH "$WORK_DIR/system/system/bin/netd" "1f01096be0010054" "1f01096b1f2003d5"
+        # - android::net::MobileBBController::isMBBPathsPresent()
+        HEX_PATCH "$WORK_DIR/system/system/bin/netd" "1f01096b20010054" "1f01096b1f2003d5"
     fi
+fi
+
+# Ensure IQtiComposer support (pre-API 36)
+# - Disable "ro.product.first_api_level" < 34 check
+if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
+    if [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "qssi" ]] && \
+            ! grep -q -r "IQtiComposer" "$WORK_DIR/vendor/etc/vintf"; then
+        PATCHED=true
+        # [b.lt #0x729be8] -> [nop]
+        HEX_PATCH "$WORK_DIR/system/system/bin/surfaceflinger" "9f8a00712b03005400068052" "9f8a00711f2003d500068052"
+    fi
+fi
+
+# Support schedtune cgroup controller (pre-API 36)
+# - Check for TARGET_PLATFORM_SDK_VERSION < 36 as 4.19 kernel support has been deprecated in Android B
+if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
+    EXTRACT_KERNEL_IMAGE
+    KERNEL_VERSION="$(grep -a -o -m 1 "Linux version [0-9]*\.[0-9]*" "$TMP_DIR/out/kernel" | awk '{print $3}')"
+    LEGACY_KERNEL=false
+    if [ "$KERNEL_VERSION" ]; then
+        if [ "${KERNEL_VERSION%%.*}" -lt "4" ] || \
+                { [[ "${KERNEL_VERSION%%.*}" == "4" ]] && [ "${KERNEL_VERSION#*.}" -le "19" ]; }; then
+            LEGACY_KERNEL=true
+        fi
+    fi
+
+    if $LEGACY_KERNEL; then
+        PATCHED=true
+
+        if ! grep -q "# Create energy-aware scheduler tuning nodes" "$WORK_DIR/system/system/etc/init/hw/init.rc"; then
+            LOG "- Adding stune cgroup nodes to /system/system/etc/init/hw/init.rc"
+            EVAL "sed -i \"/mkdir \/dev\/socket\/ot-daemon 0770 thread_network thread_network/a\\\\
+\\\\
+    # Create energy-aware scheduler tuning nodes\\\\
+    mkdir /dev/stune/foreground\\\\
+    mkdir /dev/stune/background\\\\
+    mkdir /dev/stune/top-app\\\\
+    mkdir /dev/stune/rt\\\\
+    chown system system /dev/stune\\\\
+    chown system system /dev/stune/foreground\\\\
+    chown system system /dev/stune/background\\\\
+    chown system system /dev/stune/top-app\\\\
+    chown system system /dev/stune/rt\\\\
+    chown system system /dev/stune/tasks\\\\
+    chown system system /dev/stune/foreground/tasks\\\\
+    chown system system /dev/stune/background/tasks\\\\
+    chown system system /dev/stune/top-app/tasks\\\\
+    chown system system /dev/stune/rt/tasks\\\\
+    chown system system /dev/stune/cgroup.procs\\\\
+    chown system system /dev/stune/foreground/cgroup.procs\\\\
+    chown system system /dev/stune/background/cgroup.procs\\\\
+    chown system system /dev/stune/top-app/cgroup.procs\\\\
+    chown system system /dev/stune/rt/cgroup.procs\\\\
+    chmod 0664 /dev/stune/tasks\\\\
+    chmod 0664 /dev/stune/foreground/tasks\\\\
+    chmod 0664 /dev/stune/background/tasks\\\\
+    chmod 0664 /dev/stune/top-app/tasks\\\\
+    chmod 0664 /dev/stune/rt/tasks\\\\
+    chmod 0664 /dev/stune/cgroup.procs\\\\
+    chmod 0664 /dev/stune/foreground/cgroup.procs\\\\
+    chmod 0664 /dev/stune/background/cgroup.procs\\\\
+    chmod 0664 /dev/stune/top-app/cgroup.procs\\\\
+    chmod 0664 /dev/stune/rt/cgroup.procs\" \"$WORK_DIR/system/system/etc/init/hw/init.rc\""
+        fi
+
+        if ! grep -q "/dev/stune/nnapi-hal" "$WORK_DIR/system/system/etc/init/hw/init.rc"; then
+            LOG "- Adding nnapi-hal stune group to /system/system/etc/init/hw/init.rc"
+            EVAL "sed -i \"/chmod 0664 \/dev\/stune\/camera-daemon\/cgroup.procs/a\\\\
+\\\\
+    # Create an stune group for NNAPI HAL processes\\\\
+    mkdir /dev/stune/nnapi-hal\\\\
+    chown system system /dev/stune/nnapi-hal\\\\
+    chown system system /dev/stune/nnapi-hal/tasks\\\\
+    chown system system /dev/stune/nnapi-hal/cgroup.procs\\\\
+    chmod 0664 /dev/stune/nnapi-hal/tasks\\\\
+    chmod 0664 /dev/stune/nnapi-hal/cgroup.procs\\\\
+    write /dev/stune/nnapi-hal/schedtune.boost 1\\\\
+    write /dev/stune/nnapi-hal/schedtune.prefer_idle 1\" \"$WORK_DIR/system/system/etc/init/hw/init.rc\""
+        fi
+
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+            "system/etc/task_profiles/cgroups_28.json" 0 0 644 "u:object_r:cgroup_desc_file:s0"
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+            "system/etc/task_profiles/cgroups_29.json" 0 0 644 "u:object_r:cgroup_desc_file:s0"
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+            "system/etc/task_profiles/cgroups_30.json" 0 0 644 "u:object_r:cgroup_desc_file:s0"
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+            "system/etc/task_profiles/task_profiles_28.json" 0 0 644 "u:object_r:task_profiles_file:s0"
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+            "system/etc/task_profiles/task_profiles_29.json" 0 0 644 "u:object_r:task_profiles_file:s0"
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+            "system/etc/task_profiles/task_profiles_30.json" 0 0 644 "u:object_r:task_profiles_file:s0"
+    fi
+
+    unset KERNEL_VERSION LEGACY_KERNEL
 fi
 
 # Ensure sbauth support in target firmware
@@ -405,6 +558,62 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "35" ]; then
     fi
 fi
 
+# Support OMX hardware video codecs (pre-API 35)
+# - Replace COLOR_FormatYUV420Flexible with COLOR_FormatSurface/OMX_COLOR_FormatAndroidOpaque
+#   (https://android.googlesource.com/platform/frameworks/av/+/android-16.0.0_r2/media/libstagefright/omx/OMXNodeInstance.cpp#1687)
+# - Disable ACodec HEVC limitation for RECORDING_MODE_HDR10_PLUS/RECORDING_MODE_PRO_HDR10_PLUS
+if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "35" ]; then
+    if ! find "$WORK_DIR/vendor/etc" -maxdepth 1 -type f -name "media_codecs*.xml" ! -name "*performance*" -exec cat {} + | \
+            grep -q -P -z '<MediaCodec\s[^>]*name="c2\.(?!android\.|sec\.)[^"]*"(?:(?!</?MediaCodec[\s>])[\s\S])*?="video/'; then
+        PATCHED=true
+        SMALI_PATCH "system" "system/app/MotionPhoto/MotionPhoto.apk" \
+            "smali/com/samsung/android/motionphoto/utils/v2/video/VideoTranscoder.smali" "replace" \
+            'configVideoEncoderParameters(Landroid/media/MediaFormat;Lcom/samsung/android/motionphoto/utils/v2/video/VideoTranscodingTask;)V' \
+            'const p2, 0x7f420888' \
+            'const p2, 0x7f000789'
+        SMALI_PATCH "system" "system/app/MotionPhoto/MotionPhoto.apk" \
+            "smali/com/samsung/android/sum/core/filter/EncoderFilter.smali" "replace" \
+            'configCodec(Lcom/samsung/android/sum/core/message/Message;)V' \
+            'const v4, 0x7f420888' \
+            'const v4, 0x7f000789'
+        if xxd -p -c 0 "$WORK_DIR/system/system/lib/libstagefright.so" | grep -q "ceec002848d1724c0620"; then
+            HEX_PATCH "$WORK_DIR/system/system/lib/libstagefright.so" \
+                "ceec002848d1724c0620" "ceec002848e0724c0620"
+        elif xxd -p -c 0 "$WORK_DIR/system/system/lib/libstagefright.so" | grep -q "aaea002879d1264c0620"; then
+            HEX_PATCH "$WORK_DIR/system/system/lib/libstagefright.so" \
+                "aaea002879d1264c0620" "aaea002879e0264c0620"
+        else
+            ABORT "No known patch available for the supplied libstagefright.so"
+        fi
+        if xxd -p -c 0 "$WORK_DIR/system/system/lib64/libstagefright.so" | grep -q "70690594205100347a9a40f9"; then
+            HEX_PATCH "$WORK_DIR/system/system/lib64/libstagefright.so" \
+                "70690594205100347a9a40f9" "706905941f2003d57a9a40f9"
+        elif xxd -p -c 0 "$WORK_DIR/system/system/lib64/libstagefright.so" | grep -q "864d0594604d00347a9a40f9"; then
+            HEX_PATCH "$WORK_DIR/system/system/lib64/libstagefright.so" \
+                "864d0594604d00347a9a40f9" "864d05941f2003d57a9a40f9"
+        else
+            ABORT "No known patch available for the supplied libstagefright.so"
+        fi
+        if [ -f "$WORK_DIR/system/system/priv-app/GlobalPostProcMgr/GlobalPostProcMgr.apk" ]; then
+            SMALI_PATCH "system" "system/priv-app/GlobalPostProcMgr/GlobalPostProcMgr.apk" \
+                "smali/com/samsung/android/sum/core/filter/EncoderFilter.smali" "replace" \
+                'configCodec(Lcom/samsung/android/sum/core/message/Message;)V' \
+                'const v3, 0x7f420888' \
+                'const v3, 0x7f000789'
+        fi
+        SMALI_PATCH "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" \
+            "smali_classes3/com/samsung/android/sum/core/filter/EncoderFilter.smali" "replace" \
+            'configCodec(Lcom/samsung/android/sum/core/message/Message;)V' \
+            'const v4, 0x7f420888' \
+            'const v4, 0x7f000789'
+        SMALI_PATCH "system" "system/priv-app/vexfwk_service/vexfwk_service.apk" \
+            "smali/com/samsung/android/sum/core/filter/EncoderFilter.smali" "replace" \
+            'configCodec(Lcom/samsung/android/sum/core/message/Message;)V' \
+            'const v3, 0x7f420888' \
+            'const v3, 0x7f000789'
+    fi
+fi
+
 # Support legacy usb_notify kernel drivers (pre-API 36)
 # https://github.com/salvogiangri/UN1CA/discussions/519
 # - Check for 'SKY_DEFAULT' to determine if newer usb_notify drivers are in place
@@ -421,12 +630,9 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
     fi
 
     # Check for legacy devices
-    if EXTRACT_KERNEL_IMAGE; then
-        if grep -q "SKY_DEFAULT" "$TMP_DIR/out/kernel"; then
-            KERNEL_MISSING=false
-        fi
-    else
-        LOGW "Applying legacy usb_notify fallback because boot.img could not be parsed"
+    EXTRACT_KERNEL_IMAGE
+    if grep -q "SKY_DEFAULT" "$TMP_DIR/out/kernel"; then
+        KERNEL_MISSING=false
     fi
 
     if $VBOOT_MISSING && $KERNEL_MISSING; then
@@ -474,12 +680,45 @@ fi
 # Support legacy LED Cover level
 # - Replace deprecated 'android.nfc.NfcAdapter' APIs with 'com.samsung.android.nfc.adapter.ISamsungNfcAdapter'
 if [ -f "$WORK_DIR/system/system/priv-app/LedCoverService/LedCoverService.apk" ]; then
-    NFC_LED_COVER_LEVEL="$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NFC_LED_COVER_LEVEL")"
-    if [ "${NFC_LED_COVER_LEVEL:-0}" -ge "30" ] && \
-            [ "${NFC_LED_COVER_LEVEL:-0}" -lt "100" ]; then
+    if [ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NFC_LED_COVER_LEVEL")" -ge "30" ] && \
+            [ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NFC_LED_COVER_LEVEL")" -lt "100" ]; then
         PATCHED=true
         APPLY_PATCH "system" "system/priv-app/LedCoverService/LedCoverService.apk" \
             "$MODPATH/ledcover/LedCoverService.apk/0001-Switch-to-ISamsungNfcAdapter-interface.patch"
+    fi
+fi
+
+# Upgrade Segmentation models (pre-API 34)
+if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "34" ]; then
+    if grep -q "default_lowtier" "$WORK_DIR/system/system/cameradata/portrait_data/single_bokeh_feature.json" &&
+            [ -f "$WORK_DIR/system/system/cameradata/portrait_data/SRIB_HumanInsSeg_FP16_V008.snf" ]; then
+        PATCHED=true
+        DELETE_FROM_WORK_DIR "system" "system/cameradata/portrait_data/SRIB_HumanInsSeg_FP16_V008.snf"
+        ADD_TO_WORK_DIR "a17xxx" "system" \
+            "system/cameradata/portrait_data/SRIB_BanetLite_FP16_V400.snf" 0 0 644 "u:object_r:system_file:s0"
+        LOG "- Patching /system/system/cameradata/portrait_data/single_bokeh_feature.json"
+        EVAL "sed -i \"0,/HumanInsSeg_FP16_V008/s//BanetLite_FP16_V400/\" \"$WORK_DIR/system/system/cameradata/portrait_data/single_bokeh_feature.json\""
+        EVAL "sed -i \"0,/008/s//400/\" \"$WORK_DIR/system/system/cameradata/portrait_data/single_bokeh_feature.json\""
+        EVAL "sed -i \"0,/QASYMM8/s//FLOAT16/\" \"$WORK_DIR/system/system/cameradata/portrait_data/single_bokeh_feature.json\""
+    fi
+fi
+
+# Pre-API 35
+# - Upgrade MIDAS models
+#
+# Pre-API 36
+# - Update midas_config.json
+if ! grep -q "\"version\": \"4\." "$WORK_DIR/vendor/etc/midas/midas_config.json"; then
+    if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "35" ]; then
+        PATCHED=true
+        DELETE_FROM_WORK_DIR "vendor" "etc/midas"
+        ADD_TO_WORK_DIR "a73xqxx" "vendor" \
+            "etc/midas" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+    fi
+    if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
+        PATCHED=true
+        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
+            "etc/midas/midas_config.json" 0 0 644 "u:object_r:vendor_configs_file:s0"
     fi
 fi
 
@@ -506,5 +745,5 @@ if [ -d "$TMP_DIR" ]; then
     EVAL "rm -rf \"$TMP_DIR\""
 fi
 
-unset PATCHED TARGET_FIRMWARE_PATH NFC_LED_COVER_LEVEL
+unset PATCHED TARGET_FIRMWARE_PATH
 unset -f BACKPORT_SF_PROPS EXTRACT_KERNEL_IMAGE EXTRACT_KERNEL_MODULES

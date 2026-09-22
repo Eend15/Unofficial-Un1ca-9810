@@ -35,7 +35,7 @@
 
     const-string v0, "persist.sys.pif.version"
 
-    const-string v1, "20260603"
+    const-string v1, "20260806"
 
     invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 
@@ -140,7 +140,7 @@
     :try_start_0
     const-string v1, "persist.sys.pif.version"
 
-    const-string v2, "20260603"
+    const-string v2, "20260806"
 
     invoke-static {v1, v2}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 
@@ -235,9 +235,7 @@
 .end method
 
 .method static synthetic lambda$updatePIF$2(Landroid/os/Handler;Landroid/content/Context;Landroidx/preference/Preference;)V
-    .locals 6
-
-    move-object v5, p2
+    .locals 5
 
     :try_start_0
     new-instance v0, Ljava/net/URL;
@@ -344,26 +342,6 @@
     const-string v1, "Exception: "
 
     invoke-static {v0, v1, p2}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
-
-    :try_start_8
-    new-instance p2, Lorg/json/JSONObject;
-
-    const-string v0, "{\"VERSION\":\"20260603\",\"FINGERPRINT\":\"google/shiba_beta/shiba:CANARY/ZP11.260515.009/15513807:user/release-keys\"}"
-
-    invoke-direct {p2, v0}, Lorg/json/JSONObject;-><init>(Ljava/lang/String;)V
-
-    new-instance v0, Lio/mesalabs/unica/settings/pif/PIFUtils$$ExternalSyntheticLambda0;
-
-    invoke-direct {v0, p2, p1, v5}, Lio/mesalabs/unica/settings/pif/PIFUtils$$ExternalSyntheticLambda0;-><init>(Lorg/json/JSONObject;Landroid/content/Context;Landroidx/preference/Preference;)V
-
-    invoke-virtual {p0, v0}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
-    :try_end_8
-    .catch Lorg/json/JSONException; {:try_start_8 .. :try_end_8} :catch_3
-
-    return-void
-
-    :catch_3
-    move-exception p2
 
     new-instance p2, Lio/mesalabs/unica/settings/pif/PIFUtils$$ExternalSyntheticLambda1;
 
