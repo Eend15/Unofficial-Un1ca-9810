@@ -31,7 +31,6 @@ system/etc/default-permissions/default-permissions-com.sec.enterprise.knox.cloud
 system/etc/appmanager.conf
 system/etc/permissions/com.samsung.feature.aremoji_v2.xml
 system/etc/permissions/privapp-permissions-com.samsung.android.aremoji.xml
-system/etc/permissions/privapp-permissions-com.samsung.android.scloud.xml
 system/etc/permissions/privapp-permissions-com.microsoft.appmanager.xml
 system/etc/permissions/signature-permissions-com.sec.enterprise.knox.cloudmdm.smdms.xml
 system/priv-app/AREmoji

@@ -1003,11 +1003,21 @@ _EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT()
 
 _EXYNOS9810_FINAL_STAGE_SCPM_ANCHOR()
 {
+    local SCLOUD_PERM="$WORK_DIR/system/system/etc/permissions/privapp-permissions-com.samsung.android.scloud.xml"
+    local SCLOUD_PERM_SRC="$FW_DIR/SM-S901B_EUX/system/system/etc/permissions/privapp-permissions-com.samsung.android.scloud.xml"
     local FILE="$WORK_DIR/system/system/etc/permissions/privapp-permissions-com.samsung.android.scpm.xml"
     local OVERRIDE="$WORK_DIR/system/system/etc/sysconfig/unica_exynos9810_scloud_components.xml"
     local OVERRIDE_SRC="${MODPATH:-$SRC_DIR/unica/mods/zzzzz_exynos9810_final_cleanup}/system/etc/sysconfig/unica_exynos9810_scloud_components.xml"
 
     LOG "- Preserving the Samsung Cloud shared-UID anchor with a static receiver override"
+    if [ ! -f "$SCLOUD_PERM" ] && [ -f "$SCLOUD_PERM_SRC" ]; then
+        mkdir -p "$(dirname "$SCLOUD_PERM")"
+        cp -f "$SCLOUD_PERM_SRC" "$SCLOUD_PERM" || return 1
+        chmod 0644 "$SCLOUD_PERM"
+        _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/permissions/privapp-permissions-com.samsung.android.scloud.xml" \
+            0 0 644 "u:object_r:system_file:s0"
+    fi
+
     [ -f "$FILE" ] || {
         LOGE "SCPMAgent privapp-permissions file is missing: $FILE"
         return 1
