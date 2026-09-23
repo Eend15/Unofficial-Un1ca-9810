@@ -1023,6 +1023,10 @@ _EXYNOS9810_FINAL_STAGE_SCPM_ANCHOR()
         return 1
     }
 
+    if ! grep -qF 'android.permission.MANAGE_USERS' "$FILE"; then
+        sed -i 's|</privapp-permissions>|\t<permission name="android.permission.MANAGE_USERS"/>\n\t\t<permission name="android.permission.QUERY_USERS"/>\n\t</privapp-permissions>|' "$FILE"
+    fi
+
     if [ ! -f "$OVERRIDE" ]; then
         [ -f "$OVERRIDE_SRC" ] || {
             LOGE "Samsung Cloud component override source is missing: $OVERRIDE_SRC"
@@ -6005,6 +6009,12 @@ _EXYNOS9810_FINAL_ENABLE_REPORTED_FEATURES()
         "com.samsung.android.smartmirroring" || return 1
     _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
         "SEC_FLOATING_FEATURE_SMART_VIEW_APP_CAST_SUPPORTED" "TRUE" || return 1
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_COMMON_CONFIG_DEX_MODE" "dual,wireless,dexforpc" || return 1
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_COMMON_SUPPORT_DEX_ON_PC" "TRUE" || return 1
+    _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+        "SEC_FLOATING_FEATURE_COMMON_SUPPORT_DEX_WIRELESS" "TRUE" || return 1
 }
 
 _EXYNOS9810_FINAL_ENABLE_EXTRA_BRIGHTNESS()
