@@ -958,6 +958,7 @@ _EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT()
 
     FOUND="$(find "${SEARCH_ROOTS[@]}" -type f \
         ! -name 'privapp-permissions-com.samsung.android.scloud.xml' \
+        ! -name 'unica_exynos9810_scloud_components.xml' \
         -iname '*scloud*' -print -quit)"
     [ -z "$FOUND" ] || {
         LOGE "Samsung Cloud support file remains in the final workdir: $FOUND"
@@ -1004,12 +1005,25 @@ _EXYNOS9810_FINAL_STAGE_SCPM_ANCHOR()
 {
     local FILE="$WORK_DIR/system/system/etc/permissions/privapp-permissions-com.samsung.android.scpm.xml"
     local OVERRIDE="$WORK_DIR/system/system/etc/sysconfig/unica_exynos9810_scloud_components.xml"
+    local OVERRIDE_SRC="${MODPATH:-$SRC_DIR/unica/mods/zzzzz_exynos9810_final_cleanup}/system/etc/sysconfig/unica_exynos9810_scloud_components.xml"
 
     LOG "- Preserving the Samsung Cloud shared-UID anchor with a static receiver override"
     [ -f "$FILE" ] || {
         LOGE "SCPMAgent privapp-permissions file is missing: $FILE"
         return 1
     }
+
+    if [ ! -f "$OVERRIDE" ]; then
+        [ -f "$OVERRIDE_SRC" ] || {
+            LOGE "Samsung Cloud component override source is missing: $OVERRIDE_SRC"
+            return 1
+        }
+        mkdir -p "$(dirname "$OVERRIDE")"
+        cp -f "$OVERRIDE_SRC" "$OVERRIDE" || return 1
+        chmod 0644 "$OVERRIDE"
+        _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/sysconfig/unica_exynos9810_scloud_components.xml" \
+            0 0 644 "u:object_r:system_file:s0"
+    fi
 
     [ -f "$OVERRIDE" ] || {
         LOGE "Samsung Cloud component override is missing: $OVERRIDE"
