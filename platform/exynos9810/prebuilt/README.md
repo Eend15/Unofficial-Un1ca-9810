@@ -10,6 +10,6 @@ from the Google Drive release folder and place it here before building:
 https://drive.google.com/drive/folders/1M3treF2xQEiIdIt4XQtWLgpqhQBPJi6-
 
 Expected SHA-256:
-`243e08f706534cb3299cef24bdad874f27d0ffb0d2e5e9baee5d4be4fcffedba`
+`01556276576c33cd33e7c795b92fc0fd488e4b314f630e1d31b53040205eff36`
 
 Set `EXYNOS9810_KERNEL_ZIP` explicitly to test a different package.

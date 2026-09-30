@@ -83,8 +83,9 @@ chmod 0755 "$TMP_DIR/exynos9810/sgdisk"
 # ext4 package carries the non-EROFS DTBs; the EROFS package remains the
 # repository's EROFS-specific payload.
 DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Enforcing-KernelSU-OneUI7}"
-DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-erofs-dtb.zip"
-DS_ACK_EROFS_PREBUILT_SHA256="243e08f706534cb3299cef24bdad874f27d0ffb0d2e5e9baee5d4be4fcffedba"
+DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-30.09.2026-Enforcing-KernelSU-Next-v3.4.0-SuSFS-erofs-dtb.zip"
+[ -f "$DS_ACK_EROFS_PREBUILT_ZIP" ] || DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-erofs-dtb.zip"
+DS_ACK_EROFS_PREBUILT_SHA256="01556276576c33cd33e7c795b92fc0fd488e4b314f630e1d31b53040205eff36"
 DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-ext4.zip"
 DS_ACK_EXT4_PREBUILT_SHA256="ddb2c96a54a77e21c189db901da61b398f3ac3ab44a40526c02b4cf2bd890bee"
 case "${TARGET_OS_FILE_SYSTEM_TYPE:-}" in

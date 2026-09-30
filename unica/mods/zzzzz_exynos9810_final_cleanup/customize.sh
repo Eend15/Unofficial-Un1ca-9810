@@ -2814,6 +2814,22 @@ _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA()
     chmod 0755 "$CAMERASERVER_DST" || return 1
 }
 
+_EXYNOS9810_FINAL_PATCH_CAMERA_LEGACY_OCR()
+{
+    [ "$TARGET_PLATFORM_SDK_VERSION" -lt "34" ] || return 0
+
+    # The native Camera APK is restored after the generic legacy patches, so
+    # apply the OCR backport here to keep it in the final Exynos9810 payload.
+    local PATCH
+    if $TARGET_CAMERA_SUPPORT_MASS_APP_FLAVOR; then
+        PATCH="$SRC_DIR/unica/patches/legacy/camera_mass/SamsungCamera.apk/0001-Backport-legacy-Scene-detection-code.patch"
+    else
+        PATCH="$SRC_DIR/unica/patches/legacy/camera/SamsungCamera.apk/0001-Backport-legacy-Scene-detection-code.patch"
+    fi
+
+    APPLY_PATCH "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" "$PATCH" || return 1
+}
+
 _EXYNOS9810_FINAL_REPATCH_APPS()
 {
     LOG "- Re-applying Exynos9810 Camera/Bluetooth/Settings patches after final restore"
@@ -2825,6 +2841,7 @@ _EXYNOS9810_FINAL_REPATCH_APPS()
     # later S22-native camera payload: that override regresses the
     # portrait-photo -> gallery -> back lifecycle on the legacy HAL.
     _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA || return 1
+    _EXYNOS9810_FINAL_PATCH_CAMERA_LEGACY_OCR || return 1
 
     _EXYNOS9810_FINAL_RESTORE_BLUETOOTH_LIB || return 1
     rm -rf "$APKTOOL_DIR/system/app/BluetoothAgent/BluetoothAgent.apk"

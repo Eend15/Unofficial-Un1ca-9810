@@ -13,7 +13,7 @@ EXPECTED_FS="${2:?expected filesystem is required}"
 }
 case "$EXPECTED_FS" in
     erofs)
-        EXPECTED_KERNEL_SHA256="243e08f706534cb3299cef24bdad874f27d0ffb0d2e5e9baee5d4be4fcffedba"
+        EXPECTED_KERNEL_SHA256="01556276576c33cd33e7c795b92fc0fd488e4b314f630e1d31b53040205eff36"
         ;;
     ext4)
         EXPECTED_KERNEL_SHA256="ddb2c96a54a77e21c189db901da61b398f3ac3ab44a40526c02b4cf2bd890bee"

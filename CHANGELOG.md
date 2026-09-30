@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-29 — UN1CA 3.2.1 updates
+
+- Added RKP keyboxes support
+- Fixed Samsung Camera OCR on legacy devices
+
 ## 2026-08-07
 
 - Added battery health patch

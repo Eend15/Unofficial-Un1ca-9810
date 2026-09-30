@@ -38,6 +38,5 @@ unica.vibrator-service binary
 # Recovery installer is a native ARM64 ELF, never normalize it as text.
 target/*/installer/update-binary binary
 unica/patches/exynos9810_device_stack/embedded/** filter=lfs diff=lfs merge=lfs -text
-platform/exynos9810/prebuilt/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-erofs-dtb.zip filter=lfs diff=lfs merge=lfs -text
-platform/exynos9810/prebuilt/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-ext4.zip filter=lfs diff=lfs merge=lfs -text
+platform/exynos9810/prebuilt/*.zip filter=lfs diff=lfs merge=lfs -text
 unica/mods/zz_weather/**/*.apk filter=lfs diff=lfs merge=lfs -text
