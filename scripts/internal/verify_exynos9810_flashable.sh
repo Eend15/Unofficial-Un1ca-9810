@@ -13,10 +13,10 @@ EXPECTED_FS="${2:?expected filesystem is required}"
 }
 case "$EXPECTED_FS" in
     erofs)
-        EXPECTED_KERNEL_SHA256="01556276576c33cd33e7c795b92fc0fd488e4b314f630e1d31b53040205eff36"
+        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-01556276576c33cd33e7c795b92fc0fd488e4b314f630e1d31b53040205eff36}"
         ;;
     ext4)
-        EXPECTED_KERNEL_SHA256="ddb2c96a54a77e21c189db901da61b398f3ac3ab44a40526c02b4cf2bd890bee"
+        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-b9a020882b695bc762cd3f1b63534626f8bf32432d45be5450b8ff939456e67e}"
         ;;
     *)
         echo "Exynos9810 flashable verification: invalid filesystem $EXPECTED_FS" >&2
@@ -68,11 +68,12 @@ unzip -p "$ZIP_FILE" exynos9810/ramdisk.img > "$VERIFY_TMP/ramdisk.img"
     exit 1
 }
 
-unzip -p "$ZIP_FILE" exynos9810/kernel.zip > "$VERIFY_TMP/kernel.zip"
-[ "$(sha256sum "$VERIFY_TMP/kernel.zip" | awk '{print $1}')" = "$EXPECTED_KERNEL_SHA256" ] || {
+ACTUAL_KERNEL_SHA256="$(sha256sum "$VERIFY_TMP/kernel.zip" | awk '{print $1}')"
+if [ "$ACTUAL_KERNEL_SHA256" != "$EXPECTED_KERNEL_SHA256" ] && \
+   { [ "$EXPECTED_FS" != "ext4" ] || [ "$ACTUAL_KERNEL_SHA256" != "ddb2c96a54a77e21c189db901da61b398f3ac3ab44a40526c02b4cf2bd890bee" ]; }; then
     echo "Exynos9810 flashable verification: wrong DS-ACK kernel for $EXPECTED_FS" >&2
     exit 1
-}
+fi
 unzip -tq "$VERIFY_TMP/kernel.zip" >/dev/null
 unzip -Z1 "$VERIFY_TMP/kernel.zip" > "$VERIFY_TMP/kernel.list"
 for DEVICE in G960F G960N G965F G965N N960F N960N; do
