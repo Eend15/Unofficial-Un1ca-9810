@@ -48,8 +48,8 @@ EVAL "cp -a \"$WORK_DIR/kernel/$BOOT_FILE\" \"$TMP_DIR/$BOOT_FILE\""
 MKBOOTIMG_ARGS="$(unpack_bootimg --boot_img "$TMP_DIR/$BOOT_FILE" --out "$TMP_DIR/out" --format mkbootimg 2>&1 || true)"
 
 BOOT_IMAGE_SKIPPED=false
-if ! find "$TMP_DIR/out" -type f -name "*ramdisk*" 2>/dev/null | grep -q .; then
-    LOG "\033[0;33m! Could not unpack $BOOT_FILE (non-standard boot image header); boot image fstab patch skipped. Vendor fstab patch still applies.\033[0m"
+if [ "$TARGET_PLATFORM" = "exynos9810" ] || ! find "$TMP_DIR/out" -type f -name "*ramdisk*" 2>/dev/null | grep -q .; then
+    LOG "\033[0;33m! Skipping boot image patch for $TARGET_PLATFORM (legacy boot flow); vendor fstab patch still applies.\033[0m"
     BOOT_IMAGE_SKIPPED=true
 fi
 
@@ -65,7 +65,9 @@ if ! $BOOT_IMAGE_SKIPPED; then
             RAMDISK_FORMAT="lz4"
         fi
         if [ ! "$RAMDISK_FORMAT" ]; then
-            ABORT "Ramdisk format not valid\n\n$(LC_ALL=C file -b "$f")"
+            LOG "\033[0;33m! Ramdisk format not recognized; boot image fstab patch skipped. Vendor fstab patch still applies.\033[0m"
+            BOOT_IMAGE_SKIPPED=true
+            break
         fi
 
         EVAL "mkdir -p \"$TMP_DIR/out/ramdisk_extracted\""
