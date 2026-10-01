@@ -1967,6 +1967,20 @@ _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT()
     _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/unica/ksunext/KernelSUNext.apk" 0 0 644 "u:object_r:system_file:s0"
     _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/init/unica_ksunext_installer.rc" 0 0 644 "u:object_r:system_file:s0"
     _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/unica_ksunext_installer.sh" 0 2000 755 "u:object_r:system_file:s0"
+
+    local KSUD_TARGET="$WORK_DIR/system/system/bin/ksud"
+    local CROWN_TARGET="$WORK_DIR/system/system/bin/ksu_crown"
+    local CROWN_SRC="$MODPATH/kernelsu/ksu_crown"
+
+    unzip -p "$EXYNOS9810_KERNELSU_NEXT_APK" "lib/arm64-v8a/libksud.so" > "$KSUD_TARGET" || return 1
+    chmod 0755 "$KSUD_TARGET"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/ksud" 0 2000 755 "u:object_r:system_file:s0"
+
+    if [ -f "$CROWN_SRC" ]; then
+        cp -f "$CROWN_SRC" "$CROWN_TARGET" || return 1
+        chmod 0755 "$CROWN_TARGET"
+        _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/ksu_crown" 0 2000 755 "u:object_r:system_file:s0"
+    fi
 }
 
 

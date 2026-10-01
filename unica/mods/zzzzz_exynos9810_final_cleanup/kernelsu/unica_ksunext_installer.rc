@@ -1,3 +1,9 @@
+on post-fs-data
+    mkdir /data/adb 0700 root root
+    copy /system/bin/ksud /data/adb/ksud
+    chmod 0755 /data/adb/ksud
+    chown root root /data/adb/ksud
+
 on property:sys.boot_completed=1
     start unica_ksunext_installer
 
