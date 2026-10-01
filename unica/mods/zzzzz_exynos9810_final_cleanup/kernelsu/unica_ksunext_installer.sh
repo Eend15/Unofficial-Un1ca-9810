@@ -50,15 +50,14 @@ crown_manager()
         log -t "$TAG" "Crowning manager UID $UID_VAL"
         if [ -x /system/bin/ksu_crown ]; then
             /system/bin/ksu_crown "$UID_VAL"
-        am force-stop "$PACKAGE" 2>/dev/null
         fi
+        am force-stop "$PACKAGE" 2>/dev/null
     fi
 
     if [ -x /data/adb/ksud ]; then
         /data/adb/ksud post-fs-data 2>/dev/null
         /data/adb/ksud services 2>/dev/null
         /data/adb/ksud boot-completed 2>/dev/null
-        /data/adb/ksud install 2>/dev/null
     fi
 }
 
