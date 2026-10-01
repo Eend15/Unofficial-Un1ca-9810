@@ -1354,6 +1354,13 @@ _EXYNOS9810_FINAL_ENSURE_TARGET_IDENTITY()
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.product.name" "$NAME"
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.build.flavor" "$NAME-user"
 
+    # Enforce UN1CA Settings ROM version display: '1.4 (stable)-Unofficial-UN1CA 3.2.1'
+    if ! grep -q "^ro\.unica\.version" "$WORK_DIR/system/system/etc/selinux/plat_property_contexts" 2>/dev/null; then
+        echo "ro.unica.version u:object_r:build_prop:s0 exact string" >> "$WORK_DIR/system/system/etc/selinux/plat_property_contexts"
+    fi
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.unica.version" "1.4 (stable)-Unofficial-UN1CA 3.2.1"
+    sed -i '/^ro\.unica\.codename=/d' "$WORK_DIR/system/system/build.prop"
+
     for FILE in \
         "$WORK_DIR/vendor/build.prop:vendor" \
         "$WORK_DIR/vendor/vendor_dlkm/etc/build.prop:vendor_dlkm" \
