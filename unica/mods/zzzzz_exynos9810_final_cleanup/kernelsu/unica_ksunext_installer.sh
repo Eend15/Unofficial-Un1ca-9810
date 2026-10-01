@@ -50,6 +50,7 @@ crown_manager()
         log -t "$TAG" "Crowning manager UID $UID_VAL"
         if [ -x /system/bin/ksu_crown ]; then
             /system/bin/ksu_crown "$UID_VAL"
+        am force-stop "$PACKAGE" 2>/dev/null
         fi
     fi
 
