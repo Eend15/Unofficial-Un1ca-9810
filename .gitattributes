@@ -40,3 +40,7 @@ target/*/installer/update-binary binary
 unica/patches/exynos9810_device_stack/embedded/** filter=lfs diff=lfs merge=lfs -text
 platform/exynos9810/prebuilt/*.zip filter=lfs diff=lfs merge=lfs -text
 unica/mods/zz_weather/**/*.apk filter=lfs diff=lfs merge=lfs -text
+
+# Embedded Infinity runtime payload
+*.dex binary
+unica/mods/zzzzzz_s9_infinity/payload/system/priv-app/wallpaper-res/*.apk filter=lfs diff=lfs merge=lfs -text

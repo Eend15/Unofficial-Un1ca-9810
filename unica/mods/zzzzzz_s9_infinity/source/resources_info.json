@@ -1,0 +1,320 @@
+{
+  "version": "0.0.10",
+  "phone": [
+    {
+      "isDefault": true,
+      "index": 0,
+      "which": 7,
+      "screen": 0,
+      "target_screen_only": true,
+      "type": 10,
+      "type_params": {
+        "content_type": "infinity",
+        "service_package_name": "com.samsung.android.wallpaper.live",
+        "service_class_name": "com.samsung.android.wallpaper.live.infinity.InfinityWallpaper",
+        "service_settings": {
+          "filename": "video_001.mp4",
+          "thumbnail_system_frame_no": 1021,
+          "thumbnail_lock_frame_no": 350,
+          "thumbnail_frame_no": 350,
+          "transition_frame_info": "AOD AOD 0 150 1200 0.17 0.17 0.1 1\nAOD LOCK 0 350 1000 0.33 0 0.1 1\nAOD HOME 0 1020 2500 0.33 0 0.1 1\nLOCK HOME 350 1020 1500 0.17 0.17 0.1 1\nLOCK TOUCH 350 875 1500 0.17 0.17 0.1 1"
+        }
+      },
+      "filename": "video_001.mp4",
+      "frame_no": 350,
+      "desc_str_id": "str_id_blue",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": false,
+      "index": 1,
+      "which": 7,
+      "screen": 0,
+      "target_screen_only": true,
+      "type": 10,
+      "type_params": {
+        "content_type": "infinity",
+        "service_package_name": "com.samsung.android.wallpaper.live",
+        "service_class_name": "com.samsung.android.wallpaper.live.infinity.InfinityWallpaper",
+        "service_settings": {
+          "filename": "video_002.mp4",
+          "thumbnail_system_frame_no": 1021,
+          "thumbnail_lock_frame_no": 350,
+          "thumbnail_frame_no": 350,
+          "transition_frame_info": "AOD AOD 0 150 1200 0.17 0.17 0.1 1\nAOD LOCK 0 350 1000 0.33 0 0.1 1\nAOD HOME 0 1020 2500 0.33 0 0.1 1\nLOCK HOME 350 1020 1500 0.17 0.17 0.1 1\nLOCK TOUCH 350 875 1500 0.17 0.17 0.1 1"
+        }
+      },
+      "filename": "video_002.mp4",
+      "frame_no": 350,
+      "desc_str_id": "str_id_gold",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": false,
+      "index": 2,
+      "which": 7,
+      "screen": 0,
+      "target_screen_only": true,
+      "type": 10,
+      "type_params": {
+        "content_type": "infinity",
+        "service_package_name": "com.samsung.android.wallpaper.live",
+        "service_class_name": "com.samsung.android.wallpaper.live.infinity.InfinityWallpaper",
+        "service_settings": {
+          "filename": "video_003.mp4",
+          "thumbnail_system_frame_no": 1021,
+          "thumbnail_lock_frame_no": 350,
+          "thumbnail_frame_no": 350,
+          "transition_frame_info": "AOD AOD 0 150 1200 0.17 0.17 0.1 1\nAOD LOCK 0 350 1000 0.33 0 0.1 1\nAOD HOME 0 1020 2500 0.33 0 0.1 1\nLOCK HOME 350 1020 1500 0.17 0.17 0.1 1\nLOCK TOUCH 350 875 1500 0.17 0.17 0.1 1"
+        }
+      },
+      "filename": "video_003.mp4",
+      "frame_no": 350,
+      "desc_str_id": "str_id_pink",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": false,
+      "index": 3,
+      "which": 7,
+      "screen": 0,
+      "target_screen_only": true,
+      "type": 10,
+      "type_params": {
+        "content_type": "infinity",
+        "service_package_name": "com.samsung.android.wallpaper.live",
+        "service_class_name": "com.samsung.android.wallpaper.live.infinity.InfinityWallpaper",
+        "service_settings": {
+          "filename": "video_004.mp4",
+          "thumbnail_system_frame_no": 1021,
+          "thumbnail_lock_frame_no": 350,
+          "thumbnail_frame_no": 350,
+          "transition_frame_info": "AOD AOD 0 150 1200 0.17 0.17 0.1 1\nAOD LOCK 0 350 1000 0.33 0 0.1 1\nAOD HOME 0 1020 2500 0.33 0 0.1 1\nLOCK HOME 350 1020 1500 0.17 0.17 0.1 1\nLOCK TOUCH 350 875 1500 0.17 0.17 0.1 1"
+        }
+      },
+      "filename": "video_004.mp4",
+      "frame_no": 350,
+      "desc_str_id": "str_id_dark_purple",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": false,
+      "index": 4,
+      "which": 7,
+      "screen": 0,
+      "target_screen_only": true,
+      "type": 10,
+      "type_params": {
+        "content_type": "infinity",
+        "service_package_name": "com.samsung.android.wallpaper.live",
+        "service_class_name": "com.samsung.android.wallpaper.live.infinity.InfinityWallpaper",
+        "service_settings": {
+          "filename": "video_005.mp4",
+          "thumbnail_system_frame_no": 1021,
+          "thumbnail_lock_frame_no": 350,
+          "thumbnail_frame_no": 350,
+          "transition_frame_info": "AOD AOD 0 150 1200 0.17 0.17 0.1 1\nAOD LOCK 0 350 1000 0.33 0 0.1 1\nAOD HOME 0 1020 2500 0.33 0 0.1 1\nLOCK HOME 350 1020 1500 0.17 0.17 0.1 1\nLOCK TOUCH 350 875 1500 0.17 0.17 0.1 1"
+        }
+      },
+      "filename": "video_005.mp4",
+      "frame_no": 350,
+      "desc_str_id": "str_id_gray",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": false,
+      "index": 5,
+      "which": 7,
+      "screen": 0,
+      "target_screen_only": true,
+      "type": 10,
+      "type_params": {
+        "content_type": "infinity",
+        "service_package_name": "com.samsung.android.wallpaper.live",
+        "service_class_name": "com.samsung.android.wallpaper.live.infinity.InfinityVideoWallpaper",
+        "service_settings": {
+          "filename": "video_006.mp4",
+          "thumbnail_system_frame_no": 1021,
+          "thumbnail_lock_frame_no": 350,
+          "thumbnail_frame_no": 350,
+          "transition_frame_info": "AOD AOD 0 150 1200 0.17 0.17 0.1 1\nAOD LOCK 0 350 1000 0.33 0 0.1 1\nAOD HOME 0 1020 2500 0.33 0 0.1 1\nLOCK HOME 350 1020 1500 0.17 0.17 0.1 1\nLOCK TOUCH 350 875 1500 0.17 0.17 0.1 1"
+        }
+      },
+      "filename": "video_006.mp4",
+      "frame_no": 350,
+      "desc_str_id": "str_id_silver",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": false,
+      "index": 6,
+      "which": 7,
+      "screen": 0,
+      "target_screen_only": true,
+      "type": 10,
+      "type_params": {
+        "content_type": "infinity",
+        "service_package_name": "com.samsung.android.wallpaper.live",
+        "service_class_name": "com.samsung.android.wallpaper.live.infinity.InfinityVideoWallpaper",
+        "service_settings": {
+          "filename": "video_007.mp4",
+          "thumbnail_system_frame_no": 1021,
+          "thumbnail_lock_frame_no": 350,
+          "thumbnail_frame_no": 350,
+          "transition_frame_info": "AOD AOD 0 150 1200 0.17 0.17 0.1 1\nAOD LOCK 0 350 1000 0.33 0 0.1 1\nAOD HOME 0 1020 2500 0.33 0 0.1 1\nLOCK HOME 350 1020 1500 0.17 0.17 0.1 1\nLOCK TOUCH 350 875 1500 0.17 0.17 0.1 1"
+        }
+      },
+      "filename": "video_007.mp4",
+      "frame_no": 350,
+      "desc_str_id": "str_id_green",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": false,
+      "index": 7,
+      "which": 7,
+      "screen": 0,
+      "target_screen_only": true,
+      "type": 10,
+      "type_params": {
+        "content_type": "infinity",
+        "service_package_name": "com.samsung.android.wallpaper.live",
+        "service_class_name": "com.samsung.android.wallpaper.live.infinity.InfinityVideoWallpaper",
+        "service_settings": {
+          "filename": "video_008.mp4",
+          "thumbnail_system_frame_no": 1021,
+          "thumbnail_lock_frame_no": 350,
+          "thumbnail_frame_no": 350,
+          "transition_frame_info": "AOD AOD 0 150 1200 0.17 0.17 0.1 1\nAOD LOCK 0 350 1000 0.33 0 0.1 1\nAOD HOME 0 1020 2500 0.33 0 0.1 1\nLOCK HOME 350 1020 1500 0.17 0.17 0.1 1\nLOCK TOUCH 350 875 1500 0.17 0.17 0.1 1"
+        }
+      },
+      "filename": "video_008.mp4",
+      "frame_no": 350,
+      "desc_str_id": "str_id_light_blue",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": false,
+      "index": 8,
+      "which": 7,
+      "screen": 0,
+      "target_screen_only": true,
+      "type": 10,
+      "type_params": {
+        "content_type": "infinity",
+        "service_package_name": "com.samsung.android.wallpaper.live",
+        "service_class_name": "com.samsung.android.wallpaper.live.infinity.InfinityVideoWallpaper",
+        "service_settings": {
+          "filename": "video_009.mp4",
+          "thumbnail_system_frame_no": 1021,
+          "thumbnail_lock_frame_no": 350,
+          "thumbnail_frame_no": 350,
+          "transition_frame_info": "AOD AOD 0 150 1200 0.17 0.17 0.1 1\nAOD LOCK 0 350 1000 0.33 0 0.1 1\nAOD HOME 0 1020 2500 0.33 0 0.1 1\nLOCK HOME 350 1020 1500 0.17 0.17 0.1 1\nLOCK TOUCH 350 875 1500 0.17 0.17 0.1 1"
+        }
+      },
+      "filename": "video_009.mp4",
+      "frame_no": 350,
+      "desc_str_id": "str_id_blue",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": false,
+      "index": 9,
+      "which": 7,
+      "screen": 0,
+      "target_screen_only": true,
+      "type": 10,
+      "type_params": {
+        "content_type": "infinity",
+        "service_package_name": "com.samsung.android.wallpaper.live",
+        "service_class_name": "com.samsung.android.wallpaper.live.infinity.InfinityVideoWallpaper",
+        "service_settings": {
+          "filename": "video_010.mp4",
+          "thumbnail_system_frame_no": 1021,
+          "thumbnail_lock_frame_no": 350,
+          "thumbnail_frame_no": 350,
+          "transition_frame_info": "AOD AOD 0 150 1200 0.17 0.17 0.1 1\nAOD LOCK 0 350 1000 0.33 0 0.1 1\nAOD HOME 0 1020 2500 0.33 0 0.1 1\nLOCK HOME 350 1020 1500 0.17 0.17 0.1 1\nLOCK TOUCH 350 875 1500 0.17 0.17 0.1 1"
+        }
+      },
+      "filename": "video_010.mp4",
+      "frame_no": 350,
+      "desc_str_id": "str_id_pink",
+      "cmf_info": [
+        ""
+      ]
+    }
+  ],
+  "dex": [
+    {
+      "isDefault": true,
+      "index": 0,
+      "which": 11,
+      "screen": 10,
+      "type": 0,
+      "filename": "dex_wallpaper_1.png"
+    },
+    {
+      "isDefault": true,
+      "index": 0,
+      "which": 11,
+      "screen": 10,
+      "type": 0,
+      "filename": "dex_wallpaper_2.png",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": true,
+      "index": 0,
+      "which": 11,
+      "screen": 10,
+      "type": 0,
+      "filename": "dex_wallpaper_3.png",
+      "cmf_info": [
+        ""
+      ]
+    },
+    {
+      "isDefault": true,
+      "index": 0,
+      "which": 11,
+      "screen": 10,
+      "type": 0,
+      "filename": "dex_wallpaper_4.png",
+      "cmf_info": [
+        ""
+      ]
+    }
+  ],
+  "types": [
+    {
+      "which": 2,
+      "screen": 0,
+      "type": 10
+    },
+    {
+      "which": 1,
+      "screen": 0,
+      "type": 10
+    }
+  ]
+}
