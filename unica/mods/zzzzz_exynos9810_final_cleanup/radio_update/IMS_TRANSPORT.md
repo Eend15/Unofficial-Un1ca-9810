@@ -1,0 +1,9 @@
+# IMS transport on Exynos9810
+
+The bundled N770F RIL registers `vendor.samsung.hardware.radio.channel@2.0::ISehChannel/imsd` and `imsd2`. Samsung's donor IMS dispatcher factory selects AIDL when `ro.vendor.api_level >= 33`. This ROM needs API level 33 for other compatibility, so the unmodified factory attempts to use undeclared AIDL `ISehRadioChannel` instances and retries every four seconds on both slots.
+
+`patch_ims_transport.py` selects the existing HIDL dispatcher in this Exynos9810-only module. It preserves the slot argument, callbacks, link-to-death registration, IPC payloads and reconnect implementation. It does not lower the vendor API level or disable IMS, VoLTE, Wi-Fi calling, SMS or either SIM slot. The build helper requires both HIDL channel declarations and the original callback/death registration methods before patching.
+
+Validation includes an idempotent factory-only patch test, rejection of an unexpected factory, assembly of the modified APK and execution of the real build helper in isolated trees for starlte, star2lte and crownlte. On the test S9+ after reboot, both slots reported `onIilConnected`, received modem IPC and sent `IPC_IIL_PREFERENCE` with `SmsFormat=3GPP`; the former AIDL-null/dead-proxy loop stopped. A live modem-channel connection check is separate from carrier registration and SMS delivery.
+
+The available test phone reports both SIM slots absent. Actual SMS send/receive reliability remains unverified. A SIM-equipped test should cover sending and receiving after boot, after airplane-mode recovery and after an idle period, with IMS enabled. Record the device model, carrier, SIM slot, firmware version and radio/IMS logs for any remaining failure. Check whether the failing message is SMS or RCS; the transport repair alone does not establish that all reported messaging failures share this cause.

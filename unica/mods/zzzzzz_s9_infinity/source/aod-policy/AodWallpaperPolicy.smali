@@ -2,6 +2,7 @@
 .super Ljava/lang/Object;
 .field private static lastState:I = -1
 .field private static lastUser:I = -1
+.field private static watchers:Ljava/util/ArrayList;
 .field private static ctx:Landroid/content/Context;
 .method public constructor <init>()V
     .locals 0
@@ -16,14 +17,65 @@
     invoke-virtual {v0}, Landroid/app/ActivityThread;->getSystemContext()Landroid/app/ContextImpl;
     move-result-object v0
     sput-object v0, LAodWallpaperPolicy;->ctx:Landroid/content/Context;
-    :loop
+    invoke-static {}, LAodWallpaperPolicy;->watchUsers()V
     invoke-static {}, LAodWallpaperPolicy;->apply()V
-    const-wide/16 v0, 0x7d0
-    invoke-static {v0, v1}, Landroid/os/SystemClock;->sleep(J)V
-    goto :loop
+    invoke-static {}, Landroid/os/Looper;->loop()V
+    return-void
 .end method
 
-.method public static apply()V
+# Samsung's Android 16 broadcast registry requires an application process.
+# Observe atomic wallpaper metadata updates directly from this root init service.
+.method public static synchronized watchUsers()V
+    .locals 6
+    sget-object v0, LAodWallpaperPolicy;->watchers:Ljava/util/ArrayList;
+    if-eqz v0, :create
+    invoke-virtual {v0}, Ljava/util/ArrayList;->iterator()Ljava/util/Iterator;
+    move-result-object v1
+    :stop
+    invoke-interface {v1}, Ljava/util/Iterator;->hasNext()Z
+    move-result v2
+    if-eqz v2, :create
+    invoke-interface {v1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
+    move-result-object v2
+    check-cast v2, Landroid/os/FileObserver;
+    invoke-virtual {v2}, Landroid/os/FileObserver;->stopWatching()V
+    goto :stop
+    :create
+    new-instance v0, Ljava/util/ArrayList;
+    invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
+    sput-object v0, LAodWallpaperPolicy;->watchers:Ljava/util/ArrayList;
+    const-string v1, "/data/system/users"
+    new-instance v2, LAodWallpaperPolicyObserver;
+    invoke-direct {v2, v1}, LAodWallpaperPolicyObserver;-><init>(Ljava/lang/String;)V
+    invoke-virtual {v2}, Landroid/os/FileObserver;->startWatching()V
+    invoke-virtual {v0, v2}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
+    new-instance v2, Ljava/io/File;
+    invoke-direct {v2, v1}, Ljava/io/File;-><init>(Ljava/lang/String;)V
+    invoke-virtual {v2}, Ljava/io/File;->listFiles()[Ljava/io/File;
+    move-result-object v1
+    if-eqz v1, :done
+    const/4 v2, 0x0
+    array-length v3, v1
+    :next
+    if-ge v2, v3, :done
+    aget-object v4, v1, v2
+    invoke-virtual {v4}, Ljava/io/File;->isDirectory()Z
+    move-result v5
+    if-eqz v5, :advance
+    invoke-virtual {v4}, Ljava/io/File;->getAbsolutePath()Ljava/lang/String;
+    move-result-object v4
+    new-instance v5, LAodWallpaperPolicyObserver;
+    invoke-direct {v5, v4}, LAodWallpaperPolicyObserver;-><init>(Ljava/lang/String;)V
+    invoke-virtual {v5}, Landroid/os/FileObserver;->startWatching()V
+    invoke-virtual {v0, v5}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
+    :advance
+    add-int/lit8 v2, v2, 0x1
+    goto :next
+    :done
+    return-void
+.end method
+
+.method public static synchronized apply()V
     .locals 8
     :try_start
     sget-object v0, LAodWallpaperPolicy;->ctx:Landroid/content/Context;

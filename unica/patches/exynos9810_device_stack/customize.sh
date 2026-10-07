@@ -3106,8 +3106,9 @@ _EXYNOS9810_APPLY_BOOT_PROPS()
     _EXYNOS9810_SET_PROP_ALL "fw.show_hidden_users" "1"
     _EXYNOS9810_SET_PROP_ALL "fw.power_user_switcher" "1"
     _EXYNOS9810_SET_PROP_ALL "persist.sys.unica.pif" "true"
-    _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.version" "20260603"
-    _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.fingerprint" "google/shiba_beta/shiba:CANARY/ZP11.260515.009/15513807:user/release-keys"
+    # Match the profile distributed by the built-in UN1CA sixteen updater.
+    _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.version" "20260916"
+    _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.fingerprint" "google/shiba_beta/shiba:CANARY/ZP11.260821.010/16290768:user/release-keys"
     _EXYNOS9810_SET_PROP_ALL "boot.fps" "30"
     _EXYNOS9810_SET_PROP_ALL "shutdown.fps" "30"
     _EXYNOS9810_DELETE_PROP_VENDOR_SIDE "ro.crypto.state"

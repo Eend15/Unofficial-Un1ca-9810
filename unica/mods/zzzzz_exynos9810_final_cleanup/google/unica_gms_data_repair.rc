@@ -1,0 +1,10 @@
+on property:sys.boot_completed=1 && property:sys.user.0.ce_available=true
+    start unica_gms_data_repair
+
+service unica_gms_data_repair /system/bin/sh /system/bin/unica_gms_data_repair.sh
+    class late_start
+    user root
+    group root system shell
+    disabled
+    oneshot
+    seclabel u:r:su:s0

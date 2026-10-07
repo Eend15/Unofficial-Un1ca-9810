@@ -1845,6 +1845,21 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK()
 
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES()
 {
+    # The audio service already supplies the legacy 2.0 SoundTrigger HAL. Without
+    # its VINTF declaration registration fails, leaving stdev unopened while
+    # voice input repeatedly tries to read the VTS capture PCM (-ENODEV).
+    local ST_MANIFEST="etc/vintf/manifest/unica.soundtrigger.xml"
+    [ -f "$WORK_DIR/vendor/lib/hw/android.hardware.soundtrigger@2.0-impl.so" ] || return 1
+    [ -f "$WORK_DIR/vendor/lib/hw/sound_trigger.primary.exynos9810.so" ] || return 1
+    install -D -m 644 "$MODPATH/audio/soundtrigger.xml" "$WORK_DIR/vendor/$ST_MANIFEST" || return 1
+    _EXYNOS9810_FINAL_SET_METADATA "vendor" "$ST_MANIFEST" \
+        0 0 644 "u:object_r:vendor_configs_file:s0"
+
+    local UI_BASELINE="$EXYNOS9810_EMBEDDED_PORT_DIR/vendor/etc/situation_audio_policy_volumes_sec.xml"
+    local UI_TABLE="$WORK_DIR/vendor/etc/situation_audio_policy_volumes_sec.xml"
+    LOG "- Calibrating Samsung keyboard and touch feedback on built-in speakers"
+    python3 "$MODPATH/audio/calibrate_ui_volumes.py" "$UI_BASELINE" "$UI_TABLE" || return 1
+
     local TABLE="$WORK_DIR/vendor/etc/default_volume_tables.xml"
     local POLICY="$WORK_DIR/vendor/etc/audio_policy_volumes.xml"
 
@@ -1862,9 +1877,8 @@ import xml.etree.ElementTree as ET
 table_path, policy_path = sys.argv[1:]
 
 # The legacy WM1814/WM5110 mixer is already the proven Exynos9810 device mixer. The
-# One UI 8 framework, however, maps its short volume-index range onto these
-# generic curves too aggressively. Increase attenuation only below 100%; keep
-# the final point at 0 mB so maximum media/call volume is unchanged.
+# generic curves retain the existing device calibration. Samsung tagged UI
+# feedback uses situation_audio_policy_volumes_sec.xml, calibrated separately.
 table_updates = {
     "DEFAULT_SYSTEM_VOLUME_CURVE": [(1, -4200), (33, -3000), (66, -1800), (100, -600)],
     "DEFAULT_MEDIA_VOLUME_CURVE": [(1, -6800), (20, -5000), (60, -2300), (100, -600)],
@@ -1921,8 +1935,23 @@ PY
     return 0
 }
 
+_EXYNOS9810_FINAL_STAGE_GOOGLE_DATA_REPAIR()
+{
+    install -D -m 755 "$MODPATH/google/unica_gms_data_repair.sh" \
+        "$WORK_DIR/system/system/bin/unica_gms_data_repair.sh" || return 1
+    install -D -m 644 "$MODPATH/google/unica_gms_data_repair.rc" \
+        "$WORK_DIR/system/system/etc/init/unica_gms_data_repair.rc" || return 1
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/unica_gms_data_repair.sh" \
+        0 2000 755 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/init/unica_gms_data_repair.rc" \
+        0 0 644 "u:object_r:system_file:s0"
+
+    return 0
+}
+
 _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT()
 {
+
     # KernelSU Next's legacy kernel scanner only crowns a manager found as a
     # normal /data/app/.../base.apk. An otherwise byte-identical APK placed in
     # /system/app is ignored, leaving the manager without its KernelSU fd and
@@ -4659,6 +4688,34 @@ print("ok")
 PY
 }
 
+_EXYNOS9810_FINAL_RESTORE_TARGET_WIDEVINE()
+{
+    # OEMCrypto and its signed TA must match the target's Exynos9810 TEE.
+    # The newer donor pair fails TEEC_OpenSession and silently falls back to L3.
+    local TARGET_FW REL
+    TARGET_FW="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+    LOG "- Restoring target-matched Widevine OEMCrypto and trusted application"
+    for REL in lib/liboemcrypto.so app/mcRegistry/00060308060501020000000000000000.tlbin; do
+        [ -s "$FW_DIR/$TARGET_FW/vendor/$REL" ] || {
+            LOGE "Target Widevine component missing: $TARGET_FW/vendor/$REL"
+            return 1
+        }
+    done
+    for REL in lib/liboemcrypto.so app/mcRegistry/00060308060501020000000000000000.tlbin; do
+        install -D -m 644 "$FW_DIR/$TARGET_FW/vendor/$REL" "$WORK_DIR/vendor/$REL" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
+            0 0 644 "u:object_r:vendor_file:s0" || return 1
+    done
+}
+
+_EXYNOS9810_FINAL_FIX_NOTE9_CHARGE_SETTLE()
+{
+    [[ "$TARGET_CODENAME" == "crownlte" ]] || return 0
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/AirCommand/AirCommand.apk"
+    python3 "$MODPATH/spen/patch_crown_charge.py" \
+        "$APK_DIR/smali/j3/a.smali" "$APK_DIR/smali/androidx/activity/d.smali" || return 1
+}
+
 _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_SYSFS_BRIDGE()
 {
     # One UI 8 routes BLE charging commands through SemInputDeviceManager and
@@ -5218,6 +5275,29 @@ if n != 1:
     raise SystemExit(f"expected 1 QR lite gate, patched {n}")
 open(path, "w").write(new)
 PY
+}
+
+_EXYNOS9810_FINAL_FIX_IMS_RADIO_TRANSPORT()
+{
+    local APK_REL="system/priv-app/imsservice/imsservice.apk"
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/imsservice/imsservice.apk"
+    local FACTORY HIDL
+
+    LOG "- Matching IMS transport to the Exynos9810 HIDL radio channel"
+    # API level 33 is needed elsewhere in this port, but does not imply an
+    # AIDL modem. Keep the vendor properties and Samsung's complete IMS stack.
+    grep -q '<instance>imsd</instance>' \
+        "$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml" || return 1
+    grep -q '<instance>imsd2</instance>' \
+        "$WORK_DIR/vendor/etc/vintf/manifest/vendor.samsung.hardware.sehradio_manifest_2_31.xml" || return 1
+    DECODE_APK "system" "$APK_REL" || return 1
+    FACTORY="$(find "$APK_DIR" -type f -path '*/com/sec/internal/ims/core/iil/IpcDispatcherFactory.smali' -print -quit)"
+    [ -n "$FACTORY" ] || return 1
+    HIDL="$(dirname "$FACTORY")/IpcDispatcherHidl.smali"
+    [ -f "$HIDL" ] || return 1
+    grep -q 'ISehChannel;->setCallback' "$HIDL" || return 1
+    grep -q 'ISehChannel;->linkToDeath' "$HIDL" || return 1
+    python3 "$MODPATH/radio_update/patch_ims_transport.py" "$FACTORY" || return 1
 }
 
 _EXYNOS9810_FINAL_FIX_WALLPAPER_OBJECTCAPTURE()
@@ -6414,6 +6494,22 @@ _EXYNOS9810_FINAL_VERIFY_REPORTED_BUG_FIXES()
         }
     }
 
+    # A legacy runtime patch blocked every GMS/Play Store certificate chain,
+    # including ordinary Cryptauth and Play Integrity API requests. Reject
+    # that blanket hook; the source PIF hook scopes its fallback to DroidGuard.
+    python3 - "$WORK_DIR/system/system/framework/framework.jar" <<'PY' || return 1
+import sys
+import zipfile
+with zipfile.ZipFile(sys.argv[1]) as jar:
+    for name in jar.namelist():
+        if name.endswith('.dex'):
+            dex = jar.read(name)
+            if any(message in dex for message in (
+                b'Blocked GMS key attestation', b'Blocked Vending key attestation'
+            )):
+                raise SystemExit('Framework still contains blanket GMS/Play Store attestation blocking')
+PY
+
     for REL in "$FEATURE_SYSTEM" "$FEATURE_VENDOR"; do
         [ -f "$REL" ] || {
             LOGE "Floating-feature file is missing: $REL"
@@ -6608,6 +6704,7 @@ _EXYNOS9810_FINAL_RAM_TWEAKS
 _EXYNOS9810_FINAL_ENSURE_DISPLAY_PROPS
 _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK
 _EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK
+_EXYNOS9810_FINAL_RESTORE_TARGET_WIDEVINE || return 1
 _EXYNOS9810_FINAL_RESTORE_RAMPLUS_FILES
 _EXYNOS9810_FINAL_RESTORE_EMBEDDED_REMOTEDISPLAY
 _EXYNOS9810_FINAL_RESTORE_EMBEDDED_SENSORS
@@ -6615,6 +6712,7 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK
 _EXYNOS9810_FINAL_ENABLE_CAMERA_UHD_60FPS
 _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES
+_EXYNOS9810_FINAL_STAGE_GOOGLE_DATA_REPAIR
 _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT
 _EXYNOS9810_FINAL_ADD_VISUAL_CLOUD_CORE
 _EXYNOS9810_FINAL_VERIFY_PHOTO_EDITOR_STACK
@@ -6624,6 +6722,7 @@ _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN
 _EXYNOS9810_FINAL_PATCH_AIRCOMMAND_BLE_CONTROLLER_NULL
 _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_SYSFS_BRIDGE
 _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_BLE_PROTOCOL
+_EXYNOS9810_FINAL_FIX_NOTE9_CHARGE_SETTLE
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY
 _EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME
 _EXYNOS9810_FINAL_PATCH_CAMERA_PORTRAIT_RESUME
@@ -6631,6 +6730,7 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY
 _EXYNOS9810_FINAL_PATCH_CAMERA_QR_POPUP_CRASH
 _EXYNOS9810_FINAL_PATCH_CAMERA_SEAMLESS_ZOOM_GUARD
 _EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT
+_EXYNOS9810_FINAL_FIX_IMS_RADIO_TRANSPORT || return 1
 _EXYNOS9810_FINAL_FIX_WALLPAPER_OBJECTCAPTURE
 _EXYNOS9810_FINAL_FIX_SNAP_IMAGETAGGER_MODEL_PAIR
 _EXYNOS9810_FINAL_PATCH_ONEUI8_IPSERVICE
