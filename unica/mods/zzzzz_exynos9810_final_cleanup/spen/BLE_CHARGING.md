@@ -27,3 +27,16 @@ unexpected donor rejection; assembled the complete smali tree of the existing
 These repairs address confirmed incompatibilities, but successful BLE pairing
 and camera/media single/double presses still require a Note9 hardware test.
 The log alone cannot exclude a discharged or faulty pen or another scan issue.
+
+The October 8 source audit also corrected the legacy-button patch's repeat
+application check: it checked a label it never inserted, so the second pass
+failed with `legacy button pattern mismatch`. It now checks the actual inserted
+label. Note9 setup, controller, sysfs, BLE protocol and charge-settle failures
+now propagate to the build instead of allowing an incomplete port to ship.
+The controller decoder and garage fallback also propagate failures.
+
+Validation used a fresh decode of the repository's AirCommand APK on a Linux
+filesystem, applied the controller/protocol/charging patches twice, and built
+the complete APK successfully. Both charging tests passed. This is source and
+assembly verification, not proof of successful radio pairing or button actions;
+only an S9+ was connected during this audit.

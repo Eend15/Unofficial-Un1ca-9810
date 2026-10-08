@@ -1007,6 +1007,8 @@ _EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY()
 (allow vold vendor_file (file (getattr open read)))
 (allow vold vendor_zram_prop (file (getattr open read)))
 (allow vold_prepare_subdirs vendor_apex_file (dir (search)))
+# Smart View's passthrough mapper lookup enumerates /vendor/lib/hw.
+(allow remotedisplay vendor_file (dir (open read)))
 (allow wificond vendor_apex_file (dir (search)))
 (allow zygote vendor_default_prop (file (getattr open read)))
 (allow zygote vendor_file (dir (open read)))

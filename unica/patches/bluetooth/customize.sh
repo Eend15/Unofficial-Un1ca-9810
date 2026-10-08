@@ -139,7 +139,19 @@ else
 fi
 
 _FDF1_PATCH_COUNT=0
+# Include the BP2A.250605.031.A3 layout as well as the earlier donor layout.
+# Only DBFW vendor-debug sends are skipped; OPP/OBEX, audio and pairing remain.
 for _FDF1_CALL in \
+    "20be9f52c1008052e3031faac2b40b94" \
+    "20be9f5241008052e3031faa70e70a94" \
+    "20be9f5241008052e3031faaf3c30039f4c7003939e70a94" \
+    "20be9f52c1008052e3031faaff2b0179e89300b9427f0a94" \
+    "20be9f5241008052e3031faabb0e0a94" \
+    "20be9f5261008052e3031faa310e0a94" \
+    "20be9f5261008052e3031faaff0d0a94" \
+    "20be9f5261008052e3031faafa0d0a94" \
+    "20be9f5281008052e3031faaac0d0a94" \
+    "20be9f5281008052e3031faa980d0a94" \
     "20be9f52c1008052e3031faa42b40b94" \
     "20be9f5241008052e3031faaf0e60a94" \
     "20be9f5241008052e3031faaf3c30039f4c70039b9e60a94" \
