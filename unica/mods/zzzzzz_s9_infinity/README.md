@@ -4,6 +4,16 @@ Applied after zzzzz_exynos9810_final_cleanup to starlte (S9), star2lte (S9+) and
 
 Five native color variants appear first: Blue, Gold, Pink, Purple, Gray. The five UN1CA S-shaped video variants follow. Samsung native model names differ from visible colors: Purple data is pink, Black data is purple, Orchid/grey data is gray. Preview customdata is handled by the active native engine and retained across scene rebuilds.
 
+The thumbnail provider also registers the native InfinityWallpaper component.
+For video_001 through video_005 it uses the corresponding stock lock/home
+background resource instead of donor video frames; other filenames retain the
+video thumbnail path. Startup repairs existing wallpaper_thumbs directories to
+system:system mode 0700. S9+ overview validation on 2026-10-08 confirmed both
+panels show the selected Blue background after previously showing black/purple.
+These static overview backgrounds do not include the animated crystal meshes.
+Use source/rebuild.py --sprite-only for Sprite smali changes without rebuilding
+the unrelated AOD application's resources.
+
 The original mesh/textures, transitions and interrupt gyro are retained. Each AOD engine schedules its own four-second timer followed by a 600 ms fade to black; the clock remains visible. The AOD plugin bridge affects only native Infinity. The two tested sensor libraries replace the earlier embedded sensor copies.
 
 A boot-started policy checks the actual current-user lockscreen component and filename at startup and when wallpaper metadata changes. File observers watch all existing user directories and refresh when user metadata or directories change; there is no polling timer or wakelock. Samsung's Android 16 broadcast registry requires an application process, so this standalone init service observes the atomic metadata writes directly. A shared lockscreen follows the home wallpaper. Fullscreen AOD is enabled only for native Infinity video_001 through video_005 and disabled for all other wallpapers, including UN1CA videos. Merely opening a preview does not enable it. The setting changes only when the selected policy state or user changes. Startup preserves an existing home motion preference and supplies the default when absent.

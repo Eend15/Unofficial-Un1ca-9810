@@ -58,7 +58,78 @@
 .end method
 
 .method private makeThumbnailBitmap(Landroid/content/Context;Lcom/samsung/android/wallpaper/live/infinity/thumbnail/InfinityResourceInfo;I)Landroid/graphics/Bitmap;
-    .locals 0
+    .locals 4
+
+    # Native Infinity uses meshes, not the donor video timeline. Its overview
+    # thumbnails must use the same filename-to-colour mapping as the renderer.
+    invoke-virtual {p2}, Lcom/samsung/android/wallpaper/live/infinity/thumbnail/InfinityResourceInfo;->getFileName()Ljava/lang/String;
+    move-result-object v0
+
+    const-string v1, "video_001.mp4"
+    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    move-result v2
+    if-eqz v2, :native_next_1
+    const-string v0, "wallpaper_blue"
+    goto :native_resource
+    :native_next_1
+
+    const-string v1, "video_002.mp4"
+    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    move-result v2
+    if-eqz v2, :native_next_2
+    const-string v0, "wallpaper_gold"
+    goto :native_resource
+    :native_next_2
+
+    const-string v1, "video_003.mp4"
+    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    move-result v2
+    if-eqz v2, :native_next_3
+    const-string v0, "wallpaper_purple"
+    goto :native_resource
+    :native_next_3
+
+    const-string v1, "video_004.mp4"
+    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    move-result v2
+    if-eqz v2, :native_next_4
+    const-string v0, "wallpaper_black"
+    goto :native_resource
+    :native_next_4
+
+    const-string v1, "video_005.mp4"
+    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    move-result v2
+    if-eqz v2, :native_next_5
+    const-string v0, "wallpaper_grey"
+    goto :native_resource
+    :native_next_5
+
+    goto :native_video_fallback
+    :native_resource
+    const/16 v1, 0x3e8
+    if-lt p3, v1, :native_lock
+    const-string v1, "_home"
+    goto :native_suffix
+    :native_lock
+    const-string v1, "_lock"
+    :native_suffix
+    invoke-virtual {v0, v1}, Ljava/lang/String;->concat(Ljava/lang/String;)Ljava/lang/String;
+    move-result-object v0
+    invoke-virtual {p1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+    move-result-object v1
+    invoke-virtual {p1}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
+    move-result-object v2
+    const-string v3, "drawable"
+    invoke-virtual {v1, v0, v3, v2}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+    move-result v0
+    if-eqz v0, :native_video_fallback
+    invoke-static {v1, v0}, Landroid/graphics/BitmapFactory;->decodeResource(Landroid/content/res/Resources;I)Landroid/graphics/Bitmap;
+    move-result-object v0
+    if-eqz v0, :native_video_fallback
+    return-object v0
+    :native_video_fallback
+
 
     :try_start_0
     invoke-virtual {p2}, Lcom/samsung/android/wallpaper/live/infinity/thumbnail/InfinityResourceInfo;->getFileName()Ljava/lang/String;

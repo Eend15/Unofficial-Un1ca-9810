@@ -2792,7 +2792,8 @@ PY
 
 _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA()
 {
-    # Keep the exact stock One UI 8 v26 app/cameraserver pair. The v2 UniHAL
+    # Keep the One UI 8 app/cameraserver pair, with Samsung Photo routing
+    # restored in the app rather than replacing it with the One UI 5 APK. The v2 UniHAL
     # payload is byte-identical to the previously working build except for a
     # tiny hook in unused executable padding: on a cold camera session it
     # restores Samsung's option-2 flag to the JPEG stream before the existing
@@ -2833,11 +2834,11 @@ _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA()
     }
 
     # Refuse to package a silently replaced or stale payload. These are the
-    # hashes of the exact proven SamsungCamera APK (One UI 8 v26 base plus the
-    # working Motion Photo SURFACE-mode stack), cold-session-safe 32-bit
+    # hashes of the SamsungCamera APK (One UI 8 base plus Motion Photo
+    # SURFACE mode and restored Samsung Photo routing), cold-session-safe 32-bit
     # UniHAL and cameraserver combination.
     [ "$(sha256sum "$APK_SRC" | cut -d ' ' -f 1)" = \
-        "45d1d3c89ad7abc8b34e335f3953c8334553f94b2156bd775879d860162e5a23" ] || {
+        "6d870aa5f82934b592db6841b9d59efc17b2575a7439b8872e02db3dfe0e99d2" ] || {
         LOGE "Unexpected native SamsungCamera payload hash"
         return 1
     }
@@ -5076,114 +5077,12 @@ if interval_replacement not in text:
 path.write_text(text)
 PY
 
-    # UniHAL on the Exynos9810 omits the software QR preview-callback stream.
-    # Bypass it only for the dedicated scanner and normal Photo maker, the two
-    # sessions which feed SaivQRCodeNode. This preserves Samsung routing for
-    # video and every unrelated shooting mode.
-    MAKER_BASE_SMALI="$(find "$APK_DIR" -path '*core2/maker/MakerBase.smali' -print -quit)"
-    if [ -z "$MAKER_BASE_SMALI" ] || [ ! -f "$MAKER_BASE_SMALI" ]; then
-        LOGE "MakerBase.smali not found in SamsungCamera.apk"
-        return 1
-    fi
-
-    LOG "- Routing Photo and QR callback streams directly to the Exynos9810 HAL"
-    python3 - "$MAKER_BASE_SMALI" <<'PY' || return 1
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-text = path.read_text()
-marker = "Lcom/samsung/android/camera/core2/maker/AutoBeautyPhotoMaker;"
-needle = "    sget-object v2, Lcom/samsung/android/camera/core2/PublicMetadata;->a:Ljava/util/List;\n"
-guards = """    instance-of v2, p0, Lcom/samsung/android/camera/core2/maker/QrPhotoMaker;
-
-    if-nez v2, :cond_0
-
-    instance-of v2, p0, Lcom/samsung/android/camera/core2/maker/AutoBeautyPhotoMaker;
-
-    if-nez v2, :cond_0
-
-"""
-
-if marker not in text:
-    count = text.count(needle)
-    if count != 1:
-        raise SystemExit(f"expected one Samsung-camera parameter assignment, found {count}")
-    text = text.replace(needle, guards + needle, 1)
-else:
-    qr_guard = "instance-of v2, p0, Lcom/samsung/android/camera/core2/maker/QrPhotoMaker;"
-    if qr_guard not in text:
-        raise SystemExit("AutoBeautyPhotoMaker guard exists without QrPhotoMaker guard")
-
-path.write_text(text)
-PY
-
-    # With samsungcamera=false, the legacy Exynos9810 HAL delivers standard
-    # Camera2 capture callbacks but not Samsung's shutter vendor metadata.
-    # AutoBeautyPhotoMaker still receives and saves the JPEG, then Camera's
-    # sequence controller rejects PICTURE_RECEIVED because SHUTTER_RECEIVED
-    # never happened. Synthesize that one missing callback immediately before
-    # Core2's software capture-available callback. The guard keeps every maker
-    # which still uses UniHAL on its stock callback path.
-    PHOTO_MAKER_BASE_SMALI="$(find "$APK_DIR" -path '*core2/maker/PhotoMakerBase.smali' -print -quit)"
-    if [ -z "$PHOTO_MAKER_BASE_SMALI" ] || [ ! -f "$PHOTO_MAKER_BASE_SMALI" ]; then
-        LOGE "PhotoMakerBase.smali not found in SamsungCamera.apk"
-        return 1
-    fi
-
-    LOG "- Restoring Exynos9810 Photo capture callback ordering"
-    python3 - "$PHOTO_MAKER_BASE_SMALI" <<'PY' || return 1
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-text = path.read_text()
-marker = "# Exynos9810 legacy HAL does not publish Samsung shutter metadata."
-needle = """    invoke-virtual {p0}, Lcom/samsung/android/camera/core2/maker/MakerBase;->getMakerTag()Ljava/lang/String;
-
-    move-result-object v0
-
-    iget-object v1, p0, Lcom/samsung/android/camera/core2/maker/PhotoMakerBase;->mPictureCallback:Lcom/samsung/android/camera/core2/callback/PictureCallback;
-
-    iget-object p0, p0, Lcom/samsung/android/camera/core2/maker/MakerBase;->mCamDevice:Lcom/samsung/android/camera/core2/CamDevice;
-
-    invoke-static {v0, v1, p1, p2, p0}, Lcom/samsung/android/camera/core2/callback/helper/CallbackHelper$PictureCallbackHelper;->a(Ljava/lang/String;Lcom/samsung/android/camera/core2/callback/PictureCallback;ILjava/lang/Long;Lcom/samsung/android/camera/core2/CamDevice;)V
-"""
-replacement = """    # Exynos9810 legacy HAL does not publish Samsung shutter metadata.
-    instance-of v0, p0, Lcom/samsung/android/camera/core2/maker/AutoBeautyPhotoMaker;
-
-    if-eqz v0, :exynos9810_shutter_done
-
-    invoke-virtual {p0}, Lcom/samsung/android/camera/core2/maker/MakerBase;->getMakerTag()Ljava/lang/String;
-
-    move-result-object v0
-
-    iget-object v1, p0, Lcom/samsung/android/camera/core2/maker/PhotoMakerBase;->mPictureCallback:Lcom/samsung/android/camera/core2/callback/PictureCallback;
-
-    iget-object v2, p0, Lcom/samsung/android/camera/core2/maker/MakerBase;->mCamDevice:Lcom/samsung/android/camera/core2/CamDevice;
-
-    invoke-static {v0, v1, p1, p2, v2}, Lcom/samsung/android/camera/core2/callback/helper/CallbackHelper$PictureCallbackHelper;->g(Ljava/lang/String;Lcom/samsung/android/camera/core2/callback/PictureCallback;ILjava/lang/Long;Lcom/samsung/android/camera/core2/CamDevice;)V
-
-    :exynos9810_shutter_done
-    invoke-virtual {p0}, Lcom/samsung/android/camera/core2/maker/MakerBase;->getMakerTag()Ljava/lang/String;
-
-    move-result-object v0
-
-    iget-object v1, p0, Lcom/samsung/android/camera/core2/maker/PhotoMakerBase;->mPictureCallback:Lcom/samsung/android/camera/core2/callback/PictureCallback;
-
-    iget-object p0, p0, Lcom/samsung/android/camera/core2/maker/MakerBase;->mCamDevice:Lcom/samsung/android/camera/core2/CamDevice;
-
-    invoke-static {v0, v1, p1, p2, p0}, Lcom/samsung/android/camera/core2/callback/helper/CallbackHelper$PictureCallbackHelper;->a(Ljava/lang/String;Lcom/samsung/android/camera/core2/callback/PictureCallback;ILjava/lang/Long;Lcom/samsung/android/camera/core2/CamDevice;)V
-"""
-
-if marker not in text:
-    count = text.count(needle)
-    if count != 1:
-        raise SystemExit(f"expected one software capture-available callback, found {count}")
-    text = text.replace(needle, replacement, 1)
-
-path.write_text(text)
-PY
+    # Normal Photo must retain Samsung identification: bypassing UniHAL also
+    # bypasses its Samsung processing scenario. Only the dedicated scanner
+    # keeps the direct callback route. Remove the old synthetic Photo shutter
+    # callback when migrating an already decoded APK to the Samsung route.
+    LOG "- Restoring Samsung Photo processing with a dedicated QR callback route"
+    python3 "$MODPATH/native_camera/patches/restore_photo_processing.py" "$APK_DIR" || return 1
 
     # Software decoding takes 500-850 ms on Exynos9810. The stock 500 ms Photo
     # cadence can overlap decoder work until the legacy HAL stops returning
@@ -5555,6 +5454,28 @@ new, count = pattern.subn(replacement, text, count=1)
 if count != 1:
     raise SystemExit(f"expected one Rubin database-key method, patched {count}")
 path.write_text(new)
+PY
+
+    LOG "- Pinning Rubin version code to prevent invalid Galaxy Store update"
+    python3 - "$RUBIN_DIR" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+rubin_dir = Path(sys.argv[1])
+manifest = rubin_dir / "AndroidManifest.xml"
+apktool_yml = rubin_dir / "apktool.yml"
+
+if manifest.is_file():
+    text = manifest.read_text()
+    text = re.sub(r'android:versionCode="[0-9]+"', 'android:versionCode="999999999"', text, count=1)
+    manifest.write_text(text)
+
+if apktool_yml.is_file():
+    text = apktool_yml.read_text()
+    text = re.sub(r"versionCode:\s*'[0-9]+'", "versionCode: '999999999'", text, count=1)
+    text = re.sub(r'versionCode:\s*[0-9]+', 'versionCode: 999999999', text, count=1)
+    apktool_yml.write_text(text)
 PY
 
     LOG "- Patching Smart Suggestions database keys for legacy Exynos9810 keymaster"
@@ -6680,7 +6601,22 @@ _EXYNOS9810_FINAL_VERIFY_ENFORCING_BOOT_STATE()
 }
 
 
+_EXYNOS9810_FINAL_RESTORE_STOCK_LED_DEFAULTS()
+{
+    # Stock S9 framework resources: blue, 500 ms on / 5000 ms off.
+    # Keep Samsung's existing charging/low-battery HAL and channel/DND policy.
+    case "$TARGET_CODENAME" in
+        starlte|star2lte) ;;
+        *) return 0 ;;
+    esac
+    local APK_DIR="$APKTOOL_DIR/system/framework/framework-res.apk"
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/framework/framework-res.apk" || return 1
+    LOG "- Restoring stock S9-series notification LED colour and timing"
+    python3 "$MODPATH/lights/restore_stock_led.py" "$APK_DIR" || return 1
+}
+
 _EXYNOS9810_FINAL_REPATCH_APPS
+_EXYNOS9810_FINAL_RESTORE_STOCK_LED_DEFAULTS || return 1
 _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK
 _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF
 _EXYNOS9810_FINAL_APPLY_TESTED_RADIO_RESTORE_V5

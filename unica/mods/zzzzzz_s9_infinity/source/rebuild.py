@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import subprocess, shutil, tempfile
+import subprocess, shutil, tempfile, sys
 root=Path(__file__).resolve().parents[4]
 module=Path(__file__).resolve().parents[1]
 tools=root/'out/tools/bin'
@@ -8,10 +8,10 @@ keys=root/'external/android-tools/vendor/build/target/product/security'
 def run(*args): subprocess.run([str(x) for x in args],check=True)
 with tempfile.TemporaryDirectory(prefix='s9-infinity-') as tmp:
  tmp=Path(tmp)
- for app in ['SpriteWallpaper','AODService_v80']:
+ for app in (['SpriteWallpaper'] if '--sprite-only' in sys.argv else ['SpriteWallpaper','AODService_v80']):
   apk=module/f'payload/system/priv-app/{app}/{app}.apk'
   decoded=tmp/app
-  run('java','-jar',tools/'apktool.jar','d','-f',apk,'-o',decoded)
+  run('java','-jar',tools/'apktool.jar','d','-f',*(['-r'] if app=='SpriteWallpaper' else []),apk,'-o',decoded)
   if app=='SpriteWallpaper': shutil.copytree(module/'source/sprite-smali',decoded/'smali',dirs_exist_ok=True)
   else:
    dest=decoded/'smali/com/samsung/android/app/aodservice/plugin'

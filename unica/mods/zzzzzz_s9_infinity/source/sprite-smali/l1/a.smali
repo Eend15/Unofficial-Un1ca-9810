@@ -87,6 +87,16 @@
 
     invoke-virtual {v0, v1, v2}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
 
+    const-class v1, Lcom/samsung/android/wallpaper/live/infinity/InfinityWallpaper;
+
+    invoke-virtual {v1}, Ljava/lang/Class;->getName()Ljava/lang/String;
+
+    move-result-object v1
+
+    const-class v2, Lcom/samsung/android/wallpaper/live/infinity/thumbnail/InfinityThumbnail;
+
+    invoke-virtual {v0, v1, v2}, Ljava/util/HashMap;->put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+
     const-class v1, Lcom/samsung/android/wallpaper/live/suitcase/PhysicsWallpaper;
 
     invoke-virtual {v1}, Ljava/lang/Class;->getName()Ljava/lang/String;
