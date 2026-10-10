@@ -15,7 +15,7 @@ def main():
     repo = mod.parents[2]
     source = (mod / 'customize.sh').read_text()
     legacy = repo / 'unica/patches/exynos9810_device_stack/embedded/exynos9810_legacy_port'
-    names = ('_EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK', '_EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME')
+    names = ('_EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK', '_EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME', '_EXYNOS9810_FINAL_PATCH_CAMERA_ACQUIRE_FENCES')
     functions = []
     for name in names:
         match = re.search(r'(?ms)^' + name + r'\(\)\n\{\n.*?^\}\n', source)
@@ -36,6 +36,7 @@ def main():
         with tempfile.TemporaryDirectory(prefix=f'camera-{target}-') as tmp:
             script = 'set -e\nLOG() { :; }\nLOGE() { echo "$@" >&2; }\n_EXYNOS9810_FINAL_SET_METADATA() { :; }\n'
             script += f'EXYNOS9810_LEGACY_PORT_DIR={shlex.quote(str(legacy))}\n'
+            script += f'MODPATH={shlex.quote(str(mod))}\n'
             script += f'WORK_DIR={shlex.quote(tmp)}\nTARGET_CODENAME={target}\n'
             script += '\n'.join(functions) + '\n' + names[0] + '\n'
             subprocess.run(['bash', '-c', script], check=True)
@@ -48,7 +49,18 @@ def main():
             # and incremental-build/idempotence failures.
             script = script[:script.rfind(names[0] + '\n')] + names[1] + '\n' + names[1] + '\n'
             subprocess.run(['bash', '-c', script], check=True)
-            print(f'{target}: correct 32/64-bit HALs, LLS safeguard and repeat invocation PASS')
+            script += names[2] + '\n' + names[2] + '\n'
+            subprocess.run(['bash', '-c', script], check=True)
+            for arch in ('lib', 'lib64'):
+                camera = Path(tmp) / 'vendor' / arch / 'hw/camera.exynos9810.so'
+                needed = subprocess.check_output(['patchelf', '--print-needed', str(camera)], text=True).splitlines()
+                if needed.count('libexynos_camera_fence.so') != 1:
+                    raise RuntimeError(f'{target}: missing/duplicate fence adapter in {arch}')
+                staged = Path(tmp) / 'vendor' / arch / 'libexynos_camera_fence.so'
+                expected = mod / 'native_camera/fence' / arch / 'libexynos_camera_fence.so'
+                if staged.read_bytes() != expected.read_bytes():
+                    raise RuntimeError(f'{target}: wrong {arch} fence adapter')
+            print(f'{target}: correct HALs, LLS and fence adapter; repeat invocation PASS')
     print(f'Common One UI 8 APK checksum PASS: {digest}')
 
 if __name__ == '__main__':

@@ -1,0 +1,39 @@
+name: Exynos9810 camera validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'unica/mods/zzzzz_exynos9810_final_cleanup/**'
+      - 'unica/patches/exynos9810_device_stack/**'
+      - 'target/starlte/**'
+      - 'target/star2lte/**'
+      - 'target/crownlte/**'
+      - '.github/workflows/camera-exynos9810.yml'
+  push:
+    paths:
+      - 'unica/mods/zzzzz_exynos9810_final_cleanup/**'
+      - 'unica/patches/exynos9810_device_stack/**'
+      - 'target/starlte/**'
+      - 'target/star2lte/**'
+      - 'target/crownlte/**'
+      - '.github/workflows/camera-exynos9810.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+      - name: Install validation tools
+        run: sudo apt-get update && sudo apt-get install -y patchelf clang-18
+      - name: Validate all three target camera stacks
+        run: |
+          python3 unica/mods/zzzzz_exynos9810_final_cleanup/native_camera/patches/verify_camera_targets.py
+          python3 unica/mods/zzzzz_exynos9810_final_cleanup/native_camera/patches/test_restore_photo_processing.py
+          bash -n unica/mods/zzzzz_exynos9810_final_cleanup/customize.sh
+      - name: Verify acquire-fence ownership
+        run: |
+          clang-18 -O2 -Wall -Wextra -Werror unica/mods/zzzzz_exynos9810_final_cleanup/native_camera/patches/test_camera_acquire_fence.c -o /tmp/test-camera-fences
+          /tmp/test-camera-fences

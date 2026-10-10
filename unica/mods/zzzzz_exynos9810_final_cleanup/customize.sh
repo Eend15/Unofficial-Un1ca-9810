@@ -1798,6 +1798,36 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK()
     done
 }
 
+_EXYNOS9810_FINAL_PATCH_CAMERA_ACQUIRE_FENCES()
+{
+    # HIDL dup()s acquire fences and transfers ownership on successful capture.
+    # The legacy HAL leaks them. Consume only these imported fences at its entry;
+    # retain release fences, recording FPS and native buffer ownership.
+    command -v patchelf >/dev/null || {
+        LOGE "patchelf is required for the Exynos9810 camera fence adapter"
+        return 1
+    }
+    local ARCH EXPECTED SRC DST
+    for ARCH in lib lib64; do
+        case "$ARCH" in
+            lib) EXPECTED="04aa183c76fe6de845ebbc9964f513f312609953c44e2d9d6aa8c04e287c12ff" ;;
+            lib64) EXPECTED="197074ff89ccdc8231b3c3f55bed1d559d9b85c436adcace92ed11495125f183" ;;
+        esac
+        SRC="$MODPATH/native_camera/fence/$ARCH/libexynos_camera_fence.so"
+        DST="$WORK_DIR/vendor/$ARCH/libexynos_camera_fence.so"
+        [ -f "$SRC" ] && [ "$(sha256sum "$SRC" | cut -d ' ' -f 1)" = "$EXPECTED" ] || {
+            LOGE "Missing or unexpected $ARCH camera fence adapter"
+            return 1
+        }
+        install -D -m 644 "$SRC" "$DST" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "$ARCH/libexynos_camera_fence.so" \
+            0 0 644 "u:object_r:vendor_file:s0"
+        python3 "$MODPATH/native_camera/patches/patch_camera_acquire_fences.py" \
+            "$WORK_DIR/vendor/$ARCH/hw/camera.exynos9810.so" || return 1
+    done
+    LOG "- Repairing ownership of Exynos9810 camera acquire fences"
+}
+
 _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK()
 {
     # Re-assert device-matched camera binaries after generic camera patches.
@@ -1806,7 +1836,7 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK()
     local REL SRC DST
 
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
-    [ -d "$ROOT" ] || return 0
+    [ -d "$ROOT" ] || { LOGE "Missing camera target directory: $ROOT"; return 1; }
 
     LOG "- Restoring target-matched Exynos9810 camera HAL for $TARGET_CODENAME"
     for REL in \
@@ -1817,7 +1847,7 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK()
         lib/hw/camera.unihal.default.so \
         lib64/hw/camera.unihal.default.so; do
         SRC="$GLOBAL/$REL"
-        [ -f "$SRC" ] || continue
+        [ -s "$SRC" ] || { LOGE "Missing required camera payload: $SRC"; return 1; }
         DST="$WORK_DIR/vendor/$REL"
         mkdir -p "$(dirname "$DST")"
         cp -af "$SRC" "$DST" || return 1
@@ -1834,7 +1864,7 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK()
         lib64/hw/camera.exynos9810.so \
         lib64/libexynoscamera3.so; do
         SRC="$ROOT/$REL"
-        [ -f "$SRC" ] || continue
+        [ -s "$SRC" ] || { LOGE "Missing required camera payload: $SRC"; return 1; }
         DST="$WORK_DIR/vendor/$REL"
         mkdir -p "$(dirname "$DST")"
         cp -af "$SRC" "$DST" || return 1
@@ -2835,10 +2865,10 @@ _EXYNOS9810_FINAL_INSTALL_NATIVE_CAMERA()
 
     # Refuse to package a silently replaced or stale payload. These are the
     # hashes of the SamsungCamera APK (One UI 8 base plus Motion Photo
-    # SURFACE mode and restored Samsung Photo routing), cold-session-safe 32-bit
+    # SURFACE mode, restored Photo routing and native SSM burst transport), cold-session-safe 32-bit
     # UniHAL and cameraserver combination.
     [ "$(sha256sum "$APK_SRC" | cut -d ' ' -f 1)" = \
-        "6d870aa5f82934b592db6841b9d59efc17b2575a7439b8872e02db3dfe0e99d2" ] || {
+        "05d303bebe590545ce3a96e940b368af5fb8726e0f8bd377c12cee48521ddb72" ] || {
         LOGE "Unexpected native SamsungCamera payload hash"
         return 1
     }
@@ -6664,6 +6694,7 @@ _EXYNOS9810_FINAL_RESTORE_RAMPLUS_FILES
 _EXYNOS9810_FINAL_RESTORE_EMBEDDED_REMOTEDISPLAY
 _EXYNOS9810_FINAL_RESTORE_EMBEDDED_SENSORS
 _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK
+_EXYNOS9810_FINAL_PATCH_CAMERA_ACQUIRE_FENCES || return 1
 _EXYNOS9810_FINAL_ENABLE_CAMERA_UHD_60FPS
 _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES
