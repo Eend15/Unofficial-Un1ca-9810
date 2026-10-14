@@ -50,6 +50,26 @@ for PARTITION in system vendor odm; do
             if command -v e2fsck >/dev/null 2>&1; then
                 e2fsck -fn "$RAW_IMAGE" >/dev/null
             fi
+            # Check the REAL image rather than only the staging folder: NTFS
+            # can silently collapse these case-distinct ELF dependencies.
+            if [ "$PARTITION" = "system" ] && [ "${TARGET_CODENAME:-}" = "star2lte" ]; then
+                for library in libPSI.so libpsi.so; do
+                    debugfs -R "dump /system/lib64/$library $VERIFY_TMP/$library" \
+                        "$RAW_IMAGE" >/dev/null 2>&1 || {
+                        echo "Exynos9810 system missing $library" >&2
+                        exit 1
+                    }
+                    [ -s "$VERIFY_TMP/$library" ] || {
+                        echo "Exynos9810 system missing or empty $library" >&2
+                        exit 1
+                    }
+                done
+                if cmp -s "$VERIFY_TMP/libPSI.so" "$VERIFY_TMP/libpsi.so"; then
+                    echo "Exynos9810 system native library case collision" >&2
+                    exit 1
+                fi
+                echo "Verified distinct libPSI.so/libpsi.so in actual $PARTITION image"
+            fi
             ;;
     esac
 

@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "dex_sha256": "2e483a50bde90923daf9e4347f7df6c6a93e4584358a88f15b5921261a3ba1a2",
+  "sources": {
+    "bridge/FaceunlockFixAuthStartGate.java": "5830514fbd76e5d9a8a735cd325d699860e1e29992a11b5a6ded19e44876e58c",
+    "bridge/FaceunlockFixCamera2FrameSource.java": "b28ba845e654b91c50d401cb44d95a2c6e9bc4bf572505d428e2a00b47f85be3",
+    "bridge/FaceunlockFixCleanupFailureBridge.java": "028efe7b235023235ef52f02df7435a01db6f3f793bd0db1fa2c2c85da1ff0e7",
+    "bridge/FaceunlockFixHidl.java": "83e85c2126694cbef317c1500282f6688977447e06b7e4007a6425e56c15bf3c",
+    "bridge/FaceunlockFixNativeBackend.java": "b827190679de9369f5185a3bdbc41f5e40a2d28ddd82561a71415c5ae2058673",
+    "bridge/FaceunlockFixNativeEnumeration.java": "bb79cccda2058c57bda53b0f7972ab4b2df2ee9c2665a3e5001f6d04d85aba94",
+    "bridge/FaceunlockFixPlanePayload.java": "123ddd25c0a66b665960dc861fea2f495a9a54a248179363cbcf24c6930a46ee",
+    "bridge/FaceunlockFixProbe.java": "9e27c4477a07ed2a1130aabcd4680d196fdc69af9beb47e60678b63326651e55",
+    "bridge/FaceunlockFixRemovalCompletion.java": "d173f6bded3c7c616ff406d5d243870949751d0d00d0ef3dc42a72b51191e402",
+    "bridge/NativeFaceCallback.java": "321cbc2b6a7e4d559b427b8205cbc60d7e8686c1e26a9167178426035ad93852",
+    "bridge/NativeFaceTransport.java": "4f45e09a8d93539a6789ecc94bd126849b7cb46445cc53d05c1b02285e7c603e",
+    "bridge/Nv21Packer.java": "3111849fdda654327a7e85a6749e9704044eec8adee21513b573109af9be1875",
+    "aidl/com/samsung/android/bio/face/IFaceDaemon.aidl": "45edb27910af562de0ac589a2b1574da87506c17353d803524699503c23bd386",
+    "aidl/com/samsung/android/bio/face/IFaceDaemonCallback.aidl": "0c86a16f5c3658f89242f15551ae7e7346af6700d1f3d91268d93dcdb18e8be3",
+    "aidl/com/samsung/android/bio/face/IFaceService.aidl": "b7316f29c87617c345d1535d4122e472896e1757e66ab80711a2cebf6750b5c8",
+    "aidl/com/samsung/android/bio/face/IFaceServiceReceiver.aidl": "90e21b3fa3d5ee4e9766d539b1e04e72ffac8d6e3f29795e34e575845ad3ad11",
+    "aidl/com/samsung/android/bio/face/SemBioFace.aidl": "9d0f581ea24cfe93d7ee3c4a4027a68d44e7e8f62219094fb81f9bf459aa0d09"
+  },
+  "tested_device": "SM-G965F, Android16; remove-all + face/PIN USB confirmation + re-enrollment/reboot"
+}

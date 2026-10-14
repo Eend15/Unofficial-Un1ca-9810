@@ -1,0 +1,250 @@
+// Reference-only source; not wired into Android 16 services.jar.
+// Must be compiled with the exact Noble IFaceDaemon and IFaceDaemonCallback
+// AIDL classes extracted from the legacy Noble framework.jar.
+// All biometric operations call the REAL native /system/bin/noble_faced.
+package com.android.server.biometrics.sensors.face.hidl.noble;
+
+import android.os.IBinder;
+import android.os.RemoteException;
+import android.os.ServiceManager;
+import com.samsung.android.bio.face.IFaceDaemon;
+import com.samsung.android.bio.face.IFaceDaemonCallback;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+public final class NativeFaceTransport implements AutoCloseable {
+    private static final String SERVICE = "com.samsung.android.bio.face.IFaceDaemon";
+    private static final int HAT_SIZE = 69;
+
+    // This interface is the input for the genuine HIDL callback adapter.
+    // No method is allowed to synthesize success, a face ID, or a token.
+    public interface Events {
+        void onEnrollResult(long deviceId, int faceId, int user, int remaining);
+        void onAcquired(long deviceId, int acquiredInfo);
+        void onAuthenticated(long deviceId, int faceId, int user,
+                             byte[] originalHat, byte[] originalFido);
+        void onError(long deviceId, int nativeCode);
+        void onRemoved(long deviceId, int faceId, int user);
+        void onEnumerate(long deviceId, int[] faceIds, int[] groups);
+        void onNativeDied();
+    }
+
+    private final IFaceDaemon daemon;
+    private final IBinder nativeBinder;
+    private final Events events;
+    private final long deviceId;
+    private int activeUser = -1;
+    private boolean activeOperation;
+    private boolean closed;
+
+    private final IBinder.DeathRecipient death = () -> {
+        synchronized (NativeFaceTransport.this) {
+            closed = true;
+            activeOperation = false;
+        }
+        events.onNativeDied();
+    };
+
+    private final IFaceDaemonCallback callbacks = new IFaceDaemonCallback.Stub() {
+        @Override
+        public void onEnrollResult(long dev, int face, int group, int remaining) {
+            if (!isValidUser(group)) return;
+            events.onEnrollResult(dev, face, group, remaining);
+        }
+
+        @Override
+        public void onAcquired(long dev, int acquiredInfo) {
+            if (!isActive()) return;
+            events.onAcquired(dev, acquiredInfo);
+        }
+
+        @Override
+        public void onAuthenticated(long dev, int face, int group, byte[] hat,
+                                    byte[] fido) {
+            if (!isValidUser(group) || !isActive()) return;
+            // Android16's converter would otherwise call success with null
+            // HAT for positive face IDs and a short token. Reject that case.
+            if (face > 0 && (hat == null || hat.length != HAT_SIZE)) {
+                events.onError(dev, 2); // transport/hardware unavailable
+                return;
+            }
+            events.onAuthenticated(dev, face, group,
+                    hat == null ? null : Arrays.copyOf(hat, hat.length),
+                    fido == null ? null : Arrays.copyOf(fido, fido.length));
+        }
+
+        @Override
+        public void onError(long dev, int error) {
+            synchronized (NativeFaceTransport.this) {
+                activeOperation = false;
+            }
+            events.onError(dev, error);
+        }
+
+        @Override
+        public void onRemoved(long dev, int face, int group) {
+            if (!isValidUser(group)) return;
+            events.onRemoved(dev, face, group);
+        }
+
+        @Override
+        public void onEnumerate(long dev, int[] faces, int[] groups) {
+            if (faces == null || groups == null || faces.length != groups.length)
+                return;
+            for (int group : groups) if (!isValidUser(group)) return;
+            events.onEnumerate(dev, Arrays.copyOf(faces, faces.length),
+                    Arrays.copyOf(groups, groups.length));
+        }
+    };
+
+    private NativeFaceTransport(IFaceDaemon daemon, IBinder binder,
+                                Events events) throws RemoteException {
+        this.daemon = daemon;
+        this.nativeBinder = binder;
+        this.events = events;
+        binder.linkToDeath(death, 0);
+        boolean success = false;
+        long opened = 0;
+        try {
+            daemon.init(callbacks);
+            opened = daemon.openHal();
+            if (opened == 0) throw new RemoteException("Noble openHal=0");
+            success = true;
+        } finally {
+            if (!success) {
+                if (opened != 0) daemon.closeHal();
+                binder.unlinkToDeath(death, 0);
+            }
+        }
+        this.deviceId = opened;
+    }
+
+    public static NativeFaceTransport connect(Events events)
+            throws RemoteException {
+        IBinder binder = ServiceManager.getService(SERVICE);
+        if (binder == null || !SERVICE.equals(binder.getInterfaceDescriptor()))
+            throw new RemoteException("No genuine Noble IFaceDaemon");
+        return new NativeFaceTransport(IFaceDaemon.Stub.asInterface(binder),
+                binder, events);
+    }
+
+    private synchronized boolean isActive() {
+        return !closed && activeOperation;
+    }
+
+    private synchronized boolean isValidUser(int user) {
+        return !closed && activeUser == user;
+    }
+
+    public synchronized long getDeviceId() {
+        return closed ? 0 : deviceId;
+    }
+
+    public synchronized void setActiveUser(int userId) throws RemoteException {
+        requireOpen();
+        if (activeOperation || userId < 0)
+            throw new RemoteException("Invalid active user transition");
+        String dir = "/data/system/users/" + userId + "/bio/fr";
+        int result = daemon.setActiveGroup(userId,
+                dir.getBytes(StandardCharsets.UTF_8));
+        if (result != 0) throw new RemoteException("setActiveGroup=" + result);
+        activeUser = userId;
+    }
+
+    public synchronized long preEnroll() throws RemoteException {
+        requireOpen();
+        return daemon.preEnroll();
+    }
+
+    public synchronized int enroll(byte[] actualHat, int timeout, int flags)
+            throws RemoteException {
+        requireOpen();
+        if (activeUser < 0 || actualHat == null || actualHat.length != HAT_SIZE)
+            throw new RemoteException("Missing real enrollment HAT/user");
+        int rc = daemon.enroll(Arrays.copyOf(actualHat, HAT_SIZE),
+                activeUser, timeout, flags);
+        if (rc == 0) activeOperation = true;
+        return rc;
+    }
+
+    public synchronized int authenticate(long opId, int securityLevel,
+                                         byte[] actualFido)
+            throws RemoteException {
+        requireOpen();
+        if (activeUser < 0) throw new RemoteException("No active user");
+        int rc = daemon.authenticate(opId, activeUser, securityLevel, actualFido);
+        if (rc == 0) activeOperation = true;
+        return rc;
+    }
+
+    public synchronized int processFrontImage(byte[] frame, int width, int height,
+                                              int rotation, int imageType)
+            throws RemoteException {
+        requireOpen();
+        if (!activeOperation || frame == null || frame.length == 0)
+            throw new RemoteException("Frame without real active operation");
+        // Camera2 caller must pass the original exact Noble plane packing.
+        return daemon.processFrontImage(frame, width, height, rotation, imageType);
+    }
+
+    public synchronized int cancelAuthentication() throws RemoteException {
+        requireOpen();
+        activeOperation = false;
+        return daemon.cancelAuthentication();
+    }
+
+    public synchronized int cancelEnrollment() throws RemoteException {
+        requireOpen();
+        activeOperation = false;
+        return daemon.cancelEnrollment();
+    }
+
+    public synchronized int cancelEnumeration() throws RemoteException {
+        requireOpen();
+        activeOperation = false;
+        return daemon.cancelEnumeration();
+    }
+
+    public synchronized int enumerate() throws RemoteException {
+        requireOpen();
+        return daemon.enumerate();
+    }
+
+    public synchronized int remove(int faceId) throws RemoteException {
+        requireOpen();
+        return daemon.remove(faceId, activeUser);
+    }
+
+    public synchronized long getAuthenticatorId() throws RemoteException {
+        requireOpen();
+        return daemon.getAuthenticatorId();
+    }
+
+    public synchronized int postEnroll() throws RemoteException {
+        requireOpen();
+        return daemon.postEnroll();
+    }
+
+    public synchronized int request(int cmd, byte[] input, byte[] output, int arg)
+            throws RemoteException {
+        requireOpen();
+        return daemon.request(cmd, input, output, arg);
+    }
+
+    private void requireOpen() throws RemoteException {
+        if (closed || !nativeBinder.isBinderAlive() || deviceId == 0)
+            throw new RemoteException("Genuine Noble daemon unavailable");
+    }
+
+    @Override
+    public synchronized void close() throws RemoteException {
+        if (closed) return;
+        closed = true;
+        activeOperation = false;
+        try {
+            daemon.closeHal();
+        } finally {
+            nativeBinder.unlinkToDeath(death, 0);
+        }
+    }
+}

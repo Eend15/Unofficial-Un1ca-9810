@@ -1,0 +1,4 @@
+# REFERENCE ONLY, not a patch. FaceunlockFix reuses the verified existing
+# Android 16 faced_exec label and the system Binder faced_service domain.
+# Never create an additional conflicting faced_exec or permissive domain.
+/system/bin/faced u:object_r:faced_exec:s0

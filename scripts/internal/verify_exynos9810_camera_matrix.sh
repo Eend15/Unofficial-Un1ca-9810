@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SRC_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
-CUSTOMIZE="$SRC_DIR/unica/mods/zzzzz_exynos9810_final_cleanup/customize.sh"
+CUSTOMIZE="$SRC_DIR/unica/patches/exynos9810_device_stack/exynos9810_finalization/customize.sh"
 
 for TARGET_CODENAME in starlte star2lte crownlte; do
     TARGET_WORK_DIR="$SRC_DIR/out/target/$TARGET_CODENAME/work_dir"
@@ -82,28 +82,28 @@ for TARGET_CODENAME in starlte star2lte crownlte; do
     echo "OK $TARGET_CODENAME camera runtime matrix is present"
 done
 
-# SamsungCamera.apk is shared by all three targets. Keep the QR/photo repair
-# target-independent and fail if a future edit accidentally scopes it.
-QR_BODY=$(sed -n \
-    '/^_EXYNOS9810_FINAL_PATCH_CAMERA_QR_POPUP_CRASH()/,/^_EXYNOS9810_FINAL_FIX_WALLPAPER_OBJECTCAPTURE()/p' \
-    "$CUSTOMIZE")
-for marker in \
-    'Exynos9810 has no One UI 8 HAL QR metadata' \
-    'instance-of v2, p0, Lcom/samsung/android/camera/core2/maker/QrPhotoMaker;' \
-    'instance-of v2, p0, Lcom/samsung/android/camera/core2/maker/AutoBeautyPhotoMaker;' \
-    'Exynos9810 legacy HAL does not publish Samsung shutter metadata.' \
-    'if-eqz v0, :exynos9810_shutter_done' \
-    'CallbackHelper$PictureCallbackHelper;->g(Ljava/lang/String;' \
-    'QrController;->QR_CODE_DETECTION_INTERVAL:J' \
-    'const/16 v0, 0x5dc'; do
-    grep -qF "$marker" <<< "$QR_BODY" || {
-        echo "SamsungCamera QR/photo marker is missing: $marker" >&2
-        exit 1
-    }
-done
-if grep -q 'TARGET_CODENAME' <<< "$QR_BODY"; then
-    echo "SamsungCamera QR/photo patch must remain shared by every target" >&2
-    exit 1
-fi
-
-echo "OK shared SamsungCamera QR/photo patch covers all Exynos9810 targets"
+# Validate the current final photo repair, not historical inline patch markers.
+# AutoBeauty must use Samsung Photo routing and must not emit a duplicate shutter.
+python3 -B - "$SRC_DIR" <<'PYCAMERA'
+from pathlib import Path
+import importlib.util
+import sys
+root = Path(sys.argv[1])
+patch = root / "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/patches/restore_photo_processing.py"
+spec = importlib.util.spec_from_file_location("photo_repair", patch)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+for target in ("starlte", "star2lte", "crownlte"):
+    camera = root / f"out/target/{target}/apktool/system/priv-app/SamsungCamera/SamsungCamera.apk"
+    if not camera.is_dir():
+        continue
+    texts = []
+    for name in ("MakerBase", "PhotoMakerBase", "AutoBeautyPhotoMaker"):
+        paths = list(camera.glob(f"smali*/com/samsung/android/camera/core2/maker/{name}.smali"))
+        if len(paths) != 1:
+            raise SystemExit(f"{target}: missing/ambiguous {name}")
+        texts.append(paths[0].read_text())
+    if module.restore(*texts) != tuple(texts):
+        raise SystemExit(f"{target}: final Samsung Photo/QR repair is not applied")
+    print(f"OK {target}: Samsung Photo routing, QR bypass and single shutter callback")
+PYCAMERA

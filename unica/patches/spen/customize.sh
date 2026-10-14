@@ -4,6 +4,22 @@ TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" 
 SOURCE_HAS_SPEN="$(test -n "$(find "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/permissions" -type f -name "com.sec.feature.spen_usp*.xml")" && echo "true" || echo "false")"
 TARGET_HAS_SPEN="$(test -n "$(find "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/etc/permissions" -type f -name "com.sec.feature.spen_usp*.xml")" && echo "true" || echo "false")"
 
+# Exynos9810 Note9 has the original Wacom digitizer and BLE S Pen even when
+# Samsung's firmware server cannot deliver the target firmware during an
+# incremental build. Its target profile and the canonical Exynos9810 S Pen
+# feature declaration are repository-owned, so do not infer "no pen" simply
+# because the unpacked target firmware tree is unavailable. Later Note9
+# finalization validates the AirCommand APK, controller smali and native path.
+if [ "${TARGET_PLATFORM:-}" = "exynos9810" ] && \
+        [ "${TARGET_CODENAME:-}" = "crownlte" ]; then
+    SPEN_TARGET_FEATURE="$SRC_DIR/unica/patches/exynos9810_device_stack/exynos9810_finalization/spen/com.sec.feature.spen_usp_level40.xml"
+    if [ ! -s "$SPEN_TARGET_FEATURE" ]; then
+        ABORT "Missing canonical Note9 S Pen feature declaration"
+    fi
+    TARGET_HAS_SPEN=true
+    unset SPEN_TARGET_FEATURE
+fi
+
 if ! $SOURCE_HAS_SPEN; then
     if $TARGET_HAS_SPEN; then
         ADD_TO_WORK_DIR "b0qxxx" "system" "system/app/AirGlance/AirGlance.apk" 0 0 644 "u:object_r:system_file:s0"

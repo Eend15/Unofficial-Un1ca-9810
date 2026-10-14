@@ -1,0 +1,6 @@
+id=faceunlockfix_speed
+name=FaceunlockFix Speed (Temporary Systemless Test)
+version=2026-10-13-test
+versionCode=1
+author=UN1CA FaceunlockFix
+description=Temporary rooted-device speed validation via original Samsung native faced; disable this module to restore stock system services.jar without reflashing.

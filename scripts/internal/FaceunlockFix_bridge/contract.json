@@ -1,0 +1,121 @@
+{
+  "version": "faceunlockfix-native-hidl-bridge-v2",
+  "native_descriptor": "com.samsung.android.bio.face.IFaceDaemon",
+  "native_callback_descriptor": "com.samsung.android.bio.face.IFaceDaemonCallback",
+  "native_transactions": {
+    "authenticate": 1,
+    "cancelAuthentication": 2,
+    "enroll": 3,
+    "cancelEnrollment": 4,
+    "preEnroll": 5,
+    "remove": 6,
+    "getAuthenticatorId": 7,
+    "setActiveGroup": 8,
+    "openHal": 9,
+    "closeHal": 10,
+    "init": 11,
+    "postEnroll": 12,
+    "request": 13,
+    "enumerate": 14,
+    "cancelEnumeration": 15,
+    "processFrontImage": 16,
+    "setPreviewTarget": 17,
+    "createInputSurface": 18,
+    "release": 19,
+    "releasePreviewSurface": 20,
+    "installTA": 21
+  },
+  "native_callback_transactions": {
+    "onEnrollResult": 1,
+    "onAcquired": 2,
+    "onAuthenticated": 3,
+    "onError": 4,
+    "onRemoved": 5,
+    "onEnumerate": 6
+  },
+  "noble_request_codes": {
+    "SESSION_OPEN": 12,
+    "SESSION_STATUS": 13,
+    "SESSION_CLOSE": 14,
+    "GET_TA_VERSION": 10000,
+    "GET_CAMERA_INFO": 10001,
+    "GET_SECURITY_LEVEL": 10002,
+    "SET_PAUSE": 3000,
+    "FIRST_CAM_ORIENTATION": 50001,
+    "SECOND_CAM_ORIENTATION": 50002
+  },
+  "hidl_method_routes": {
+    "asBinder": "local HIDL HwBinder identity; must retain real native death awareness",
+    "authenticate": "native.authenticate(opId,activeUser,secureLevel,emptyFido); arm Camera2 feed only on real success",
+    "cancel": "native.cancelAuthentication/cancelEnrollment/cancelEnumeration according to active operation; stop Camera2",
+    "debug": "IBase diagnostic only; never biometric operation",
+    "enroll": "native.enroll(actual69ByteHat,activeUser,verifiedTimeout,verifiedFlags); start Camera2 feed",
+    "enumerate": "native.enumerate; emit only callbacks from real engine/template store",
+    "generateChallenge": "native.preEnroll -> OptionalUint64; preserve genuine challenge",
+    "getAuthenticatorId": "native.getAuthenticatorId -> OptionalUint64; must be actual engine ID",
+    "getDebugInfo": "IBase introspection for local HwBinder",
+    "getFeature": "must query genuine state; return non-success until verified",
+    "getHashChain": "IBase deterministic descriptor/hash contract; generate from official HIDL interface",
+    "interfaceChain": "IBase chain includes vendor 2.0, face 1.0, IBase",
+    "interfaceDescriptor": "IBase descriptor for vendor 2.0 ISehBiometricsFace",
+    "linkToDeath": "register actual native Binder death relay or return failure",
+    "notifySyspropsChanged": "IBase sysprops notification only",
+    "onTransact": "HwBinder dispatch if remote use, all method IDs/flags; typed local invocation can bypass",
+    "ping": "IBase liveness only; validate transport connection separately",
+    "queryLocalInterface": "return this for matching vendor HIDL descriptor",
+    "remove": "native.remove(faceId,activeUser); accept only genuine onRemoved",
+    "resetLockout": "require real signed HardwareAuthToken and native support; otherwise fail closed",
+    "revokeChallenge": "native.postEnroll iff protocol confirms challenge revocation; otherwise fail closed",
+    "sehAuthenticate": "native.authenticate(opId,user,secureLevel,realFido); verify user matches active user",
+    "sehCloseTaSession": "native.request(SESSION_CLOSE, empty buffers, 0); propagate real result",
+    "sehGetEngineVersion": "query actual TA/native version; null if unimplemented",
+    "sehGetSecurityLevel": "native.request(GET_SECURITY_LEVEL) and callback actual result; never hardcode biometric strength",
+    "sehGetTaInfo": "query actual TA/native metadata; null if unimplemented",
+    "sehIsTaSessionClosed": "native.request(SESSION_STATUS); validate semantics before mapping boolean",
+    "sehOpenTaSession": "native.request(SESSION_OPEN, empty buffers, 0); propagate real result",
+    "sehPauseEnrollment": "native.request(SET_PAUSE) only after verifying expected argument; otherwise fail closed",
+    "sehResumeEnrollment": "native.request(SET_PAUSE) only after verifying expected argument; otherwise fail closed",
+    "sehSetCallback": "native.init(real IFaceDaemonCallback); native.openHal; deliver callbacks through Android16 typed framework converter",
+    "sehSetFaceTag": "unsupported unless real native request code/semantics recovered; fail closed",
+    "sehSetRotation": "native.request(FIRST_CAM_ORIENTATION,[],[],rotation); only verified values",
+    "setActiveUser": "native.setActiveGroup(user, UTF8 /data/system/users/<user>/bio/fr); use isolated data namespace",
+    "setCallback": "same genuine callback setup as sehSetCallback; no simulated success",
+    "setFeature": "native request only after exact feature contract verified; otherwise fail closed",
+    "setHALInstrumentation": "IBase diagnostics only",
+    "toString": "IBase deterministic descriptor string",
+    "unlinkToDeath": "detach native death relay recipient",
+    "userActivity": "no-op IBase behavior; not an authentication result"
+  },
+  "callbacks": {
+    "onEnrollResult": {
+      "hidl_transaction": 1,
+      "route": "native IFaceDaemonCallback.onEnrollResult -> typed Android16 AidlResponseHandler.onEnrollmentProgress",
+      "require": "native face ID and remaining count; never manufacture enrolled template"
+    },
+    "onAuthenticated": {
+      "hidl_transaction": 2,
+      "route": "native onAuthenticated -> typed HidlToAidlCallbackConverter.onAuthenticated(deviceId,faceId,user,original signed HAT)",
+      "require": "positive face ID allowed only with original exact 69-byte HAT from secure engine; correct user/op"
+    },
+    "onAcquired": {
+      "hidl_transaction": 3,
+      "route": "native onAcquired -> typed Android16 AidlResponseHandler.handleResponse to active AcquisitionClient",
+      "require": "forward real acquired/vendor codes"
+    },
+    "onError": {
+      "hidl_transaction": 4,
+      "route": "native onError -> typed framework ISehBiometricsFaceClientCallback.onError",
+      "require": "propagate errors and cancel outstanding operation"
+    },
+    "onRemoved": {
+      "hidl_transaction": 5,
+      "route": "native onRemoved -> typed framework ISehBiometricsFaceClientCallback.onRemoved(activeUser,actualRemovedFaceIds)",
+      "require": "emit only after native template deletion"
+    },
+    "onEnumerate": {
+      "hidl_transaction": 6,
+      "route": "native onEnumerate -> typed framework ISehBiometricsFaceClientCallback.onEnumerate(activeUser,actualFaceIds)",
+      "require": "verify all native group IDs match active user"
+    }
+  }
+}

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - 'unica/mods/zzzzz_exynos9810_final_cleanup/**'
+      - 'unica/patches/exynos9810_device_stack/exynos9810_finalization/**'
       - 'unica/patches/exynos9810_device_stack/**'
       - 'target/starlte/**'
       - 'target/star2lte/**'
@@ -12,7 +12,7 @@ on:
       - '.github/workflows/camera-exynos9810.yml'
   push:
     paths:
-      - 'unica/mods/zzzzz_exynos9810_final_cleanup/**'
+      - 'unica/patches/exynos9810_device_stack/exynos9810_finalization/**'
       - 'unica/patches/exynos9810_device_stack/**'
       - 'target/starlte/**'
       - 'target/star2lte/**'
@@ -30,10 +30,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y patchelf clang-18
       - name: Validate all three target camera stacks
         run: |
-          python3 unica/mods/zzzzz_exynos9810_final_cleanup/native_camera/patches/verify_camera_targets.py
-          python3 unica/mods/zzzzz_exynos9810_final_cleanup/native_camera/patches/test_restore_photo_processing.py
-          bash -n unica/mods/zzzzz_exynos9810_final_cleanup/customize.sh
+          python3 unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/patches/verify_camera_targets.py
+          python3 unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/patches/test_restore_photo_processing.py
+          bash -n unica/patches/exynos9810_device_stack/exynos9810_finalization/customize.sh
       - name: Verify acquire-fence ownership
         run: |
-          clang-18 -O2 -Wall -Wextra -Werror unica/mods/zzzzz_exynos9810_final_cleanup/native_camera/patches/test_camera_acquire_fence.c -o /tmp/test-camera-fences
+          clang-18 -O2 -Wall -Wextra -Werror unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/patches/test_camera_acquire_fence.c -o /tmp/test-camera-fences
           /tmp/test-camera-fences

@@ -98,10 +98,10 @@ done
 # NOTE: Supplementary "(allow ...)" CIL rules for this legacy exynos9810
 # vendor (the boot-critical vendor_init property_service sets, etc.) are NOT
 # applied here. This patch runs early in the module pipeline, and the later
-# zzzz_exynos9810_boot_restore module wipes and re-copies a pristine vendor
+# exynos9810_boot_restore module wipes and re-copies a pristine vendor
 # tree (rm -rf "$WORK_DIR/vendor"), which would discard anything appended to
 # vendor_sepolicy.cil here. Those rules are therefore applied in
-# unica/mods/zzzz_exynos9810_boot_restore/customize.sh, immediately after the
+# unica/patches/exynos9810_device_stack/exynos9810_boot_restore/customize.sh, immediately after the
 # vendor baseline restore, where they actually survive into vendor.img.
 
 if ! $PATCHED; then

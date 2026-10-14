@@ -44,3 +44,11 @@ unica/mods/zz_weather/**/*.apk filter=lfs diff=lfs merge=lfs -text
 # Embedded Infinity runtime payload
 *.dex binary
 unica/mods/zzzzzz_s9_infinity/payload/system/priv-app/wallpaper-res/*.apk filter=lfs diff=lfs merge=lfs -text
+
+# Preserve relocated release payloads and boot images byte-for-byte.
+*.img binary
+unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/cameraserver binary
+unica/patches/exynos9810_device_stack/exynos9810_finalization/kernelsu/ksu_crown binary
+unica/patches/exynos9810_device_stack/exynos9810_finalization/face/FaceunlockFix/native/** -text
+unica/mods/weather/**/*.apk filter=lfs diff=lfs merge=lfs -text
+unica/mods/s9_infinity_Wallpaper/payload/system/priv-app/wallpaper-res/*.apk filter=lfs diff=lfs merge=lfs -text

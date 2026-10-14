@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "sources": {
+    "ksu_crown.c": "bee9aecdf655cc36386973ee671b88b0e95d3616e2bb1ebbe35c2caf86d6c72b",
+    "KernelSUManagerVerifier.java": "914b62808db15fe31035c3966f0b52c892e6e857a6eaa5d88ec3f6f14785e1a5",
+    "unica_ksunext_installer.sh": "866ea78f85594ebc103e71e1d774779a2ca4c029cbbdab46b5f1ac5bf17133a7",
+    "unica_ksunext_installer.rc": "a46b77ce008a7d9553129c6b897a1694796dcebcedf147595b84ed22e3bc7777"
+  },
+  "payloads": {
+    "ksu_crown": "0a58e2e1806eb89214ff18fd4fd95bf3b0e30835d12a819a7f1bbe76f776536c",
+    "KernelSUManagerVerifier.jar": "a051c60b3afb9d34298bdd3538131be443e58b54de782d20da3b4b963517912b",
+    "KernelSUNext.apk": "50339a93c0f812b8a72c1a387a1b441891e3df0f20b2d9daf80fd798d04b3de8"
+  }
+}

@@ -145,8 +145,13 @@ fi
 MODULE_ROOT="$1"
 shift
 EXCLUDED_MODULES=()
+INCLUDE_EXYNOS9810_FINAL_STAGES=false
 while [ "$#" -gt "0" ]; do
     case "$1" in
+        --include-exynos9810-final-stages)
+            INCLUDE_EXYNOS9810_FINAL_STAGES=true
+            shift
+            ;;
         --exclude)
             [ "$#" -ge "2" ] || {
                 echo "Missing module name after --exclude" >&2
@@ -172,7 +177,30 @@ else
         MODNAME="${f##*/}"
         IS_EXCLUDED_MODULE "$MODNAME" && continue
         APPLY_MODULE "$f"
-    done < <(find "$MODULE_ROOT" -mindepth 1 -maxdepth 1 -type d | LC_ALL=C sort)
+    done < <(python3 - "$MODULE_ROOT" "$SRC_DIR" "$TARGET_PLATFORM" "$INCLUDE_EXYNOS9810_FINAL_STAGES" <<'PYORDER'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+def key(path):
+    order = 0
+    prop = path / "module.prop"
+    if prop.is_file():
+        for line in prop.read_text().splitlines():
+            if line.startswith("build_order="):
+                order = int(line.split("=", 1)[1])
+    return order, path.name
+modules = [p for p in root.iterdir() if p.is_dir()]
+if sys.argv[3] == "exynos9810" and sys.argv[4] == "true":
+    stack = Path(sys.argv[2]) / "unica/patches/exynos9810_device_stack"
+    for name in ("exynos9810_boot_restore", "exynos9810_finalization"):
+        path = stack / name
+        if not (path / "module.prop").is_file() or not (path / "customize.sh").is_file():
+            raise SystemExit(f"Missing Exynos9810 final stage: {path}")
+        modules.append(path)
+for path in sorted(modules, key=key):
+    print(path)
+PYORDER
+)
 fi
 
 exit 0

@@ -41,8 +41,6 @@ system/priv-app/MultiControl
 system/priv-app/SamsungCloudClient
 system/priv-app/StickerFaceARAvatar
 system/priv-app/YourPhone_Stub
-product/overlay/NotesRoleEnabled
-system/product/overlay/NotesRoleEnabled
 "
 
 _EXYNOS9810_TARGET_DEBLOAT_NAMES="
@@ -64,12 +62,9 @@ SamsungGlobalGoals
 SamsungHealth
 SamsungMembers
 SamsungMembers_Removable
-SamsungNotes
-SamsungNotes_Removable
 SamsungVoiceRecorder
 SmartThings
 SmartThingsKit
-SNoteProvider
 SoundRecorder
 VoiceRecorder
 YourPhone_Stub

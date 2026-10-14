@@ -1,0 +1,34 @@
+# Stock Android16 system_ext_file_contexts already labels /system/bin/faced as
+# faced_exec, and the stock SELinux policy provides a faced domain with access
+# to its original system-Binder IFaceDaemon service. Use the *same* basename to
+# retain that security transition, but a different init service name so that
+# this opt-in backend cannot collide with vendor's original "faced" name.
+# The ROM staging step MUST disable BOTH old vendor faced auto-start stanzas.
+service faceunlockfixd /system/bin/faced
+    class late_start
+    disabled
+    oneshot
+    user system
+    group system
+    setenv LD_PRELOAD /system/lib64/faceunlockfix/libfaceunlockfix_hwredirect.so
+    setenv LD_LIBRARY_PATH /system/lib64/faceunlockfix
+
+# Debug opt-in requires an explicit persistent device property. Never start
+# this daemon automatically in ordinary ROM boots, and don't touch the active
+# vendor.samsung.hardware.biometrics.face@2.0-service.
+on property:persist.sys.un1ca.faceunlockfix.experimental=1
+    start faceunlockfixd
+
+on property:persist.sys.un1ca.faceunlockfix.experimental=true
+    start faceunlockfixd
+
+# Read-only ROM integration switch; ordinary apps cannot enable this path.
+# Native Binder identity and supported-SoC checks remain in the framework.
+on property:ro.un1ca.faceunlockfix.builtin=1
+    start faceunlockfixd
+
+on property:persist.sys.un1ca.faceunlockfix.experimental=0
+    stop faceunlockfixd
+
+on property:persist.sys.un1ca.faceunlockfix.experimental=false
+    stop faceunlockfixd

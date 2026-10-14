@@ -304,6 +304,44 @@ EOF
 
 _EXYNOS9810_PATCH_FACE_ZERO_CHALLENGE || return 1
 
+# Android 16 prefers a declared AIDL face service even if it cannot use the
+# Exynos9810 front-camera recognition stack. Original S9/Note9 firmware uses
+# a pre-HIDL face.default.so HAL; the embedded legacy Samsung vendor donor
+# instead provides HIDL 2.0, supported by HidlToAidlSensorAdapter.
+# Select that HIDL path only on Exynos9810.
+_EXYNOS9810_USE_LEGACY_FACE_HIDL()
+{
+    [ "$TARGET_PLATFORM" = "exynos9810" ] || return 0
+    case "$TARGET_CODENAME" in
+        starlte|star2lte|crownlte) ;;
+        *) return 0 ;;
+    esac
+
+    local SMALI
+    local BODY
+    DECODE_APK "system" "system/framework/services.jar" || return 1
+    SMALI="$(find "$APKTOOL_DIR/system/framework/services.jar" -type f \
+        -path "*/com/android/server/biometrics/sensors/face/FaceService.smali" | head -n 1)"
+    if [ ! -f "$SMALI" ]; then
+        LOGE "FaceService.smali not found for Exynos9810 HIDL face selection"
+        return 1
+    fi
+
+    BODY="$(cat <<'EOF'
+    .locals 2
+
+    const/4 v0, 0x0
+    new-array v1, v0, [Ljava/lang/String;
+    return-object v1
+EOF
+)"
+    LOG "- Selecting Exynos9810 Samsung HIDL face HAL instead of incompatible AIDL face engine"
+    _EXYNOS9810_FACE_REPLACE_SMALI_METHOD "$SMALI" "getDeclaredInstances()" "$BODY" || return 1
+    PATCHED=true
+}
+
+_EXYNOS9810_USE_LEGACY_FACE_HIDL || return 1
+
 # Support legacy SehLights HAL (pre-API 35)
 # - Check for [lsr wD, wS, #0x18] to determine if the newer HAL is already in place
 if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "35" ]; then

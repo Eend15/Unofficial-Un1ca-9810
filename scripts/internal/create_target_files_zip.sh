@@ -4,6 +4,7 @@
 
 # [
 source "$SRC_DIR/scripts/utils/install_utils.sh" || exit 1
+source "$SRC_DIR/scripts/internal/acquire_exynos9810_packaging_lease.sh" || exit 1
 
 trap 'rm -rf "$TMP_DIR"' EXIT INT
 
@@ -121,6 +122,13 @@ if [ "${TARGET_PLATFORM:-}" = "exynos9810" ]; then
         LOGE "Refusing to create target-files before Exynos9810 ROM patches and verification complete"
         exit 1
     fi
+fi
+
+# A case-insensitive Windows staging folder collapses the separate Samsung
+# libPSI.so and Android libpsi.so files, producing a bootloop despite valid
+# ext4/DEX checks. Stop before ever packaging that irreversible collision.
+if [ "${TARGET_PLATFORM:-}" = "exynos9810" ] && [ "${TARGET_CODENAME:-}" = "star2lte" ]; then
+    python3 -B "$SRC_DIR/scripts/internal/verify_star2lte_psi_case.py" "$WORK_DIR" || exit 1
 fi
 
 [ -d "$TMP_DIR" ] && rm -rf "$TMP_DIR"

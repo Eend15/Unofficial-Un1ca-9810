@@ -19,3 +19,7 @@ samloader.log
 *.log
 *.tar.md5
 *.zip.sha256
+
+# Local Python regression-test caches are not source payloads.
+__pycache__/
+*.pyc

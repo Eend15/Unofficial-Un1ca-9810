@@ -1,0 +1,4 @@
+name=Exynos9810 final build phase
+author=UN1CA Exynos9810 port
+description=Applies device-specific final fixes after generic modules.
+build_order=30

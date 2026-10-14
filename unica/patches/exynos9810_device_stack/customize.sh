@@ -3106,9 +3106,9 @@ _EXYNOS9810_APPLY_BOOT_PROPS()
     _EXYNOS9810_SET_PROP_ALL "fw.show_hidden_users" "1"
     _EXYNOS9810_SET_PROP_ALL "fw.power_user_switcher" "1"
     _EXYNOS9810_SET_PROP_ALL "persist.sys.unica.pif" "true"
-    # Match the profile distributed by the built-in UN1CA sixteen updater.
-    _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.version" "20260916"
-    _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.fingerprint" "google/shiba_beta/shiba:CANARY/ZP11.260821.010/16290768:user/release-keys"
+    # Default profile matches the built-in updater snapshot installed on 2026-10-11.
+    _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.version" "20261011"
+    _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.fingerprint" "google/bluejay_beta/bluejay:CANARY/ZP11.260918.007/16484274:user/release-keys"
     _EXYNOS9810_SET_PROP_ALL "boot.fps" "30"
     _EXYNOS9810_SET_PROP_ALL "shutdown.fps" "30"
     _EXYNOS9810_DELETE_PROP_VENDOR_SIDE "ro.crypto.state"
@@ -4285,7 +4285,7 @@ _EXYNOS9810_APPLY_FULL_VENDOR_STACK()
         EXYNOS9810_HXA3_VENDOR_BASE_APPLIED=true
     else
         # VNDK33, not 31: _EXYNOS9810_RESTORE_BOOTING_VNDK_APEX swaps the v31
-        # APEX out for v33, and zzzz_exynos9810_boot_restore pins
+        # APEX out for v33, and exynos9810_boot_restore pins
         # ro.vndk.version/ro.board.api_level to 33. Verified on a live star2lte:
         # ro.vndk.version=33, ro.board.api_level=33.
         LOG "- Applying full legacy Exynos9810 donor/N770F GVI2 VNDK33 Exynos9810 vendor stack"

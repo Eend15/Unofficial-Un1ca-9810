@@ -1,0 +1,10 @@
+// REFERENCE ONLY. Must be moved into a device tree with Android.bp support.
+// No native binaries are built or installed by this directory.
+cc_library_shared {
+    name: "libnoble_face_hwredirect",
+    srcs: ["noble_face_hwredirect.c"],
+    header_libs: ["libhardware_headers"],
+    shared_libs: ["libdl", "liblog"],
+    compile_multilib: "64",
+    cflags: ["-Wall", "-Wextra", "-Werror"],
+}

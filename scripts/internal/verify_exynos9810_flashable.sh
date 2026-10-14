@@ -13,10 +13,10 @@ EXPECTED_FS="${2:?expected filesystem is required}"
 }
 case "$EXPECTED_FS" in
     erofs)
-        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-52e716dcb9becdb7156d400b119a4b1a11f707ab14fc7b2f1408f68d8430c7b8}"
+        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-3e405a08fd5e0b4f8492096be9003349bb8372e4f16ec43f0308095d6615203f}"
         ;;
     ext4)
-        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-82437f5de23ba4d1951e36207818f86cbf3da892d8a7e0edfbbb0a6e0d4cb3b4}"
+        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-d95c59f6620583635919d983142c8315e68a5545f4d037e8b66d769d4c996735}"
         ;;
     *)
         echo "Exynos9810 flashable verification: invalid filesystem $EXPECTED_FS" >&2
@@ -63,14 +63,14 @@ ACTUAL_FS="$(unzip -p "$ZIP_FILE" exynos9810/fs_type.prop | sed -n 's/^fs_type=/
 }
 
 unzip -p "$ZIP_FILE" exynos9810/ramdisk.img > "$VERIFY_TMP/ramdisk.img"
-[ "$(sha256sum "$VERIFY_TMP/ramdisk.img" | awk '{print $1}')" = "1b059d65c342ceb41fcd32bb06545bd75265ff674337d3a0d00efcf2a2932b4d" ] || {
+[ "$(sha256sum "$VERIFY_TMP/ramdisk.img" | awk '{print $1}')" = "${EXYNOS9810_EXPECTED_RAMDISK_SHA256:-6a6fe0cd652b22103e88547254c0b8b777aef9612b40309ab1150fe1d1ee410e}" ] || {
     echo "Exynos9810 flashable verification: boot ramdisk is not the tested baseline" >&2
     exit 1
 }
 
+unzip -p "$ZIP_FILE" exynos9810/kernel.zip > "$VERIFY_TMP/kernel.zip"
 ACTUAL_KERNEL_SHA256="$(sha256sum "$VERIFY_TMP/kernel.zip" | awk '{print $1}')"
-if [ "$ACTUAL_KERNEL_SHA256" != "$EXPECTED_KERNEL_SHA256" ] && \
-   { [ "$EXPECTED_FS" != "ext4" ] || [ "$ACTUAL_KERNEL_SHA256" != "ddb2c96a54a77e21c189db901da61b398f3ac3ab44a40526c02b4cf2bd890bee" ]; }; then
+if [ "$ACTUAL_KERNEL_SHA256" != "$EXPECTED_KERNEL_SHA256" ]; then
     echo "Exynos9810 flashable verification: wrong DS-ACK kernel for $EXPECTED_FS" >&2
     exit 1
 fi
@@ -102,6 +102,21 @@ else
 fi
 
 unzip -p "$ZIP_FILE" META-INF/com/google/android/updater-script > "$VERIFY_TMP/updater-script"
+if [ -n "${EXYNOS9810_EXPECTED_RAMDISK_SHA256:-}" ]; then
+    unzip -p "$ZIP_FILE" exynos9810/ramdisk.img > "$VERIFY_TMP/ramdisk.img"
+    ACTUAL_RAMDISK_SHA256="$(sha256sum "$VERIFY_TMP/ramdisk.img" | awk '{print $1}')"
+    [ "$ACTUAL_RAMDISK_SHA256" = "$EXYNOS9810_EXPECTED_RAMDISK_SHA256" ] || {
+        echo "Exynos9810 flashable verification: wrong pinned boot image" >&2
+        exit 1
+    }
+    if [ "${EXYNOS9810_EXPECTED_BOOT_SELINUX:-}" = "enforcing" ]; then
+        strings "$VERIFY_TMP/ramdisk.img" > "$VERIFY_TMP/ramdisk.strings"
+        grep -q 'androidboot.selinux=enforcing' "$VERIFY_TMP/ramdisk.strings" || {
+            echo "Exynos9810 flashable verification: enforcing boot parameter missing" >&2
+            exit 1
+        }
+    fi
+fi
 grep -q 'Writing Exynos9810 boot ramdisk' "$VERIFY_TMP/updater-script" || {
     echo "Exynos9810 flashable verification: tested ramdisk install step is missing" >&2
     exit 1

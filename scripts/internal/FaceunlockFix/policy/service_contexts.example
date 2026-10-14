@@ -1,0 +1,4 @@
+# REFERENCE ONLY: existing system_ext Binder service registrations in the
+# validated Android16 work image (not HIDL, not a policy addition).
+com.samsung.android.bio.face.IFaceDaemon u:object_r:faced_service:s0
+samsung.face u:object_r:faced_service:s0

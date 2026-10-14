@@ -16,3 +16,5 @@ SMALI_PATCH "system" "system/framework/services.jar" \
     > /dev/null
 
 unset CERT_PREFIX CERT_SIGNATURE
+
+python3 "$MODPATH/preserve_platform_identity.py" "$APKTOOL_DIR/system/framework/services.jar" "$WORK_DIR/system/system/etc/selinux/plat_mac_permissions.xml" || return 1

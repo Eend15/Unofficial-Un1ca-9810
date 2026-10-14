@@ -1,0 +1,5 @@
+id=dsack_star2lte_kernel
+name=DS-ACK V1.12 Enforcing KernelSU Next SuSFS EROFS/ext4 kernel (S9+)
+author=DS-ACK / UN1CA integration
+description=Galaxy S9+ G965F DS-ACK KernelSU Next 3.4.0, SuSFS and SELinux enforcing; selected boot/DTB automatically for EROFS or ext4 builds.
+build_order=50

@@ -1,6 +1,7 @@
 mkdir -p "$TMP_DIR/exynos9810"
 cp -a "$SRC_DIR/platform/exynos9810/installer/repartition/." "$TMP_DIR/exynos9810/"
 
+
 # These payloads are copied from the tested 2026-08-12 stable build and kept
 # in the repository so a clean checkout never depends on a local donor folder.
 EXYNOS9810_BUNDLED_BATTERY_TWEAKS="$SRC_DIR/platform/exynos9810/installer/battery_tweaks.sh"
@@ -31,8 +32,13 @@ fi
 # investigation, but it is intentionally not bundled into normal images:
 # changing the ramdisk from the installer can itself alter boot behaviour.
 
-EXYNOS9810_RAMDISK_IMG="$SRC_DIR/platform/exynos9810/installer/ramdisk.img"
-EXYNOS9810_EXPECTED_RAMDISK_SHA256="1b059d65c342ceb41fcd32bb06545bd75265ff674337d3a0d00efcf2a2932b4d"
+EXYNOS9810_RAMDISK_IMG="${EXYNOS9810_RAMDISK_IMG:-$SRC_DIR/platform/exynos9810/installer/ramdisk.img}"
+EXYNOS9810_EXPECTED_RAMDISK_SHA256="${EXYNOS9810_EXPECTED_RAMDISK_SHA256:-6a6fe0cd652b22103e88547254c0b8b777aef9612b40309ab1150fe1d1ee410e}"
+EXYNOS9810_EXPECTED_BOOT_SELINUX="${EXYNOS9810_EXPECTED_BOOT_SELINUX:-enforcing}"
+case "$EXYNOS9810_EXPECTED_BOOT_SELINUX" in
+    enforcing|permissive) ;;
+    *) LOGE "Invalid verified boot-header SELinux mode"; exit 1 ;;
+esac
 [ -f "$EXYNOS9810_RAMDISK_IMG" ] || {
     LOGE "Bundled Exynos9810 boot ramdisk is missing: $EXYNOS9810_RAMDISK_IMG"
     exit 1
@@ -85,14 +91,12 @@ chmod 0755 "$TMP_DIR/exynos9810/sgdisk"
 DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Enforcing-KernelSU-OneUI7}"
 DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-30.09.2026-Enforcing-KernelSU-Next-v3.4.0-SuSFS-erofs-dtb.zip"
 [ -f "$DS_ACK_EROFS_PREBUILT_ZIP" ] || DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-erofs-dtb.zip"
-DS_ACK_EROFS_PREBUILT_SHA256="52e716dcb9becdb7156d400b119a4b1a11f707ab14fc7b2f1408f68d8430c7b8"
+DS_ACK_EROFS_PREBUILT_SHA256="3e405a08fd5e0b4f8492096be9003349bb8372e4f16ec43f0308095d6615203f"
 DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-30.09.2026-Enforcing-KernelSU-Next-v3.4.0-SuSFS-ext4-dtb.zip"
-if [ ! -f "$DS_ACK_EXT4_PREBUILT_ZIP" ]; then
-    DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-08.05.2026-Enforcing-KernelSU-OneUI7-ext4.zip"
-    DS_ACK_EXT4_PREBUILT_SHA256="ddb2c96a54a77e21c189db901da61b398f3ac3ab44a40526c02b4cf2bd890bee"
-else
-    DS_ACK_EXT4_PREBUILT_SHA256="82437f5de23ba4d1951e36207818f86cbf3da892d8a7e0edfbbb0a6e0d4cb3b4"
-fi
+# This hash pins the source/user ext4 archive with the tested October14 G965F
+# legacy kernel payload and unchanged filesystem-specific DTBs. A missing package must fail, not silently fall back to
+# the older OneUI7 kernel or a differently signed same-name archive.
+DS_ACK_EXT4_PREBUILT_SHA256="d95c59f6620583635919d983142c8315e68a5545f4d037e8b66d769d4c996735"
 case "${TARGET_OS_FILE_SYSTEM_TYPE:-}" in
     ext4)
         DS_ACK_PREBUILT_ZIP="$DS_ACK_EXT4_PREBUILT_ZIP"
@@ -164,14 +168,14 @@ if [ -f "$EXYNOS9810_KERNEL_ZIP" ]; then
     # Match the tested legacy boot flow: the DS-ACK kernel is installed over this
     # untouched Samsung boot image. The enforcing kernel binary selects the
     # strict policy; the boot header is left unchanged.
-    EXYNOS9810_TESTED_RAMDISK_SHA256="1b059d65c342ceb41fcd32bb06545bd75265ff674337d3a0d00efcf2a2932b4d"
+    EXYNOS9810_TESTED_RAMDISK_SHA256="$EXYNOS9810_EXPECTED_RAMDISK_SHA256"
     EXYNOS9810_RAMDISK_SHA256="$(sha256sum "$TMP_DIR/exynos9810/ramdisk.img" | awk '{print $1}')"
     [ "$EXYNOS9810_RAMDISK_SHA256" = "$EXYNOS9810_TESTED_RAMDISK_SHA256" ] || {
         LOGE "Exynos9810 boot image differs from the tested legacy ramdisk"
         exit 1
     }
-    strings "$TMP_DIR/exynos9810/ramdisk.img" | \
-        grep -q 'androidboot.selinux=permissive' || {
+    strings "$TMP_DIR/exynos9810/ramdisk.img" > "$TMP_DIR/exynos9810/ramdisk.strings"
+    grep -q "androidboot.selinux=$EXYNOS9810_EXPECTED_BOOT_SELINUX" "$TMP_DIR/exynos9810/ramdisk.strings" || {
         LOGE "Exynos9810 legacy boot-header marker is missing"
         exit 1
     }

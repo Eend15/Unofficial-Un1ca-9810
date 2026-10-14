@@ -1,0 +1,37 @@
+on post-fs-data
+    mkdir /data/adb 0700 root root
+    copy /system/bin/ksud /data/adb/ksud
+    chmod 0755 /data/adb/ksud
+    chown root root /data/adb/ksud
+
+on property:sys.boot_completed=1
+    start unica_ksunext_installer
+
+service unica_ksunext_installer /system/bin/sh /system/bin/unica_ksunext_installer.sh
+    class late_start
+    user root
+    group root system shell
+    disabled
+    oneshot
+    seclabel u:r:su:s0
+
+# Package credentials are available after the first unlock on encrypted data.
+# Reuse the one-shot installer: it respects deliberate manager uninstallation.
+on property:sys.user.0.ce_available=true
+    start unica_ksunext_installer
+
+# The legacy driver can invalidate its throne after PackageManager writes.
+# Watch those events without idle polling; validate the real signing lineage
+# and restore only an installed trusted manager. User uninstall is respected.
+on property:sys.boot_completed=1
+    start unica_ksunext_guard
+
+on property:sys.user.0.ce_available=true
+    start unica_ksunext_guard
+
+service unica_ksunext_guard /system/bin/ksu_crown --watch
+    class late_start
+    user root
+    group root system shell
+    disabled
+    seclabel u:r:su:s0
