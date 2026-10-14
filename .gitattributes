@@ -52,3 +52,11 @@ unica/patches/exynos9810_device_stack/exynos9810_finalization/kernelsu/ksu_crown
 unica/patches/exynos9810_device_stack/exynos9810_finalization/face/FaceunlockFix/native/** -text
 unica/mods/weather/**/*.apk filter=lfs diff=lfs merge=lfs -text
 unica/mods/s9_infinity_Wallpaper/payload/system/priv-app/wallpaper-res/*.apk filter=lfs diff=lfs merge=lfs -text
+
+# Relocated native executables must never undergo text normalization.
+unica/patches/exynos9810_device_stack/exynos9810_finalization/radio_update/META-INF/com/google/android/update-binary binary
+unica/patches/exynos9810_device_stack/exynos9810_finalization/radio_update/vendor/bin/secril_config_svc binary
+unica/patches/exynos9810_device_stack/exynos9810_finalization/radio_update/vendor/bin/hw/rild binary
+unica/patches/exynos9810_device_stack/exynos9810_finalization/stock_radio_restore_v5/system/system/bin/imsd binary
+unica/patches/exynos9810_device_stack/exynos9810_finalization/stock_radio_restore_v5/vendor/bin/hw/rild binary
+unica/patches/exynos9810_device_stack/exynos9810_finalization/vibrator/seh/vendor.samsung.hardware.vibrator-service binary
