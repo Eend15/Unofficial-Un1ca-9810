@@ -1,3 +1,18 @@
+# The final 9810 Infinity module installs its verified, signed 10-video
+# catalog and discards this donor decode. Do not spend time re-encoding an
+# APK that is replaced before packaging; final artifact checks stay mandatory.
+if [ "$TARGET_PLATFORM" = exynos9810 ]; then
+    case "$TARGET_CODENAME" in
+        starlte|star2lte|crownlte)
+            [ -s "$SRC_DIR/unica/mods/s9_infinity_Wallpaper/payload/system/priv-app/wallpaper-res/wallpaper-res.apk" ] || {
+                LOGE "Verified Infinity replacement payload is missing"; return 1;
+            }
+            LOG "- Skipping disposable Paradigm encode; verified Infinity catalog is installed by the final module"
+            return 0
+            ;;
+    esac
+fi
+
 if $DEBUG; then
     LOG "\033[0;33m! Debug build detected. Skipping\033[0m"
     return 0
