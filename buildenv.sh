@@ -179,10 +179,26 @@ export WORK_DIR="$OUT_DIR/target/$SELECTED_TARGET/work_dir"
 export TMP_DIR="$OUT_DIR/target/$SELECTED_TARGET/tmp"
 
 mkdir -p "$OUT_DIR/target/$SELECTED_TARGET"
+# Multiple target builds share out/config.sh. Keep target configuration
+# generation and sourcing atomic so parallel builds cannot read a mixed or
+# partially-written config.
+CONFIG_LOCK_FILE="$OUT_DIR/.config_generation.lock"
+exec {CONFIG_LOCK_FD}>"$CONFIG_LOCK_FILE"
+flock "$CONFIG_LOCK_FD"
 # shellcheck disable=SC2046
 [ -f "$OUT_DIR/config.sh" ] && unset $(sed "/Automatically/d" "$OUT_DIR/config.sh" | cut -d "=" -f 1)
-"$SRC_DIR/scripts/internal/gen_config_file.sh" "$SELECTED_TARGET" || return 1
-set -o allexport; source "$OUT_DIR/config.sh"; set +o allexport
+if ! "$SRC_DIR/scripts/internal/gen_config_file.sh" "$SELECTED_TARGET"; then
+    flock -u "$CONFIG_LOCK_FD"
+    exec {CONFIG_LOCK_FD}>&-
+    return 1
+fi
+set -o allexport
+source "$OUT_DIR/config.sh"
+CONFIG_SOURCE_RC=$?
+set +o allexport
+flock -u "$CONFIG_LOCK_FD"
+exec {CONFIG_LOCK_FD}>&-
+[ "$CONFIG_SOURCE_RC" -eq 0 ] || return "$CONFIG_SOURCE_RC"
 
 unset TARGETS SELECTED_TARGET
 

@@ -37,8 +37,14 @@ def verify(work: Path, target: str) -> None:
     with zipfile.ZipFile(system/"framework/framework-res.apk") as z:
         if not contains(z.read("resources.arsc"),"com.samsung.android.wallpaper.live/com.samsung.android.wallpaper.live.infinity.InfinityWallpaper"):
             raise RuntimeError("Compiled native Infinity default component absent")
+    # Apktool/aapt obfuscates compiled resource entry names, so source
+    # res/xml/unica_extra_settings.xml is emitted under a generated res/*.xml
+    # name. Verify the actual compiled XML payload instead of assuming the
+    # source path survives packaging.
     with zipfile.ZipFile(system/"priv-app/SecSettings/SecSettings.apk") as z:
-        if not contains(z.read("res/xml/unica_extra_settings.xml"),"unica_bixby_action"):
+        compiled_xml = [z.read(name) for name in z.namelist()
+                        if name.startswith("res/") and name.endswith(".xml")]
+        if not any(contains(data,"unica_bixby_action") for data in compiled_xml):
             raise RuntimeError("Compiled Bixby button selector absent")
     import importlib.util
     checker=ROOT/"unica/mods/s9_infinity_Wallpaper/source/verify_factory_live_default.py"
