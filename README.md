@@ -72,6 +72,7 @@ Snapdragon models are not supported.
 - Ported Motion Photo feature from SM-S901B
 - Debloat profile tailored for legacy Exynos9810 memory and partition limits
 - Device-specific overlays, DVFS/SIOP policy hooks, floating features, CSC feature tuning, and framework feature declarations
+- Fully working face unlock ported from stock firmware
 
 ## Build
 
