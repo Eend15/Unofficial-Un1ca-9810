@@ -144,7 +144,7 @@ for EROFS or EXT4. The build creates the ROM ZIP in `out/`.
 - **Back up your files, EFS and modem.** The installer may resize partitions
   and formats `/data`, so **your data and internal storage can be erased**.
 - Flash the [custom TWRP recovery](https://drive.google.com/drive/u/1/folders/1fHC1F6aZkXxVGCHYRtzU_RQqX51rYGtk)
-  for your device through Download Mode. It must support **EROFS** and
+  for your device through Download Mode. This TWRP supports **EROFS** and
   **ROM ZIP files larger than 5 GB**.
 
 ### Flash the ROM
