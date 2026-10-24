@@ -137,52 +137,39 @@ for EROFS or EXT4. The build creates the ROM ZIP in `out/`.
 
 ## Installation
 
-1. Flash the custom TWRP recovery with Erofs support and 5gb+ zips support.
-2. first via Download mode:
-   https://drive.google.com/drive/u/1/folders/1fHC1F6aZkXxVGCHYRtzU_RQqX51rYGtk
+### Before you start
 
-3. Boot into the custom TWRP recovery.
+- Use a [supported Exynos Galaxy S9, S9+ or Note9](#supported-devices).
+  **Snapdragon models are not supported.**
+- **Back up your files, EFS and modem.** The installer may resize partitions
+  and formats `/data`, so **your data and internal storage can be erased**.
+- Flash the [custom TWRP recovery](https://drive.google.com/drive/u/1/folders/1fHC1F6aZkXxVGCHYRtzU_RQqX51rYGtk)
+  for your device through Download Mode. It must support **EROFS** and
+  **ROM ZIP files larger than 5 GB**.
 
-4. Get the UN1CA zip onto the device using one of:
-   - Copy it to your microSD card and select it from there in TWRP, or
-   - Drag/copy the zip onto internal storage, or
-   - Use a USB stick (OTG) plugged into the device
+### Flash the ROM
 
-5. In TWRP, tap Install, select the UN1CA zip, and swipe to flash.
+1. Download the UN1CA ZIP for your device. Copy it to a **microSD card or USB
+   OTG drive** (recommended, since internal storage may be wiped).
+2. Boot into TWRP, select **Install**, choose the ROM ZIP and swipe to flash.
+   The installer handles repartitioning if needed.
+3. If installation stops with a partition/recovery refresh error, reboot back
+   into TWRP, select **Wipe > Format Data**, type `yes`, then flash the ZIP again.
+4. When coming from an older One UI version, or if encryption/mount problems
+   remain, use **Wipe > Format Data** and type `yes` before rebooting.
+5. Select **Reboot > System**. The first boot can take several minutes.
 
-6. Once flashing completes, go back and tap Wipe > Format Data,
-   then type "yes" to confirm.
-   a Format Data wipe is needed. (when coming from older one ui versions)
+The ROM already includes the matching **EROFS or EXT4** kernel with
+**SELinux Enforcing, KernelSU Next and SuSFS**. Do not flash a kernel for
+the wrong filesystem.
 
-7. Reboot System.
+For bugs and feature requests, join the [official Telegram group](https://t.me/+sE1dIX31j5w1OWRk).
 
-First boot after a Format Data wipe can take a few minutes longer patiently wait.
- — this is normal.
+### Disclaimer
 
-Notes:
-- Back up EFS, modem, and any important data before you start —
-  this ROM is still a porting project.
-- Only flash on supported Exynos9810 models: S9 (`starlte`),
-  S9+ (`star2lte`), and Note9 (`crownlte`) global, dual-SIM, or Korean variants.
-  
-Official Telegram: (report bugs or wanted features)
-https://t.me/+sE1dIX31j5w1OWRk
-
-### Accountability
-
-```
-
-
-/*
-* Your warranty is now void.
-*
-* I am not responsible for bricked devices, dead SD cards,
-* thermonuclear war, or you getting fired because the alarm app failed. Please
-* do some research if you have any concerns about doing this to your device
-* YOU are choosing to make these modifications, and if
-* you point the finger at me for messing up your device, I will laugh at you.
-*
-```
+Flashing an unofficial ROM is at your own risk. It may void your warranty,
+erase your data or make your device unusable. The maintainers are not
+responsible for damage caused by flashing.
 
 ## Branches
 
