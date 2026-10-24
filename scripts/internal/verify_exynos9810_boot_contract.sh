@@ -48,6 +48,8 @@ require_file() {
 
 require_file "$SYSTEM_PROP"
 require_file "$VENDOR_PROP"
+python3 "$(dirname "$0")/../../unica/patches/exynos9810_device_stack/exynos9810_finalization/input/verify_wake_keylayout.py" \
+    "$WORK"
 if [ "$TARGET_CODENAME" = "crownlte" ]; then
     python3 "$(dirname "$0")/../../unica/patches/exynos9810_device_stack/exynos9810_finalization/spen/patch_smps_property.py" \
         "$WORK" --verify

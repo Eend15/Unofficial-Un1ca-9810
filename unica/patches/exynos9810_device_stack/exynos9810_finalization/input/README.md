@@ -39,4 +39,24 @@ with their respective proven baselines.
 
 The new AOT interface, persistence after reboot, AOD coexistence, and power use
 are not yet accepted on physical hardware. Do not describe source tests as
-S9 or Note9 device tests. No new kernel has been flashed in this follow-up.
+S9 or Note9 device tests. The original audit did not cover the October24 wake-only key mapping.
+
+October24 wake-only key integration: the backend now emits Linux KEY_WAKEUP
+(scancode 143) for a suspended wake request, preserving POWER (116) for awake
+sleep gestures. The dedicated wg_pwrkey.kl must map both keys with WAKE. Without
+143 mapped, the kernel can vibrate after recognizing a double tap while Android
+ignores the unmapped key. The platform keylayout writer now supplies both lines
+for starlte, star2lte and crownlte. test_wake_keylayout.py executes the actual
+writer for all three targets and preserves the Bixby mapping. Reboot after a
+live keylayout change so EventHub reloads the device map. Physical acceptance
+of this mapping is tracked separately from the old backend acceptance above.
+
+After the October24 keylayout correction and reboot, the user physically
+confirmed that double-tap-to-wake works on the connected S9+. A separate
+injected KEY_WAKEUP test changed Dozing to Awake. This acceptance is specific
+to the S9+ and this ROM/keylayout pairing; S9 and Note9 remain untested.
+
+Wake-feedback default: native init writes only android_touch/vib_strength=0
+after boot, suppressing the extra wake-gesture pulse while preserving ordinary
+Android haptic settings. The S9+ retained zero after reboot. This setting is
+provided by the platform source writer and checked by the boot contract.

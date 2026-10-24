@@ -573,6 +573,7 @@ _EXYNOS9810_WRITE_EXYNOS9810_KEYLAYOUTS()
 
     cat > "$KL_DIR/wg_pwrkey.kl" <<'EOF'
 key 116   POWER             WAKE
+key 143   WAKEUP            WAKE
 EOF
 
     # Bixby button = scancode 703 on starlte, star2lte and crownlte. USER is a
@@ -585,6 +586,16 @@ key 115   VOLUME_UP
 key 116   POWER             WAKE
 key 703   USER
 EOF
+
+    # Silence only the wake-gesture feedback motor pulse. Normal Android
+    # notification, call and touch haptics use their existing controls.
+    mkdir -p "$WORK_DIR/system/system/etc/init"
+    cat > "$WORK_DIR/system/system/etc/init/unica_wake_gestures.rc" <<'EOF'
+on property:sys.boot_completed=1
+    write /sys/android_touch/vib_strength 0
+EOF
+    _EXYNOS9810_SET_METADATA "system" "system/etc/init/unica_wake_gestures.rc" \
+        "/system/etc/init/unica_wake_gestures.rc" 0 0 644 "u:object_r:system_file:s0"
 
     _EXYNOS9810_SET_METADATA "system" "system/usr/keylayout/wg_pwrkey.kl" \
         "/system/usr/keylayout/wg_pwrkey.kl" 0 0 644 "u:object_r:system_file:s0"

@@ -1,0 +1,32 @@
+{
+  "base_revisions": [
+    "5f1503d49dedf4d5c4c641ca27bcde5564541f24",
+    "042ce35d7795f75bb86e013097ca2002acfb6424"
+  ],
+  "patch_sha256": "7becbf235b30d64ae39c85d6198fba51ee478d1e2b9994e6c7fbe085751d9af7",
+  "susfs_version": "v1.5.5",
+  "susfs_variant": "NON-GKI",
+  "compiled_features": 15,
+  "status_adapter": "Root-only read-only v3.4.2 query ABI; original prctl controls retained",
+  "candidate_v2_port": {
+    "repository": "https://github.com/wxx9248/susfs4ksu",
+    "revision": "71345ded5af28f55d76ebcdc7a9df9cea56111e1",
+    "version": "v2.3.0",
+    "accepted": false,
+    "reason": "Separate ReSukiSU-oriented hooks and v2 userspace ABI; patch does not apply to this already-integrated Next tree. Not claimed compatible or shipped."
+  },
+  "accepted_source_revisions": {
+    "ext4": "0f2d01d2517523c62f648c8e23b76ffca9eb807c",
+    "erofs": "a6985bf04e1e3cdc2e648ad5f90bb570fe6d6456"
+  },
+  "physical_acceptance": {
+    "model": "G965F star2lte",
+    "grant_and_app_root_after_two_reboots": true,
+    "module_boot_execution_count": 1,
+    "selinux": "Enforcing",
+    "stale_sequence_warnings": 0,
+    "user_confirmed_smooth_scroll_and_dt2w": true,
+    "wake_haptic_default_after_reboot": 0,
+    "other_models": "Not physically accepted"
+  }
+}

@@ -50,7 +50,7 @@ static struct file *filp_open(const char *path,int flags,int mode) {
     struct file *f=calloc(1,sizeof(*f));f->stream=s;return f;
 }
 static int read_calls;
-static ssize_t kernel_read(struct file *f,void *buf,size_t count,loff_t *pos) {
+static ssize_t ksu_kernel_read_compat(struct file *f,void *buf,size_t count,loff_t *pos) {
     ++read_calls;
     fseek(f->stream,*pos,SEEK_SET);size_t n=fread(buf,1,count,f->stream);*pos+=n;return n;
 }
@@ -62,6 +62,18 @@ static int ksu_get_manager_appid(void) {return manager;}
 static bool ksu_is_manager_appid_valid(void) {return manager!=-1;}
 static void ksu_invalidate_manager_uid(void) {manager=-1;}
 static void ksu_set_manager_appid(u32 uid) {manager=uid;}
+#define KSU_INVALID_APPID ((uid_t)-1)
+#define KSU_MANAGER_PACKAGE "com.rifsxd.ksunext"
+#define unlikely(x) (x)
+#define PTR_ERR(x) (-2)
+#define ENOENT 2
+static int throne_tracker_mutex;
+static void mutex_lock(int *p) {(void)p;}
+static void mutex_unlock(int *p) {(void)p;}
+static char cached_manager_apk_path[384];
+struct path {int unused;};
+static int kern_path(const char *p,int flags,struct path *out) {(void)p;(void)flags;(void)out;return -2;}
+static void path_put(struct path *p) {(void)p;}
 static void search_manager(const char *s,int n,struct list_head *h) {(void)s;(void)n;(void)h;}
 static void ksu_prune_allowlist(bool (*valid)(uid_t,char*,void*),void *data) {
     ++prunes;if(!valid(10002,"com.example.allowed",data))grant=0;
@@ -86,7 +98,7 @@ int main(int argc,char **argv) {
             source.write_text(code)
             binary = work / 'tracker'
             subprocess.run(['cc', '-std=gnu11', '-Werror=implicit-function-declaration',
-                            str(source), '-o', str(binary)], check=True, capture_output=True)
+                            str(source), '-o', str(binary)], check=True, capture_output=False)
             manager = 'com.rifsxd.ksunext 10001 0 /data/user/0/manager default 0\n'
             app = 'com.example.allowed 10002 0 /data/user/0/app default 0\n'
             cases = [

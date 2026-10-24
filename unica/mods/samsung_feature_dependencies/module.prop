@@ -1,0 +1,5 @@
+id=exynos9810_samsung_dependencies
+name=Samsung account policy and sticker dependencies
+author=UN1CA Exynos9810
+description=Restore original Samsung Cloud shared-UID permissions and Gallery StickerCenter.
+build_order=50

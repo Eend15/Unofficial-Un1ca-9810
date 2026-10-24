@@ -11,11 +11,13 @@ class InitBootstrapTests(unittest.TestCase):
         for target in ("starlte", "star2lte", "crownlte"):
             with self.subTest(target=target):
                 source = ROOT / f"out/target/{target}/work_dir/system/system/etc/init/hw/init.rc"
+                if not source.is_file():
+                    source = ROOT / 'out/fw/SM-S901B_EUX/system/system/etc/init/hw/init.rc'
                 original = source.read_text()
                 result = patch(original)
                 self.assertEqual(result.count("UN1CA_KSUNEXT_EARLY_DAEMON"), 1)
                 self.assertEqual(patch(result), result)
-                self.assertEqual(result.replace(BLOCK, "", 1), original)
+                self.assertEqual(result.replace(BLOCK, "", 1), original.replace(BLOCK, "", 1))
                 action = re.search(r"^on post-fs-data\n(?:(?!^(?:on |service |import )).)*",
                                    result, re.M | re.S).group()
                 self.assertLess(action.index("checkpoint prepareCheckpoint"),

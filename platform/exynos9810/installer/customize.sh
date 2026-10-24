@@ -88,15 +88,16 @@ chmod 0755 "$TMP_DIR/exynos9810/sgdisk"
 # Select the DS-ACK payload that matches the filesystem being built. The
 # ext4 package carries the non-EROFS DTBs; the EROFS package remains the
 # repository's EROFS-specific payload.
-DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Enforcing-KernelSU-OneUI7}"
-DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-23.10.2026-Enforcing-KernelSU-Next-v3.4.0-SuSFS-erofs-dtb.zip"
-DS_ACK_EROFS_PREBUILT_SHA256="ed5963a64ec99cb401c96e0a008f09df7ba9762e050355b3195f0a54324c6ce8"
-DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-23.10.2026-Enforcing-KernelSU-Next-v3.4.0-SuSFS-ext4-dtb.zip"
-# These archives contain the October21 package-snapshot kernel fix for all six
-# models and retain the existing filesystem-specific DTBs/tools/installer.
+DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Enforcing-KernelSU-Next-v3.4.2-SuSFS}"
+DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-24.10.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-SuSFS-erofs-dtb.zip"
+DS_ACK_EROFS_PREBUILT_SHA256="87f62131e904b2061f1761cf87587b685b5d6c170e4e3b823283e00b946408cc"
+DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-24.10.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-SuSFS-ext4-dtb.zip"
+# These October24 archives contain the tested Linux4.9 persistence/cache fixes,
+# maximum compiled legacy SuSFS features and the complete six-model family.
+# Filesystem-specific DTBs/tools/installer remain from their proven baselines.
 # A missing package must fail, not silently fall back to
 # the older OneUI7 kernel or a differently signed same-name archive.
-DS_ACK_EXT4_PREBUILT_SHA256="fb366c09131491c49fffab3355cdd470ad10a97b7ab06e1b6c86e758e6034209"
+DS_ACK_EXT4_PREBUILT_SHA256="e5a366110357a0d7807f12c61d1f71088c4508471df50fbf36deb62c064a1aca"
 case "${TARGET_OS_FILE_SYSTEM_TYPE:-}" in
     ext4)
         DS_ACK_PREBUILT_ZIP="$DS_ACK_EXT4_PREBUILT_ZIP"
@@ -118,7 +119,7 @@ CROWNTRAIL_KERNEL_ZIP="${CROWNTRAIL_KERNEL_ZIP:-}"
 # DS-ACK v1.12 kernel payload is selected above; brightness scaling remains
 # selected by the legacy Samsung profile in floating_feature.xml.
 if [ -z "${EXYNOS9810_KERNEL_ZIP:-}" ] && [ -f "$DS_ACK_LOCAL_ZIP" ]; then
-    EXYNOS9810_KERNEL_NAME="${EXYNOS9810_KERNEL_NAME:-DS-ACK v1.12 KernelSU-Next OneUI7 (legacy boot flow)}"
+    EXYNOS9810_KERNEL_NAME="${EXYNOS9810_KERNEL_NAME:-DS-ACK v1.12 Enforcing KernelSU-Next v3.4.2 + SuSFS v1.5.5}"
     EXYNOS9810_KERNEL_ZIP="$DS_ACK_LOCAL_ZIP"
 elif [ -z "${EXYNOS9810_KERNEL_ZIP:-}" ]; then
     LOGE "Exynos9810 enforcing DS-ACK kernel package not found: $DS_ACK_LOCAL_ZIP"

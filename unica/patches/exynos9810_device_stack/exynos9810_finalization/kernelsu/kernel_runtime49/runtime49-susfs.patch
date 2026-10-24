@@ -1,0 +1,333 @@
+diff --git a/KernelSU-Next/kernel/Kbuild b/KernelSU-Next/kernel/Kbuild
+index f91aa262eb06..a020f16ff964 100644
+--- a/KernelSU-Next/kernel/Kbuild
++++ b/KernelSU-Next/kernel/Kbuild
+@@ -2,6 +2,9 @@ kernelsu-objs := core/init.o
+ 
+ kernelsu-objs += compat/kernel_compat.o
+ kernelsu-objs += feature/kernel_umount.o
++ifeq ($(CONFIG_KSU_SUSFS),y)
++kernelsu-objs += feature/susfs_legacy_status.o
++endif
+ kernelsu-objs += feature/sulog.o
+ kernelsu-objs += feature/sucompat.o
+ kernelsu-objs += feature/shell_su_adb_only.o
+diff --git a/KernelSU-Next/kernel/feature/susfs_legacy_status.c b/KernelSU-Next/kernel/feature/susfs_legacy_status.c
+new file mode 100644
+index 000000000000..ad9acb43c39f
+--- /dev/null
++++ b/KernelSU-Next/kernel/feature/susfs_legacy_status.c
+@@ -0,0 +1,91 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Read-only KernelSU Next v3.4.2 status ABI for built-in SuSFS v1.5.5.
++ * Keep the original prctl control ABI and report the real version/features.
++ */
++#include <linux/cred.h>
++#include <linux/errno.h>
++#include <linux/string.h>
++#include <linux/uaccess.h>
++#include <linux/susfs.h>
++
++static const char ksu_susfs_legacy_features[] =
++#ifdef CONFIG_KSU_SUSFS_SUS_PATH
++ "CONFIG_KSU_SUSFS_SUS_PATH\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
++ "CONFIG_KSU_SUSFS_SUS_MOUNT\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
++ "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
++ "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
++ "CONFIG_KSU_SUSFS_SUS_KSTAT\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_SUS_OVERLAYFS
++ "CONFIG_KSU_SUSFS_SUS_OVERLAYFS\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
++ "CONFIG_KSU_SUSFS_TRY_UMOUNT\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
++ "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
++ "CONFIG_KSU_SUSFS_SPOOF_UNAME\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_ENABLE_LOG
++ "CONFIG_KSU_SUSFS_ENABLE_LOG\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
++ "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
++ "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
++ "CONFIG_KSU_SUSFS_OPEN_REDIRECT\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_SUS_SU
++ "CONFIG_KSU_SUSFS_SUS_SU\n"
++#endif
++#ifdef CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT
++ "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT\n"
++#endif
++ "";
++
++static int ksu_susfs_copy_status(void __user *arg, const char *value,
++                                size_t capacity)
++{
++ size_t length = strlen(value) + 1;
++ int error = 0;
++
++ if (length > capacity)
++  return -E2BIG;
++ if (copy_to_user(arg, value, length))
++  return -EFAULT;
++ if (copy_to_user((char __user *)arg + capacity, &error, sizeof(error)))
++  return -EFAULT;
++ return 0;
++}
++
++int ksu_susfs_legacy_status(unsigned int cmd, void __user *arg)
++{
++ /* The manager invokes ksud from its root shell. Never expose a new
++  * unprivileged query surface or allow any state-changing command here.
++  */
++ if (current_uid().val != 0)
++  return -EPERM;
++ switch (cmd) {
++ case 0x555e1:
++  return ksu_susfs_copy_status(arg, SUSFS_VERSION, 16);
++ case 0x555e2:
++  return ksu_susfs_copy_status(arg, ksu_susfs_legacy_features, 8192);
++ case 0x555e3:
++  return ksu_susfs_copy_status(arg, SUSFS_VARIANT, 16);
++ default:
++  return -EOPNOTSUPP;
++ }
++}
+diff --git a/KernelSU-Next/kernel/manager/apk_sign.c b/KernelSU-Next/kernel/manager/apk_sign.c
+index 262a924882cc..67843158e2af 100644
+--- a/KernelSU-Next/kernel/manager/apk_sign.c
++++ b/KernelSU-Next/kernel/manager/apk_sign.c
+@@ -1,3 +1,4 @@
++#include "compat/kernel_compat.h"
+ #include "util.h"
+ #include <linux/err.h>
+ #include <linux/fs.h>
+@@ -80,7 +81,7 @@ static bool read_exact(struct file *fp, void *buffer, size_t size, loff_t *pos,
+ 	if (*pos < 0 || *pos > end || size > (size_t)(end - *pos))
+ 		return false;
+ 
+-	return kernel_read(fp, buffer, size, pos) == (ssize_t)size;
++	return ksu_kernel_read_compat(fp, buffer, size, pos) == (ssize_t)size;
+ }
+ 
+ static bool read_length_prefixed_end(struct file *fp, loff_t *pos, loff_t container_end, loff_t *value_end)
+@@ -171,7 +172,7 @@ static __always_inline bool check_v2_signature(char *path,
+ 	// https://en.wikipedia.org/wiki/Zip_(file_format)#End_of_central_directory_record_(EOCD)
+ 	// Buffered backward search (single read) instead of the upstream
+ 	// byte-by-byte loop: scanning /data/app at boot with thousands of
+-	// 2-byte kernel_read() calls stalls the device for ages.
++	// 2-byte ksu_kernel_read_compat() calls stalls the device for ages.
+ 	{
+ 		unsigned char *eocd_buffer;
+ 		long search_size;
+@@ -191,7 +192,7 @@ static __always_inline bool check_v2_signature(char *path,
+ 		memset(eocd_buffer, 0, search_size);
+ 
+ 		pos = file_size - search_size;
+-		if (kernel_read(fp, eocd_buffer, search_size, &pos) != search_size) {
++		if (ksu_kernel_read_compat(fp, eocd_buffer, search_size, &pos) != search_size) {
+ 			kvfree(eocd_buffer);
+ 			goto clean;
+ 		}
+diff --git a/KernelSU-Next/kernel/manager/throne_tracker.c b/KernelSU-Next/kernel/manager/throne_tracker.c
+index 862e0fdff3e9..b7f058461642 100644
+--- a/KernelSU-Next/kernel/manager/throne_tracker.c
++++ b/KernelSU-Next/kernel/manager/throne_tracker.c
+@@ -1,3 +1,4 @@
++#include "compat/kernel_compat.h"
+ #include "ksu.h"
+ #include "linux/cred.h"
+ #include "linux/namei.h"
+@@ -303,7 +304,7 @@ void track_throne(bool prune_only)
+ 	/* This runs from a PackageManager fsnotify callback. Read in chunks,
+ 	 * rather than performing a VFS/security read for every single byte. */
+ 	for (;;) {
+-		ssize_t count = kernel_read(fp, read_buf, 4096, &pos);
++		ssize_t count = ksu_kernel_read_compat(fp, read_buf, 4096, &pos);
+ 		ssize_t index;
+ 		if (count <= 0) {
+ 			if (count < 0 || prefix_len != 0)
+diff --git a/KernelSU-Next/kernel/policy/allowlist.c b/KernelSU-Next/kernel/policy/allowlist.c
+index 977b8ba72fcd..c4627a31a722 100644
+--- a/KernelSU-Next/kernel/policy/allowlist.c
++++ b/KernelSU-Next/kernel/policy/allowlist.c
+@@ -580,14 +580,14 @@ void ksu_load_allow_list()
+ 	}
+ 
+ 	// verify magic
+-	if (kernel_read(fp, &magic, sizeof(magic), &off) != sizeof(magic) ||
++	if (ksu_kernel_read_compat(fp, &magic, sizeof(magic), &off) != sizeof(magic) ||
+ 	    magic != FILE_MAGIC) {
+ 		pr_err("allowlist file invalid: %d!\n", magic);
+ 		goto exit;
+ 	}
+ 
+ 	// get file version
+-	if (kernel_read(fp, &version, sizeof(version), &off) != sizeof(version)) {
++	if (ksu_kernel_read_compat(fp, &version, sizeof(version), &off) != sizeof(version)) {
+ 		pr_err("allowlist read version: %d failed\n", version);
+ 		goto exit;
+ 	}
+@@ -605,7 +605,7 @@ void ksu_load_allow_list()
+ 	while (true) {
+ 		struct app_profile profile;
+ 
+-		ret = kernel_read(fp, &profile, app_profile_size, &off);
++		ret = ksu_kernel_read_compat(fp, &profile, app_profile_size, &off);
+ 
+ 		if (ret != app_profile_size) {
+ 			if (ret != 0)
+diff --git a/KernelSU-Next/kernel/runtime/ksud_integration.c b/KernelSU-Next/kernel/runtime/ksud_integration.c
+index 9d9240c7376a..3078e952d9de 100644
+--- a/KernelSU-Next/kernel/runtime/ksud_integration.c
++++ b/KernelSU-Next/kernel/runtime/ksud_integration.c
+@@ -135,7 +135,7 @@ static void load_module_rc_once(void)
+ 		goto out_close_file;
+ 	}
+ 
+-	r = kernel_read(f, module_rc_buf, fsize, &pos);
++	r = ksu_kernel_read_compat(f, module_rc_buf, fsize, &pos);
+ 
+ 	if (r <= 0) {
+ 		pr_err("module rc: read failed: %zd\n", r);
+diff --git a/KernelSU-Next/kernel/selinux/rules.c b/KernelSU-Next/kernel/selinux/rules.c
+index b7aaabab67f7..b480a2753b3f 100644
+--- a/KernelSU-Next/kernel/selinux/rules.c
++++ b/KernelSU-Next/kernel/selinux/rules.c
+@@ -61,8 +61,7 @@ static void reset_avc_cache()
+ #ifdef KSU_COMPAT_USE_SELINUX_STATE
+ 	u32 seqno = selinux_state.ss ? ++selinux_state.ss->latest_granting : 1;
+ #else
+-	static atomic_t ksu_policy_seqno = ATOMIC_INIT(1);
+-	u32 seqno = (u32)atomic_inc_return(&ksu_policy_seqno);
++	u32 seqno = security_ksu_next_policy_seqno();
+ #endif
+ 
+ #if ((!defined(KSU_COMPAT_USE_SELINUX_STATE)) || \
+diff --git a/KernelSU-Next/kernel/supercall/supercall.c b/KernelSU-Next/kernel/supercall/supercall.c
+index 9c7ac7bb8531..c3aaaf730d1b 100644
+--- a/KernelSU-Next/kernel/supercall/supercall.c
++++ b/KernelSU-Next/kernel/supercall/supercall.c
+@@ -120,12 +120,27 @@ static void ksu_install_fd_tw_func(struct callback_head *cb)
+     kfree(tw);
+ }
+ 
++#ifdef CONFIG_KSU_SUSFS
++extern int ksu_susfs_legacy_status(unsigned int cmd, void __user *arg);
++#endif
++
+ int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd,
+ 			  void __user **arg)
+ {
+ 	if (magic1 != KSU_INSTALL_MAGIC1)
+ 		return 0;
+ 
++#ifdef CONFIG_KSU_SUSFS
++ /* Official Next 3.4.2 queries use the reboot status ABI; our built-in
++  * SuSFS 1.5.5 retains its original prctl controls. Translate only the
++  * three read-only status queries and keep their real version/features.
++  */
++ if ((u32)magic2 == 0xFAFAFAFA) {
++  ksu_susfs_legacy_status(cmd, *arg);
++  return 0;
++ }
++#endif
++
+ #ifdef CONFIG_KSU_DEBUG
+ 	pr_info("sys_reboot: intercepted call! magic: 0x%x id: %d\n", magic1,
+ 		magic2);
+diff --git a/security/selinux/include/security.h b/security/selinux/include/security.h
+index fd0097b33504..57c7af36433d 100644
+--- a/security/selinux/include/security.h
++++ b/security/selinux/include/security.h
+@@ -263,6 +263,10 @@ struct selinux_kernel_status {
+ 
+ extern void selinux_status_update_setenforce(int enforcing);
+ extern void selinux_status_update_policyload(int seqno);
++#ifdef CONFIG_KSU
++u32 security_ksu_next_policy_seqno(void);
++#endif
++
+ extern void selinux_complete_init(void);
+ extern int selinux_disable(void);
+ extern void exit_sel_fs(void);
+diff --git a/security/selinux/ss/services.c b/security/selinux/ss/services.c
+index 5e092a76abae..4cdaca14c96b 100644
+--- a/security/selinux/ss/services.c
++++ b/security/selinux/ss/services.c
+@@ -90,6 +90,25 @@ int ss_initialized;
+  */
+ static u32 latest_granting;
+ 
++#ifdef CONFIG_KSU
++/* Keep in-place KernelSU policy mutations in the security server sequence.
++ * Advancing only the AVC notification counter makes every later access
++ * decision look stale and prevents the cache from accepting any decision.
++ * The caller sends notifications after this lock has been released.
++ */
++u32 security_ksu_next_policy_seqno(void)
++{
++ unsigned long flags;
++ u32 seqno;
++
++ write_lock_irqsave(&policy_rwlock, flags);
++ seqno = ++latest_granting;
++ write_unlock_irqrestore(&policy_rwlock, flags);
++ return seqno;
++}
++#endif
++
++
+ /* Forward declaration. */
+ static int context_struct_to_string(struct context *context, char **scontext,
+ 				    u32 *scontext_len);
+diff --git a/tools/verify_release_zip.sh b/tools/verify_release_zip.sh
+index c36f3a26a6fc..c445f5903db9 100755
+--- a/tools/verify_release_zip.sh
++++ b/tools/verify_release_zip.sh
+@@ -61,13 +61,28 @@ for variant in G960F G965F N960F G960N G965N N960N; do
+     config="$TMP_DIR/$variant.config"
+ 
+     case "$(basename "$ZIP_PATH")" in
+-        *AOT-dt2w*)
++        *AOT*)
+             grep -q '^CONFIG_WAKE_GESTURES=y$' "$config"
+             grep -aq 'aot_enable' "$kernel"
+             grep -aq 'doubletap2wake' "$kernel"
+             ;;
+     esac
+ 
++    case "$(basename "$ZIP_PATH")" in
++        *v3.4.2*)
++            grep -aq 'v3.4.2-legacy' "$kernel"
++            grep -aq '.ksu_services_once' "$kernel"
++            grep -q '^CONFIG_KSU_SUSFS=y$' "$config"
++            for feature in HAS_MAGIC_MOUNT SUS_PATH SUS_MOUNT \
++                AUTO_ADD_SUS_KSU_DEFAULT_MOUNT AUTO_ADD_SUS_BIND_MOUNT \
++                SUS_KSTAT SUS_OVERLAYFS TRY_UMOUNT \
++                AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT SPOOF_UNAME ENABLE_LOG \
++                HIDE_KSU_SUSFS_SYMBOLS SPOOF_CMDLINE_OR_BOOTCONFIG OPEN_REDIRECT SUS_SU; do
++                grep -q "^CONFIG_KSU_SUSFS_${feature}=y$" "$config"
++            done
++            ;;
++    esac
++
+     grep -q '^CONFIG_EROFS_FS=y$' "$config"
+     grep -q '^CONFIG_EROFS_FS_ZIP=y$' "$config"
+     grep -q '^CONFIG_DEVTMPFS=y$' "$config"

@@ -2050,7 +2050,7 @@ _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT()
     # ready. packages.list then changes, the kernel scanner sees base.apk and
     # crowns the manager immediately, exactly like a manual adb/package-
     # installer install.
-    local EXPECTED_SHA256="50339a93c0f812b8a72c1a387a1b441891e3df0f20b2d9daf80fd798d04b3de8"
+    local EXPECTED_SHA256="774a5511f7034a4930e881114e202319cbdc34c5aaaa5c7c6b6d2902364e4c58"
     local PAYLOAD_DIR="$WORK_DIR/system/system/etc/unica/ksunext"
     local PAYLOAD="$PAYLOAD_DIR/KernelSUNext.apk"
     local SCRIPT="$WORK_DIR/system/system/bin/unica_ksunext_installer.sh"
@@ -2068,7 +2068,7 @@ _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT()
     fi
 
     if [ "$(sha256sum "$EXYNOS9810_KERNELSU_NEXT_APK" | cut -d ' ' -f 1)" != "$EXPECTED_SHA256" ]; then
-        LOGE "Unexpected KernelSU Next v3.4.0 (33294) payload hash"
+        LOGE "Unexpected KernelSU Next v3.4.2 (33355) payload hash"
         return 1
     fi
 
