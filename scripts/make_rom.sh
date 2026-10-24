@@ -421,6 +421,13 @@ if [ "$TARGET_PLATFORM" = exynos9810 ] && \
     unset DI_CERT_PREFIX
 fi
 
+if [ "$TARGET_PLATFORM" = exynos9810 ] && \
+        [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] && \
+        [ ! -f "$SRC_DIR/unica/mods/privacy_indicator_fix/disable" ]; then
+    python3 "$SRC_DIR/unica/mods/privacy_indicator_fix/source/verify_built.py" \
+        "$WORK_DIR/system/system/system_ext/priv-app/SystemUI/SystemUI.apk" || exit 1
+fi
+
 if $BUILD_TARGET_FILES || $BUILD_FLASHABLE_ZIP; then
     CURRENT_WORK_HASH="$(GET_WORK_DIR_HASH)"
     if [ -f "$WORK_DIR/.build_in_progress" ]; then

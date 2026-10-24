@@ -1,0 +1,5 @@
+id=exynos9810_privacy_stop
+name=Privacy indicator stop attribution
+author=UN1CA Exynos9810
+description=Preserve the tracked AppOps attribution when notifying camera/microphone stop.
+build_order=45
