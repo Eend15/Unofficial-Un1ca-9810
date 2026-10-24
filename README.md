@@ -89,11 +89,13 @@ cd Unofficial-Un1ca-9810
 git lfs install
 git submodule update --init --recursive
 git lfs pull
-python3 scripts/internal/verify_source_checkout.py
+python3 scripts/internal/verify_source_checkout.py --check-index
 ```
 
 `git lfs pull` is required: a small LFS pointer is not a kernel or APK. The
-preflight checks repository input completeness and the six pinned submodules
+preflight checks repository input completeness, the six pinned submodules,
+and both filesystem-specific kernel archives against the exact SHA-256 pins
+and all six device kernel/DTB entries
 before building. Tool binaries are generated automatically from the submodules;
 no existing `out/tools`, private SDK cache or another developer's workdir is
 required for a normal ROM build. Optional source-development rebuild helpers
@@ -108,7 +110,7 @@ sudo apt install git git-lfs openjdk-21-jdk build-essential clang lld cmake ninj
   autoconf automake libtool pkg-config libusb-1.0-0-dev libprotobuf-dev protobuf-compiler \
   liblz4-dev libzstd-dev zlib1g-dev libssl-dev libpcre2-dev libselinux1-dev \
   libbrotli-dev uuid-dev libjsoncpp-dev python3 python3-pip python3-venv \
-  p7zip-full bc brotli cpio curl ffmpeg attr lz4 rsync unzip zip zstd webp
+  p7zip-full bc brotli cpio curl ffmpeg attr file xxd lz4 rsync unzip zip zstd webp
 ```
 
 Place/extract the matching firmware using the upstream `out/odin` and `out/fw`
@@ -116,6 +118,15 @@ layout. The source donor is `SM-S901B/EUX`; the device firmware is
 `SM-G960F/PHN`, `SM-G965F/PHN` or `SM-N960F/PHN` respectively. The exact configured
 releases and extracted partition layout must match the source configuration;
 copying an arbitrary firmware ZIP into the repository root is insufficient.
+The extracted input directories are `out/fw/SM-S901B_EUX` and one of
+`out/fw/SM-G960F_PHN`, `out/fw/SM-G965F_PHN`,
+`out/fw/SM-N960F_PHN`. They must contain the `.extracted` marker and
+the extracted partitions and metadata (for example `system/`, `vendor/`,
+`fs_config-system`, `file_context-system`). For local firmware, finish
+`unica extract_fw` first: a `.downloaded` marker or a raw AP/BL archive
+does not count as an extracted input. If firmware download is unavailable,
+obtain and extract that firmware manually; the ROM's source dependencies
+are already included with Git and Git LFS.
 Use `unica extract_fw` for locally supplied firmware, or the existing
 `unica download_fw` / `unica extract_fw` workflow. Source and target firmware
 remain external inputs. Enforcing KernelSU kernels and the required mod payloads
@@ -142,6 +153,17 @@ For EXT4, choose one target and run the two commands separately (replace
 source buildenv.sh crownlte
 unica make_rom -z --fs-type ext4
 ```
+
+Both filesystem choices work with each of the three targets above. The kernel
+is selected automatically for the chosen filesystem and all six Exynos9810
+device model variants are included in each kernel archive. Use these commands
+from the project root on the Linux filesystem. An already-built ROM ZIP does
+not update when new source patches are merged: rerun the build.
+
+Successful source and configuration preflight is a prerequisite, not a promise
+that every proprietary donor-firmware build or physical device test will pass.
+If an actual build fails, preserve the build log in `out/target/<target>/`
+and report its first error.
 
 Build output and extracted firmware are intentionally not tracked in git. Keep `out/` and `work/` local.
 
