@@ -1,8 +1,5 @@
-on post-fs-data
-    mkdir /data/adb 0700 root root
-    copy /system/bin/ksud /data/adb/ksud
-    chmod 0755 /data/adb/ksud
-    chown root root /data/adb/ksud
+# ksud is prepared by the patched main init.rc post-fs-data action, after
+# checkpoint/data setup and before the kernel's injected module boot action.
 
 on property:sys.boot_completed=1
     start unica_ksunext_installer

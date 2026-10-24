@@ -1,0 +1,131 @@
+diff --git a/KernelSU-Next/kernel/manager/pkg_observer.c b/KernelSU-Next/kernel/manager/pkg_observer.c
+index e9de0acf6bcb..e0b14252c013 100644
+--- a/KernelSU-Next/kernel/manager/pkg_observer.c
++++ b/KernelSU-Next/kernel/manager/pkg_observer.c
+@@ -9,7 +9,9 @@
+ #include "klog.h" // IWYU pragma: keep
+ #include "throne_tracker.h"
+ 
+-#define MASK_SYSTEM (FS_CREATE | FS_MOVE | FS_EVENT_ON_CHILD)
++/* A newly created packages.list may still be empty. Never prune credentials
++ * until PackageManager closes a completed write or atomically publishes it. */
++#define MASK_SYSTEM (FS_CLOSE_WRITE | FS_MOVED_TO | FS_EVENT_ON_CHILD)
+ 
+ struct watch_dir {
+ 	const char *path;
+diff --git a/KernelSU-Next/kernel/manager/throne_tracker.c b/KernelSU-Next/kernel/manager/throne_tracker.c
+index 87888cecc4f6..90c260268622 100644
+--- a/KernelSU-Next/kernel/manager/throne_tracker.c
++++ b/KernelSU-Next/kernel/manager/throne_tracker.c
+@@ -285,55 +285,65 @@ void track_throne(bool prune_only)
+ 	struct list_head uid_list;
+ 	INIT_LIST_HEAD(&uid_list);
+ 
+-	char chr = 0;
+ 	loff_t pos = 0;
+-	loff_t line_start = 0;
+ 	char buf[KSU_MAX_PACKAGE_NAME];
++	size_t prefix_len = 0;
++	char *read_buf = kzalloc(4096, GFP_KERNEL);
++	bool snapshot_complete = true;
++	if (!read_buf) {
++		filp_close(fp, 0);
++		goto out;
++	}
++	/* This runs from a PackageManager fsnotify callback. Read in chunks,
++	 * rather than performing a VFS/security read for every single byte. */
+ 	for (;;) {
+-		ssize_t count = kernel_read(fp, &chr, sizeof(chr), &pos);
+-		if (count != sizeof(chr))
+-			break;
+-		if (chr != '\n')
+-			continue;
+-
+-		count = kernel_read(fp, buf, sizeof(buf) - 1, &line_start);
++		ssize_t count = kernel_read(fp, read_buf, 4096, &pos);
++		ssize_t index;
+ 		if (count <= 0) {
++			if (count < 0 || prefix_len != 0)
++				snapshot_complete = false;
+ 			break;
+ 		}
+-		buf[count] = '\0';
+-
+-		struct uid_data *data = kzalloc(sizeof(struct uid_data), GFP_KERNEL);
+-		if (!data) {
+-			filp_close(fp, 0);
+-			goto out;
+-		}
+-
+-		char *tmp = buf;
+-		const char *delim = " ";
+-		char *package = strsep(&tmp, delim);
+-		char *uid = strsep(&tmp, delim);
+-		if (!uid || !package) {
+-			kfree(data);
+-			pr_err("update_uid: package or uid is NULL!\n");
+-			line_start = pos;
+-			continue;
+-		}
+-
+-		u32 res;
+-		if (kstrtou32(uid, 10, &res)) {
+-			kfree(data);
+-			pr_err("update_uid: uid parse err\n");
+-			line_start = pos;
+-			continue;
++		for (index = 0; index < count; ++index) {
++			struct uid_data *data;
++			char *tmp, *package, *uid;
++			u32 res;
++			if (read_buf[index] != '\n') {
++				/* Only the package/UID prefix is needed, not long data paths. */
++				if (prefix_len < sizeof(buf) - 1)
++					buf[prefix_len++] = read_buf[index];
++				continue;
++			}
++			buf[prefix_len] = '\0';
++			prefix_len = 0;
++			tmp = buf;
++			package = strsep(&tmp, " ");
++			uid = strsep(&tmp, " ");
++			if (!package || !*package || !uid || kstrtou32(uid, 10, &res)) {
++				snapshot_complete = false;
++				continue;
++			}
++			data = kzalloc(sizeof(*data), GFP_KERNEL);
++			if (!data) {
++				kfree(read_buf);
++				filp_close(fp, 0);
++				goto out;
++			}
++			data->uid = res;
++			strscpy(data->package, package, sizeof(data->package));
++			list_add_tail(&data->list, &uid_list);
+ 		}
+-		data->uid = res;
+-		strscpy(data->package, package, sizeof(data->package));
+-		list_add_tail(&data->list, &uid_list);
+-		// reset line start
+-		line_start = pos;
+ 	}
++	kfree(read_buf);
+ 	filp_close(fp, 0);
+ 
++	/* An empty, truncated or unreadable snapshot is not proof of uninstall.
++	 * Preserve the throne and every grant until a complete list is published. */
++	if (!snapshot_complete || list_empty(&uid_list)) {
++		pr_info("packages.list incomplete; preserving manager and grants\n");
++		goto out;
++	}
++
+ 	// now update uid list
+ 	struct uid_data *np;
+ 	struct uid_data *n;
+@@ -398,4 +408,4 @@ void __init ksu_throne_tracker_init()
+ void __exit ksu_throne_tracker_exit()
+ {
+ 	// nothing to do
+-}
+\ No newline at end of file
++}

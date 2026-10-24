@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import subprocess
 import tempfile
 import unittest
@@ -13,7 +14,8 @@ from verify_note9_rebuilt_artifacts import (
 )
 
 
-AUDIT = Path(__file__).resolve().parents[5] / "out/target/crownlte/spen_airactions_audit"
+AUDIT = Path(os.environ.get("EXYNOS9810_SPEN_AUDIT_DIR", str(
+    Path(__file__).resolve().parents[5] / "out/target/crownlte/spen_discovery_audit_20261022")))
 ROM_BUILDER = Path(__file__).resolve().parents[5] / "scripts/make_rom.sh"
 ROOT = Path(__file__).resolve().parents[5]
 CERT = ROOT / "security/aosp_platform.x509.pem"

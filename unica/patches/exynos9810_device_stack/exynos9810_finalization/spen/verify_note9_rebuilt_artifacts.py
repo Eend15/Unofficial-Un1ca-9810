@@ -128,8 +128,24 @@ def _method(smali: str, name: str) -> str:
     return match.group(1)
 
 
+def verify_crown_discovery(smali: str) -> None:
+    scan = _method(smali,
+        "a(Landroid/content/Context;ILandroid/os/ParcelUuid;LD0/c;Ljava/lang/String;LR2/a;)V")
+    if not re.search(
+            r'(?s)invoke-static\s+\{p5\},\s+Landroid/text/TextUtils;->isEmpty'
+            r'.*?move-result\s+p4.*?if-eqz\s+p4,\s+:\w+'
+            r'.*?const-string\s+v0,\s+"EDFEC62E-9910-0BAC-5241-D8BDA6932A2F"'
+            r'.*?Landroid/os/ParcelUuid;->fromString'
+            r'.*?->setServiceUuid\(Landroid/os/ParcelUuid;\)'
+            r'.*?const/4\s+p4,\s+0x1', scan):
+        raise ValueError("Note9 compiled stock service filter/address bypass missing")
+    if '->setDeviceAddress(Ljava/lang/String;)' not in scan:
+        raise ValueError("Note9 compiled address reconnect path missing")
+
+
 def verify_aircommand_methods(apk: Path) -> None:
-    classes = _disassemble_required(apk, ("b3/b", "U2/k", "j3/a", "A/j"))
+    classes = _disassemble_required(apk, ("b3/b", "U2/k", "j3/a", "A/j", "R2/b"))
+    verify_crown_discovery(classes["R2/b"])
     profile = _method(classes["b3/b"], "<clinit>()V")
     if not re.search(
             r'(?s)const-string\s+(v\d+),\s+"EDFEC62E-9910-0BAC-5241-D8BDA6932A2F"'
@@ -156,6 +172,12 @@ def verify_aircommand_methods(apk: Path) -> None:
             "const-wide/16", "0xc8", "SystemClock;->elapsedRealtime()J",
             "Ljava/lang/Math;->min(JJ)J")):
         raise ValueError("Note9 compiled 200ms Wacom transaction spacing missing")
+    writer = _method(classes["j3/a"], "h(Ljava/lang/String;)V")
+    for command in ('0', '1', '2', '7'):
+        if not re.search(r'(?s)const-string\s+v0,\s+"' + command +
+                         r'"\s+invoke-virtual\s+\{v0, p1\}.*?move-result\s+v0'
+                         r'\s+if-nez\s+v0,\s+:\w+', writer):
+            raise ValueError(f"Note9 compiled command {command} transaction boundary missing")
 
     scanner = classes["A/j"]
     if not all(text in scanner for text in (

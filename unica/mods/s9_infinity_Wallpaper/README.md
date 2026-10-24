@@ -1,5 +1,17 @@
 # S9 Infinity port for Exynos9810
 
+October 21 target audit: crownlte now retains the Samsung Note9 AK09918C
+sensorhub HAL. The previous common payload incorrectly overwrote it with the
+S9 AK09916C board variant. The source script restores only its missing
+`libhidltransport.so` dependency, reproducing exactly the dependency repair
+used by the working S9+ blob. All Note9 executable sections and the original
+donor provenance annotation are preserved. S9/S9+ continue using their tested
+sensorhub and all targets retain the common grip HAL and live effects.
+The post-Apktool verifier now receives the target explicitly and rejects a
+wrong-board sensorhub in the outgoing Note9 ROM. Source/ELF and isolated
+three-target staging tests pass; physical sensor/gyro/frame-time validation
+on Note9 remains necessary before claiming the reported lag is resolved.
+
 Applied after exynos9810_finalization to starlte (S9), star2lte (S9+) and crownlte (Note9), including debug builds. Normal make_rom builds pick this module up automatically. No external port workspace or KernelSU bind mounts are required for the ROM payload.
 
 Five native color variants appear first: Blue, Gold, Pink, Purple, Gray. The five UN1CA S-shaped video variants follow. Samsung native model names differ from visible colors: Purple data is pink, Black data is purple, Orchid/grey data is gray. Preview customdata is handled by the active native engine and retained across scene rebuilds.

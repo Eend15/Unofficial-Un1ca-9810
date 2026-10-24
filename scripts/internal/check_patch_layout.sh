@@ -51,6 +51,17 @@ while IFS= read -r patch_file; do
     patch_parent="${patch_file%/*}"
     artifact="${patch_parent##*/}"
 
+    # These audited kernel inputs are not consumed by the APK patch walker.
+    case "${patch_file#$SRC_DIR/}" in
+        unica/patches/exynos9810_device_stack/exynos9810_finalization/input/dt2w_aot.patch|\
+        unica/patches/exynos9810_device_stack/exynos9810_finalization/kernelsu/package_snapshot.patch)
+            if ! grep -q '^--- ' "$patch_file" || ! grep -q '^+++ ' "$patch_file"; then
+                fail "kernel input has no unified-diff headers: ${patch_file#$SRC_DIR/}"
+            fi
+            continue
+            ;;
+    esac
+
     case "$patch_name" in
         [0-9][0-9][0-9][0-9]-*.patch) ;;
         *) fail "patch filename is not numbered: ${patch_file#$SRC_DIR/}" ;;

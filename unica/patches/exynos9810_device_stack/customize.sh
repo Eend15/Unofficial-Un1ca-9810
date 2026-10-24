@@ -3109,6 +3109,8 @@ _EXYNOS9810_APPLY_BOOT_PROPS()
     # Default profile matches the built-in updater snapshot installed on 2026-10-11.
     _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.version" "20261011"
     _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.fingerprint" "google/bluejay_beta/bluejay:CANARY/ZP11.260918.007/16484274:user/release-keys"
+    _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.security_patch" "2026-10-05"
+    _EXYNOS9810_SET_PROP_ALL "persist.sys.pif.first_api_level" "32"
     _EXYNOS9810_SET_PROP_ALL "boot.fps" "30"
     _EXYNOS9810_SET_PROP_ALL "shutdown.fps" "30"
     _EXYNOS9810_DELETE_PROP_VENDOR_SIDE "ro.crypto.state"

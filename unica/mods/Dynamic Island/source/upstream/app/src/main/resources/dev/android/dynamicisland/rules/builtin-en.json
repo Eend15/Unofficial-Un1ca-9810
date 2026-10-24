@@ -1,0 +1,398 @@
+{
+ "smart_rules": [
+  {
+   "id": "food",
+   "max_stage": 4,
+   "package_hints": [
+    "com.dd.doordash",
+    "com.ubercab.eats",
+    "com.grubhub",
+    "com.postmates",
+    "com.instacart",
+    "com.dominospizza",
+    "com.pizzahut",
+    "com.starbucks",
+    "com.chipotle",
+    "com.wendys",
+    "com.bk.",
+    "com.deliveroo",
+    "com.justeat",
+    "com.skipthedishes",
+    "com.wolt",
+    "com.glovo",
+    "com.yum.",
+    "com.subway",
+    "com.mcdonalds",
+    "com.panera",
+    "com.chickfila",
+    "com.tacobell"
+   ],
+   "exclude_patterns": [
+    "(promo|coupon|discount|% off|\\$\\d+ off|free delivery|deal|offer|reward|earn|points|save \\$|gift card)",
+    "(rate your|how was|leave a review|feedback|survey)",
+    "(add a tip|tip your|\\btipping\\b)",
+    "(refund|cancel+ed|unable to|issue with|missing item|substitut)"
+   ],
+   "signals": [
+    {
+     "stage": 4,
+     "pattern": "(has been delivered|was delivered|been delivered|order (has )?arrived|enjoy your (meal|order|food)|delivered (to|at) (your )?(door|address|location|building))"
+    },
+    {
+     "stage": 3,
+     "pattern": "(arriving (now|soon|shortly|in \\d+)|almost (there|here)|(is|are) (nearby|outside|close|at your (door|location))|will be there in \\d+|just around the corner|ready for pickup|ready to pick up|order is ready|is ready for you)"
+    },
+    {
+     "stage": 2,
+     "pattern": "(on (the|its|their) way|(picked up|picking up) your (order|food)|out for delivery|heading (to you|your way|to your (location|address))|(has|have) (picked up|left the restaurant)|(is|are) delivering)"
+    },
+    {
+     "stage": 1,
+     "pattern": "((is|are|being) (preparing|prepared|making|made|cooking|packing) (your )?(order|food|meal)?|(restaurant|store|kitchen) (has )?(accepted|is preparing|is making|confirmed)|preparing your (order|food|meal)|your order is being prepared|looking for a (dasher|driver|courier))"
+    },
+    {
+     "stage": 0,
+     "pattern": "(order( from [^.!?\\n]{1,40})? (has been |is |was |has )?(placed|received|confirmed|submitted)|(we('| ha)ve|we) received your order|thanks for your order|thank you for your order|order confirmed)"
+    }
+   ]
+  },
+  {
+   "id": "parcel",
+   "max_stage": 4,
+   "final_ttl_min": 30,
+   "package_hints": [
+    "com.amazon.mshop",
+    "com.ups.",
+    "com.fedex",
+    "com.usps",
+    "com.dhl",
+    "com.royalmail",
+    "com.shopify.arrive",
+    "com.aliexpress",
+    "com.temu",
+    "com.walmart",
+    "com.target",
+    "com.etsy",
+    "com.ebay.mobile",
+    "com.evri",
+    "com.parcelforce",
+    "com.yodel",
+    "com.dpd",
+    "com.gls",
+    "com.postnl",
+    "com.canadapost",
+    "com.auspost",
+    "com.tracktry",
+    "com.parcel"
+   ],
+   "exclude_patterns": [
+    "(sale|deal|coupon|promo|discount|% off|offer|save \\$|reward)",
+    "(rate your|leave a review|review (your|this)|survey|how was)",
+    "(return (label|request|window)|refund|cancel+ed)",
+    "(prime (day|video|music)|membership|subscription)"
+   ],
+   "signals": [
+    {
+     "stage": 4,
+     "pattern": "((was|has been|have been|been) delivered|delivered( to| at| in| on|:)|left (at|in|on|by) (your |the )?(front door|door|mailbox|porch|lobby|reception|doorstep|garage|neighbou?r)|delivery (is )?complete|ready for pickup at)"
+    },
+    {
+     "stage": 3,
+     "pattern": "(out for delivery|arriving (today|tomorrow|soon|now|by)|will be delivered (today|tomorrow)|delivery (is )?(scheduled )?(for )?today|(driver|courier|carrier) (is )?(nearby|\\d+ stops? away|on the way)|delivering (today|your))"
+    },
+    {
+     "stage": 2,
+     "pattern": "(arrived at (a |the |your |our )?(local |regional |destination |nearest |sort(ing)? |distribution |delivery )?(facility|hub|post office|depot|center|centre|warehouse)|at (the )?local (facility|post office|delivery)|reached (your )?(local|nearest))"
+    },
+    {
+     "stage": 1,
+     "pattern": "((has|have) shipped|(order|package|parcel|item)s? (has |have )?(been )?shipped|shipped( on|:)?|in transit|(departed|left|leaving) (the |our |a )?(origin |sort(ing)? )?(facility|hub|warehouse|location)|processed (at|through)|on (its|the) way)"
+    },
+    {
+     "stage": 0,
+     "pattern": "(label (has been )?created|shipment (information )?(received|created)|order (has been )?(received|confirmed|placed)|preparing (your )?(shipment|package|order)|(awaiting|waiting for) (pickup|shipment|carrier))"
+    }
+   ]
+  },
+  {
+   "id": "taxi",
+   "max_stage": 4,
+   "final_ttl_min": 5,
+   "package_hints": [
+    "com.ubercab",
+    "com.lyft.android",
+    "me.lyft",
+    "com.bolt",
+    "ee.mtakso",
+    "com.grabtaxi.passenger",
+    "com.olacabs",
+    "com.didiglobal",
+    "taxi.android.client",
+    "com.freenow",
+    "com.gettaxi",
+    "com.curb",
+    "com.wheely",
+    "com.cabify",
+    "com.yandex.taxi",
+    "com.inDriver",
+    "sinet.startup.indriver"
+   ],
+   "exclude_patterns": [
+    "(promo|coupon|discount|% off|free ride|offer|reward|gift|invite|refer)",
+    "(schedule(d)? (a )?ride|reserve)",
+    "(safety check|share (your )?trip)"
+   ],
+   "signals": [
+    {
+     "stage": 4,
+     "pattern": "((you('| ha)ve|you) arrived|have arrived (at|to) (your )?destination|(trip|ride) (has )?(ended|completed|is complete)|(your )?(trip|ride) is complete|thanks for riding|dropped off|rate your (driver|ride|trip))"
+    },
+    {
+     "stage": 3,
+     "pattern": "((driver|ride|car|cab) (has |is )?(arrived|here|waiting)|(has )?arrived (at|to) (your )?(pickup|location)|(is )?(waiting|outside) (for you|at)|meet your driver|on your way to|heading to (your )?destination|enjoy your (ride|trip))"
+    },
+    {
+     "stage": 2,
+     "pattern": "((driver|ride|car|cab) (is )?(on (the|their) way|arriving|\\d+ min(utes)? away|coming|approaching)|arriving in \\d+|(is )?\\d+ min(utes)? away|heading (to you|your way|to your (pickup|location)))"
+    },
+    {
+     "stage": 1,
+     "pattern": "((driver|ride|trip|request) (has been |was |is )?(accepted|confirmed|assigned|matched)|matched with|(your )?(driver|ride) (is )?confirmed|driver (accepted|assigned))"
+    },
+    {
+     "stage": 0,
+     "pattern": "((finding|looking for|searching for|connecting you to) (a |your )?(driver|ride|car|cab)|requesting (a |your )?(ride|car)|waiting for (a )?driver)"
+    }
+   ]
+  },
+  {
+   "id": "navigation",
+   "max_stage": 4,
+   "final_ttl_min": 2,
+   "package_hints": [
+    "com.google.android.apps.maps",
+    "com.waze",
+    "com.citymapper",
+    "com.here.app.maps",
+    "com.tomtom",
+    "com.mapquest",
+    "com.sygic",
+    "com.mapfactor",
+    "com.garmin",
+    "net.osmand",
+    "app.organicmaps",
+    "com.apple.maps"
+   ],
+   "exclude_patterns": [
+    "(timeline|review|photos?|contribut|\\brate\\b|explore|places? (to|you)|reservation|\\btips?\\b|saved|your (trip|week|month)|mapping|popular|crowd)"
+   ],
+   "signals": [
+    {
+     "stage": 4,
+     "pattern": "((you('| ha)ve|you) arrived|arriv(ed|ing) (at|to) (your )?destination|destination (is )?(on|ahead|reached)|navigation (has )?(ended|stopped|finished)|trip (has )?ended)"
+    },
+    {
+     "stage": 3,
+     "pattern": "((get|getting) off (at|the|in)|exit (at|the|train|bus)|next stop|arriv(e|ing) (at|in) (the )?(next )?stop|your stop|alight)"
+    },
+    {
+     "stage": 2,
+     "pattern": "((board|take|ride) (the |a |an )?\\w+ (bus|train|tram|subway|metro|line|ferry)|(bus|train|tram|subway|metro|ferry|line) (to|towards|toward|at|from)|platform \\d+|transit)"
+    },
+    {
+     "stage": 1,
+     "pattern": "((head|turn|continue|keep|take|merge|bear|slight|sharp|make a|use the|follow|walk|cycle|drive|go) (north|south|east|west|left|right|straight|onto|on|to|along|for|toward)|navigation (has )?started|starting navigation|in \\d+(\\.\\d+)? ?(mi|miles?|km|m|ft|feet|yd)|\\d+ min (\\W )?\\d+(\\.\\d+)? ?(mi|km)|\\beta\\b)"
+    }
+   ]
+  },
+  {
+   "id": "wearable",
+   "max_stage": 3,
+   "ttl_min": 3,
+   "package_hints": [
+    "com.samsung.android.app.watchmanager",
+    "com.google.android.apps.wearables",
+    "com.fitbit",
+    "com.garmin.android.apps.connectmobile",
+    "com.oculus",
+    "com.sonymobile",
+    "com.bose",
+    "com.jabra",
+    "com.jbl"
+   ],
+   "exclude_patterns": [
+    "(software update|firmware|update available|backup|tips? (and|&)|user guide|screenshot|new feature|setup|set up)",
+    "(not (nearby|near|in range)|out of range)"
+   ],
+   "signals": [
+    {
+     "stage": 3,
+     "pattern": "(charging complete|fully charged|battery (is )?full|finished charging|(is )?(?<![a-z])charged)"
+    },
+    {
+     "stage": 2,
+     "pattern": "((is )?(now )?(?<!dis)(?<!not )(?<!n't )(re)?connected|connected to your phone|reconnected|back online|(is )?online)"
+    },
+    {
+     "stage": 0,
+     "pattern": "((is )?(now )?disconnected|not connected|lost connection|connection lost|(is )?offline|(has )?disconnected)"
+    }
+   ],
+   "cooldown_min": 15
+  },
+  {
+   "id": "battery",
+   "max_stage": 1,
+   "ttl_min": 15,
+   "package_hints": [
+    "com.google.android.apps.wearables",
+    "com.samsung.android.app.watchmanager",
+    "com.fitbit",
+    "com.garmin.android.apps.connectmobile",
+    "com.oculus",
+    "com.jabra",
+    "com.bose",
+    "com.jbl"
+   ],
+   "signals": [
+    {
+     "stage": 1,
+     "pattern": "(?:battery|charge)[^%\\d]{0,24}?(?:low|critical|at|is|left)[^%\\d]{0,12}?(?<!\\d)(20|1\\d|\\d)(?!\\d)\\s*%",
+     "percent_group": 1
+    },
+    {
+     "stage": 1,
+     "pattern": "(?<!\\d)(20|1\\d|\\d)(?!\\d)\\s*%\\s*(?:battery\\s*)?(?:remaining|left)",
+     "percent_group": 1
+    },
+    {
+     "stage": 1,
+     "pattern": "low battery[^%\\d]{0,24}?(\\d{1,3})\\s*%",
+     "percent_group": 1
+    }
+   ],
+   "cooldown_min": 20
+  },
+  {
+   "id": "external_device",
+   "max_stage": 2,
+   "ttl_min": 3,
+   "package_hints": [
+    "com.google.android.apps.wearables",
+    "com.android.bluetooth",
+    "com.google.android.gms",
+    "com.gopro",
+    "com.dji",
+    "com.sonos",
+    "com.bose",
+    "com.jbl",
+    "com.logitech",
+    "com.garmin"
+   ],
+   "exclude_patterns": [
+    "(software update|firmware|update available|new feature|tips?)"
+   ],
+   "signals": [
+    {
+     "stage": 2,
+     "pattern": "((?<!dis)(?<!not )(?<!n't )connected( to)?|paired( with)?|now (connected|paired))"
+    },
+    {
+     "stage": 1,
+     "pattern": "(connecting( to)?|pairing( with)?)"
+    }
+   ]
+  }
+ ],
+ "status_labels": {
+  "food": {
+   "en": {
+    "0": "Order placed",
+    "1": "Preparing",
+    "2": "On the way",
+    "3": "Arriving",
+    "4": "Delivered"
+   }
+  },
+  "parcel": {
+   "en": {
+    "0": "Label created",
+    "1": "In transit",
+    "2": "At local facility",
+    "3": "Out for delivery",
+    "4": "Delivered"
+   }
+  },
+  "taxi": {
+   "en": {
+    "0": "Finding a driver",
+    "1": "Driver assigned",
+    "2": "Driver on the way",
+    "3": "Driver arrived",
+    "4": "Trip complete"
+   }
+  },
+  "navigation": {
+   "en": {
+    "1": "Navigating",
+    "2": "On transit",
+    "3": "Getting off soon",
+    "4": "Arrived"
+   }
+  },
+  "wearable": {
+   "en": {
+    "0": "Disconnected",
+    "2": "Connected",
+    "3": "Fully charged"
+   }
+  },
+  "battery": {
+   "en": {
+    "1": "Low battery"
+   }
+  },
+  "external_device": {
+   "en": {
+    "1": "Connecting",
+    "2": "Connected"
+   }
+  }
+ },
+ "navigation_distance_pattern": "(\\d+(?:[.,]\\d+)?\\s?(?:miles?|mi|km|ft|feet|yd|yards?|m)\\b)",
+ "blocked_source_packages": [
+  "com.google.android.gm",
+  "com.google.android.apps.gmail",
+  "com.microsoft.office.outlook",
+  "com.yahoo.mobile.client.android.mail",
+  "com.whatsapp",
+  "org.telegram.messenger",
+  "org.thoughtcrime.securesms",
+  "com.discord",
+  "com.slack",
+  "com.facebook.orca",
+  "com.facebook.katana",
+  "com.instagram.android",
+  "com.twitter.android",
+  "com.x.android",
+  "com.reddit.frontpage",
+  "com.snapchat.android",
+  "com.linkedin.android",
+  "com.pinterest",
+  "com.tumblr",
+  "com.zhiliaoapp.musically",
+  "com.ss.android.ugc.trill",
+  "com.google.android.youtube",
+  "com.google.android.apps.youtube.music",
+  "tv.twitch.android.app",
+  "com.microsoft.teams",
+  "us.zoom.videomeetings",
+  "com.google.android.apps.dynamite",
+  "com.google.android.apps.messaging",
+  "com.samsung.android.messaging",
+  "com.nytimes.android",
+  "com.cnn.mobile.android.phone",
+  "com.foxnews.android",
+  "com.bbc.news"
+ ]
+}

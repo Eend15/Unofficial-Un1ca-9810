@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/sampple-korea/dynamicisland",
+  "tag": "v0.1.10",
+  "commit": "32e55b6e220bc872dcab415fd7f5326c3576fbf8",
+  "license": "MIT",
+  "targets": [
+    "starlte",
+    "star2lte",
+    "crownlte"
+  ],
+  "android_sdk": 36
+}

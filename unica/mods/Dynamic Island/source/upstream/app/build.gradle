@@ -1,0 +1,57 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'dev.android.dynamicisland'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'dev.android.dynamicisland'
+        minSdk 35
+        targetSdk 36
+        versionCode 49
+        versionName '0.1.10'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            all {
+                // offline Robolectric: run with -ProbolectricDir=<folder with android-all-instrumented jars>
+                if (project.hasProperty('robolectricDir')) {
+                    systemProperty 'robolectric.offline', 'true'
+                    systemProperty 'robolectric.dependency.dir', project.property('robolectricDir')
+                }
+                // -Pfilm writes every frame of MotionFilmTest to app/build/film
+                if (project.hasProperty('film')) {
+                    systemProperty 'film', 'true'
+                }
+            }
+            returnDefaultValues = true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    compileOnly files('libs/xposed-api-82.jar')
+
+    testImplementation files('libs/xposed-api-82.jar')
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.16'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << '-Xmaxerrs' << '1000'
+}

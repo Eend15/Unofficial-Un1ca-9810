@@ -46,14 +46,15 @@ crown_manager()
     [ -x /system/bin/ksu_crown ] || return 1
     # Package updates must not stop a working manager or repeat ksud's boot
     # hooks. The event service repairs only a genuinely missing registration.
-    if [ "${1:-}" = "--repair" ] && /system/bin/ksu_crown --check "$UID_VAL"; then
+    # Boot-completed and CE unlock may both start us. A verified registration
+    # is already sufficient; do not force-stop a manager the user just opened.
+    if /system/bin/ksu_crown --check "$UID_VAL"; then
         return 0
     fi
-    if [ "${1:-}" != "--repair" ] && [ -x /data/adb/ksud ]; then
-        /data/adb/ksud post-fs-data 2>/dev/null
-        /data/adb/ksud services 2>/dev/null
-        /data/adb/ksud boot-completed 2>/dev/null
-    fi
+    # The built-in kernel injects ksud's ordered init actions at post-fs-data,
+    # nonencrypted/decrypt and boot-completed. Manager registration can run
+    # again at CE unlock: replaying those hooks here runs module startup twice
+    # and attempts early mount work after Android has already booted.
     log -t "$TAG" "Registering verified manager UID $UID_VAL"
     /system/bin/ksu_crown "$UID_VAL" || return 1
     am force-stop "$PACKAGE" 2>/dev/null

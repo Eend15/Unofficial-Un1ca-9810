@@ -1,0 +1,453 @@
+{
+ "blocked_source_packages": [
+  "com.google.android.gm",
+  "com.nhn.android.mail",
+  "com.discord",
+  "dev.shiggy.cord",
+  "app.revenge",
+  "app.revenge.manager",
+  "io.github.pyoncord.app",
+  "io.github.pyoncord.manager",
+  "fork.risin42.nagramx",
+  "org.telegram.group",
+  "org.telegram.messenger",
+  "org.telegram.messenger.web",
+  "com.radolyn.ayugram",
+  "uz.unnarsx.cherrygram",
+  "top.nkbe.niagram",
+  "app.nicegram",
+  "com.beeper.android",
+  "com.whatsapp",
+  "jp.naver.line.android",
+  "com.kakao.talk",
+  "com.samsung.android.messaging",
+  "com.google.android.apps.dynamite",
+  "com.tencent.mm",
+  "net.superblock.pushover",
+  "io.heckel.ntfy",
+  "com.facebook.aura",
+  "com.facebook.katana",
+  "com.instagram.android",
+  "com.instagram.barcelona",
+  "com.twitter.android",
+  "com.x.android.lite",
+  "com.sina.weibo",
+  "com.openai.chatgpt",
+  "com.anthropic.claude",
+  "ai.perplexity.app.android",
+  "ai.x.grok",
+  "com.moonshot.kimichat",
+  "me.rerere.rikkahub",
+  "gptos.intelligence.assistant",
+  "com.larus.nova",
+  "com.google.android.googlequicksearchbox",
+  "com.PassionDev.DasiStand",
+  "com.nhn.android.navercafe",
+  "com.navercorp.game.android.community",
+  "com.towneers.www",
+  "com.nhn.android.search",
+  "com.google.android.youtube",
+  "app.revanced.android.youtube",
+  "app.rvx.android.youtube",
+  "app.morphe.android.youtube",
+  "com.google.android.apps.youtube.music",
+  "app.morphe.android.apps.youtube.music",
+  "app.revanced.android.apps.youtube.music",
+  "com.android.chrome",
+  "com.chrome.canary",
+  "com.chrome.dev",
+  "com.sec.android.app.sbrowser",
+  "com.sec.android.app.sbrowser.beta",
+  "com.brave.browser",
+  "com.microsoft.emmx.dev",
+  "com.naver.whale",
+  "com.kiwibrowser.browser",
+  "com.apple.android.music",
+  "com.spotify.music",
+  "com.aspiro.tidal",
+  "com.shopback.app",
+  "com.skmc.okcashbag.home_google"
+ ],
+ "smart_rules": [
+  {
+   "id": "food",
+   "max_stage": 4,
+   "package_hints": [
+    "com.sampleapp",
+    "woowahan",
+    "com.coupang.mobile.eats",
+    "com.fineapp.yogiyo",
+    "com.paytalab.mkseo.passorder",
+    "com.starbucks.co",
+    "kr.co.subway.preorder",
+    "kr.co.lotteria",
+    "com.mcdonalds"
+   ],
+   "exclude_patterns": [
+    "(취소|환불|품절|반려)",
+    "(광고)",
+    "(어떠셨나요|리뷰를 남겨)",
+    "(쿠폰|할인|이벤트|적립)",
+    "(발송|택배|배송 ?조회|통관)",
+    "(완료되지 않았|돌아와서)"
+   ],
+   "signals": [
+    {
+     "stage": 4,
+     "pattern": "(배달(이)? ?완료(됐|되었)|만에 (배달 )?완료됐습니다|배달 완료|픽업이 완료되었어요|문앞으로 배달이 완료)"
+    },
+    {
+     "stage": 3,
+     "pattern": "(곧 도착(해요|합니다)|거의 도착했습니다|조리가 완료되었어요|메뉴가 (모두 )?준비되었어요|준비 완료|픽업대에서 (메뉴를 픽업|기다리고))"
+    },
+    {
+     "stage": 2,
+     "pattern": "(배달(을)? ?시작했어요|(음식|주문|상품|메뉴)을 픽업했습니다|주문하신 곳으로 가고 있어요|도착 소식을 전하고 있어요)"
+    },
+    {
+     "stage": 1,
+     "pattern": "(주문이 (접수|수락)(됐|되었)(어요|습니다)|주문하신 메뉴가 접수|준비를 시작합니다|준비 중|조리 중|조리하고 있어요)"
+    },
+    {
+     "stage": 0,
+     "pattern": "(매장에 주문을 요청했어요|주문 완료|주문이 완료)"
+    }
+   ]
+  },
+  {
+   "id": "parcel",
+   "max_stage": 4,
+   "final_ttl_min": 30,
+   "package_hints": [
+    "sweettracker.smartparcel",
+    "com.coupang.mobile",
+    "fstudio.kream",
+    "alibaba.aliexpresshd",
+    "cjlogistics",
+    "hanjin",
+    "lotte.lpay",
+    "epost",
+    "logen",
+    "kurly",
+    "com.ebay.kr.gmarket",
+    "com.elevenst"
+   ],
+   "exclude_patterns": [
+    "(광고)",
+    "(이벤트|쿠폰|리뷰|별점|캐시)",
+    "(반품|회수|취소|환불)",
+    "(구매이용권|와우|멤버십)",
+    "(분 만에|분 일찍|라이더|배달원|음식|메뉴)"
+   ],
+   "signals": [
+    {
+     "stage": 4,
+     "pattern": "(배송 ?완료|배송이 ?완료|배달 ?완료|택배 왔어요|배송을 완료|수령 ?완료)"
+    },
+    {
+     "stage": 3,
+     "pattern": "(배송 ?출발|배달 ?출발|오늘 도착 예정|오늘 .{0,12}사이)"
+    },
+    {
+     "stage": 2,
+     "pattern": "(영업소 ?도착|간선하차|배달 ?준비|통관 ?완료)"
+    },
+    {
+     "stage": 1,
+     "pattern": "(간선상차|상품이동중|배송 ?시작|택배사에 전달|상품이 발송되었|발송 준비)"
+    },
+    {
+     "stage": 0,
+     "pattern": "(집화 ?처리|상품 ?인수|주문상품 .{0,10}등록되었)"
+    }
+   ]
+  },
+  {
+   "id": "navigation",
+   "max_stage": 4,
+   "final_ttl_min": 2,
+   "package_hints": [
+    "nhn.android.nmap",
+    "skt.tmap",
+    "net.daum.android.map",
+    "com.kakao.mapp",
+    "com.locnall.kimgisa",
+    "com.google.android.apps.maps"
+   ],
+   "exclude_patterns": [
+    "(광고)",
+    "(투표|오프라인 지도|타임라인|리뷰|어떠셨나요|아는 장소)"
+   ],
+   "signals": [
+    {
+     "stage": 4,
+     "pattern": "(길안내를 종료합니다|주변 도착|목적지에 도착|안내를 종료)"
+    },
+    {
+     "stage": 3,
+     "pattern": "((이번|다음) ?(역|정류장)에서 하차|곧 하차|하차 준비)"
+    },
+    {
+     "stage": 2,
+     "pattern": "(열차 승차|버스 승차|승차\\b|하차까지 \\d+개|방면 빠른 하차)"
+    },
+    {
+     "stage": 1,
+     "pattern": "(까지 걷기|길안내를 시작합니다|도보)"
+    }
+   ]
+  },
+  {
+   "id": "taxi",
+   "max_stage": 4,
+   "final_ttl_min": 5,
+   "package_hints": [
+    "kakao.taxi",
+    "kakaomobility",
+    "skt.tmap.taxi",
+    "uber",
+    "onda"
+   ],
+   "exclude_patterns": [
+    "(배지 획득)",
+    "(광고)",
+    "(쿠폰|할인)"
+   ],
+   "signals": [
+    {
+     "stage": 4,
+     "pattern": "(자동결제 택시입니다|택시 요금을 지불하지 마세요|놓고 내리시는 물건|목적지에 도착(했|하였))"
+    },
+    {
+     "stage": 3,
+     "pattern": "(출발지에 도착(했|하였)|탑승 ?(완료|중)|목적지로 이동)"
+    },
+    {
+     "stage": 2,
+     "pattern": "(기사님이 (곧 )?도착(해요|합니다)|기사님이 .{0,8}오고 있|접근 ?중)"
+    },
+    {
+     "stage": 1,
+     "pattern": "(배차(가)? ?(완료|되었)|기사님이 배차)"
+    },
+    {
+     "stage": 0,
+     "pattern": "(기사님을 (찾|호출)|호출 ?중|배차 ?요청)"
+    }
+   ]
+  },
+  {
+   "id": "wearable",
+   "max_stage": 3,
+   "ttl_min": 3,
+   "package_hints": [
+    "samsung.android.ringplugin",
+    "samsung.android.waterplugin",
+    "samsung.accessory.paranmgr",
+    "samsung.android.app.find",
+    "samsung.android.oneconnect"
+   ],
+   "exclude_patterns": [
+    "(소프트웨어|업데이트|백업|팁과|사용 설명서|스크린샷|이미지 추가|설치됨)",
+    "(주변에 없습니다|내 주변|isn't near)",
+    "(펫 케어|반려동물|\\(광고\\)|삼성닷컴)"
+   ],
+   "signals": [
+    {
+     "stage": 3,
+     "pattern": "(충전 ?완료|fully charged)"
+    },
+    {
+     "stage": 2,
+     "pattern": "(온라인 상태|다시 연결)"
+    },
+    {
+     "stage": 2,
+     "pattern": "(연결됨|연결되었|is connected)"
+    },
+    {
+     "stage": 0,
+     "pattern": "(연결이 해제|연결 해제|disconnected|연결 안 됨|오프라인)"
+    }
+   ],
+   "cooldown_min": 15
+  },
+  {
+   "id": "battery",
+   "max_stage": 1,
+   "ttl_min": 15,
+   "package_hints": [
+    "com.android.bluetooth",
+    "samsung.android.ringplugin",
+    "samsung.android.waterplugin",
+    "samsung.accessory.paranmgr",
+    "com.google.android.gms"
+   ],
+   "exclude_patterns": [],
+   "signals": [
+    {
+     "stage": 1,
+     "pattern": "(?:low battery|배터리 부족).{0,40}?(\\d{1,3})\\s*%",
+     "percent_group": 1
+    },
+    {
+     "stage": 1,
+     "pattern": "배터리(?:가|는)?\\s*(?<!\\d)(20|1\\d|\\d)(?!\\d)\\s*%",
+     "percent_group": 1
+    },
+    {
+     "stage": 1,
+     "pattern": "battery (?:is |at |low: )?(?<!\\d)(20|1\\d|\\d)(?!\\d)\\s*%",
+     "percent_group": 1
+    }
+   ],
+   "cooldown_min": 20
+  },
+  {
+   "id": "external_device",
+   "max_stage": 2,
+   "ttl_min": 3,
+   "package_hints": [
+    "bluetooth",
+    "accessory",
+    "galaxywearable",
+    "gopro",
+    "dji",
+    "camera"
+   ],
+   "exclude_patterns": [
+    "(광고)",
+    "(업데이트|소프트웨어)"
+   ],
+   "signals": [
+    {
+     "stage": 2,
+     "pattern": "(연결(됨|되었)|(?<![a-z])(?<!not )(?<!n't )connected\\b|(?<![a-z])pair(ed)?\\b)"
+    },
+    {
+     "stage": 1,
+     "pattern": "(연결 ?중|connecting|pairing)"
+    }
+   ]
+  },
+  {
+   "id": "relay",
+   "max_stage": 2,
+   "ttl_min": 1440,
+   "package_hints": [
+    "app.iris.relay"
+   ],
+   "exclude_patterns": [],
+   "signals": [
+    {
+     "stage": 1,
+     "pattern": "(릴레이 실행 중|relay (is )?running)"
+    }
+   ],
+   "show_progress": false,
+   "hide_original": true
+  },
+  {
+   "id": "assistant",
+   "max_stage": 1,
+   "ttl_min": 10,
+   "package_hints": [],
+   "text_triggers": [
+    "어시스턴트의 요청을 처리"
+   ],
+   "exclude_patterns": [],
+   "signals": [
+    {
+     "stage": 1,
+     "pattern": "(요청을 처리하는 중|처리하는 중)"
+    }
+   ],
+   "show_progress": false,
+   "hide_original": true
+  }
+ ],
+ "status_labels": {
+  "food": {
+   "ko": {
+    "0": "주문 요청",
+    "1": "조리 중",
+    "2": "배달 중",
+    "3": "곧 도착",
+    "4": "배달 완료"
+   }
+  },
+  "parcel": {
+   "ko": {
+    "0": "집화",
+    "1": "이동 중",
+    "2": "터미널 도착",
+    "3": "배송 출발",
+    "4": "배송 완료"
+   }
+  },
+  "taxi": {
+   "ko": {
+    "0": "호출 중",
+    "1": "배차 완료",
+    "2": "접근 중",
+    "3": "탑승 중",
+    "4": "도착"
+   }
+  },
+  "wearable": {
+   "ko": {
+    "0": "연결 해제",
+    "2": "연결됨",
+    "3": "충전 완료"
+   }
+  },
+  "battery": {
+   "ko": {
+    "1": "배터리 부족"
+   }
+  },
+  "external_device": {
+   "ko": {
+    "1": "연결 중",
+    "2": "연결됨"
+   }
+  },
+  "navigation": {
+   "ko": {
+    "1": "길안내 시작",
+    "2": "이동 중",
+    "3": "곧 하차",
+    "4": "도착"
+   }
+  },
+  "relay": {
+   "ko": {
+    "1": "실행 중"
+   },
+   "en": {
+    "1": "Running"
+   }
+  },
+  "assistant": {
+   "ko": {
+    "1": "처리 중"
+   },
+   "en": {
+    "1": "Working"
+   }
+  }
+ },
+ "external_device_name_patterns": [
+  "(?<![a-z])(?:connected|connecting|pair(?:ed|ing))\\s*(?:to)?\\s*[\"«]?([\\p{L}\\p{N}][\\p{L}\\p{N} ._#\\-]{1,40})[\"»]?(?=\\s|$|[,.!])",
+  "[\"«]?([\\p{L}\\p{N}][\\p{L}\\p{N} ._#\\-]{1,40})[\"»]?\\s*(?:이\\(가\\)|이|가)?\\s*연결(?:됨|되었습니다)"
+ ],
+ "otp_strong_triggers": [
+  "본인확인 인증번호",
+  "로그인 코드",
+  "인증 코드",
+  "일회용 비밀번호"
+ ],
+ "text_progress_include_context_pattern": "(다운로드 중|다운로드 진행|진행도|progress|파일 조각|오프라인 지도|리소스)",
+ "text_progress_exclude_context_pattern": "(관세|금리|할인율|수수료|정확도|득점)",
+ "navigation_distance_pattern": "(\\d+(?:[.,]\\d+)?\\s?(?:km|m(?![a-z])|킬로미터|미터))"
+}

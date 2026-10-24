@@ -48,6 +48,23 @@ OLD_STANZA = re.compile(
 )
 
 
+def disable_competing_service(original: str) -> str:
+    """Accept only the original stanza or our exact already-disabled stanza."""
+    prefix = "# FaceunlockFix: disable competing "
+    restored = re.sub(r"(?m)^" + re.escape(prefix) + r"([^\n]*)$",
+                      lambda m: ("" if m.group(1).startswith("service ") else "    ") + m.group(1),
+                      original)
+    matches = OLD_STANZA.findall(restored)
+    if len(matches) != 1:
+        raise RuntimeError(f"Expected exactly one duplicate native faced service; got {len(matches)}")
+    patched = OLD_STANZA.sub(
+        lambda m: "\n".join(prefix + line.strip() for line in m.group(0).splitlines()),
+        restored, count=1)
+    if re.search(r"(?m)^[ \t]*service[ \t]+faced[ \t]", patched):
+        raise RuntimeError("Competing faced init entry survived")
+    return patched
+
+
 def store(relative: str, data: bytes, mode: int = 0o644) -> None:
     dest = OUTPUT / relative
     if not dest.resolve().is_relative_to(OUTPUT.resolve()):
@@ -116,15 +133,7 @@ def stage() -> None:
 
     for path in VENDOR_RC_FILES:
         original = (WORK / path).read_text()
-        matches = OLD_STANZA.findall(original)
-        if len(matches) != 1:
-            raise RuntimeError(f"Expected exactly one duplicate native faced service in {path}; got {len(matches)}")
-        patched = OLD_STANZA.sub(
-                    lambda m: "\n".join("# FaceunlockFix: disable competing " + line.strip()
-                                for line in m.group(0).splitlines()), original,
-            count=1)
-        if re.search(r"(?m)^[ \t]*service[ \t]+faced[ \t]", patched):
-            raise RuntimeError(f"Competing faced init entry survived in {path}")
+        patched = disable_competing_service(original)
         store(path, patched.encode())
 
     manifest = ("FaceunlockFix Android16 optional genuine stock native runtime\n"

@@ -1,0 +1,53 @@
+{
+  "classes": {
+    "com.android.systemui.blur.SecQSNewBlurView": 0,
+    "com.android.systemui.plugins.statusbar.StatusBarStateController$StateListener": 2,
+    "com.android.systemui.qs.panelresource.SecQSPanelResourceNormalPicker": 1,
+    "com.android.systemui.log.QuickPanelLoggerHelper$PanelStateLogger": 0,
+    "com.android.systemui.qs.animator.QSAnimView": 0,
+    "com.android.systemui.qs.SecQSPanelResourcePicker": 1,
+    "com.android.systemui.media.SecMediaControlPanel": 1,
+    "com.android.systemui.media.QSMediaCornerRoundedView": 3,
+    "com.android.systemui.statusbar.StatusBarStateControllerImpl": 3,
+    "com.android.systemui.statusbar.notification.row.NotificationBackgroundView": 1,
+    "com.android.systemui.statusbar.notification.row.NotificationRowContentBinderImpl$Companion": 1,
+    "com.android.systemui.statusbar.notification.row.wrapper.NotificationViewWrapper": 1,
+    "com.android.systemui.statusbar.policy.SecFlashlightControllerImpl": 2,
+    "com.android.systemui.statusbar.phone.ongoingactivity.OngoingActivityController": 9,
+    "com.android.systemui.statusbar.notification.row.ActivatableNotificationView": 5,
+    "com.android.systemui.statusbar.phone.ongoingactivity.OngoingActivityDataHelper": 7,
+    "com.android.systemui.statusbar.chips.ui.model.OngoingActivityChipModel$Inactive": 0,
+    "com.android.systemui.statusbar.notification.collection.ShadeListBuilder": 2,
+    "com.android.systemui.statusbar.chips.ui.viewmodel.OngoingActivityChipsViewModel": 0,
+    "com.android.systemui.statusbar.pipeline.shared.ui.binder.HomeStatusBarViewBinderImpl": 1,
+    "com.android.systemui.statusbar.phone.ongoingactivity.ChipAnimationController": 3,
+    "com.android.systemui.statusbar.notification.row.NotificationRowContentBinderImpl": 0,
+    "com.android.systemui.statusbar.phone.fragment.CollapsedStatusBarFragment": 3,
+    "com.android.systemui.statusbar.notification.collection.NotificationEntry": 1,
+    "com.android.systemui.statusbar.notification.row.NotificationContentView": 9,
+    "com.android.systemui.shade.ShadeExpansionListener": 0,
+    "com.android.systemui.statusbar.window.StatusBarWindowStateListener": 0,
+    "com.android.systemui.statusbar.notification.row.NotificationRowContentBinderImpl$AsyncInflationTask": 1,
+    "com.android.systemui.statusbar.phone.ongoingcall.OngoingCallController": 6,
+    "com.android.systemui.shade.ShadeExpansionStateManager": 2,
+    "com.android.systemui.statusbar.phone.PhoneStatusBarViewController": 2,
+    "com.android.systemui.statusbar.notification.headsup.HeadsUpManagerImpl": 3,
+    "com.android.systemui.statusbar.window.StatusBarWindowStateController": 1,
+    "noticolorpicker.NotificationColorPicker": 0
+  },
+  "methods": 71,
+  "dex": [
+    "smali",
+    "smali_classes2",
+    "smali_classes3",
+    "smali_classes4"
+  ],
+  "constructors": [
+    "com.android.systemui.statusbar.StatusBarStateControllerImpl#<init>(Lcom/android/internal/logging/UiEventLogger;Lcom/android/systemui/util/kotlin/JavaAdapter;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;)V",
+    "com.android.systemui.statusbar.policy.SecFlashlightControllerImpl#<init>(Landroid/hardware/camera2/CameraManager;Landroid/content/Context;Lcom/android/systemui/util/settings/SecureSettings;Lcom/android/systemui/util/SettingsHelper;Landroid/content/pm/PackageManager;Lcom/android/systemui/statusbar/policy/FlashlightControllerImpl;)V",
+    "com.android.systemui.statusbar.phone.ongoingactivity.OngoingActivityController#<init>(Landroid/content/Context;Lcom/android/systemui/statusbar/notification/collection/notifcollection/CommonNotifCollection;Lcom/android/systemui/plugins/ActivityStarter;Lcom/android/systemui/plugins/statusbar/StatusBarStateController;Lcom/android/systemui/statusbar/phone/IndicatorGardenPresenter;Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManager;Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;Lcom/android/systemui/statusbar/policy/ConfigurationController;Lcom/android/systemui/broadcast/BroadcastDispatcher;Lcom/android/systemui/shared/system/TaskStackChangeListeners;Lcom/android/systemui/statusbar/phone/IndicatorScaleGardener;Lcom/android/systemui/statusbar/notification/collection/NotifCollection;Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;Lcom/android/systemui/statusbar/NotificationRemoteInputManager;Lcom/android/systemui/statusbar/window/StatusBarWindowStateController;Lcom/android/systemui/dump/DumpManager;Lcom/android/systemui/media/SecMediaHost;Lcom/android/systemui/util/SettingsHelper;Lcom/android/systemui/statusbar/phone/NotificationIconAreaController;Lcom/android/systemui/media/controls/domain/pipeline/MediaDataManager;Lcom/android/systemui/unfold/updates/screen/ScreenStatusProvider;Lcom/android/systemui/facewidget/plugin/FaceWidgetNotificationControllerWrapper;)V",
+    "com.android.systemui.statusbar.phone.ongoingcall.OngoingCallController#<init>(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallControllerExt;Lkotlinx/coroutines/CoroutineScope;Landroid/content/Context;Lcom/android/systemui/statusbar/phone/ongoingcall/data/repository/OngoingCallRepository;Lcom/android/systemui/statusbar/notification/domain/interactor/ActiveNotificationsInteractor;Ljava/util/concurrent/Executor;Landroid/app/IActivityManager;Lcom/android/systemui/dump/DumpManager;Lcom/android/systemui/statusbar/window/StatusBarWindowControllerStore;Lcom/android/systemui/statusbar/gesture/SwipeStatusBarAwayGestureHandler;Lcom/android/systemui/statusbar/data/repository/StatusBarModeRepositoryStore;Lcom/android/systemui/log/LogBuffer;Lcom/android/systemui/statusbar/phone/ongoingcall/KeyguardCallChipController;Lcom/android/systemui/util/time/SystemClock;Lcom/android/systemui/statusbar/policy/ConfigurationController;Lcom/android/systemui/statusbar/phone/IndicatorScaleGardener;)V",
+    "com.android.systemui.shade.ShadeExpansionStateManager#<init>(Lcom/android/systemui/dump/DumpManager;)V",
+    "com.android.systemui.statusbar.window.StatusBarWindowStateController#<init>(ILcom/android/systemui/statusbar/CommandQueue;)V"
+  ]
+}

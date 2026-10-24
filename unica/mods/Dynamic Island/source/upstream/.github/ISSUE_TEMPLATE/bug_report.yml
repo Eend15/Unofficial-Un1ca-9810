@@ -1,0 +1,42 @@
+name: Bug report / 버그 신고
+description: Something does not work / 동작하지 않는 부분
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Open **Tools → Diagnostics** in the app, copy the report and paste it below. It lists the hooks that did not attach and the last events.
+        앱의 **도구 → 진단**에서 리포트를 복사해 아래에 붙여 주세요. 연결되지 않은 후크와 최근 이벤트가 들어 있습니다.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened / 무슨 일이 있었나요
+      description: What you did, what you expected and what you saw. / 한 일, 기대한 동작, 실제 동작
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Phone and One UI version / 기기와 One UI 버전
+      placeholder: Galaxy S25 Ultra, One UI 8
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Module version / 모듈 버전
+      placeholder: "0.1.2"
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Diagnostics report / 진단 리포트
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else / 그 밖에
+      description: Other modules in the System UI scope, the app that sent the notification, screenshots. / 같은 SystemUI 범위의 다른 모듈, 알림을 보낸 앱, 스크린샷

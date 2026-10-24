@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-23",
+  "kernel_build": {
+    "started": 1792747644.459548,
+    "source_sha256": {
+      "KernelSU-Next/kernel/manager/pkg_observer.c": "6952269b2a946caf6e2afee315751ef8af8718e8faef45ac54e973812015ca31",
+      "KernelSU-Next/kernel/manager/throne_tracker.c": "81d9899acc29b286b8e5a1d3fed8c135914a97ccbd0a533896bcf5ddd8a2a305",
+      "drivers/input/touchscreen/sec_ts/sec_ts_fn.c": "7d99affe165f058c1afdb9fec5ea5ad8d94ba5095642b5451c06f707259f09ef",
+      "drivers/input/touchscreen/sec_ts/y771/sec_ts_fn.c": "a8ec7de193ec02deff2f1bde7092c88ad3eb6e3145176dbe831de86eaf69e98c",
+      "kernel/sys.c": "936b2eff606ac515bbae04f0cb98f34ddbba4d5b8698ed6c633148a67f1118de",
+      "security/selinux/hooks.c": "79bef8fbeb0d19a7e4a10076fb3c36f05e6f1baced540e8c4d429ef062bc70e1",
+      "apollo.sh": "1ee1a0fc9e7504877ff6ff19660f95eac66234590b599290d59f9e7d7e15dbf1"
+    },
+    "state": "compiled",
+    "exit_code": 0,
+    "finished": 1792749325.044876
+  },
+  "compiled_sha256": "7c92181350fd1d094dc59e1a35fc8284a35ac0e07ec383f1298bf167c0489ccf",
+  "archive_sha256": {
+    "erofs": "ed5963a64ec99cb401c96e0a008f09df7ba9762e050355b3195f0a54324c6ce8",
+    "ext4": "fb366c09131491c49fffab3355cdd470ad10a97b7ab06e1b6c86e758e6034209"
+  },
+  "dtbs": "Unchanged from October21 filesystem-specific baselines",
+  "physical_test": "Existing DT2W backend accepted on S9+; new AOT interface awaits device test"
+}

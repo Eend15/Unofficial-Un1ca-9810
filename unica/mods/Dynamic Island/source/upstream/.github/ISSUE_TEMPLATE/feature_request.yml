@@ -1,0 +1,15 @@
+name: Feature or rule request / 기능·규칙 요청
+description: An idea, or an app whose notification should become a card / 아이디어, 또는 카드로 만들고 싶은 앱의 알림
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like / 원하는 것
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example notification / 알림 예시
+      description: For a rule request: the app (package name) and the exact notification text, with personal details removed. / 규칙 요청이라면 앱(패키지명)과 알림 문구를 개인정보를 지우고 적어 주세요.

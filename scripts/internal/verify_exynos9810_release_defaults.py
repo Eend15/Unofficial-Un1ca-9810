@@ -2,7 +2,7 @@
 """Fail closed if a fresh/cached release omits source-matched default fixes."""
 from pathlib import Path
 from hashlib import sha256
-import argparse,json,sys,zipfile
+import argparse,json,re,sys,zipfile
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"scripts/internal/FaceunlockFix"))
 from release_bridge import load_release_bridge
@@ -14,6 +14,10 @@ def verify(work: Path, target: str) -> None:
         if z.read("classes3.dex") != load_release_bridge():
             raise RuntimeError("Staged face bridge differs from verified source release")
     props=(system/"build.prop").read_text().splitlines()
+    versions=re.findall(r'^SET_PROP "system" "ro\.unica\.version" "([^"]+)"$',
+                        (ROOT/"unica/mods/settings/customize.sh").read_text(),re.MULTILINE)
+    if len(versions)!=1 or "ro.unica.version="+versions[0] not in props:
+        raise RuntimeError("ROM display version differs from current source release")
     for prop in ["ro.un1ca.faceunlockfix.builtin=1","persist.sys.unica.pif=true","persist.sys.pif.version=20261011"]:
         if prop not in props: raise RuntimeError("Required release default absent: "+prop)
     base=ROOT/"unica/patches/exynos9810_device_stack/exynos9810_finalization/kernelsu"

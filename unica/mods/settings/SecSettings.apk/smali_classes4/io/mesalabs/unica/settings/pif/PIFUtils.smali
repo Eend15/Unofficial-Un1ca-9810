@@ -186,6 +186,8 @@
     :try_start_2
     invoke-static {p0}, Lio/mesalabs/unica/settings/pif/PIFUtils;->setPIFProps(Lorg/json/JSONObject;)V
 
+    invoke-static {p1}, Lio/mesalabs/unica/settings/pif/PIFUtils;->killGMS(Landroid/content/Context;)V
+
     const/4 p0, 0x1
 
     invoke-static {p1, p0}, Lio/mesalabs/unica/settings/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
@@ -198,6 +200,7 @@
     invoke-static {p1, p0}, Lio/mesalabs/unica/settings/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
     :try_end_2
     .catch Lorg/json/JSONException; {:try_start_2 .. :try_end_2} :catch_0
+    .catch Ljava/lang/RuntimeException; {:try_start_2 .. :try_end_2} :catch_0
 
     goto :goto_2
 
@@ -213,8 +216,6 @@
     invoke-static {p1, p0}, Lio/mesalabs/unica/settings/pif/PIFUtils;->showToast(Landroid/content/Context;I)V
 
     :goto_2
-    invoke-static {p1}, Lio/mesalabs/unica/settings/pif/PIFUtils;->killGMS(Landroid/content/Context;)V
-
     invoke-static {}, Lio/mesalabs/unica/settings/pif/PIFUtils;->getFormattedPIFVersion()Ljava/lang/CharSequence;
 
     move-result-object p0
@@ -249,6 +250,22 @@
     move-result-object v0
 
     check-cast v0, Ljava/net/HttpURLConnection;
+
+    const/4 v1, 0x0
+
+    invoke-virtual {v0, v1}, Ljava/net/URLConnection;->setUseCaches(Z)V
+
+    const/16 v1, 0x3a98
+
+    invoke-virtual {v0, v1}, Ljava/net/URLConnection;->setConnectTimeout(I)V
+
+    invoke-virtual {v0, v1}, Ljava/net/URLConnection;->setReadTimeout(I)V
+
+    const-string v1, "Cache-Control"
+
+    const-string v2, "no-cache"
+
+    invoke-virtual {v0, v1, v2}, Ljava/net/URLConnection;->setRequestProperty(Ljava/lang/String;Ljava/lang/String;)V
     :try_end_0
     .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_0
     .catch Lorg/json/JSONException; {:try_start_0 .. :try_end_0} :catch_0
@@ -612,18 +629,6 @@
 
     invoke-static {v1, v0}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
 
-    const-string v0, "VERSION"
-
-    const-string v1, "Custom"
-
-    invoke-virtual {p0, v0, v1}, Lorg/json/JSONObject;->optString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-
-    move-result-object v0
-
-    const-string v1, "persist.sys.pif.version"
-
-    invoke-static {v1, v0}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
-
     const-string v0, "PRODUCT"
 
     const-string v1, "null"
@@ -720,11 +725,24 @@
 
     invoke-virtual {p0, v0, v1}, Lorg/json/JSONObject;->optString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 
-    move-result-object p0
+    move-result-object v0
 
-    const-string v0, "persist.sys.pif.first_api_level"
+    const-string v1, "persist.sys.pif.first_api_level"
 
-    invoke-static {v0, p0}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
+    invoke-static {v1, v0}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
+
+    # Commit the displayed version only after all profile fields are applied.
+    const-string v0, "VERSION"
+
+    const-string v1, "Custom"
+
+    invoke-virtual {p0, v0, v1}, Lorg/json/JSONObject;->optString(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v0
+
+    const-string v1, "persist.sys.pif.version"
+
+    invoke-static {v1, v0}, Landroid/os/SemSystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
 
     return-void
 .end method

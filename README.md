@@ -76,8 +76,52 @@ Snapdragon models are not supported.
 
 ## Build
 
-Use the same build entry point as upstream UN1CA. EROFS is the default; select
-ext4 for a easy to debug build:
+Use Ubuntu 24.04 on a case-sensitive Linux filesystem (also inside WSL), Bash,
+Git LFS and the upstream host build dependencies. Keep the checkout and Android
+trees on that filesystem, not an NTFS-mounted Windows directory. Allow space
+for extracted firmware, work trees, APK rebuilds and output images.
+
+Clone with submodules, then hydrate the source-shipped binary payloads:
+
+```bash
+git clone --recurse-submodules https://github.com/Eend15/Unofficial-Un1ca-9810.git
+cd Unofficial-Un1ca-9810
+git lfs install
+git submodule update --init --recursive
+git lfs pull
+python3 scripts/internal/verify_source_checkout.py
+```
+
+`git lfs pull` is required: a small LFS pointer is not a kernel or APK. The
+preflight checks repository input completeness and the six pinned submodules
+before building. Tool binaries are generated automatically from the submodules;
+no existing `out/tools`, private SDK cache or another developer's workdir is
+required for a normal ROM build. Optional source-development rebuild helpers
+may require an Android SDK; shipped mod APKs do not require rebuilding those
+helpers first.
+
+Install the host packages before the first build:
+
+```bash
+sudo apt update
+sudo apt install git git-lfs openjdk-21-jdk build-essential clang lld cmake ninja-build \
+  autoconf automake libtool pkg-config libusb-1.0-0-dev libprotobuf-dev protobuf-compiler \
+  liblz4-dev libzstd-dev zlib1g-dev libssl-dev libpcre2-dev libselinux1-dev \
+  libbrotli-dev uuid-dev libjsoncpp-dev python3 python3-pip python3-venv \
+  p7zip-full bc brotli cpio curl ffmpeg attr lz4 rsync unzip zip zstd webp
+```
+
+Place/extract the matching firmware using the upstream `out/odin` and `out/fw`
+layout. The source donor is `SM-S901B/EUX`; the device firmware is
+`SM-G960F/PHN`, `SM-G965F/PHN` or `SM-N960F/PHN` respectively. The exact configured
+releases and extracted partition layout must match the source configuration;
+copying an arbitrary firmware ZIP into the repository root is insufficient.
+Use `unica extract_fw` for locally supplied firmware, or the existing
+`unica download_fw` / `unica extract_fw` workflow. Source and target firmware
+remain external inputs. Enforcing KernelSU kernels and the required mod payloads
+are shipped in the repository through Git LFS where configured.
+
+EROFS builds:
 
 ```bash
 source buildenv.sh star2lte
@@ -89,7 +133,14 @@ unica make_rom -z --fs-type erofs
 source buildenv.sh crownlte
 unica make_rom -z --fs-type erofs
 
-source buildenv.sh (target) unica make_rom -z --fs-type ext4 (for ext4)
+```
+
+For EXT4, choose one target and run the two commands separately (replace
+`crownlte` with `starlte` or `star2lte` as needed):
+
+```bash
+source buildenv.sh crownlte
+unica make_rom -z --fs-type ext4
 ```
 
 Build output and extracted firmware are intentionally not tracked in git. Keep `out/` and `work/` local.

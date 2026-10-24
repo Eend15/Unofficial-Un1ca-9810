@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # [
+python3 "$SRC_DIR/scripts/internal/verify_source_checkout.py" || exit 1
 source "$SRC_DIR/scripts/utils/build_utils.sh" || exit 1
 
 # Built-in Exynos9810 face support explicitly requested for all three targets.
@@ -325,7 +326,7 @@ if $BUILD_ROM; then
             [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]]; then
         LOG_STEP_IN true "Verifying final Galaxy S9 Infinity and UN1CA wallpapers"
         python3 "$SRC_DIR/unica/mods/s9_infinity_Wallpaper/source/verify_built_wallpapers.py" \
-            --work-dir "$WORK_DIR" || exit 1
+            --work-dir "$WORK_DIR" --target "$TARGET_CODENAME" || exit 1
         LOG_STEP_OUT
     fi
 
@@ -406,6 +407,18 @@ fi
 
 if [ "$TARGET_PLATFORM" = "exynos9810" ]; then
     python3 -B "$SRC_DIR/scripts/internal/verify_exynos9810_selinux.py" "$WORK_DIR" || exit 1
+fi
+
+# Source integration alone cannot prove the rebuilt APKs retain the native hooks.
+if [ "$TARGET_PLATFORM" = exynos9810 ] && \
+        [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] && \
+        [ ! -f "$SRC_DIR/unica/mods/Dynamic Island/disable" ]; then
+    DI_CERT_PREFIX=aosp
+    [ "${ROM_IS_OFFICIAL:-false}" != true ] || DI_CERT_PREFIX=unica
+    python3 "$SRC_DIR/unica/mods/Dynamic Island/source/verify_built.py" \
+        --work-dir "$WORK_DIR" \
+        --platform-cert "$SRC_DIR/security/${DI_CERT_PREFIX}_platform.x509.pem" || exit 1
+    unset DI_CERT_PREFIX
 fi
 
 if $BUILD_TARGET_FILES || $BUILD_FLASHABLE_ZIP; then

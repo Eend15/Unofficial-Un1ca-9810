@@ -16,6 +16,7 @@ from pathlib import Path
 import re
 import sys
 import zipfile
+from patch_note9_sensorhub import PATCHED_SHA256 as NOTE9_SENSOR_SHA256
 
 
 MODULE = Path(__file__).resolve().parents[1]
@@ -66,7 +67,7 @@ def verify_catalog(path: Path) -> None:
         raise ValueError(f"cannot inspect final wallpaper-res: {exc}") from exc
 
 
-def verify_payload_hashes(work_dir: Path, module: Path = MODULE) -> None:
+def verify_payload_hashes(work_dir: Path, module: Path = MODULE, target: str | None = None) -> None:
     manifest = module / "SHA256SUMS"
     if not manifest.is_file():
         raise ValueError("S9 Infinity module checksum manifest missing")
@@ -76,6 +77,8 @@ def verify_payload_hashes(work_dir: Path, module: Path = MODULE) -> None:
         if not match:
             raise ValueError(f"invalid wallpaper SHA256SUMS entry: {line[:100]}")
         expected, rel = match.groups()
+        if target == 'crownlte' and rel == 'vendor/lib64/sensors.sensorhub.so':
+            expected = NOTE9_SENSOR_SHA256
         if rel in paths:
             raise ValueError(f"duplicate wallpaper payload entry {rel}")
         paths.add(rel)
@@ -104,17 +107,18 @@ def verify_payload_hashes(work_dir: Path, module: Path = MODULE) -> None:
         raise ValueError(f"unexpected S9 Infinity payload file set: {sorted(paths ^ mandatory)}")
 
 
-def verify(work_dir: Path, module: Path = MODULE) -> None:
-    verify_payload_hashes(work_dir, module)
+def verify(work_dir: Path, module: Path = MODULE, target: str | None = None) -> None:
+    verify_payload_hashes(work_dir, module, target)
     verify_catalog(work_dir / "system/system/priv-app/wallpaper-res/wallpaper-res.apk")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--work-dir", required=True, type=Path)
+    parser.add_argument("--target", required=True, choices=('starlte', 'star2lte', 'crownlte'))
     args = parser.parse_args()
     try:
-        verify(args.work_dir)
+        verify(args.work_dir, target=args.target)
     except ValueError as exc:
         print(f"FAIL Exynos9810 wallpaper catalog: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc

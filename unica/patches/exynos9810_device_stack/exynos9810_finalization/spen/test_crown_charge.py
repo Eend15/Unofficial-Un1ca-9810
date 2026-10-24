@@ -29,6 +29,16 @@ class CrownChargeTests(unittest.TestCase):
                          ['const-string v0, "0"', 'const-string v0, "1"',
                           'const-string v0, "3"'])
         self.assertEqual(patch(driver, continuous), (driver, continuous))
+        branch = driver.split(':unica_crown_module_interval\n    const-wide/16', 1)[0]
+        for command in ('0', '1', '2', '7'):
+            self.assertIn(f'const-string v0, "{command}"', branch)
+
+    def test_existing_port_upgrades_without_repeating_continuous_patch(self):
+        driver, continuous = patch(self.driver, self.continuous)
+        start = driver.index('    # UN1CA_CROWN_ALL_TRANSACTION_BOUNDARIES')
+        end = driver.index('    const-string v0, "1"', start)
+        old_driver = driver[:start] + driver[end:]
+        self.assertEqual(patch(old_driver, continuous), (driver, continuous))
 
     def test_unknown_donor_rejected(self):
         with self.assertRaises(ValueError):

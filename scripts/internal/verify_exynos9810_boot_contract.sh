@@ -48,6 +48,10 @@ require_file() {
 
 require_file "$SYSTEM_PROP"
 require_file "$VENDOR_PROP"
+if [ "$TARGET_CODENAME" = "crownlte" ]; then
+    python3 "$(dirname "$0")/../../unica/patches/exynos9810_device_stack/exynos9810_finalization/spen/patch_smps_property.py" \
+        "$WORK" --verify
+fi
 require_file "$WORK/vendor/etc/fstab.samsungexynos9810"
 require_file "$WORK/vendor/etc/init/init.samsungexynos9810.rc"
 require_file "$WORK/vendor/bin/hw/android.hardware.keymaster@4.0-service"
@@ -228,4 +232,21 @@ if [ "${EXYNOS9810_ENABLE_SYSTEM_BOOT_DEBUG:-false}" != "true" ]; then
     done
 fi
 
+python3 "$(dirname "$0")/../../unica/patches/exynos9810_device_stack/exynos9810_finalization/kernelsu/patch_init_bootstrap.py" \
+    "$WORK/system/system/etc/init/hw/init.rc" --verify
+
+python3 "$(dirname "$0")/../../unica/patches/exynos9810_device_stack/exynos9810_finalization/display/patch_external_display.py" \
+    "$WORK/system/system/bin/surfaceflinger" --verify
+python3 "$(dirname "$0")/../../unica/patches/exynos9810_device_stack/exynos9810_finalization/exynos9810_audio/patch_hdmi_audio.py" \
+    "$WORK/vendor/lib/hw/audio.primary.exynos9810.so" --verify
+grep -Fxq '/system/bin/surfaceflinger u:object_r:surfaceflinger_exec:s0' \
+    "$WORK/configs/file_context-system" || {
+    echo "Exynos9810 boot contract: SurfaceFlinger executable SELinux label is incorrect" >&2
+    exit 1
+}
+grep -Eq '^system/bin/surfaceflinger 0 2000 755( |$)' \
+    "$WORK/configs/fs_config-system" || {
+    echo "Exynos9810 boot contract: SurfaceFlinger executable permissions are incorrect" >&2
+    exit 1
+}
 echo "Verified Exynos9810 boot contract for ${TARGET_CODENAME}: ${EXPECTED_MODEL}/${EXPECTED_NAME}, ${TARGET_OS_FILE_SYSTEM_TYPE}"

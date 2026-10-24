@@ -43,6 +43,37 @@ def patch(driver: str, continuous: str) -> tuple[str, str]:
             raise ValueError("Crown command interval pattern mismatch")
         driver = driver[:start] + method.replace(old, new, 1) + driver[end:]
 
+    # Stock Crown treats module-off and DSP reset as transactions too. The
+    # previous port only spaced enable/reset, leaving stop->other operations
+    # and TicToc's raw disable writes at the 20ms command interval.
+    boundary_marker = "UN1CA_CROWN_ALL_TRANSACTION_BOUNDARIES"
+    if boundary_marker not in driver:
+        anchor = '    const-string v0, "1"\n\n    invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z'
+        start = driver.index('.method public final declared-synchronized h(Ljava/lang/String;)V')
+        end = driver.index('.end method', start)
+        body = driver[start:end]
+        if body.count(anchor) != 1:
+            raise ValueError('Crown transaction-boundary pattern mismatch')
+        checks = f'''    # {boundary_marker}
+    const-string v0, "0"
+
+    invoke-virtual {{v0, p1}}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-nez v0, :unica_crown_module_interval
+
+    const-string v0, "7"
+
+    invoke-virtual {{v0, p1}}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result v0
+
+    if-nez v0, :unica_crown_module_interval
+
+'''
+        driver = driver[:start] + body.replace(anchor, checks + anchor, 1) + driver[end:]
+
     marker = "UN1CA_CROWN_BUILTIN_CHARGE"
     if marker not in continuous:
         old = '''    const-string v0, "3"

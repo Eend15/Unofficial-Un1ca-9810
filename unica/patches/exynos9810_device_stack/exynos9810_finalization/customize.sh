@@ -1366,11 +1366,11 @@ _EXYNOS9810_FINAL_ENSURE_TARGET_IDENTITY()
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.product.name" "$NAME"
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.build.flavor" "$NAME-user"
 
-    # Enforce UN1CA Settings ROM version display: '1.4 (stable)-Unofficial-UN1CA 3.2.1'
+    # Enforce UN1CA Settings ROM version display: '1.5 (stable)-Unofficial-UN1CA 3.2.1'
     if ! grep -q "^ro\.unica\.version" "$WORK_DIR/system/system/etc/selinux/plat_property_contexts" 2>/dev/null; then
         echo "ro.unica.version u:object_r:build_prop:s0 exact string" >> "$WORK_DIR/system/system/etc/selinux/plat_property_contexts"
     fi
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.unica.version" "1.4 (stable)-Unofficial-UN1CA 3.2.1"
+    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/system/system/build.prop" "ro.unica.version" "1.5 (stable)-Unofficial-UN1CA 3.2.1"
     sed -i '/^ro\.unica\.codename=/d' "$WORK_DIR/system/system/build.prop"
 
     for FILE in \
@@ -1476,6 +1476,16 @@ _EXYNOS9810_FINAL_ENSURE_DISPLAY_PROPS()
         "debug.sf.disable_backpressure" "1"
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
         "debug.sf.latch_unsignaled" "0"
+}
+
+_EXYNOS9810_FINAL_PATCH_EXTERNAL_DISPLAY()
+{
+    case "$TARGET_CODENAME" in starlte|star2lte|crownlte) ;; *) return 0 ;; esac
+    LOG "- Applying verified Exynos9810 legacy HWC external-display compatibility"
+    python3 "$MODPATH/display/patch_external_display.py" \
+        "$WORK_DIR/system/system/bin/surfaceflinger" || return 1
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/surfaceflinger" \
+        0 2000 755 "u:object_r:surfaceflinger_exec:s0" || return 1
 }
 
 _EXYNOS9810_FINAL_RESTORE_RAMPLUS_FILES()
@@ -1817,6 +1827,10 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK()
         install -D -m 644 "$SRC" "$WORK_DIR/system/system/$REL" || return 1
         _EXYNOS9810_FINAL_SET_METADATA "system" "system/$REL" 0 0 644 "u:object_r:system_file:s0"
     done
+    # Apply after restoring the model-matched stack so the donor copy cannot
+    # replace the HDMI flag repair. No bind mounts or audio-service restarts.
+    python3 "$MODPATH/exynos9810_audio/patch_hdmi_audio.py" \
+        "$WORK_DIR/vendor/lib/hw/audio.primary.exynos9810.so" || return 1
 }
 
 _EXYNOS9810_FINAL_PATCH_CAMERA_ACQUIRE_FENCES()
@@ -2068,6 +2082,11 @@ _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT()
     cp -f "$EXYNOS9810_KERNELSU_NEXT_APK" "$PAYLOAD" || return 1
     cp -f "$SCRIPT_SRC" "$SCRIPT" || return 1
     cp -f "$RC_SRC" "$RC" || return 1
+
+    # The kernel appends its post-fs-data action to the main init.rc. Imported
+    # service RC actions run later, so their copy was too late on a fresh /data.
+    python3 "$MODPATH/kernelsu/patch_init_bootstrap.py" \
+        "$WORK_DIR/system/system/etc/init/hw/init.rc" || return 1
 
     cp -f "$MODPATH/kernelsu/KernelSUManagerVerifier.jar" "$PAYLOAD_DIR/KernelSUManagerVerifier.jar" || return 1
     chmod 0644 "$PAYLOAD_DIR/KernelSUManagerVerifier.jar"
@@ -4860,6 +4879,7 @@ for name, old, new in (
 path.write_text(text)
 print("ok")
 PY
+    python3 "$MODPATH/spen/patch_crown_scan.py" "$APK_DIR/smali/R2/b.smali" || return 1
 }
 
 _EXYNOS9810_FINAL_RESTORE_TARGET_WIDEVINE()
@@ -7058,8 +7078,9 @@ _EXYNOS9810_FINAL_ENABLE_NOW_BRIEF_WIDGET
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS
 _EXYNOS9810_FINAL_ENSURE_DISPLAY_PROPS
+_EXYNOS9810_FINAL_PATCH_EXTERNAL_DISPLAY || return 1
 _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK
-_EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK
+_EXYNOS9810_FINAL_RESTORE_TARGET_AUDIO_STACK || return 1
 _EXYNOS9810_FINAL_RESTORE_TARGET_WIDEVINE || return 1
 _EXYNOS9810_FINAL_RESTORE_RAMPLUS_FILES
 _EXYNOS9810_FINAL_RESTORE_EMBEDDED_REMOTEDISPLAY
@@ -7078,6 +7099,9 @@ _EXYNOS9810_FINAL_VERIFY_PHOTO_EDITOR_STACK
 _EXYNOS9810_FINAL_ENABLE_SIM_VARIANT_ACCEPTANCE
 _EXYNOS9810_FINAL_ADD_VIBRATOR_AIDL_HAL
 _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN || return 1
+if [ "$TARGET_CODENAME" = "crownlte" ]; then
+    python3 "$MODPATH/spen/patch_smps_property.py" "$WORK_DIR" || return 1
+fi
 _EXYNOS9810_FINAL_PATCH_AIRCOMMAND_BLE_CONTROLLER_NULL || return 1
 _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_SYSFS_BRIDGE || return 1
 _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_BLE_PROTOCOL || return 1
@@ -7094,15 +7118,15 @@ _EXYNOS9810_FINAL_FIX_IMS_RADIO_TRANSPORT || return 1
 _EXYNOS9810_FINAL_FIX_WALLPAPER_OBJECTCAPTURE
 _EXYNOS9810_FINAL_FIX_SNAP_IMAGETAGGER_MODEL_PAIR
 _EXYNOS9810_FINAL_PATCH_ONEUI8_IPSERVICE
-_EXYNOS9810_FINAL_PATCH_PERSONALIZATION_DATABASE_KEYS
+_EXYNOS9810_FINAL_PATCH_PERSONALIZATION_DATABASE_KEYS || return 1
 _EXYNOS9810_FINAL_PORT_N770_MOTION_PHOTO
 _EXYNOS9810_FINAL_FORCE_S3NRN82_NFC
 _EXYNOS9810_FINAL_PIN_QUICK_SHARE_STACK
 _EXYNOS9810_FINAL_ENABLE_BLUETOOTH_FILE_TRANSFER || return 1
 _EXYNOS9810_FINAL_VERIFY_SHARING_STACK || return 1
-_EXYNOS9810_FINAL_VERIFY_WALLPAPER_AND_BRIEF_STACK
-_EXYNOS9810_FINAL_VERIFY_WEATHER_PAYLOAD
-_EXYNOS9810_FINAL_VERIFY_RAM_PROFILE
+_EXYNOS9810_FINAL_VERIFY_WALLPAPER_AND_BRIEF_STACK || return 1
+_EXYNOS9810_FINAL_VERIFY_WEATHER_PAYLOAD || return 1
+_EXYNOS9810_FINAL_VERIFY_RAM_PROFILE || return 1
 _EXYNOS9810_FINAL_ENABLE_EXTRA_BRIGHTNESS
 _EXYNOS9810_FINAL_SET_BRIGHTNESS_PROFILE
 _EXYNOS9810_FINAL_ENABLE_REPORTED_FEATURES || return 1

@@ -85,6 +85,8 @@ _EXYNOS9810_FINAL_FIX_NOTE9_CHARGE_SETTLE
         "smali/a3/a.smali": ("UN1CA_CROWN_APPLICATION_FEATURES",),
         "smali/U2/c.smali": ("UN1CA_CROWN_OPERATION_MODE",),
         "smali/A/j.smali": ("prepareTicToc : crown advertisement off",),
+        "smali/R2/b.smali": ("UN1CA_CROWN_DISCOVERY_SERVICE_FILTER",
+                              "->setServiceUuid(Landroid/os/ParcelUuid;)",),
     }
     for relative, required in expected.items():
         file = decoded / relative

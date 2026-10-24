@@ -1,0 +1,3673 @@
+Subject: [PATCH] Built-in Dynamic Island v0.1.10 static SystemUI callsites
+
+--- a/smali/com/android/systemui/SystemUIApplication.smali
++++ b/smali/com/android/systemui/SystemUIApplication.smali
+@@ -452,6 +452,8 @@
+ .method public final onCreate()V
+     .locals 4
+ 
++    invoke-static {p0}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->start(Landroid/app/Application;)V
++
+     invoke-super {p0}, Landroid/app/Application;->onCreate()V
+ 
+     new-instance v0, Landroid/util/TimingsTraceLog;
+--- /dev/null
++++ b/smali/io/mesalabs/unica/dynamicisland/Bootstrap.smali
+@@ -0,0 +1,374 @@
++.class public final Lio/mesalabs/unica/dynamicisland/Bootstrap;
++.super Ljava/lang/Object;
++.source "Bootstrap.java"
++
++
++# static fields
++.field private static constructor:Ljava/lang/reflect/Method;
++
++.field private static dispatch:Ljava/lang/reflect/Method;
++
++
++# direct methods
++.method public constructor <init>()V
++    .registers 1
++
++    .line 9
++    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
++
++    return-void
++.end method
++
++.method public static constructed(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)V
++    .registers 5
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "(",
++            "Ljava/lang/Object;",
++            "Ljava/lang/Class<",
++            "*>;",
++            "Ljava/lang/String;",
++            "[",
++            "Ljava/lang/Object;",
++            ")V"
++        }
++    .end annotation
++
++    .line 33
++    :try_start_0
++    sget-object v0, Lio/mesalabs/unica/dynamicisland/Bootstrap;->constructor:Ljava/lang/reflect/Method;
++
++    if-eqz v0, :cond_15
++
++    filled-new-array {p0, p1, p2, p3}, [Ljava/lang/Object;
++
++    move-result-object p0
++
++    const/4 p1, 0x0
++
++    invoke-virtual {v0, p1, p0}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
++    :try_end_c
++    .catchall {:try_start_0 .. :try_end_c} :catchall_d
++
++    return-void
++
++    :catchall_d
++    move-exception p0
++
++    .line 34
++    const-string p1, "UnicaDynamicIsland"
++
++    const-string p2, "Constructor observer failed"
++
++    invoke-static {p1, p2, p0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    :cond_15
++    return-void
++.end method
++
++.method private static id(Ljava/lang/String;)Ljava/lang/String;
++    .registers 6
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/lang/Exception;
++        }
++    .end annotation
++
++    .line 22
++    const-string v0, "SHA-256"
++
++    invoke-static {v0}, Ljava/security/MessageDigest;->getInstance(Ljava/lang/String;)Ljava/security/MessageDigest;
++
++    move-result-object v0
++
++    sget-object v1, Ljava/nio/charset/StandardCharsets;->UTF_8:Ljava/nio/charset/Charset;
++
++    invoke-virtual {p0, v1}, Ljava/lang/String;->getBytes(Ljava/nio/charset/Charset;)[B
++
++    move-result-object p0
++
++    invoke-virtual {v0, p0}, Ljava/security/MessageDigest;->digest([B)[B
++
++    move-result-object p0
++
++    new-instance v0, Ljava/lang/StringBuilder;
++
++    const-string v1, "unica_di_"
++
++    invoke-direct {v0, v1}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
++
++    const/4 v1, 0x0
++
++    :goto_18
++    const/16 v2, 0x8
++
++    if-ge v1, v2, :cond_34
++
++    .line 23
++    sget-object v2, Ljava/util/Locale;->ROOT:Ljava/util/Locale;
++
++    aget-byte v3, p0, v1
++
++    invoke-static {v3}, Ljava/lang/Byte;->valueOf(B)Ljava/lang/Byte;
++
++    move-result-object v3
++
++    filled-new-array {v3}, [Ljava/lang/Object;
++
++    move-result-object v3
++
++    const-string v4, "%02x"
++
++    invoke-static {v2, v4, v3}, Ljava/lang/String;->format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
++
++    move-result-object v2
++
++    invoke-virtual {v0, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    add-int/lit8 v1, v1, 0x1
++
++    goto :goto_18
++
++    :cond_34
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p0
++
++    return-object p0
++.end method
++
++.method public static invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    .registers 10
++    .annotation system Ldalvik/annotation/Signature;
++        value = {
++            "(",
++            "Ljava/lang/Object;",
++            "Ljava/lang/Class<",
++            "*>;",
++            "Ljava/lang/String;",
++            "[",
++            "Ljava/lang/Object;",
++            ")",
++            "Ljava/lang/Object;"
++        }
++    .end annotation
++
++    .annotation system Ldalvik/annotation/Throws;
++        value = {
++            Ljava/lang/Throwable;
++        }
++    .end annotation
++
++    .line 27
++    :try_start_0
++    sget-object v0, Lio/mesalabs/unica/dynamicisland/Bootstrap;->dispatch:Ljava/lang/reflect/Method;
++
++    if-eqz v0, :cond_e
++
++    filled-new-array {p0, p1, p2, p3}, [Ljava/lang/Object;
++
++    move-result-object p0
++
++    const/4 p1, 0x0
++
++    invoke-virtual {v0, p1, p0}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
++
++    move-result-object p0
++
++    return-object p0
++
++    .line 28
++    :cond_e
++    invoke-virtual {p1}, Ljava/lang/Class;->getDeclaredMethods()[Ljava/lang/reflect/Method;
++
++    move-result-object v0
++
++    array-length v1, v0
++
++    const/4 v2, 0x0
++
++    :goto_14
++    if-ge v2, v1, :cond_32
++
++    aget-object v3, v0, v2
++
++    invoke-virtual {v3}, Ljava/lang/reflect/Method;->getName()Ljava/lang/String;
++
++    move-result-object v4
++
++    invoke-static {p2}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->id(Ljava/lang/String;)Ljava/lang/String;
++
++    move-result-object v5
++
++    invoke-virtual {v4, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v4
++
++    if-eqz v4, :cond_2f
++
++    const/4 p1, 0x1
++
++    invoke-virtual {v3, p1}, Ljava/lang/reflect/Method;->setAccessible(Z)V
++
++    invoke-virtual {v3, p0, p3}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
++
++    move-result-object p0
++
++    return-object p0
++
++    :cond_2f
++    add-int/lit8 v2, v2, 0x1
++
++    goto :goto_14
++
++    .line 29
++    :cond_32
++    new-instance p0, Ljava/lang/NoSuchMethodException;
++
++    invoke-virtual {p1}, Ljava/lang/Class;->getName()Ljava/lang/String;
++
++    move-result-object p1
++
++    new-instance p3, Ljava/lang/StringBuilder;
++
++    invoke-direct {p3}, Ljava/lang/StringBuilder;-><init>()V
++
++    invoke-virtual {p3, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    const-string p1, "#"
++
++    invoke-virtual {p3, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    invoke-virtual {p3, p2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    invoke-virtual {p3}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object p1
++
++    invoke-direct {p0, p1}, Ljava/lang/NoSuchMethodException;-><init>(Ljava/lang/String;)V
++
++    throw p0
++    :try_end_50
++    .catch Ljava/lang/reflect/InvocationTargetException; {:try_start_0 .. :try_end_50} :catch_50
++
++    :catch_50
++    move-exception p0
++
++    .line 30
++    invoke-virtual {p0}, Ljava/lang/reflect/InvocationTargetException;->getCause()Ljava/lang/Throwable;
++
++    move-result-object p0
++
++    throw p0
++.end method
++
++.method public static start(Landroid/app/Application;)V
++    .registers 9
++
++    const/4 v0, 0x0
++
++    .line 13
++    :try_start_1
++    invoke-virtual {p0}, Landroid/app/Application;->getClassLoader()Ljava/lang/ClassLoader;
++
++    move-result-object v1
++
++    .line 14
++    new-instance v2, Ldalvik/system/PathClassLoader;
++
++    const-string v3, "/system/app/UnicaDynamicIsland/UnicaDynamicIsland.apk"
++
++    invoke-direct {v2, v3, v1}, Ldalvik/system/PathClassLoader;-><init>(Ljava/lang/String;Ljava/lang/ClassLoader;)V
++
++    .line 15
++    const-string v3, "dev.android.dynamicisland.nativebridge.NativeRuntime"
++
++    const/4 v4, 0x1
++
++    invoke-static {v3, v4, v2}, Ljava/lang/Class;->forName(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;
++
++    move-result-object v2
++
++    .line 16
++    const-string v3, "invoke"
++
++    const-class v4, Ljava/lang/Object;
++
++    const-class v5, Ljava/lang/Class;
++
++    const-class v6, Ljava/lang/String;
++
++    const-class v7, [Ljava/lang/Object;
++
++    filled-new-array {v4, v5, v6, v7}, [Ljava/lang/Class;
++
++    move-result-object v4
++
++    invoke-virtual {v2, v3, v4}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
++
++    move-result-object v3
++
++    sput-object v3, Lio/mesalabs/unica/dynamicisland/Bootstrap;->dispatch:Ljava/lang/reflect/Method;
++
++    .line 17
++    const-string v3, "constructed"
++
++    const-class v4, Ljava/lang/Object;
++
++    const-class v5, Ljava/lang/Class;
++
++    const-class v6, Ljava/lang/String;
++
++    const-class v7, [Ljava/lang/Object;
++
++    filled-new-array {v4, v5, v6, v7}, [Ljava/lang/Class;
++
++    move-result-object v4
++
++    invoke-virtual {v2, v3, v4}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
++
++    move-result-object v3
++
++    sput-object v3, Lio/mesalabs/unica/dynamicisland/Bootstrap;->constructor:Ljava/lang/reflect/Method;
++
++    .line 18
++    const-string v3, "init"
++
++    const-class v4, Landroid/app/Application;
++
++    const-class v5, Ljava/lang/ClassLoader;
++
++    filled-new-array {v4, v5}, [Ljava/lang/Class;
++
++    move-result-object v4
++
++    invoke-virtual {v2, v3, v4}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
++
++    move-result-object v2
++
++    filled-new-array {p0, v1}, [Ljava/lang/Object;
++
++    move-result-object p0
++
++    invoke-virtual {v2, v0, p0}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
++    :try_end_50
++    .catchall {:try_start_1 .. :try_end_50} :catchall_51
++
++    return-void
++
++    :catchall_51
++    move-exception p0
++
++    .line 19
++    const-string v1, "UnicaDynamicIsland"
++
++    const-string v2, "Built-in initialization failed; stock methods remain available"
++
++    invoke-static {v1, v2, p0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    sput-object v0, Lio/mesalabs/unica/dynamicisland/Bootstrap;->dispatch:Ljava/lang/reflect/Method;
++
++    sput-object v0, Lio/mesalabs/unica/dynamicisland/Bootstrap;->constructor:Ljava/lang/reflect/Method;
++
++    return-void
++.end method
+--- /dev/null
++++ b/smali/io/mesalabs/unica/dynamicisland/ConstructorCalls.smali
+@@ -0,0 +1,69 @@
++.class public final Lio/mesalabs/unica/dynamicisland/ConstructorCalls;
++
++.super Ljava/lang/Object;
++
++.method public static unica_di_fb07a88ce5aff195(Lcom/android/systemui/statusbar/StatusBarStateControllerImpl;)V
++    .locals 4
++    const/4 v3, 0x0
++    new-array v3, v3, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/StatusBarStateControllerImpl;
++    const-string v2, "<init>(Lcom/android/internal/logging/UiEventLogger;Lcom/android/systemui/util/kotlin/JavaAdapter;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;Ldagger/Lazy;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->constructed(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)V
++    return-void
++.end method
++
++.method public static unica_di_c5eece8ee59efffa(Lcom/android/systemui/statusbar/policy/SecFlashlightControllerImpl;)V
++    .locals 4
++    const/4 v3, 0x0
++    new-array v3, v3, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/policy/SecFlashlightControllerImpl;
++    const-string v2, "<init>(Landroid/hardware/camera2/CameraManager;Landroid/content/Context;Lcom/android/systemui/util/settings/SecureSettings;Lcom/android/systemui/util/SettingsHelper;Landroid/content/pm/PackageManager;Lcom/android/systemui/statusbar/policy/FlashlightControllerImpl;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->constructed(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)V
++    return-void
++.end method
++
++.method public static unica_di_d59cb24825e36665(Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;)V
++    .locals 4
++    const/4 v3, 0x0
++    new-array v3, v3, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
++    const-string v2, "<init>(Landroid/content/Context;Lcom/android/systemui/statusbar/notification/collection/notifcollection/CommonNotifCollection;Lcom/android/systemui/plugins/ActivityStarter;Lcom/android/systemui/plugins/statusbar/StatusBarStateController;Lcom/android/systemui/statusbar/phone/IndicatorGardenPresenter;Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManager;Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;Lcom/android/systemui/statusbar/policy/ConfigurationController;Lcom/android/systemui/broadcast/BroadcastDispatcher;Lcom/android/systemui/shared/system/TaskStackChangeListeners;Lcom/android/systemui/statusbar/phone/IndicatorScaleGardener;Lcom/android/systemui/statusbar/notification/collection/NotifCollection;Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;Lcom/android/systemui/statusbar/NotificationRemoteInputManager;Lcom/android/systemui/statusbar/window/StatusBarWindowStateController;Lcom/android/systemui/dump/DumpManager;Lcom/android/systemui/media/SecMediaHost;Lcom/android/systemui/util/SettingsHelper;Lcom/android/systemui/statusbar/phone/NotificationIconAreaController;Lcom/android/systemui/media/controls/domain/pipeline/MediaDataManager;Lcom/android/systemui/unfold/updates/screen/ScreenStatusProvider;Lcom/android/systemui/facewidget/plugin/FaceWidgetNotificationControllerWrapper;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->constructed(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)V
++    return-void
++.end method
++
++.method public static unica_di_c5cd1575dd6ad568(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;)V
++    .locals 4
++    const/4 v3, 0x0
++    new-array v3, v3, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;
++    const-string v2, "<init>(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallControllerExt;Lkotlinx/coroutines/CoroutineScope;Landroid/content/Context;Lcom/android/systemui/statusbar/phone/ongoingcall/data/repository/OngoingCallRepository;Lcom/android/systemui/statusbar/notification/domain/interactor/ActiveNotificationsInteractor;Ljava/util/concurrent/Executor;Landroid/app/IActivityManager;Lcom/android/systemui/dump/DumpManager;Lcom/android/systemui/statusbar/window/StatusBarWindowControllerStore;Lcom/android/systemui/statusbar/gesture/SwipeStatusBarAwayGestureHandler;Lcom/android/systemui/statusbar/data/repository/StatusBarModeRepositoryStore;Lcom/android/systemui/log/LogBuffer;Lcom/android/systemui/statusbar/phone/ongoingcall/KeyguardCallChipController;Lcom/android/systemui/util/time/SystemClock;Lcom/android/systemui/statusbar/policy/ConfigurationController;Lcom/android/systemui/statusbar/phone/IndicatorScaleGardener;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->constructed(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)V
++    return-void
++.end method
++
++.method public static unica_di_14aa3579d4425294(Lcom/android/systemui/shade/ShadeExpansionStateManager;)V
++    .locals 4
++    const/4 v3, 0x0
++    new-array v3, v3, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/shade/ShadeExpansionStateManager;
++    const-string v2, "<init>(Lcom/android/systemui/dump/DumpManager;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->constructed(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)V
++    return-void
++.end method
++
++.method public static unica_di_06f1d401b73c7659(Lcom/android/systemui/statusbar/window/StatusBarWindowStateController;)V
++    .locals 4
++    const/4 v3, 0x0
++    new-array v3, v3, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/window/StatusBarWindowStateController;
++    const-string v2, "<init>(ILcom/android/systemui/statusbar/CommandQueue;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->constructed(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)V
++    return-void
++.end method
+--- a/smali_classes2/com/android/systemui/media/QSMediaCornerRoundedView.smali
++++ b/smali_classes2/com/android/systemui/media/QSMediaCornerRoundedView.smali
+@@ -172,3 +172,83 @@
+ 
+     return-void
+ .end method
++
++.method public unica_di_9dce7f213788d721(Landroid/graphics/Canvas;)V
++    .locals 0
++
++    invoke-super {p0, p1}, Landroid/widget/FrameLayout;->dispatchDraw(Landroid/graphics/Canvas;)V
++
++    return-void
++.end method
++
++.method public dispatchDraw(Landroid/graphics/Canvas;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/media/QSMediaCornerRoundedView;
++    const-string v2, "dispatchDraw(Landroid/graphics/Canvas;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public unica_di_783346414ccf04fb(Landroid/view/MotionEvent;)Z
++    .locals 0
++
++    invoke-super {p0, p1}, Landroid/widget/FrameLayout;->dispatchTouchEvent(Landroid/view/MotionEvent;)Z
++
++    move-result p0
++
++    return p0
++.end method
++
++.method public dispatchTouchEvent(Landroid/view/MotionEvent;)Z
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/media/QSMediaCornerRoundedView;
++    const-string v2, "dispatchTouchEvent(Landroid/view/MotionEvent;)Z"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Boolean;
++    invoke-virtual {v0}, Ljava/lang/Boolean;->booleanValue()Z
++    move-result v0
++    return v0
++
++.end method
++
++.method public unica_di_c22e6c82be93e9fa(II)V
++    .locals 0
++
++    invoke-super {p0, p1, p2}, Landroid/widget/FrameLayout;->onMeasure(II)V
++
++    return-void
++.end method
++
++.method public onMeasure(II)V
++    .locals 6
++    const v4, 2
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    invoke-static/range {p2 .. p2}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/media/QSMediaCornerRoundedView;
++    const-string v2, "onMeasure(II)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
+--- a/smali_classes2/com/android/systemui/media/SecMediaControlPanel.smali
++++ b/smali_classes2/com/android/systemui/media/SecMediaControlPanel.smali
+@@ -594,7 +594,7 @@
+     return-void
+ .end method
+ 
+-.method public final bind(Lcom/android/systemui/media/controls/shared/model/MediaData;Ljava/lang/String;)V
++.method public final unica_di_bb09f04103e65d98(Lcom/android/systemui/media/controls/shared/model/MediaData;Ljava/lang/String;)V
+     .locals 18
+ 
+     move-object/from16 v1, p0
+@@ -2342,6 +2342,24 @@
+     invoke-static {}, Landroid/os/Trace;->endSection()V
+ 
+     return-void
++.end method
++
++.method public final bind(Lcom/android/systemui/media/controls/shared/model/MediaData;Ljava/lang/String;)V
++    .locals 6
++    const v4, 2
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v5, p2
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/media/SecMediaControlPanel;
++    const-string v2, "bind(Lcom/android/systemui/media/controls/shared/model/MediaData;Ljava/lang/String;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public final isPlaying()Z
+--- a/smali_classes2/com/android/systemui/plugins/statusbar/StatusBarStateController$StateListener.smali
++++ b/smali_classes2/com/android/systemui/plugins/statusbar/StatusBarStateController$StateListener.smali
+@@ -20,10 +20,26 @@
+     return-void
+ .end method
+ 
+-.method public onDozingChanged(Z)V
++.method public unica_di_a5892149b4c25548(Z)V
+     .locals 0
+ 
+     return-void
++.end method
++
++.method public onDozingChanged(Z)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;
++    const-string v2, "onDozingChanged(Z)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public onDreamingChanged(Z)V
+@@ -44,10 +60,26 @@
+     return-void
+ .end method
+ 
+-.method public onStateChanged(I)V
++.method public unica_di_9c08127664a791b9(I)V
+     .locals 0
+ 
+     return-void
++.end method
++
++.method public onStateChanged(I)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;
++    const-string v2, "onStateChanged(I)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public onStatePostChange()V
+--- a/smali_classes2/com/android/systemui/qs/SecQSPanelResourcePicker.smali
++++ b/smali_classes2/com/android/systemui/qs/SecQSPanelResourcePicker.smali
+@@ -244,20 +244,39 @@
+     return p0
+ .end method
+ 
++.method public final unica_di_d4508fc377fb878c(Landroid/content/Context;)I
++    .locals 0
++
++    iget-object p0, p0, Lcom/android/systemui/qs/SecQSPanelResourcePicker;->resourcePickHelper:Lcom/android/systemui/qs/panelresource/SecQSPanelResourcePickHelper;
++
++    invoke-virtual {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourcePickHelper;->getTargetPicker()Lcom/android/systemui/qs/panelresource/SecQSPanelResourceNormalPicker;
++
++    move-result-object p0
++
++    invoke-virtual {p0, p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceNormalPicker;->getPanelWidth(Landroid/content/Context;)I
++
++    move-result p0
++
++    return p0
++.end method
++
+ .method public final getPanelWidth(Landroid/content/Context;)I
+-    .locals 0
+-
+-    iget-object p0, p0, Lcom/android/systemui/qs/SecQSPanelResourcePicker;->resourcePickHelper:Lcom/android/systemui/qs/panelresource/SecQSPanelResourcePickHelper;
+-
+-    invoke-virtual {p0}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourcePickHelper;->getTargetPicker()Lcom/android/systemui/qs/panelresource/SecQSPanelResourceNormalPicker;
+-
+-    move-result-object p0
+-
+-    invoke-virtual {p0, p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceNormalPicker;->getPanelWidth(Landroid/content/Context;)I
+-
+-    move-result p0
+-
+-    return p0
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/qs/SecQSPanelResourcePicker;
++    const-string v2, "getPanelWidth(Landroid/content/Context;)I"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Integer;
++    invoke-virtual {v0}, Ljava/lang/Integer;->intValue()I
++    move-result v0
++    return v0
++
+ .end method
+ 
+ .method public final getPopOverMargin(Landroid/content/Context;)I
+--- a/smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceNormalPicker.smali
++++ b/smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceNormalPicker.smali
+@@ -679,37 +679,56 @@
+     return p0
+ .end method
+ 
++.method public unica_di_d4508fc377fb878c(Landroid/content/Context;)I
++    .locals 1
++
++    sget-object p0, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon;->Companion:Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;
++
++    invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    invoke-static {p1}, Lcom/android/systemui/util/DeviceState;->getDisplayWidth(Landroid/content/Context;)I
++
++    move-result p0
++
++    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->isPortrait(Landroid/content/Context;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_0
++
++    return p0
++
++    :cond_0
++    int-to-float p0, p0
++
++    const v0, 0x7f070f77
++
++    invoke-static {p1, v0, p0}, Lcom/android/keyguard/SecurityUtils$$ExternalSyntheticOutline0;->m(Landroid/content/Context;IF)F
++
++    move-result p0
++
++    float-to-int p0, p0
++
++    return p0
++.end method
++
+ .method public getPanelWidth(Landroid/content/Context;)I
+-    .locals 1
+-
+-    sget-object p0, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon;->Companion:Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;
+-
+-    invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-
+-    invoke-static {p1}, Lcom/android/systemui/util/DeviceState;->getDisplayWidth(Landroid/content/Context;)I
+-
+-    move-result p0
+-
+-    invoke-static {p1}, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceCommon$Companion;->isPortrait(Landroid/content/Context;)Z
+-
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/qs/panelresource/SecQSPanelResourceNormalPicker;
++    const-string v2, "getPanelWidth(Landroid/content/Context;)I"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Integer;
++    invoke-virtual {v0}, Ljava/lang/Integer;->intValue()I
+     move-result v0
+-
+-    if-eqz v0, :cond_0
+-
+-    return p0
+-
+-    :cond_0
+-    int-to-float p0, p0
+-
+-    const v0, 0x7f070f77
+-
+-    invoke-static {p1, v0, p0}, Lcom/android/keyguard/SecurityUtils$$ExternalSyntheticOutline0;->m(Landroid/content/Context;IF)F
+-
+-    move-result p0
+-
+-    float-to-int p0, p0
+-
+-    return p0
++    return v0
++
+ .end method
+ 
+ .method public getPopOverBlankSpace(Landroid/content/Context;)I
+--- a/smali_classes3/com/android/systemui/shade/ShadeExpansionStateManager.smali
++++ b/smali_classes3/com/android/systemui/shade/ShadeExpansionStateManager.smali
+@@ -79,30 +79,47 @@
+     iput-object v1, p0, Lcom/android/systemui/shade/ShadeExpansionStateManager;->stateLogger:Lcom/android/app/tracing/TraceStateLogger;
+ 
+     invoke-virtual {p1, p0}, Lcom/android/systemui/dump/DumpManager;->registerDumpable(Lcom/android/systemui/Dumpable;)V
+-
++    invoke-static/range {p0 .. p0}, Lio/mesalabs/unica/dynamicisland/ConstructorCalls;->unica_di_14aa3579d4425294(Lcom/android/systemui/shade/ShadeExpansionStateManager;)V
+     return-void
+ .end method
+ 
+ 
+ # virtual methods
++.method public final unica_di_aa457e1a2ba9c31d(Lcom/android/systemui/shade/ShadeExpansionListener;)Lcom/android/systemui/shade/ShadeExpansionChangeEvent;
++    .locals 2
++
++    iget-object v0, p0, Lcom/android/systemui/shade/ShadeExpansionStateManager;->expansionListeners:Ljava/util/concurrent/CopyOnWriteArrayList;
++
++    invoke-virtual {v0, p1}, Ljava/util/concurrent/CopyOnWriteArrayList;->add(Ljava/lang/Object;)Z
++
++    new-instance p1, Lcom/android/systemui/shade/ShadeExpansionChangeEvent;
++
++    iget v0, p0, Lcom/android/systemui/shade/ShadeExpansionStateManager;->fraction:F
++
++    iget-boolean v1, p0, Lcom/android/systemui/shade/ShadeExpansionStateManager;->expanded:Z
++
++    iget-boolean p0, p0, Lcom/android/systemui/shade/ShadeExpansionStateManager;->tracking:Z
++
++    invoke-direct {p1, v0, v1, p0}, Lcom/android/systemui/shade/ShadeExpansionChangeEvent;-><init>(FZZ)V
++
++    return-object p1
++.end method
++
+ .method public final addExpansionListener(Lcom/android/systemui/shade/ShadeExpansionListener;)Lcom/android/systemui/shade/ShadeExpansionChangeEvent;
+-    .locals 2
+-
+-    iget-object v0, p0, Lcom/android/systemui/shade/ShadeExpansionStateManager;->expansionListeners:Ljava/util/concurrent/CopyOnWriteArrayList;
+-
+-    invoke-virtual {v0, p1}, Ljava/util/concurrent/CopyOnWriteArrayList;->add(Ljava/lang/Object;)Z
+-
+-    new-instance p1, Lcom/android/systemui/shade/ShadeExpansionChangeEvent;
+-
+-    iget v0, p0, Lcom/android/systemui/shade/ShadeExpansionStateManager;->fraction:F
+-
+-    iget-boolean v1, p0, Lcom/android/systemui/shade/ShadeExpansionStateManager;->expanded:Z
+-
+-    iget-boolean p0, p0, Lcom/android/systemui/shade/ShadeExpansionStateManager;->tracking:Z
+-
+-    invoke-direct {p1, v0, v1, p0}, Lcom/android/systemui/shade/ShadeExpansionChangeEvent;-><init>(FZZ)V
+-
+-    return-object p1
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/shade/ShadeExpansionStateManager;
++    const-string v2, "addExpansionListener(Lcom/android/systemui/shade/ShadeExpansionListener;)Lcom/android/systemui/shade/ShadeExpansionChangeEvent;"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Lcom/android/systemui/shade/ShadeExpansionChangeEvent;
++    return-object v0
++
+ .end method
+ 
+ .method public final dump(Ljava/io/PrintWriter;[Ljava/lang/String;)V
+--- a/smali_classes3/com/android/systemui/statusbar/StatusBarStateControllerImpl.smali
++++ b/smali_classes3/com/android/systemui/statusbar/StatusBarStateControllerImpl.smali
+@@ -164,12 +164,13 @@
+     goto :goto_0
+ 
+     :cond_0
++    invoke-static/range {p0 .. p0}, Lio/mesalabs/unica/dynamicisland/ConstructorCalls;->unica_di_fb07a88ce5aff195(Lcom/android/systemui/statusbar/StatusBarStateControllerImpl;)V
+     return-void
+ .end method
+ 
+ 
+ # virtual methods
+-.method public final addCallback(Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;)V
++.method public final unica_di_43b37d54017cf2bd(Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;)V
+     .locals 2
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/StatusBarStateControllerImpl;->mListeners:Ljava/util/ArrayList;
+@@ -195,14 +196,44 @@
+     throw p0
+ .end method
+ 
++.method public final addCallback(Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/StatusBarStateControllerImpl;
++    const-string v2, "addCallback(Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public final bridge synthetic unica_di_82fd42e5f4ce26cb(Ljava/lang/Object;)V
++    .locals 0
++
++    check-cast p1, Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;
++
++    invoke-virtual {p0, p1}, Lcom/android/systemui/statusbar/StatusBarStateControllerImpl;->addCallback(Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;)V
++
++    return-void
++.end method
++
+ .method public final bridge synthetic addCallback(Ljava/lang/Object;)V
+-    .locals 0
+-
+-    check-cast p1, Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;
+-
+-    invoke-virtual {p0, p1}, Lcom/android/systemui/statusbar/StatusBarStateControllerImpl;->addCallback(Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;)V
+-
+-    return-void
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/StatusBarStateControllerImpl;
++    const-string v2, "addCallback(Ljava/lang/Object;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public final addListenerInternalLocked(Lcom/android/systemui/plugins/statusbar/StatusBarStateController$StateListener;I)V
+--- a/smali_classes3/com/android/systemui/statusbar/notification/collection/NotificationEntry.smali
++++ b/smali_classes3/com/android/systemui/statusbar/notification/collection/NotificationEntry.smali
+@@ -360,12 +360,26 @@
+     return-object v0
+ .end method
+ 
++.method public final unica_di_5898ba284958b160()Ljava/lang/String;
++    .locals 0
++
++    iget-object p0, p0, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->mKey:Ljava/lang/String;
++
++    return-object p0
++.end method
++
+ .method public final getKey()Ljava/lang/String;
+-    .locals 0
+-
+-    iget-object p0, p0, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->mKey:Ljava/lang/String;
+-
+-    return-object p0
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
++    const-string v2, "getKey()Ljava/lang/String;"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/String;
++    return-object v0
++
+ .end method
+ 
+ .method public final getNotificationStyle()Ljava/lang/String;
+--- a/smali_classes3/com/android/systemui/statusbar/notification/collection/ShadeListBuilder.smali
++++ b/smali_classes3/com/android/systemui/statusbar/notification/collection/ShadeListBuilder.smali
+@@ -500,68 +500,94 @@
+     throw p0
+ .end method
+ 
++.method public static unica_di_8f2f3945686d7c67(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;JLjava/util/List;)Z
++    .locals 6
++
++    const/4 v0, 0x1
++
++    check-cast p3, Ljava/util/ArrayList;
++
++    invoke-virtual {p3}, Ljava/util/ArrayList;->size()I
++
++    move-result v1
++
++    const/4 v2, 0x0
++
++    move v3, v2
++
++    :goto_0
++    if-ge v3, v1, :cond_1
++
++    invoke-interface {p3, v3}, Ljava/util/List;->get(I)Ljava/lang/Object;
++
++    move-result-object v4
++
++    check-cast v4, Lcom/android/systemui/statusbar/notification/collection/listbuilder/pluggable/NotifFilter;
++
++    invoke-virtual {v4, p0, p1, p2}, Lcom/android/systemui/statusbar/notification/collection/listbuilder/pluggable/NotifFilter;->shouldFilterOut(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;J)Z
++
++    move-result v5
++
++    if-eqz v5, :cond_0
++
++    goto :goto_1
++
++    :cond_0
++    add-int/2addr v3, v0
++
++    goto :goto_0
++
++    :cond_1
++    const/4 v4, 0x0
++
++    :goto_1
++    iget-object p1, p0, Lcom/android/systemui/statusbar/notification/collection/PipelineEntry;->mAttachState:Lcom/android/systemui/statusbar/notification/collection/ListAttachState;
++
++    iput-object v4, p1, Lcom/android/systemui/statusbar/notification/collection/ListAttachState;->excludingFilter:Lcom/android/systemui/statusbar/notification/collection/listbuilder/pluggable/NotifFilter;
++
++    if-eqz v4, :cond_2
++
++    sget p1, Lcom/android/systemui/statusbar/notification/shared/NotificationBundleUi;->$r8$clinit:I
++
++    sget-object p1, Lcom/android/systemui/flags/RefactorFlagUtils;->INSTANCE:Lcom/android/systemui/flags/RefactorFlagUtils;
++
++    const-wide/16 p1, -0x1
++
++    iput-wide p1, p0, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->initializationTime:J
++
++    :cond_2
++    if-eqz v4, :cond_3
++
++    return v0
++
++    :cond_3
++    return v2
++.end method
++
+ .method public static applyFilters(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;JLjava/util/List;)Z
+     .locals 6
+-
+-    const/4 v0, 0x1
+-
+-    check-cast p3, Ljava/util/ArrayList;
+-
+-    invoke-virtual {p3}, Ljava/util/ArrayList;->size()I
+-
+-    move-result v1
+-
+-    const/4 v2, 0x0
+-
+-    move v3, v2
+-
+-    :goto_0
+-    if-ge v3, v1, :cond_1
+-
+-    invoke-interface {p3, v3}, Ljava/util/List;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v4
+-
+-    check-cast v4, Lcom/android/systemui/statusbar/notification/collection/listbuilder/pluggable/NotifFilter;
+-
+-    invoke-virtual {v4, p0, p1, p2}, Lcom/android/systemui/statusbar/notification/collection/listbuilder/pluggable/NotifFilter;->shouldFilterOut(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;J)Z
+-
+-    move-result v5
+-
+-    if-eqz v5, :cond_0
+-
+-    goto :goto_1
+-
+-    :cond_0
+-    add-int/2addr v3, v0
+-
+-    goto :goto_0
+-
+-    :cond_1
+-    const/4 v4, 0x0
+-
+-    :goto_1
+-    iget-object p1, p0, Lcom/android/systemui/statusbar/notification/collection/PipelineEntry;->mAttachState:Lcom/android/systemui/statusbar/notification/collection/ListAttachState;
+-
+-    iput-object v4, p1, Lcom/android/systemui/statusbar/notification/collection/ListAttachState;->excludingFilter:Lcom/android/systemui/statusbar/notification/collection/listbuilder/pluggable/NotifFilter;
+-
+-    if-eqz v4, :cond_2
+-
+-    sget p1, Lcom/android/systemui/statusbar/notification/shared/NotificationBundleUi;->$r8$clinit:I
+-
+-    sget-object p1, Lcom/android/systemui/flags/RefactorFlagUtils;->INSTANCE:Lcom/android/systemui/flags/RefactorFlagUtils;
+-
+-    const-wide/16 p1, -0x1
+-
+-    iput-wide p1, p0, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->initializationTime:J
+-
+-    :cond_2
+-    if-eqz v4, :cond_3
+-
++    const v4, 3
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p0
++    const v4, 0
++    aput-object v5, v3, v4
++    invoke-static/range {p1 .. p2}, Ljava/lang/Long;->valueOf(J)Ljava/lang/Long;
++    move-result-object v5
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v5, p3
++    const v4, 2
++    aput-object v5, v3, v4
++    const/4 v0, 0x0
++    const-class v1, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;
++    const-string v2, "applyFilters(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;JLjava/util/List;)Z"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Boolean;
++    invoke-virtual {v0}, Ljava/lang/Boolean;->booleanValue()Z
++    move-result v0
+     return v0
+ 
+-    :cond_3
+-    return v2
+ .end method
+ 
+ .method public static callOnCleanup(Ljava/util/List;)V
+@@ -3701,130 +3727,151 @@
+     return-void
+ .end method
+ 
++.method public final unica_di_c218ab91283127d1(Ljava/util/Collection;Ljava/util/List;Ljava/util/List;)V
++    .locals 6
++
++    const-string v0, "ShadeListBuilder.filterNotifs"
++
++    invoke-static {v0}, Landroid/os/Trace;->beginSection(Ljava/lang/String;)V
++
++    sget v0, Lcom/android/systemui/statusbar/notification/collection/UseElapsedRealtimeForCreationTime;->$r8$clinit:I
++
++    iget-object p0, p0, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->mSystemClock:Lcom/android/systemui/util/time/SystemClock;
++
++    invoke-interface {p0}, Lcom/android/systemui/util/time/SystemClock;->uptimeMillis()J
++
++    move-result-wide v0
++
++    invoke-interface {p1}, Ljava/util/Collection;->iterator()Ljava/util/Iterator;
++
++    move-result-object p0
++
++    :goto_0
++    invoke-interface {p0}, Ljava/util/Iterator;->hasNext()Z
++
++    move-result p1
++
++    if-eqz p1, :cond_5
++
++    invoke-interface {p0}, Ljava/util/Iterator;->next()Ljava/lang/Object;
++
++    move-result-object p1
++
++    check-cast p1, Lcom/android/systemui/statusbar/notification/collection/PipelineEntry;
++
++    instance-of v2, p1, Lcom/android/systemui/statusbar/notification/collection/GroupEntry;
++
++    if-eqz v2, :cond_3
++
++    check-cast p1, Lcom/android/systemui/statusbar/notification/collection/GroupEntry;
++
++    iget-object v2, p1, Lcom/android/systemui/statusbar/notification/collection/GroupEntry;->mSummary:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
++
++    invoke-static {v2, v0, v1, p3}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->applyFilters(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;JLjava/util/List;)Z
++
++    move-result v3
++
++    if-eqz v3, :cond_0
++
++    const/4 v3, 0x0
++
++    iput-object v3, p1, Lcom/android/systemui/statusbar/notification/collection/GroupEntry;->mSummary:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
++
++    invoke-static {v2}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->annulAddition(Lcom/android/systemui/statusbar/notification/collection/PipelineEntry;)V
++
++    :cond_0
++    iget-object v2, p1, Lcom/android/systemui/statusbar/notification/collection/GroupEntry;->mChildren:Ljava/util/List;
++
++    check-cast v2, Ljava/util/ArrayList;
++
++    invoke-virtual {v2}, Ljava/util/ArrayList;->size()I
++
++    move-result v3
++
++    add-int/lit8 v3, v3, -0x1
++
++    :goto_1
++    if-ltz v3, :cond_2
++
++    invoke-virtual {v2, v3}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
++
++    move-result-object v4
++
++    check-cast v4, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
++
++    invoke-static {v4, v0, v1, p3}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->applyFilters(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;JLjava/util/List;)Z
++
++    move-result v5
++
++    if-eqz v5, :cond_1
++
++    invoke-virtual {v2, v4}, Ljava/util/ArrayList;->remove(Ljava/lang/Object;)Z
++
++    invoke-static {v4}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->annulAddition(Lcom/android/systemui/statusbar/notification/collection/PipelineEntry;)V
++
++    :cond_1
++    add-int/lit8 v3, v3, -0x1
++
++    goto :goto_1
++
++    :cond_2
++    move-object v2, p2
++
++    check-cast v2, Ljava/util/ArrayList;
++
++    invoke-virtual {v2, p1}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
++
++    goto :goto_0
++
++    :cond_3
++    move-object v2, p1
++
++    check-cast v2, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
++
++    invoke-static {v2, v0, v1, p3}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->applyFilters(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;JLjava/util/List;)Z
++
++    move-result v2
++
++    if-eqz v2, :cond_4
++
++    invoke-static {p1}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->annulAddition(Lcom/android/systemui/statusbar/notification/collection/PipelineEntry;)V
++
++    goto :goto_0
++
++    :cond_4
++    move-object v2, p2
++
++    check-cast v2, Ljava/util/ArrayList;
++
++    invoke-virtual {v2, p1}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
++
++    goto :goto_0
++
++    :cond_5
++    invoke-static {}, Landroid/os/Trace;->endSection()V
++
++    return-void
++.end method
++
+ .method public final filterNotifs(Ljava/util/Collection;Ljava/util/List;Ljava/util/List;)V
+     .locals 6
+-
+-    const-string v0, "ShadeListBuilder.filterNotifs"
+-
+-    invoke-static {v0}, Landroid/os/Trace;->beginSection(Ljava/lang/String;)V
+-
+-    sget v0, Lcom/android/systemui/statusbar/notification/collection/UseElapsedRealtimeForCreationTime;->$r8$clinit:I
+-
+-    iget-object p0, p0, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->mSystemClock:Lcom/android/systemui/util/time/SystemClock;
+-
+-    invoke-interface {p0}, Lcom/android/systemui/util/time/SystemClock;->uptimeMillis()J
+-
+-    move-result-wide v0
+-
+-    invoke-interface {p1}, Ljava/util/Collection;->iterator()Ljava/util/Iterator;
+-
+-    move-result-object p0
+-
+-    :goto_0
+-    invoke-interface {p0}, Ljava/util/Iterator;->hasNext()Z
+-
+-    move-result p1
+-
+-    if-eqz p1, :cond_5
+-
+-    invoke-interface {p0}, Ljava/util/Iterator;->next()Ljava/lang/Object;
+-
+-    move-result-object p1
+-
+-    check-cast p1, Lcom/android/systemui/statusbar/notification/collection/PipelineEntry;
+-
+-    instance-of v2, p1, Lcom/android/systemui/statusbar/notification/collection/GroupEntry;
+-
+-    if-eqz v2, :cond_3
+-
+-    check-cast p1, Lcom/android/systemui/statusbar/notification/collection/GroupEntry;
+-
+-    iget-object v2, p1, Lcom/android/systemui/statusbar/notification/collection/GroupEntry;->mSummary:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
+-
+-    invoke-static {v2, v0, v1, p3}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->applyFilters(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;JLjava/util/List;)Z
+-
+-    move-result v3
+-
+-    if-eqz v3, :cond_0
+-
+-    const/4 v3, 0x0
+-
+-    iput-object v3, p1, Lcom/android/systemui/statusbar/notification/collection/GroupEntry;->mSummary:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
+-
+-    invoke-static {v2}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->annulAddition(Lcom/android/systemui/statusbar/notification/collection/PipelineEntry;)V
+-
+-    :cond_0
+-    iget-object v2, p1, Lcom/android/systemui/statusbar/notification/collection/GroupEntry;->mChildren:Ljava/util/List;
+-
+-    check-cast v2, Ljava/util/ArrayList;
+-
+-    invoke-virtual {v2}, Ljava/util/ArrayList;->size()I
+-
+-    move-result v3
+-
+-    add-int/lit8 v3, v3, -0x1
+-
+-    :goto_1
+-    if-ltz v3, :cond_2
+-
+-    invoke-virtual {v2, v3}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+-
+-    move-result-object v4
+-
+-    check-cast v4, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
+-
+-    invoke-static {v4, v0, v1, p3}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->applyFilters(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;JLjava/util/List;)Z
+-
+-    move-result v5
+-
+-    if-eqz v5, :cond_1
+-
+-    invoke-virtual {v2, v4}, Ljava/util/ArrayList;->remove(Ljava/lang/Object;)Z
+-
+-    invoke-static {v4}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->annulAddition(Lcom/android/systemui/statusbar/notification/collection/PipelineEntry;)V
+-
+-    :cond_1
+-    add-int/lit8 v3, v3, -0x1
+-
+-    goto :goto_1
+-
+-    :cond_2
+-    move-object v2, p2
+-
+-    check-cast v2, Ljava/util/ArrayList;
+-
+-    invoke-virtual {v2, p1}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
+-
+-    goto :goto_0
+-
+-    :cond_3
+-    move-object v2, p1
+-
+-    check-cast v2, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
+-
+-    invoke-static {v2, v0, v1, p3}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->applyFilters(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;JLjava/util/List;)Z
+-
+-    move-result v2
+-
+-    if-eqz v2, :cond_4
+-
+-    invoke-static {p1}, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;->annulAddition(Lcom/android/systemui/statusbar/notification/collection/PipelineEntry;)V
+-
+-    goto :goto_0
+-
+-    :cond_4
+-    move-object v2, p2
+-
+-    check-cast v2, Ljava/util/ArrayList;
+-
+-    invoke-virtual {v2, p1}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
+-
+-    goto :goto_0
+-
+-    :cond_5
+-    invoke-static {}, Landroid/os/Trace;->endSection()V
+-
++    const v4, 3
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v5, p2
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v5, p3
++    const v4, 2
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/collection/ShadeListBuilder;
++    const-string v2, "filterNotifs(Ljava/util/Collection;Ljava/util/List;Ljava/util/List;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
+     return-void
++
+ .end method
+ 
+ .method public final getStabilityManager()Lcom/android/systemui/statusbar/notification/collection/listbuilder/pluggable/NotifStabilityManager;
+--- a/smali_classes3/com/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl.smali
++++ b/smali_classes3/com/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl.smali
+@@ -1479,7 +1479,7 @@
+     return-void
+ .end method
+ 
+-.method public final removeNotification(Ljava/lang/String;Ljava/lang/String;Z)Z
++.method public final unica_di_40da233e0ef1c89e(Ljava/lang/String;Ljava/lang/String;Z)Z
+     .locals 9
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl;->mAvalancheController:Lcom/android/systemui/statusbar/notification/headsup/AvalancheController;
+@@ -1622,7 +1622,33 @@
+     return p0
+ .end method
+ 
+-.method public final setEntryPinned(Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl$HeadsUpEntry;Lcom/android/systemui/statusbar/notification/headsup/PinnedStatus;Ljava/lang/String;)V
++.method public final removeNotification(Ljava/lang/String;Ljava/lang/String;Z)Z
++    .locals 6
++    const v4, 3
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v5, p2
++    const v4, 1
++    aput-object v5, v3, v4
++    invoke-static/range {p3 .. p3}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 2
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl;
++    const-string v2, "removeNotification(Ljava/lang/String;Ljava/lang/String;Z)Z"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Boolean;
++    invoke-virtual {v0}, Ljava/lang/Boolean;->booleanValue()Z
++    move-result v0
++    return v0
++
++.end method
++
++.method public final unica_di_1eada882a315dc98(Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl$HeadsUpEntry;Lcom/android/systemui/statusbar/notification/headsup/PinnedStatus;Ljava/lang/String;)V
+     .locals 9
+ 
+     iget-object v0, p1, Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl$HeadsUpEntry;->mEntry:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
+@@ -1923,6 +1949,27 @@
+     return-void
+ .end method
+ 
++.method public final setEntryPinned(Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl$HeadsUpEntry;Lcom/android/systemui/statusbar/notification/headsup/PinnedStatus;Ljava/lang/String;)V
++    .locals 6
++    const v4, 3
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v5, p2
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v5, p3
++    const v4, 2
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl;
++    const-string v2, "setEntryPinned(Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl$HeadsUpEntry;Lcom/android/systemui/statusbar/notification/headsup/PinnedStatus;Ljava/lang/String;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public final setGutsShown(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;Z)V
+     .locals 1
+ 
+@@ -2112,7 +2159,7 @@
+     return-void
+ .end method
+ 
+-.method public shouldHeadsUpBecomePinned(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;)Z
++.method public unica_di_acb8e39cce7f0488(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;)Z
+     .locals 4
+ 
+     const/4 v0, 0x0
+@@ -2203,6 +2250,25 @@
+     return v0
+ .end method
+ 
++.method public shouldHeadsUpBecomePinned(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;)Z
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl;
++    const-string v2, "shouldHeadsUpBecomePinned(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;)Z"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Boolean;
++    invoke-virtual {v0}, Ljava/lang/Boolean;->booleanValue()Z
++    move-result v0
++    return v0
++
++.end method
++
+ .method public final snooze()V
+     .locals 9
+ 
+--- a/smali_classes3/com/android/systemui/statusbar/notification/row/ActivatableNotificationView.smali
++++ b/smali_classes3/com/android/systemui/statusbar/notification/row/ActivatableNotificationView.smali
+@@ -119,7 +119,7 @@
+ 
+ 
+ # virtual methods
+-.method public final applyGradientBackground(IIZ)V
++.method public final unica_di_d343b5fb9e58cb9b(IIZ)V
+     .locals 13
+ 
+     move-object v0, p0
+@@ -208,6 +208,30 @@
+     return-void
+ .end method
+ 
++.method public final applyGradientBackground(IIZ)V
++    .locals 6
++    const v4, 3
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    invoke-static/range {p2 .. p2}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 1
++    aput-object v5, v3, v4
++    invoke-static/range {p3 .. p3}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 2
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;
++    const-string v2, "applyGradientBackground(IIZ)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public final applyHeadsUpBackground(Z)V
+     .locals 3
+ 
+@@ -529,56 +553,90 @@
+     return p0
+ .end method
+ 
++.method public unica_di_9dce7f213788d721(Landroid/graphics/Canvas;)V
++    .locals 2
++
++    iget-boolean v0, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mDrawingAppearAnimation:Z
++
++    if-eqz v0, :cond_0
++
++    invoke-virtual {p1}, Landroid/graphics/Canvas;->save()I
++
++    const/4 v0, 0x0
++
++    iget v1, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mAppearAnimationTranslation:F
++
++    invoke-virtual {p1, v0, v1}, Landroid/graphics/Canvas;->translate(FF)V
++
++    :cond_0
++    invoke-super {p0, p1}, Landroid/widget/FrameLayout;->dispatchDraw(Landroid/graphics/Canvas;)V
++
++    iget-boolean p0, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mDrawingAppearAnimation:Z
++
++    if-eqz p0, :cond_1
++
++    invoke-virtual {p1}, Landroid/graphics/Canvas;->restore()V
++
++    :cond_1
++    return-void
++.end method
++
+ .method public dispatchDraw(Landroid/graphics/Canvas;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;
++    const-string v2, "dispatchDraw(Landroid/graphics/Canvas;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public final unica_di_783346414ccf04fb(Landroid/view/MotionEvent;)Z
+     .locals 2
+ 
+-    iget-boolean v0, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mDrawingAppearAnimation:Z
+-
+-    if-eqz v0, :cond_0
+-
+-    invoke-virtual {p1}, Landroid/graphics/Canvas;->save()I
+-
+-    const/4 v0, 0x0
+-
+-    iget v1, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mAppearAnimationTranslation:F
+-
+-    invoke-virtual {p1, v0, v1}, Landroid/graphics/Canvas;->translate(FF)V
+-
+-    :cond_0
+-    invoke-super {p0, p1}, Landroid/widget/FrameLayout;->dispatchDraw(Landroid/graphics/Canvas;)V
+-
+-    iget-boolean p0, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mDrawingAppearAnimation:Z
+-
+-    if-eqz p0, :cond_1
+-
+-    invoke-virtual {p1}, Landroid/graphics/Canvas;->restore()V
+-
+-    :cond_1
+-    return-void
++    invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    move-result-object v0
++
++    invoke-virtual {v0}, Ljava/lang/Class;->getSimpleName()Ljava/lang/String;
++
++    move-result-object v0
++
++    invoke-super {p0, p1}, Landroid/widget/FrameLayout;->dispatchTouchEvent(Landroid/view/MotionEvent;)Z
++
++    move-result p0
++
++    sget-object v1, Lcom/android/systemui/shade/TouchLogger;->Companion:Lcom/android/systemui/shade/TouchLogger$Companion;
++
++    invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
++
++    invoke-static {p1, v0, p0}, Lcom/android/systemui/shade/TouchLogger$Companion;->logDispatchTouch(Landroid/view/MotionEvent;Ljava/lang/String;Z)V
++
++    return p0
+ .end method
+ 
+ .method public final dispatchTouchEvent(Landroid/view/MotionEvent;)Z
+-    .locals 2
+-
+-    invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;
++    const-string v2, "dispatchTouchEvent(Landroid/view/MotionEvent;)Z"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
+     move-result-object v0
+-
+-    invoke-virtual {v0}, Ljava/lang/Class;->getSimpleName()Ljava/lang/String;
+-
+-    move-result-object v0
+-
+-    invoke-super {p0, p1}, Landroid/widget/FrameLayout;->dispatchTouchEvent(Landroid/view/MotionEvent;)Z
+-
+-    move-result p0
+-
+-    sget-object v1, Lcom/android/systemui/shade/TouchLogger;->Companion:Lcom/android/systemui/shade/TouchLogger$Companion;
+-
+-    invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+-
+-    invoke-static {p1, v0, p0}, Lcom/android/systemui/shade/TouchLogger$Companion;->logDispatchTouch(Landroid/view/MotionEvent;Ljava/lang/String;Z)V
+-
+-    return p0
++    check-cast v0, Ljava/lang/Boolean;
++    invoke-virtual {v0}, Ljava/lang/Boolean;->booleanValue()Z
++    move-result v0
++    return v0
++
+ .end method
+ 
+ .method public final drawableStateChanged()V
+@@ -667,154 +725,166 @@
+     return p0
+ .end method
+ 
++.method public final unica_di_4abffe9990c85bc1()V
++    .locals 6
++
++    instance-of v0, p0, Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;
++
++    const/4 v1, 0x0
++
++    if-eqz v0, :cond_0
++
++    move-object v0, p0
++
++    check-cast v0, Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;
++
++    goto :goto_0
++
++    :cond_0
++    move-object v0, v1
++
++    :goto_0
++    const/4 v2, 0x0
++
++    if-eqz v0, :cond_1
++
++    iget-object v3, v0, Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;->mEntry:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
++
++    if-eqz v3, :cond_1
++
++    invoke-virtual {v3}, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->isOngoingActivity()Z
++
++    move-result v3
++
++    if-eqz v3, :cond_1
++
++    iget-object v3, v0, Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;->mEntry:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
++
++    invoke-virtual {v3}, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->isPromotedState()Z
++
++    move-result v3
++
++    if-eqz v3, :cond_1
++
++    iget-object v3, v0, Lcom/android/systemui/statusbar/notification/row/ExpandableView;->mViewState:Lcom/android/systemui/statusbar/notification/stack/ExpandableViewState;
++
++    iput-boolean v2, v3, Lcom/android/systemui/statusbar/notification/stack/ExpandableViewState;->hasGradient:Z
++
++    :cond_1
++    invoke-virtual {p0}, Landroid/widget/FrameLayout;->getResources()Landroid/content/res/Resources;
++
++    move-result-object v3
++
++    const v4, 0x7f080e62
++
++    invoke-virtual {v3, v4, v1}, Landroid/content/res/Resources;->getDrawable(ILandroid/content/res/Resources$Theme;)Landroid/graphics/drawable/Drawable;
++
++    move-result-object v1
++
++    check-cast v1, Landroidx/appcompat/graphics/drawable/SeslRecoilDrawable;
++
++    sget-object v3, Lcom/android/systemui/Dependency;->sDependency:Lcom/android/systemui/Dependency;
++
++    const-class v4, Lnoticolorpicker/NotificationColorPicker;
++
++    invoke-virtual {v3, v4}, Lcom/android/systemui/Dependency;->getDependencyInner(Ljava/lang/Object;)Ljava/lang/Object;
++
++    move-result-object v3
++
++    check-cast v3, Lnoticolorpicker/NotificationColorPicker;
++
++    invoke-virtual {v3}, Lnoticolorpicker/NotificationColorPicker;->getNotificationBgColor()I
++
++    move-result v4
++
++    if-eqz v0, :cond_2
++
++    iget-object v5, v0, Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;->mEntry:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
++
++    if-eqz v5, :cond_2
++
++    iget-object v5, v5, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->mSbn:Landroid/service/notification/StatusBarNotification;
++
++    if-eqz v5, :cond_2
++
++    invoke-static {v0}, Lnoticolorpicker/NotificationColorPicker;->isNeedToUpdated(Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;)Z
++
++    move-result v5
++
++    if-nez v5, :cond_2
++
++    invoke-virtual {v3}, Lnoticolorpicker/NotificationColorPicker;->getNotificationDefaultBgColor()I
++
++    move-result v4
++
++    :cond_2
++    const v3, 0x7f06054d
++
++    if-eqz v0, :cond_3
++
++    invoke-static {v0}, Lnoticolorpicker/NotificationColorPicker;->isNeedToUpdated(Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_3
++
++    iget-boolean v0, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mDimmed:Z
++
++    if-eqz v0, :cond_3
++
++    iget-object v0, p0, Landroid/widget/FrameLayout;->mContext:Landroid/content/Context;
++
++    invoke-virtual {v0, v3}, Landroid/content/Context;->getColor(I)I
++
++    move-result v4
++
++    :cond_3
++    instance-of v0, p0, Lcom/android/systemui/statusbar/NotificationShelf;
++
++    if-eqz v0, :cond_4
++
++    iget-boolean v0, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mDimmed:Z
++
++    if-eqz v0, :cond_4
++
++    iget-object v0, p0, Landroid/widget/FrameLayout;->mContext:Landroid/content/Context;
++
++    invoke-virtual {v0, v3}, Landroid/content/Context;->getColor(I)I
++
++    move-result v4
++
++    :cond_4
++    new-instance v0, Landroid/graphics/drawable/GradientDrawable;
++
++    sget-object v3, Landroid/graphics/drawable/GradientDrawable$Orientation;->LEFT_RIGHT:Landroid/graphics/drawable/GradientDrawable$Orientation;
++
++    filled-new-array {v4, v4}, [I
++
++    move-result-object v4
++
++    invoke-direct {v0, v3, v4}, Landroid/graphics/drawable/GradientDrawable;-><init>(Landroid/graphics/drawable/GradientDrawable$Orientation;[I)V
++
++    invoke-virtual {v1, v2, v0}, Landroid/graphics/drawable/LayerDrawable;->setDrawable(ILandroid/graphics/drawable/Drawable;)V
++
++    iget-object v0, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mBackgroundNormal:Lcom/android/systemui/statusbar/notification/row/NotificationBackgroundView;
++
++    invoke-virtual {v0, v1}, Lcom/android/systemui/statusbar/notification/row/NotificationBackgroundView;->setCustomBackground(Landroidx/appcompat/graphics/drawable/SeslRecoilDrawable;)V
++
++    invoke-virtual {p0}, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->updateCurrentBackgroundDimmedAlpha()V
++
++    return-void
++.end method
++
+ .method public final initBackground()V
+     .locals 6
+-
+-    instance-of v0, p0, Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;
+-
+-    const/4 v1, 0x0
+-
+-    if-eqz v0, :cond_0
+-
+-    move-object v0, p0
+-
+-    check-cast v0, Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;
+-
+-    goto :goto_0
+-
+-    :cond_0
+-    move-object v0, v1
+-
+-    :goto_0
+-    const/4 v2, 0x0
+-
+-    if-eqz v0, :cond_1
+-
+-    iget-object v3, v0, Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;->mEntry:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
+-
+-    if-eqz v3, :cond_1
+-
+-    invoke-virtual {v3}, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->isOngoingActivity()Z
+-
+-    move-result v3
+-
+-    if-eqz v3, :cond_1
+-
+-    iget-object v3, v0, Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;->mEntry:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
+-
+-    invoke-virtual {v3}, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->isPromotedState()Z
+-
+-    move-result v3
+-
+-    if-eqz v3, :cond_1
+-
+-    iget-object v3, v0, Lcom/android/systemui/statusbar/notification/row/ExpandableView;->mViewState:Lcom/android/systemui/statusbar/notification/stack/ExpandableViewState;
+-
+-    iput-boolean v2, v3, Lcom/android/systemui/statusbar/notification/stack/ExpandableViewState;->hasGradient:Z
+-
+-    :cond_1
+-    invoke-virtual {p0}, Landroid/widget/FrameLayout;->getResources()Landroid/content/res/Resources;
+-
+-    move-result-object v3
+-
+-    const v4, 0x7f080e62
+-
+-    invoke-virtual {v3, v4, v1}, Landroid/content/res/Resources;->getDrawable(ILandroid/content/res/Resources$Theme;)Landroid/graphics/drawable/Drawable;
+-
+-    move-result-object v1
+-
+-    check-cast v1, Landroidx/appcompat/graphics/drawable/SeslRecoilDrawable;
+-
+-    sget-object v3, Lcom/android/systemui/Dependency;->sDependency:Lcom/android/systemui/Dependency;
+-
+-    const-class v4, Lnoticolorpicker/NotificationColorPicker;
+-
+-    invoke-virtual {v3, v4}, Lcom/android/systemui/Dependency;->getDependencyInner(Ljava/lang/Object;)Ljava/lang/Object;
+-
+-    move-result-object v3
+-
+-    check-cast v3, Lnoticolorpicker/NotificationColorPicker;
+-
+-    invoke-virtual {v3}, Lnoticolorpicker/NotificationColorPicker;->getNotificationBgColor()I
+-
+-    move-result v4
+-
+-    if-eqz v0, :cond_2
+-
+-    iget-object v5, v0, Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;->mEntry:Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;
+-
+-    if-eqz v5, :cond_2
+-
+-    iget-object v5, v5, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->mSbn:Landroid/service/notification/StatusBarNotification;
+-
+-    if-eqz v5, :cond_2
+-
+-    invoke-static {v0}, Lnoticolorpicker/NotificationColorPicker;->isNeedToUpdated(Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;)Z
+-
+-    move-result v5
+-
+-    if-nez v5, :cond_2
+-
+-    invoke-virtual {v3}, Lnoticolorpicker/NotificationColorPicker;->getNotificationDefaultBgColor()I
+-
+-    move-result v4
+-
+-    :cond_2
+-    const v3, 0x7f06054d
+-
+-    if-eqz v0, :cond_3
+-
+-    invoke-static {v0}, Lnoticolorpicker/NotificationColorPicker;->isNeedToUpdated(Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;)Z
+-
+-    move-result v0
+-
+-    if-eqz v0, :cond_3
+-
+-    iget-boolean v0, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mDimmed:Z
+-
+-    if-eqz v0, :cond_3
+-
+-    iget-object v0, p0, Landroid/widget/FrameLayout;->mContext:Landroid/content/Context;
+-
+-    invoke-virtual {v0, v3}, Landroid/content/Context;->getColor(I)I
+-
+-    move-result v4
+-
+-    :cond_3
+-    instance-of v0, p0, Lcom/android/systemui/statusbar/NotificationShelf;
+-
+-    if-eqz v0, :cond_4
+-
+-    iget-boolean v0, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mDimmed:Z
+-
+-    if-eqz v0, :cond_4
+-
+-    iget-object v0, p0, Landroid/widget/FrameLayout;->mContext:Landroid/content/Context;
+-
+-    invoke-virtual {v0, v3}, Landroid/content/Context;->getColor(I)I
+-
+-    move-result v4
+-
+-    :cond_4
+-    new-instance v0, Landroid/graphics/drawable/GradientDrawable;
+-
+-    sget-object v3, Landroid/graphics/drawable/GradientDrawable$Orientation;->LEFT_RIGHT:Landroid/graphics/drawable/GradientDrawable$Orientation;
+-
+-    filled-new-array {v4, v4}, [I
+-
+-    move-result-object v4
+-
+-    invoke-direct {v0, v3, v4}, Landroid/graphics/drawable/GradientDrawable;-><init>(Landroid/graphics/drawable/GradientDrawable$Orientation;[I)V
+-
+-    invoke-virtual {v1, v2, v0}, Landroid/graphics/drawable/LayerDrawable;->setDrawable(ILandroid/graphics/drawable/Drawable;)V
+-
+-    iget-object v0, p0, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->mBackgroundNormal:Lcom/android/systemui/statusbar/notification/row/NotificationBackgroundView;
+-
+-    invoke-virtual {v0, v1}, Lcom/android/systemui/statusbar/notification/row/NotificationBackgroundView;->setCustomBackground(Landroidx/appcompat/graphics/drawable/SeslRecoilDrawable;)V
+-
+-    invoke-virtual {p0}, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->updateCurrentBackgroundDimmedAlpha()V
+-
+-    return-void
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;
++    const-string v2, "initBackground()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public onAppearAnimationFinished(ZZ)V
+@@ -1826,7 +1896,7 @@
+     return-void
+ .end method
+ 
+-.method public final updateBackground()V
++.method public final unica_di_637d7bfc1d384d9e()V
+     .locals 2
+ 
+     invoke-virtual {p0}, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;->hideBackground()Z
+@@ -1871,6 +1941,18 @@
+     invoke-virtual {p0, v1}, Landroid/view/View;->setVisibility(I)V
+ 
+     return-void
++.end method
++
++.method public final updateBackground()V
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/ActivatableNotificationView;
++    const-string v2, "updateBackground()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public updateBackgroundColors()V
+--- a/smali_classes3/com/android/systemui/statusbar/notification/row/NotificationBackgroundView.smali
++++ b/smali_classes3/com/android/systemui/statusbar/notification/row/NotificationBackgroundView.smali
+@@ -552,7 +552,7 @@
+     return-void
+ .end method
+ 
+-.method public final setCustomBackground(Landroidx/appcompat/graphics/drawable/SeslRecoilDrawable;)V
++.method public final unica_di_b020e7ed31e106eb(Landroidx/appcompat/graphics/drawable/SeslRecoilDrawable;)V
+     .locals 2
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/notification/row/NotificationBackgroundView;->mBackground:Landroidx/appcompat/graphics/drawable/SeslRecoilDrawable;
+@@ -608,6 +608,21 @@
+     invoke-virtual {p0}, Landroid/view/View;->invalidate()V
+ 
+     return-void
++.end method
++
++.method public final setCustomBackground(Landroidx/appcompat/graphics/drawable/SeslRecoilDrawable;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationBackgroundView;
++    const-string v2, "setCustomBackground(Landroidx/appcompat/graphics/drawable/SeslRecoilDrawable;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public toDumpString()Ljava/lang/String;
+--- a/smali_classes3/com/android/systemui/statusbar/notification/row/NotificationContentView.smali
++++ b/smali_classes3/com/android/systemui/statusbar/notification/row/NotificationContentView.smali
+@@ -1505,7 +1505,7 @@
+     return p0
+ .end method
+ 
+-.method public final dispatchDraw(Landroid/graphics/Canvas;)V
++.method public final unica_di_9dce7f213788d721(Landroid/graphics/Canvas;)V
+     .locals 10
+ 
+     :try_start_0
+@@ -1601,7 +1601,22 @@
+     return-void
+ .end method
+ 
+-.method public final dispatchTouchEvent(Landroid/view/MotionEvent;)Z
++.method public final dispatchDraw(Landroid/graphics/Canvas;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;
++    const-string v2, "dispatchDraw(Landroid/graphics/Canvas;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public final unica_di_783346414ccf04fb(Landroid/view/MotionEvent;)Z
+     .locals 4
+ 
+     invoke-virtual {p1}, Landroid/view/MotionEvent;->getY()F
+@@ -1676,6 +1691,25 @@
+     move-result p0
+ 
+     return p0
++.end method
++
++.method public final dispatchTouchEvent(Landroid/view/MotionEvent;)Z
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;
++    const-string v2, "dispatchTouchEvent(Landroid/view/MotionEvent;)Z"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Boolean;
++    invoke-virtual {v0}, Ljava/lang/Boolean;->booleanValue()Z
++    move-result v0
++    return v0
++
+ .end method
+ 
+ .method public final fireExpandedVisibleListenerIfVisible()V
+@@ -2536,7 +2570,7 @@
+     return v0
+ .end method
+ 
+-.method public final getMinHeight(Z)I
++.method public final unica_di_a508574560bc747e(Z)I
+     .locals 1
+ 
+     iget-object p1, p0, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;->mContainingNotification:Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;
+@@ -2601,6 +2635,26 @@
+     iget p0, p0, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;->mMinContractedHeight:I
+ 
+     return p0
++.end method
++
++.method public final getMinHeight(Z)I
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;
++    const-string v2, "getMinHeight(Z)I"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Integer;
++    invoke-virtual {v0}, Ljava/lang/Integer;->intValue()I
++    move-result v0
++    return v0
++
+ .end method
+ 
+ .method public final getSingleLineView()Lcom/android/systemui/statusbar/notification/row/HybridNotificationView;
+@@ -3281,7 +3335,7 @@
+     return-void
+ .end method
+ 
+-.method public final onMeasure(II)V
++.method public final unica_di_c22e6c82be93e9fa(II)V
+     .locals 14
+ 
+     invoke-static/range {p2 .. p2}, Landroid/view/View$MeasureSpec;->getMode(I)I
+@@ -3867,6 +3921,26 @@
+     return-void
+ .end method
+ 
++.method public final onMeasure(II)V
++    .locals 6
++    const v4, 2
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    invoke-static/range {p2 .. p2}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;
++    const-string v2, "onMeasure(II)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public final onViewAdded(Landroid/view/View;)V
+     .locals 1
+ 
+@@ -4081,7 +4155,7 @@
+     return-void
+ .end method
+ 
+-.method public final selectLayout(ZZ)V
++.method public final unica_di_7dc0426da6536070(ZZ)V
+     .locals 8
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;->mContractedChild:Landroid/view/View;
+@@ -4551,6 +4625,26 @@
+     return-void
+ .end method
+ 
++.method public final selectLayout(ZZ)V
++    .locals 6
++    const v4, 2
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    invoke-static/range {p2 .. p2}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;
++    const-string v2, "selectLayout(ZZ)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public final setAlpha(F)V
+     .locals 1
+ 
+@@ -4596,7 +4690,7 @@
+     return-void
+ .end method
+ 
+-.method public final setContractedChild(Landroid/view/View;)V
++.method public final unica_di_7d1a72e2dad2e20e(Landroid/view/View;)V
+     .locals 2
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;->mContractedChild:Landroid/view/View;
+@@ -4663,6 +4757,21 @@
+     return-void
+ .end method
+ 
++.method public final setContractedChild(Landroid/view/View;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;
++    const-string v2, "setContractedChild(Landroid/view/View;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public setContractedWrapper(Lcom/android/systemui/statusbar/notification/row/wrapper/NotificationViewWrapper;)V
+     .locals 0
+ 
+@@ -4671,7 +4780,7 @@
+     return-void
+ .end method
+ 
+-.method public final setExpandedChild(Landroid/view/View;)V
++.method public final unica_di_5b5087bd3169c58b(Landroid/view/View;)V
+     .locals 3
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;->mExpandedChild:Landroid/view/View;
+@@ -4839,6 +4948,21 @@
+     return-void
+ .end method
+ 
++.method public final setExpandedChild(Landroid/view/View;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;
++    const-string v2, "setExpandedChild(Landroid/view/View;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public setExpandedWrapper(Lcom/android/systemui/statusbar/notification/row/wrapper/NotificationViewWrapper;)V
+     .locals 0
+ 
+@@ -4847,7 +4971,7 @@
+     return-void
+ .end method
+ 
+-.method public final setHeadsUpChild(Landroid/view/View;)V
++.method public final unica_di_1c7d67e1a54a1657(Landroid/view/View;)V
+     .locals 4
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;->mHeadsUpChild:Landroid/view/View;
+@@ -4996,6 +5120,21 @@
+     return-void
+ .end method
+ 
++.method public final setHeadsUpChild(Landroid/view/View;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;
++    const-string v2, "setHeadsUpChild(Landroid/view/View;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public setHeadsUpWrapper(Lcom/android/systemui/statusbar/notification/row/wrapper/NotificationViewWrapper;)V
+     .locals 0
+ 
+@@ -5501,16 +5640,32 @@
+     return-void
+ .end method
+ 
++.method public final unica_di_5bc348b8c8787efc(Z)V
++    .locals 1
++
++    const/4 v0, 0x0
++
++    invoke-virtual {p0, p1, v0}, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;->updateExpandButtonsDuringLayout(ZZ)V
++
++    invoke-virtual {p0}, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;->updateSystemActionsMargin()V
++
++    return-void
++.end method
++
+ .method public final updateExpandButtons(Z)V
+-    .locals 1
+-
+-    const/4 v0, 0x0
+-
+-    invoke-virtual {p0, p1, v0}, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;->updateExpandButtonsDuringLayout(ZZ)V
+-
+-    invoke-virtual {p0}, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;->updateSystemActionsMargin()V
+-
+-    return-void
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationContentView;
++    const-string v2, "updateExpandButtons(Z)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public final updateExpandButtonsDuringLayout(ZZ)V
+--- a/smali_classes3/com/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$AsyncInflationTask.smali
++++ b/smali_classes3/com/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$AsyncInflationTask.smali
+@@ -693,7 +693,7 @@
+     return-void
+ .end method
+ 
+-.method public final onAsyncInflationFinished()V
++.method public final unica_di_1da24f5a93d8e4dd()V
+     .locals 21
+ 
+     move-object/from16 v0, p0
+@@ -1577,6 +1577,18 @@
+     return-void
+ .end method
+ 
++.method public final onAsyncInflationFinished()V
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$AsyncInflationTask;
++    const-string v2, "onAsyncInflationFinished()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public final onCancelled(Ljava/lang/Object;)V
+     .locals 0
+ 
+--- a/smali_classes3/com/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$Companion.smali
++++ b/smali_classes3/com/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$Companion.smali
+@@ -20,7 +20,7 @@
+     return-void
+ .end method
+ 
+-.method public static final access$apply(Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$Companion;Ljava/util/concurrent/Executor;ZZLcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$InflationProgress;ILcom/android/systemui/statusbar/notification/row/NotifRemoteViewCache;Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;Landroid/widget/RemoteViews$InteractionHandler;Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$AsyncInflationTask;Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderLogger;Lcom/android/systemui/facewidget/plugin/FaceWidgetNotificationControllerWrapper;)Landroid/os/CancellationSignal;
++.method public static final unica_di_d4c690ddee1d341a(Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$Companion;Ljava/util/concurrent/Executor;ZZLcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$InflationProgress;ILcom/android/systemui/statusbar/notification/row/NotifRemoteViewCache;Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;Landroid/widget/RemoteViews$InteractionHandler;Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$AsyncInflationTask;Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderLogger;Lcom/android/systemui/facewidget/plugin/FaceWidgetNotificationControllerWrapper;)Landroid/os/CancellationSignal;
+     .locals 23
+ 
+     move-object/from16 v0, p0
+@@ -474,6 +474,62 @@
+     invoke-virtual {v0, v1}, Landroid/os/CancellationSignal;->setOnCancelListener(Landroid/os/CancellationSignal$OnCancelListener;)V
+ 
+     return-object v0
++.end method
++
++.method public static final access$apply(Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$Companion;Ljava/util/concurrent/Executor;ZZLcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$InflationProgress;ILcom/android/systemui/statusbar/notification/row/NotifRemoteViewCache;Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;Landroid/widget/RemoteViews$InteractionHandler;Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$AsyncInflationTask;Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderLogger;Lcom/android/systemui/facewidget/plugin/FaceWidgetNotificationControllerWrapper;)Landroid/os/CancellationSignal;
++    .locals 6
++    const v4, 13
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p0
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v5, p1
++    const v4, 1
++    aput-object v5, v3, v4
++    invoke-static/range {p2 .. p2}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 2
++    aput-object v5, v3, v4
++    invoke-static/range {p3 .. p3}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 3
++    aput-object v5, v3, v4
++    move-object/from16 v5, p4
++    const v4, 4
++    aput-object v5, v3, v4
++    invoke-static/range {p5 .. p5}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 5
++    aput-object v5, v3, v4
++    move-object/from16 v5, p6
++    const v4, 6
++    aput-object v5, v3, v4
++    move-object/from16 v5, p7
++    const v4, 7
++    aput-object v5, v3, v4
++    move-object/from16 v5, p8
++    const v4, 8
++    aput-object v5, v3, v4
++    move-object/from16 v5, p9
++    const v4, 9
++    aput-object v5, v3, v4
++    move-object/from16 v5, p10
++    const v4, 10
++    aput-object v5, v3, v4
++    move-object/from16 v5, p11
++    const v4, 11
++    aput-object v5, v3, v4
++    move-object/from16 v5, p12
++    const v4, 12
++    aput-object v5, v3, v4
++    const/4 v0, 0x0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$Companion;
++    const-string v2, "access$apply(Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$Companion;Ljava/util/concurrent/Executor;ZZLcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$InflationProgress;ILcom/android/systemui/statusbar/notification/row/NotifRemoteViewCache;Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;Landroid/widget/RemoteViews$InteractionHandler;Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$AsyncInflationTask;Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderLogger;Lcom/android/systemui/facewidget/plugin/FaceWidgetNotificationControllerWrapper;)Landroid/os/CancellationSignal;"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Landroid/os/CancellationSignal;
++    return-object v0
++
+ .end method
+ 
+ .method public static final access$beginInflationAsync(Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$Companion;ILcom/android/systemui/statusbar/notification/collection/NotificationEntry;Landroid/app/Notification$Builder;Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinder$BindParams;Landroid/content/Context;Landroid/content/Context;Lcom/android/systemui/statusbar/notification/row/ExpandableNotificationRow;Lcom/android/systemui/statusbar/notification/row/NotifLayoutInflaterFactory$Provider;Lcom/android/systemui/statusbar/notification/row/HeadsUpStyleProvider;Lcom/android/systemui/statusbar/notification/ConversationNotificationProcessor;Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderLogger;)Lcom/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$InflationProgress;
+--- a/smali_classes3/com/android/systemui/statusbar/notification/row/wrapper/NotificationViewWrapper.smali
++++ b/smali_classes3/com/android/systemui/statusbar/notification/row/wrapper/NotificationViewWrapper.smali
+@@ -653,7 +653,7 @@
+     return-object p0
+ .end method
+ 
+-.method public final needsInversion(Landroid/view/View;I)Z
++.method public final unica_di_5eb18ad69c15778c(Landroid/view/View;I)Z
+     .locals 5
+ 
+     if-nez p1, :cond_0
+@@ -779,6 +779,29 @@
+     .end array-data
+ .end method
+ 
++.method public final needsInversion(Landroid/view/View;I)Z
++    .locals 6
++    const v4, 2
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    invoke-static/range {p2 .. p2}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/notification/row/wrapper/NotificationViewWrapper;
++    const-string v2, "needsInversion(Landroid/view/View;I)Z"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Boolean;
++    invoke-virtual {v0}, Ljava/lang/Boolean;->booleanValue()Z
++    move-result v0
++    return v0
++
++.end method
++
+ .method public onContentShown(Z)V
+     .locals 0
+ 
+--- a/smali_classes3/com/android/systemui/statusbar/phone/PhoneStatusBarViewController.smali
++++ b/smali_classes3/com/android/systemui/statusbar/phone/PhoneStatusBarViewController.smali
+@@ -668,7 +668,7 @@
+     return-void
+ .end method
+ 
+-.method public final onViewAttached()V
++.method public final unica_di_c4d8f84f88e0e77f()V
+     .locals 11
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/phone/PhoneStatusBarViewController;->samsungExtLazy:Ldagger/Lazy;
+@@ -1181,7 +1181,19 @@
+     return-void
+ .end method
+ 
+-.method public onViewDetached()V
++.method public final onViewAttached()V
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/PhoneStatusBarViewController;
++    const-string v2, "onViewAttached()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public unica_di_60e740fbf743a7ae()V
+     .locals 5
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/phone/PhoneStatusBarViewController;->samsungExtLazy:Ldagger/Lazy;
+@@ -1332,6 +1344,18 @@
+     return-void
+ .end method
+ 
++.method public onViewDetached()V
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/PhoneStatusBarViewController;
++    const-string v2, "onViewDetached()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public final sendTouchToView(Landroid/view/MotionEvent;)Z
+     .locals 0
+ 
+--- a/smali_classes3/com/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment.smali
++++ b/smali_classes3/com/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment.smali
+@@ -461,7 +461,7 @@
+     return-void
+ .end method
+ 
+-.method public final animateShow(Landroid/view/View;Z)V
++.method public final unica_di_17b61015124d0968(Landroid/view/View;Z)V
+     .locals 4
+ 
+     sget v0, Lcom/android/systemui/statusbar/core/StatusBarRootModernization;->$r8$clinit:I
+@@ -615,6 +615,25 @@
+     invoke-virtual {p1, v0}, Landroid/view/View;->setAlpha(F)V
+ 
+     return-void
++.end method
++
++.method public final animateShow(Landroid/view/View;Z)V
++    .locals 6
++    const v4, 2
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    invoke-static/range {p2 .. p2}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment;
++    const-string v2, "animateShow(Landroid/view/View;Z)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public final calculateInternalModel(Lcom/android/systemui/statusbar/phone/fragment/StatusBarVisibilityModel;)Lcom/android/systemui/statusbar/phone/fragment/StatusBarVisibilityModel;
+@@ -1641,16 +1660,32 @@
+     return-void
+ .end method
+ 
++.method public final unica_di_a5892149b4c25548(Z)V
++    .locals 0
++
++    sget p1, Lcom/android/systemui/statusbar/core/StatusBarRootModernization;->$r8$clinit:I
++
++    const/4 p1, 0x0
++
++    invoke-virtual {p0, p1}, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment;->updateStatusBarVisibilities(Z)V
++
++    return-void
++.end method
++
+ .method public final onDozingChanged(Z)V
+-    .locals 0
+-
+-    sget p1, Lcom/android/systemui/statusbar/core/StatusBarRootModernization;->$r8$clinit:I
+-
+-    const/4 p1, 0x0
+-
+-    invoke-virtual {p0, p1}, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment;->updateStatusBarVisibilities(Z)V
+-
+-    return-void
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment;
++    const-string v2, "onDozingChanged(Z)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public final onPause()V
+@@ -1957,20 +1992,36 @@
+     return-void
+ .end method
+ 
++.method public final unica_di_9c08127664a791b9(I)V
++    .locals 0
++
++    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment;->mSamsungExtLazy:Ldagger/Lazy;
++
++    invoke-interface {p0}, Ldagger/Lazy;->get()Ljava/lang/Object;
++
++    move-result-object p0
++
++    check-cast p0, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragmentExt;
++
++    invoke-virtual {p0}, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragmentExt;->postUpdateStatusBarVisibility()V
++
++    return-void
++.end method
++
+ .method public final onStateChanged(I)V
+-    .locals 0
+-
+-    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment;->mSamsungExtLazy:Ldagger/Lazy;
+-
+-    invoke-interface {p0}, Ldagger/Lazy;->get()Ljava/lang/Object;
+-
+-    move-result-object p0
+-
+-    check-cast p0, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragmentExt;
+-
+-    invoke-virtual {p0}, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragmentExt;->postUpdateStatusBarVisibility()V
+-
+-    return-void
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment;
++    const-string v2, "onStateChanged(I)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public final onSystemEventAnimationBegin(ZZ)Lcom/android/systemui/statusbar/events/SpringAnimatorSet;
+--- a/smali_classes3/com/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController.smali
++++ b/smali_classes3/com/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController.smali
+@@ -705,31 +705,50 @@
+     return-void
+ .end method
+ 
++.method public final unica_di_fb79b28493847f0f(Landroid/view/View;Z)V
++    .locals 2
++
++    iget-object v0, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->notificationIconAreaController:Lcom/android/systemui/statusbar/phone/NotificationIconAreaController;
++
++    const/4 v1, 0x0
++
++    invoke-interface {v0, v1}, Lcom/android/systemui/statusbar/phone/NotificationIconAreaController;->setAnimationsEnabled(Z)V
++
++    new-instance v0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController$animateChipShow$1;
++
++    const/4 v1, 0x0
++
++    invoke-direct {v0, p0, p1, p2, v1}, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController$animateChipShow$1;-><init>(Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;Landroid/view/View;ZLkotlin/coroutines/Continuation;)V
++
++    const/4 p1, 0x3
++
++    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->coroutineScope:Lkotlinx/coroutines/internal/ContextScope;
++
++    invoke-static {p0, v1, v1, v0, p1}, Lkotlinx/coroutines/BuildersKt;->launch$default(Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;I)Lkotlinx/coroutines/StandaloneCoroutine;
++
++    return-void
++.end method
++
+ .method public final animateChipShow(Landroid/view/View;Z)V
+-    .locals 2
+-
+-    iget-object v0, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->notificationIconAreaController:Lcom/android/systemui/statusbar/phone/NotificationIconAreaController;
+-
+-    const/4 v1, 0x0
+-
+-    invoke-interface {v0, v1}, Lcom/android/systemui/statusbar/phone/NotificationIconAreaController;->setAnimationsEnabled(Z)V
+-
+-    new-instance v0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController$animateChipShow$1;
+-
+-    const/4 v1, 0x0
+-
+-    invoke-direct {v0, p0, p1, p2, v1}, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController$animateChipShow$1;-><init>(Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;Landroid/view/View;ZLkotlin/coroutines/Continuation;)V
+-
+-    const/4 p1, 0x3
+-
+-    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->coroutineScope:Lkotlinx/coroutines/internal/ContextScope;
+-
+-    invoke-static {p0, v1, v1, v0, p1}, Lkotlinx/coroutines/BuildersKt;->launch$default(Lkotlinx/coroutines/CoroutineScope;Lkotlin/coroutines/CoroutineContext;Lkotlinx/coroutines/CoroutineStart;Lkotlin/jvm/functions/Function2;I)Lkotlinx/coroutines/StandaloneCoroutine;
+-
+-    return-void
+-.end method
+-
+-.method public final clockViewNudgeAnimation()V
++    .locals 6
++    const v4, 2
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    invoke-static/range {p2 .. p2}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;
++    const-string v2, "animateChipShow(Landroid/view/View;Z)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public final unica_di_239f4b159a0b69aa()V
+     .locals 5
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->isLeftClockPosition:Lkotlin/jvm/functions/Function0;
+@@ -839,6 +858,18 @@
+     return-void
+ .end method
+ 
++.method public final clockViewNudgeAnimation()V
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;
++    const-string v2, "clockViewNudgeAnimation()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public final hideView(Landroid/view/View;I)V
+     .locals 4
+ 
+@@ -873,52 +904,67 @@
+     return-void
+ .end method
+ 
++.method public final unica_di_4f867a03d7a42899(Landroid/view/View;)V
++    .locals 3
++
++    invoke-static {p1}, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->viewInfo(Landroid/view/View;)Ljava/lang/String;
++
++    move-result-object v0
++
++    new-instance v1, Ljava/lang/StringBuilder;
++
++    const-string/jumbo v2, "showView() id:"
++
++    invoke-direct {v1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
++
++    invoke-virtual {v1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++
++    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++
++    move-result-object v0
++
++    const-string/jumbo v1, "{ChipAnimationController}"
++
++    invoke-static {v1, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
++
++    const/high16 v0, 0x3f800000    # 1.0f
++
++    invoke-virtual {p1, v0}, Landroid/view/View;->setAlpha(F)V
++
++    invoke-virtual {p1, v0}, Landroid/view/View;->setScaleX(F)V
++
++    invoke-virtual {p1, v0}, Landroid/view/View;->setScaleY(F)V
++
++    const/4 v0, 0x0
++
++    invoke-virtual {p1, v0}, Landroid/view/View;->setVisibility(I)V
++
++    iget-object p1, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->notificationIconAreaController:Lcom/android/systemui/statusbar/phone/NotificationIconAreaController;
++
++    const/4 v0, 0x1
++
++    invoke-interface {p1, v0}, Lcom/android/systemui/statusbar/phone/NotificationIconAreaController;->setAnimationsEnabled(Z)V
++
++    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->ongoingActivityController:Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
++
++    invoke-virtual {p0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->startMarqueeAnimation()V
++
++    return-void
++.end method
++
+ .method public final showView(Landroid/view/View;)V
+-    .locals 3
+-
+-    invoke-static {p1}, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->viewInfo(Landroid/view/View;)Ljava/lang/String;
+-
+-    move-result-object v0
+-
+-    new-instance v1, Ljava/lang/StringBuilder;
+-
+-    const-string/jumbo v2, "showView() id:"
+-
+-    invoke-direct {v1, v2}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+-
+-    invoke-virtual {v1, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    move-result-object v0
+-
+-    const-string/jumbo v1, "{ChipAnimationController}"
+-
+-    invoke-static {v1, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    const/high16 v0, 0x3f800000    # 1.0f
+-
+-    invoke-virtual {p1, v0}, Landroid/view/View;->setAlpha(F)V
+-
+-    invoke-virtual {p1, v0}, Landroid/view/View;->setScaleX(F)V
+-
+-    invoke-virtual {p1, v0}, Landroid/view/View;->setScaleY(F)V
+-
+-    const/4 v0, 0x0
+-
+-    invoke-virtual {p1, v0}, Landroid/view/View;->setVisibility(I)V
+-
+-    iget-object p1, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->notificationIconAreaController:Lcom/android/systemui/statusbar/phone/NotificationIconAreaController;
+-
+-    const/4 v0, 0x1
+-
+-    invoke-interface {p1, v0}, Lcom/android/systemui/statusbar/phone/NotificationIconAreaController;->setAnimationsEnabled(Z)V
+-
+-    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;->ongoingActivityController:Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
+-
+-    invoke-virtual {p0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->startMarqueeAnimation()V
+-
+-    return-void
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/ChipAnimationController;
++    const-string v2, "showView(Landroid/view/View;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public final startChipTransitionAnimation(ZLandroid/view/View;ILandroid/view/animation/Interpolator;Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingCardController$collapseAnimation$2;)V
+--- a/smali_classes3/com/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController.smali
++++ b/smali_classes3/com/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController.smali
+@@ -411,7 +411,7 @@
+     invoke-direct {p1, p0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController$dismissMediaRunnable$1;-><init>(Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;)V
+ 
+     iput-object p1, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->dismissMediaRunnable:Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController$dismissMediaRunnable$1;
+-
++    invoke-static/range {p0 .. p0}, Lio/mesalabs/unica/dynamicisland/ConstructorCalls;->unica_di_d59cb24825e36665(Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;)V
+     return-void
+ .end method
+ 
+@@ -1153,22 +1153,34 @@
+ 
+ 
+ # virtual methods
++.method public final unica_di_20e3672616e04b44()V
++    .locals 2
++
++    const-string/jumbo v0, "{OngoingActivityController}"
++
++    const-string v1, "add()"
++
++    invoke-static {v0, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
++
++    const/4 v0, 0x1
++
++    invoke-virtual {p0, v0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->updateParentViewVisibility(Z)V
++
++    invoke-virtual {p0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->updateAdapter()V
++
++    return-void
++.end method
++
+ .method public final add$1()V
+-    .locals 2
+-
+-    const-string/jumbo v0, "{OngoingActivityController}"
+-
+-    const-string v1, "add()"
+-
+-    invoke-static {v0, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    const/4 v0, 0x1
+-
+-    invoke-virtual {p0, v0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->updateParentViewVisibility(Z)V
+-
+-    invoke-virtual {p0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->updateAdapter()V
+-
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
++    const-string v2, "add$1()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
+     return-void
++
+ .end method
+ 
+ .method public final checkMediaChipViewState(Ljava/lang/CharSequence;Ljava/lang/String;I)Z
+@@ -1979,7 +1991,7 @@
+     return-void
+ .end method
+ 
+-.method public final killGhost()V
++.method public final unica_di_00b118e0ba6af3b0()V
+     .locals 7
+ 
+     sget-object v0, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;->INSTANCE:Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;
+@@ -2186,6 +2198,18 @@
+     return-void
+ .end method
+ 
++.method public final killGhost()V
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
++    const-string v2, "killGhost()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public final reinflateMediaFrame()V
+     .locals 3
+ 
+@@ -2286,7 +2310,7 @@
+     return-void
+ .end method
+ 
+-.method public final remove(I)V
++.method public final unica_di_54a4af5cbd81dade(I)V
+     .locals 4
+ 
+     sget-object v0, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;->INSTANCE:Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;
+@@ -2342,7 +2366,23 @@
+     return-void
+ .end method
+ 
+-.method public final shouldVisible()Z
++.method public final remove(I)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
++    const-string v2, "remove(I)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public final unica_di_5ee791aefec0b87c()Z
+     .locals 1
+ 
+     sget-object v0, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;->INSTANCE:Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;
+@@ -2383,6 +2423,22 @@
+     const/4 p0, 0x0
+ 
+     return p0
++.end method
++
++.method public final shouldVisible()Z
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
++    const-string v2, "shouldVisible()Z"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Boolean;
++    invoke-virtual {v0}, Ljava/lang/Boolean;->booleanValue()Z
++    move-result v0
++    return v0
++
+ .end method
+ 
+ .method public final start()V
+@@ -2478,7 +2534,7 @@
+     return-void
+ .end method
+ 
+-.method public final update(Ljava/lang/String;)V
++.method public final unica_di_753eae1e964511c7(Ljava/lang/String;)V
+     .locals 4
+ 
+     const-string/jumbo v0, "update("
+@@ -2539,22 +2595,49 @@
+     return-void
+ .end method
+ 
++.method public final update(Ljava/lang/String;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
++    const-string v2, "update(Ljava/lang/String;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public final unica_di_ea2c1c21190ce7a4()V
++    .locals 2
++
++    const-string/jumbo v0, "{OngoingActivityController}"
++
++    const-string/jumbo v1, "update()"
++
++    invoke-static {v0, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
++
++    const/4 v0, 0x1
++
++    invoke-virtual {p0, v0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->updateParentViewVisibility(Z)V
++
++    invoke-virtual {p0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->updateAdapter()V
++
++    return-void
++.end method
++
+ .method public final update$1$1()V
+-    .locals 2
+-
+-    const-string/jumbo v0, "{OngoingActivityController}"
+-
+-    const-string/jumbo v1, "update()"
+-
+-    invoke-static {v0, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    const/4 v0, 0x1
+-
+-    invoke-virtual {p0, v0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->updateParentViewVisibility(Z)V
+-
+-    invoke-virtual {p0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->updateAdapter()V
+-
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
++    const-string v2, "update$1$1()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
+     return-void
++
+ .end method
+ 
+ .method public final updateAdapter()V
+@@ -2583,7 +2666,7 @@
+     return-void
+ .end method
+ 
+-.method public final updateMediaChipData()V
++.method public final unica_di_f51e5a90f1b5584a()V
+     .locals 9
+ 
+     iget-object v0, p0, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;->currentMediaOngoingActivityInfo:Lcom/android/systemui/statusbar/phone/ongoingactivity/MediaOngoingActivityInfo;
+@@ -2916,7 +2999,19 @@
+     return-void
+ .end method
+ 
+-.method public final updateParentViewVisibility(Z)V
++.method public final updateMediaChipData()V
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
++    const-string v2, "updateMediaChipData()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public final unica_di_c8ed1083e8412eb2(Z)V
+     .locals 3
+ 
+     new-instance v0, Ljava/lang/StringBuilder;
+@@ -3009,3 +3104,19 @@
+     :cond_1
+     return-void
+ .end method
++
++.method public final updateParentViewVisibility(Z)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityController;
++    const-string v2, "updateParentViewVisibility(Z)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
+--- a/smali_classes3/com/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper.smali
++++ b/smali_classes3/com/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper.smali
+@@ -2537,7 +2537,7 @@
+     return p0
+ .end method
+ 
+-.method public static notifyRankingStateChanged(Ljava/lang/String;)V
++.method public static unica_di_3d76e66c12f3f8a9(Ljava/lang/String;)V
+     .locals 6
+ 
+     invoke-static {p0}, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;->getOngoingActivityDataByKey(Ljava/lang/String;)Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityData;
+@@ -2598,7 +2598,22 @@
+     return-void
+ .end method
+ 
+-.method public static notifyRemoveItemNowbarObservers(Ljava/lang/String;)V
++.method public static notifyRankingStateChanged(Ljava/lang/String;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p0
++    const v4, 0
++    aput-object v5, v3, v4
++    const/4 v0, 0x0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;
++    const-string v2, "notifyRankingStateChanged(Ljava/lang/String;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public static unica_di_757ebc758dc06f17(Ljava/lang/String;)V
+     .locals 8
+ 
+     sget-object v0, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;->nowbarObservers:Ljava/util/List;
+@@ -2669,7 +2684,22 @@
+     return-void
+ .end method
+ 
+-.method public static notifyUpdateItemNowbarObservers(Lcom/android/systemui/plugins/keyguardstatusview/NowBarItem;)V
++.method public static notifyRemoveItemNowbarObservers(Ljava/lang/String;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p0
++    const v4, 0
++    aput-object v5, v3, v4
++    const/4 v0, 0x0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;
++    const-string v2, "notifyRemoveItemNowbarObservers(Ljava/lang/String;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public static unica_di_811aa567eada2777(Lcom/android/systemui/plugins/keyguardstatusview/NowBarItem;)V
+     .locals 4
+ 
+     sget-object v0, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;->nowbarObservers:Ljava/util/List;
+@@ -2727,6 +2757,21 @@
+     return-void
+ .end method
+ 
++.method public static notifyUpdateItemNowbarObservers(Lcom/android/systemui/plugins/keyguardstatusview/NowBarItem;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p0
++    const v4, 0
++    aput-object v5, v3, v4
++    const/4 v0, 0x0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;
++    const-string v2, "notifyUpdateItemNowbarObservers(Lcom/android/systemui/plugins/keyguardstatusview/NowBarItem;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public static notifyUpdateObservers()V
+     .locals 4
+ 
+@@ -2759,7 +2804,7 @@
+     return-void
+ .end method
+ 
+-.method public static onAsyncInflationFinished(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)Z
++.method public static unica_di_739d1574d8bf7744(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)Z
+     .locals 8
+ 
+     iget-object p0, p0, Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;->mKey:Ljava/lang/String;
+@@ -3097,6 +3142,28 @@
+     return v0
+ .end method
+ 
++.method public static onAsyncInflationFinished(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)Z
++    .locals 6
++    const v4, 2
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p0
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v5, p1
++    const v4, 1
++    aput-object v5, v3, v4
++    const/4 v0, 0x0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;
++    const-string v2, "onAsyncInflationFinished(Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)Z"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    move-result-object v0
++    check-cast v0, Ljava/lang/Boolean;
++    invoke-virtual {v0}, Ljava/lang/Boolean;->booleanValue()Z
++    move-result v0
++    return v0
++
++.end method
++
+ .method public static recreateOngoingActivity(Landroid/content/Context;Lcom/android/systemui/statusbar/notification/collection/NotificationEntry;)V
+     .locals 1
+ 
+@@ -3262,7 +3329,7 @@
+     return-void
+ .end method
+ 
+-.method public static removeOngoingActivityByKey(Ljava/lang/String;)V
++.method public static unica_di_083a44e59456497f(Ljava/lang/String;)V
+     .locals 7
+ 
+     const-string v0, "findOngoingActivityDataIndex() noti id = "
+@@ -3471,7 +3538,22 @@
+     return-void
+ .end method
+ 
+-.method public static setBaseActivityComponentName(Landroid/content/ComponentName;Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)V
++.method public static removeOngoingActivityByKey(Ljava/lang/String;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p0
++    const v4, 0
++    aput-object v5, v3, v4
++    const/4 v0, 0x0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;
++    const-string v2, "removeOngoingActivityByKey(Ljava/lang/String;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public static unica_di_37d0c7f8ec3077ef(Landroid/content/ComponentName;Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)V
+     .locals 2
+ 
+     sget-object v0, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;->baseActivityComponentName:Landroid/content/ComponentName;
+@@ -3506,6 +3588,24 @@
+     return-void
+ .end method
+ 
++.method public static setBaseActivityComponentName(Landroid/content/ComponentName;Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)V
++    .locals 6
++    const v4, 2
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p0
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v5, p1
++    const v4, 1
++    aput-object v5, v3, v4
++    const/4 v0, 0x0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;
++    const-string v2, "setBaseActivityComponentName(Landroid/content/ComponentName;Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public static shouldHide(Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityData;)Z
+     .locals 12
+ 
+@@ -4230,7 +4330,7 @@
+     return-void
+ .end method
+ 
+-.method public static updateOngoingList(Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)V
++.method public static unica_di_d96ce2349ff70a0f(Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)V
+     .locals 8
+ 
+     new-instance v0, Ljava/util/LinkedList;
+@@ -4418,6 +4518,21 @@
+     return-void
+ .end method
+ 
++.method public static updateOngoingList(Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p0
++    const v4, 0
++    aput-object v5, v3, v4
++    const/4 v0, 0x0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingactivity/OngoingActivityDataHelper;
++    const-string v2, "updateOngoingList(Lcom/android/systemui/statusbar/NotificationLockscreenUserManager;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public static updateTopIndex()V
+     .locals 10
+ 
+--- a/smali_classes3/com/android/systemui/statusbar/phone/ongoingcall/OngoingCallController.smali
++++ b/smali_classes3/com/android/systemui/statusbar/phone/ongoingcall/OngoingCallController.smali
+@@ -112,13 +112,13 @@
+     invoke-direct {p1, p0}, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$configurationListener$1;-><init>(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;)V
+ 
+     iput-object p1, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->configurationListener:Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$configurationListener$1;
+-
++    invoke-static/range {p0 .. p0}, Lio/mesalabs/unica/dynamicisland/ConstructorCalls;->unica_di_c5cd1575dd6ad568(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;)V
+     return-void
+ .end method
+ 
+ 
+ # virtual methods
+-.method public final addCallback(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallListener;)V
++.method public final unica_di_df44b6f09119a078(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallListener;)V
+     .locals 2
+ 
+     sget-object v0, Lcom/android/systemui/flags/RefactorFlagUtils;->INSTANCE:Lcom/android/systemui/flags/RefactorFlagUtils;
+@@ -169,14 +169,44 @@
+     throw p0
+ .end method
+ 
++.method public final addCallback(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallListener;)V
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;
++    const-string v2, "addCallback(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallListener;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public final bridge synthetic unica_di_82fd42e5f4ce26cb(Ljava/lang/Object;)V
++    .locals 0
++
++    check-cast p1, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallListener;
++
++    invoke-virtual {p0, p1}, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->addCallback(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallListener;)V
++
++    return-void
++.end method
++
+ .method public final bridge synthetic addCallback(Ljava/lang/Object;)V
+-    .locals 0
+-
+-    check-cast p1, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallListener;
+-
+-    invoke-virtual {p0, p1}, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->addCallback(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallListener;)V
+-
+-    return-void
++    .locals 6
++    const v4, 1
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v5, p1
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;
++    const-string v2, "addCallback(Ljava/lang/Object;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public final dump(Ljava/io/PrintWriter;[Ljava/lang/String;)V
+@@ -320,45 +350,57 @@
+     return-void
+ .end method
+ 
++.method public final unica_di_d8295da8cf71d583()V
++    .locals 3
++
++    sget-object v0, Lcom/android/systemui/flags/RefactorFlagUtils;->INSTANCE:Lcom/android/systemui/flags/RefactorFlagUtils;
++
++    sget v0, Lcom/android/systemui/statusbar/phone/ongoingcall/StatusBarChipsModernization;->$r8$clinit:I
++
++    const/4 v0, 0x0
++
++    iput-object v0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->callNotificationInfo:Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallNotificationInfo;
++
++    iget-object v1, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->swipeStatusBarAwayGestureHandler:Lcom/android/systemui/statusbar/gesture/SwipeStatusBarAwayGestureHandler;
++
++    const-string v2, "OngoingCall"
++
++    invoke-virtual {v1, v2}, Lcom/android/systemui/statusbar/gesture/GenericGestureDetector;->removeOnGestureDetectedCallback(Ljava/lang/String;)V
++
++    invoke-virtual {p0}, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->sendStateChangeEvent()V
++
++    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->uidObserver:Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallAppUidObserver;
++
++    iput-object v0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallAppUidObserver;->callAppUid:Ljava/lang/Integer;
++
++    const/4 v0, 0x0
++
++    iput-boolean v0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallAppUidObserver;->isRegistered:Z
++
++    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallAppUidObserver;->this$0:Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;
++
++    iget-object v0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->iActivityManager:Landroid/app/IActivityManager;
++
++    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->uidObserver:Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallAppUidObserver;
++
++    invoke-interface {v0, p0}, Landroid/app/IActivityManager;->unregisterUidObserver(Landroid/app/IUidObserver;)V
++
++    return-void
++.end method
++
+ .method public final removeChipInfo()V
+-    .locals 3
+-
+-    sget-object v0, Lcom/android/systemui/flags/RefactorFlagUtils;->INSTANCE:Lcom/android/systemui/flags/RefactorFlagUtils;
+-
+-    sget v0, Lcom/android/systemui/statusbar/phone/ongoingcall/StatusBarChipsModernization;->$r8$clinit:I
+-
+-    const/4 v0, 0x0
+-
+-    iput-object v0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->callNotificationInfo:Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallNotificationInfo;
+-
+-    iget-object v1, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->swipeStatusBarAwayGestureHandler:Lcom/android/systemui/statusbar/gesture/SwipeStatusBarAwayGestureHandler;
+-
+-    const-string v2, "OngoingCall"
+-
+-    invoke-virtual {v1, v2}, Lcom/android/systemui/statusbar/gesture/GenericGestureDetector;->removeOnGestureDetectedCallback(Ljava/lang/String;)V
+-
+-    invoke-virtual {p0}, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->sendStateChangeEvent()V
+-
+-    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->uidObserver:Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallAppUidObserver;
+-
+-    iput-object v0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallAppUidObserver;->callAppUid:Ljava/lang/Integer;
+-
+-    const/4 v0, 0x0
+-
+-    iput-boolean v0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallAppUidObserver;->isRegistered:Z
+-
+-    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallAppUidObserver;->this$0:Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;
+-
+-    iget-object v0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->iActivityManager:Landroid/app/IActivityManager;
+-
+-    iget-object p0, p0, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;->uidObserver:Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController$CallAppUidObserver;
+-
+-    invoke-interface {v0, p0}, Landroid/app/IActivityManager;->unregisterUidObserver(Landroid/app/IUidObserver;)V
+-
+-    return-void
+-.end method
+-
+-.method public final sendStateChangeEvent()V
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;
++    const-string v2, "removeChipInfo()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
++.method public final unica_di_bcd88c130b2d629f()V
+     .locals 20
+ 
+     move-object/from16 v0, p0
+@@ -521,6 +563,18 @@
+ 
+     :cond_3
+     return-void
++.end method
++
++.method public final sendStateChangeEvent()V
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;
++    const-string v2, "sendStateChangeEvent()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
+ .end method
+ 
+ .method public final start()V
+@@ -803,7 +857,7 @@
+     return-void
+ .end method
+ 
+-.method public final updateChip()V
++.method public final unica_di_7040a7da8a61ceee()V
+     .locals 15
+ 
+     const/4 v0, 0x0
+@@ -1182,6 +1236,18 @@
+     return-void
+ .end method
+ 
++.method public final updateChip()V
++    .locals 6
++    const v4, 0
++    new-array v3, v4, [Ljava/lang/Object;
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallController;
++    const-string v2, "updateChip()V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public final updateGestureListening()V
+     .locals 4
+ 
+--- a/smali_classes3/com/android/systemui/statusbar/pipeline/shared/ui/binder/HomeStatusBarViewBinderImpl.smali
++++ b/smali_classes3/com/android/systemui/statusbar/pipeline/shared/ui/binder/HomeStatusBarViewBinderImpl.smali
+@@ -17,7 +17,7 @@
+ 
+ 
+ # virtual methods
+-.method public final bind(ILandroid/view/View;Lcom/android/systemui/statusbar/pipeline/shared/ui/viewmodel/HomeStatusBarViewModel;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment$5;)V
++.method public final unica_di_6f80c6acf7f06f7b(ILandroid/view/View;Lcom/android/systemui/statusbar/pipeline/shared/ui/viewmodel/HomeStatusBarViewModel;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment$5;)V
+     .locals 13
+ 
+     const v0, 0x7f0a08cb
+@@ -68,3 +68,34 @@
+ 
+     return-void
+ .end method
++
++.method public final bind(ILandroid/view/View;Lcom/android/systemui/statusbar/pipeline/shared/ui/viewmodel/HomeStatusBarViewModel;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment$5;)V
++    .locals 6
++    const v4, 6
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    move-object/from16 v5, p2
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v5, p3
++    const v4, 2
++    aput-object v5, v3, v4
++    move-object/from16 v5, p4
++    const v4, 3
++    aput-object v5, v3, v4
++    move-object/from16 v5, p5
++    const v4, 4
++    aput-object v5, v3, v4
++    move-object/from16 v5, p6
++    const v4, 5
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/pipeline/shared/ui/binder/HomeStatusBarViewBinderImpl;
++    const-string v2, "bind(ILandroid/view/View;Lcom/android/systemui/statusbar/pipeline/shared/ui/viewmodel/HomeStatusBarViewModel;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lcom/android/systemui/statusbar/phone/fragment/CollapsedStatusBarFragment$5;)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
+--- a/smali_classes3/com/android/systemui/statusbar/policy/SecFlashlightControllerImpl.smali
++++ b/smali_classes3/com/android/systemui/statusbar/policy/SecFlashlightControllerImpl.smali
+@@ -493,7 +493,7 @@
+     move-result v0
+ 
+     iput-boolean v0, v1, Lcom/android/systemui/statusbar/policy/SecFlashlightControllerImpl;->mIsCameraFlashNotiOn:Z
+-
++    invoke-static/range {p0 .. p0}, Lio/mesalabs/unica/dynamicisland/ConstructorCalls;->unica_di_c5eece8ee59efffa(Lcom/android/systemui/statusbar/policy/SecFlashlightControllerImpl;)V
+     return-void
+ 
+     :goto_3
+@@ -654,7 +654,7 @@
+     return p0
+ .end method
+ 
+-.method public final setFlashlightLevel(IZ)V
++.method public final unica_di_5ab0c20f657794b2(IZ)V
+     .locals 3
+ 
+     invoke-virtual {p0}, Lcom/android/systemui/statusbar/policy/SecFlashlightControllerImpl;->isTorchStrengthControllable()Z
+@@ -711,6 +711,26 @@
+     return-void
+ .end method
+ 
++.method public final setFlashlightLevel(IZ)V
++    .locals 6
++    const v4, 2
++    new-array v3, v4, [Ljava/lang/Object;
++    invoke-static/range {p1 .. p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v5
++    const v4, 0
++    aput-object v5, v3, v4
++    invoke-static/range {p2 .. p2}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
++    move-result-object v5
++    const v4, 1
++    aput-object v5, v3, v4
++    move-object/from16 v0, p0
++    const-class v1, Lcom/android/systemui/statusbar/policy/SecFlashlightControllerImpl;
++    const-string v2, "setFlashlightLevel(IZ)V"
++    invoke-static {v0, v1, v2, v3}, Lio/mesalabs/unica/dynamicisland/Bootstrap;->invoke(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/Object;
++    return-void
++
++.end method
++
+ .method public final showUnavailableMessage()V
+     .locals 5
+ 
+--- a/smali_classes3/com/android/systemui/statusbar/window/StatusBarWindowStateController.smali
++++ b/smali_classes3/com/android/systemui/statusbar/window/StatusBarWindowStateController.smali
+@@ -30,6 +30,6 @@
+     iput-object v0, p0, Lcom/android/systemui/statusbar/window/StatusBarWindowStateController;->listeners:Ljava/util/Set;
+ 
+     invoke-virtual {p2, p1}, Lcom/android/systemui/statusbar/CommandQueue;->addCallback(Lcom/android/systemui/statusbar/CommandQueue$Callbacks;)V
+-
++    invoke-static/range {p0 .. p0}, Lio/mesalabs/unica/dynamicisland/ConstructorCalls;->unica_di_06f1d401b73c7659(Lcom/android/systemui/statusbar/window/StatusBarWindowStateController;)V
+     return-void
+ .end method

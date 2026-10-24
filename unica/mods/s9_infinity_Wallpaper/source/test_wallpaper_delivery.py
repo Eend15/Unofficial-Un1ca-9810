@@ -16,6 +16,7 @@ from verify_built_wallpapers import (  # noqa: E402
     MODULE, EXPECTED_VIDEO_FILENAMES, NATIVE_ENGINE, UN1CA_ENGINE,
     SYSTEM_PACKAGE, verify, verify_catalog,
 )
+from patch_note9_sensorhub import patch as patch_note9_sensorhub
 
 
 ROOT = MODULE.parents[2]
@@ -93,6 +94,22 @@ class WallpaperDeliveryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "missing Infinity dependency"):
                 verify(work_dir)
 
+    def test_note9_rejects_s9_sensor_and_accepts_board_matched_dependency_repair(self) -> None:
+        with tempfile.TemporaryDirectory(prefix='note9-infinity-sensors-') as td:
+            work_dir = Path(td)
+            isolated_work_dir(work_dir)
+            with self.assertRaisesRegex(ValueError, 'sensorhub'):
+                verify(work_dir, target='crownlte')
+            sensor = work_dir / 'vendor/lib64/sensors.sensorhub.so'
+            sensor.unlink()
+            source = ROOT / ('unica/patches/exynos9810_device_stack/embedded/'
+                             'exynos9810_legacy_port/device_port/device/crownlte/'
+                             'vendor/lib64/sensors.sensorhub.so')
+            sensor.write_bytes(patch_note9_sensorhub(source.read_bytes()))
+            verify(work_dir, target='crownlte')
+            with self.assertRaisesRegex(ValueError, 'sensorhub'):
+                verify(work_dir, target='star2lte')
+
     def test_missing_video_asset_is_rejected(self) -> None:
         src = MODULE / "payload/system/priv-app/wallpaper-res/wallpaper-res.apk"
         with tempfile.TemporaryDirectory(prefix="s9-infinity-truncated-catalog-") as td:
@@ -124,7 +141,8 @@ class WallpaperDeliveryTests(unittest.TestCase):
         self.assertEqual(builder.count(marker), 1)
         self.assertGreater(builder.index(marker), builder.index('wait $(jobs -p) || exit 1'))
         self.assertIn('^(starlte|star2lte|crownlte)$', builder[builder.index('wait $(jobs -p) || exit 1'):builder.index(marker)])
-        self.assertIn('--work-dir "$WORK_DIR" || exit 1', builder[builder.index(marker):builder.index(marker) + 100])
+        self.assertIn('--work-dir "$WORK_DIR" --target "$TARGET_CODENAME" || exit 1',
+                      builder[builder.index(marker):builder.index(marker) + 160])
 
 
 if __name__ == "__main__":

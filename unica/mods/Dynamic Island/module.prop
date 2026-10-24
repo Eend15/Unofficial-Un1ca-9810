@@ -1,0 +1,5 @@
+id=unica_dynamic_island
+name=Dynamic Island
+author=sampple-korea, UN1CA Exynos9810 port
+description=Built-in Dynamic Island 0.1.10 with UN1CA UI settings; no root module dependency.
+build_order=40

@@ -1,17 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
+SRC_DIR="$ROOT"
 MODPATH="$ROOT/unica/mods/s9_infinity_Wallpaper"
 TMP="$(mktemp -d)"
 trap 'rm -rf -- "$TMP"' EXIT
 LOG() { printf '%s\n' "$*"; }
 LOGE() { printf '%s\n' "$*" >&2; }
+# Minimal isolated framework inputs for the two real module patch hooks.
+DECODE_APK() {
+    local dst="$APKTOOL_DIR/$2"
+    case "$2" in
+        system/framework/framework-res.apk)
+            mkdir -p "$dst/res/values"
+            printf '%s\n' '<resources><string name="default_wallpaper_component">fixture</string></resources>' > "$dst/res/values/strings.xml"
+            ;;
+        system/framework/services.jar)
+            python3 - "$dst" "$MODPATH/source" <<'PYFIXTURE'
+from pathlib import Path
+import sys
+sys.path.insert(0, sys.argv[2])
+from patch_factory_live_default import CLASS, OLD
+target=Path(sys.argv[1])/'smali'/CLASS
+target.parent.mkdir(parents=True, exist_ok=True)
+target.write_text('.method public final setFactoryDefaultWallpaper(IILcom/android/server/wallpaper/WallpaperData;Lcom/android/server/wallpaper/WallpaperData;)V\n'+OLD+'\n.end method\n')
+PYFIXTURE
+            ;;
+        *) return 1 ;;
+    esac
+}
 # Stage the same explicit payload/metadata operations in isolated target trees.
 ADD_TO_WORK_DIR() {
     local src="$1" part="$2" rel="$3" mode="$6" dst
     if [ "$part" = system ]; then dst="$WORK_DIR/system/$rel"; else dst="$WORK_DIR/$part/$rel"; fi
     mkdir -p "$(dirname "$dst")"
-    if [ "$part" = system ]; then ln "$src/system/${rel#system/}" "$dst"; else ln "$src/$part/$rel" "$dst"; fi
+    if [ "$part" = system ]; then ln "$src/system/${rel#system/}" "$dst"; else cp "$src/$part/$rel" "$dst"; fi
     printf '%s %s %s %s %s\n' "$part/$rel" "$4" "$5" "$mode" "$7" >> "$WORK_DIR/metadata"
 }
 for TARGET_CODENAME in starlte star2lte crownlte; do
@@ -61,3 +84,4 @@ compile(s,'floating-features','exec')
 compile((m/'source/rebuild.py').read_text(),'rebuild.py','exec')
 PY
 python3 -B "$MODPATH/source/test_wallpaper_delivery.py" -v
+python3 -B "$MODPATH/source/test_note9_sensorhub.py" -v

@@ -21,7 +21,15 @@ ADD_TO_WORK_DIR "$MODPATH/payload" system system/framework/S9AodWallpaperPolicy.
 ADD_TO_WORK_DIR "$MODPATH/payload" system system/etc/init/s9_aod_wallpaper_policy.rc 0 0 644 "u:object_r:system_file:s0" || return 1
 ADD_TO_WORK_DIR "$MODPATH/payload" system system/bin/s9_aod_wallpaper_policy.sh 0 0 755 "u:object_r:system_file:s0" || return 1
 for LIB in sensors.sensorhub.so sensors.grip.so; do
-    ADD_TO_WORK_DIR "$MODPATH/payload" vendor "lib64/$LIB" 0 0 644 "u:object_r:vendor_file:s0" || return 1
+    if [ "$TARGET_CODENAME" = crownlte ] && [ "$LIB" = sensors.sensorhub.so ]; then
+        # Note9 has a different magnetic sensor/SSP board. Preserve its own
+        # Samsung HAL and transfer only the tested S9+ HIDL linkage repair.
+        SENSOR_SOURCE="$SRC_DIR/unica/patches/exynos9810_device_stack/embedded/exynos9810_legacy_port/device_port/device/crownlte"
+        ADD_TO_WORK_DIR "$SENSOR_SOURCE" vendor "lib64/$LIB" 0 0 644 "u:object_r:vendor_file:s0" || return 1
+        python3 "$MODPATH/source/patch_note9_sensorhub.py" "$WORK_DIR/vendor/lib64/$LIB" || return 1
+    else
+        ADD_TO_WORK_DIR "$MODPATH/payload" vendor "lib64/$LIB" 0 0 644 "u:object_r:vendor_file:s0" || return 1
+    fi
 done
 
 # Keep fullscreen capability available for the native stars; runtime policy
@@ -44,7 +52,7 @@ for rel in ['system/system/etc/floating_feature.xml','vendor/etc/floating_featur
   else: text=text.replace('</SecFloatingFeatureSet>',f'    {tag}\n</SecFloatingFeatureSet>')
  p.write_text(text)
 PYFEATURE
-unset APP CACHE APP_DIR LIB
+unset APP CACHE APP_DIR LIB SENSOR_SOURCE
 
 # Android's clean-install default must bind the native engine; the Samsung
 # catalog supplies Blue video_001 as its isDefault variant. Existing choices
