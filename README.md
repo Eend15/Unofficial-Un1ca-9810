@@ -92,7 +92,10 @@ git lfs pull
 python3 scripts/internal/verify_source_checkout.py --check-index
 ```
 
-`git lfs pull` is required: a small LFS pointer is not a kernel or APK. The
+This source repository uses **Git LFS** for large kernel ZIP files and ROM
+payloads. After cloning the repository, new builders must also run
+`git lfs pull` to download these required files. A small Git LFS pointer is
+not a usable kernel or APK. The
 preflight checks repository input completeness, the six pinned submodules,
 and both filesystem-specific kernel archives against the exact SHA-256 pins
 and all six device kernel/DTB entries
