@@ -1,7 +1,7 @@
 # Unofficial UN1CA 9810
 
 <p align="center">
-  <img src="readme-res/unofficial-un1ca-9810-series.png" alt="Unofficial UN1CA 9810 Series"/>
+  <img src="readme-res/unofficial-un1ca-9810-oneui8-banner.png" alt="Unofficial UN1CA 9810 Series"/>
 </p>
 
 Unofficial UN1CA 9810 is an experimental custom firmware project for Samsung Exynos9810 devices, maintained by Eend15 and based on the UN1CA build system by salvo_giangri.

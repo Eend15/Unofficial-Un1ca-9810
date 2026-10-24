@@ -824,6 +824,7 @@
     "prebuilts/samsung/r9sxxx/system/lib64/libui.so",
     "prebuilts/samsung/r9sxxx/vendor/etc/midas/midas_config.json",
     "readme-res/banner.png",
+    "readme-res/unofficial-un1ca-9810-oneui8-banner.png",
     "readme-res/unofficial-un1ca-9810-series.png",
     "scripts/apktool.sh",
     "scripts/build_dependencies.sh",
