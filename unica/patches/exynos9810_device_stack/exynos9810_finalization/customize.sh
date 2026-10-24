@@ -4378,6 +4378,7 @@ _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_BLE_PROTOCOL()
     local RUNNABLE="$APK_DIR/smali/j3/b.smali"
     local WACOM_DRIVER="$APK_DIR/smali/j3/a.smali"
     local CONTINUOUS="$APK_DIR/smali/androidx/activity/d.smali"
+    local FIRMWARE_CHECK="$APK_DIR/smali/G2/e.smali"
     local BLE_DRIVER="$APK_DIR/smali/U2/k.smali"
     local BUILTIN_DRIVER="$APK_DIR/smali/U2/c.smali"
     local DEVICE_PROFILE="$APK_DIR/smali/b3/b.smali"
@@ -4396,6 +4397,14 @@ _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_BLE_PROTOCOL()
         LOGE "AirCommand built-in S Pen driver files are missing"
         return 1
     }
+    [ -f "$FIRMWARE_CHECK" ] || {
+        LOGE "AirCommand BLE firmware check smali not found; cannot apply crown BLE firmware patch"
+        return 1
+    }
+
+    LOG "- Patching AirCommand BLE firmware check to accept Note9 S Pen"
+
+    sed -i 's|const/16 v3, 0x30|const/16 v3, 0x9|g' "$FIRMWARE_CHECK"
 
     LOG "- Translating One UI 8 S Pen BLE commands to the Note9 Wacom protocol"
     python3 - "$RUNNABLE" <<'PY' || return 1
