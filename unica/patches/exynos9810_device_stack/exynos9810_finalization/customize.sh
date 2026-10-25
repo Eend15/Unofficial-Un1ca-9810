@@ -7064,6 +7064,38 @@ _EXYNOS9810_FINAL_RESTORE_STOCK_LED_DEFAULTS()
     python3 "$MODPATH/lights/restore_stock_led.py" "$APK_DIR" || return 1
 }
 
+_EXYNOS9810_FINAL_PATCH_LED_ICON_EDITOR()
+{
+    # Stock S9 LED Icon Editor crashes on One UI 8: NfcAdapter.sem*LedCover*
+    # APIs were removed. Use the samsungnfc Binder ABI already used by our
+    # patched LedCoverService, without touching the boot-critical NFC stack.
+    case "$TARGET_CODENAME" in
+        starlte|star2lte) ;;
+        *) return 0 ;;
+    esac
+
+    local APK_REL="system/priv-app/LedCoverAppStar/LedCoverAppStar.apk"
+    local APK_DIR="$APKTOOL_DIR/$APK_REL"
+    [ -s "$WORK_DIR/system/$APK_REL" ] || {
+        LOGE "Stock S9 LED Icon Editor APK is missing"
+        return 1
+    }
+    # The stock Samsung APK contains legacy non-PNG drawable payloads with
+    # .png names; rebuilding them via aapt2 fails. Keep resources.arsc and
+    # AndroidManifest.xml byte-identical, rebuilding only the patched DEX.
+    if [ ! -d "$APK_DIR" ]; then
+        "$TOOLS_DIR/bin/apktool" d -r -j 1 -o "$APK_DIR" \
+            "$WORK_DIR/system/$APK_REL" || return 1
+    fi
+    if [ -d "$APK_DIR/res" ]; then
+        LOGE "LED Icon Editor must be decoded with raw resources to avoid invalid stock PNG payloads"
+        return 1
+    fi
+    LOG "- Bridging stock LED Icon Editor to One UI 8 Samsung NFC service"
+    python3 "$MODPATH/ledcover/patch_led_icon_editor.py" \
+        "$APK_DIR" "$MODPATH/ledcover/bridge" || return 1
+}
+
 _EXYNOS9810_FINAL_REPATCH_APPS
 _EXYNOS9810_FINAL_RESTORE_STOCK_LED_DEFAULTS || return 1
 _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK
@@ -7072,6 +7104,7 @@ _EXYNOS9810_FINAL_APPLY_TESTED_RADIO_RESTORE_V5
 _EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED
 _EXYNOS9810_FINAL_DEBLOAT
 _EXYNOS9810_FINAL_RESTORE_ACCESSORY_STACK || return 1
+_EXYNOS9810_FINAL_PATCH_LED_ICON_EDITOR || return 1
 _EXYNOS9810_FINAL_STAGE_SCPM_ANCHOR || return 1
 _EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT
 _EXYNOS9810_FINAL_VERIFY_REMOVED_OPTIONAL_COMPONENTS
