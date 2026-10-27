@@ -4,6 +4,8 @@ from pathlib import Path
 import argparse
 import subprocess
 import hashlib
+import json
+import shutil
 
 HERE = Path(__file__).resolve().parent
 parser = argparse.ArgumentParser(description=__doc__)
@@ -25,8 +27,12 @@ dex.mkdir()
 run(args.build_tools / 'd8', '--release', '--min-api', '36', '--lib',
     args.android_jar, '--output', dex, args.output / 'runtime.jar')
 run('java', '-cp', args.apktool_jar, 'com.android.tools.smali.baksmali.Main',
-    'd', dex / 'classes.dex', '-o', HERE / 'smali')
-files = [*sorted(HERE.glob('*.java')), *sorted((HERE / 'smali').rglob('*.smali'))]
+    'd', dex / 'classes.dex', '-o', args.output / 'runtime-smali')
+fresh=args.output/'runtime-smali/io/mesalabs/unica/camera'
+for file in fresh.glob('*.smali'):
+    shutil.copyfile(file,HERE/'smali/io/mesalabs/unica/camera'/file.name)
+(HERE/'runtime-classes.json').write_text(json.dumps(sorted(file.name for file in fresh.glob('*.smali')),indent=2)+'\n')
+files = [*sorted(HERE.glob('*.java')), *sorted((HERE / 'smali').rglob('*.smali')),HERE/'runtime-classes.json']
 (HERE / 'SHA256SUMS').write_text(''.join(hashlib.sha256(f.read_bytes()).hexdigest()
     + '  ' + f.relative_to(HERE).as_posix() + '\n' for f in files))
 print('PASS regenerated aperture runtime and source/payload hashes')

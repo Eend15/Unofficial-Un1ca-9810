@@ -48,7 +48,7 @@
 
     iget p0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda5;->f$3:I
 
-    invoke-static {v0, v1, v2, p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->lambda$installStockFeedback$5(Landroid/widget/TextView;[III)V
+    invoke-static {v0, v1, v2, p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->lambda$installStockFeedback$6(Landroid/widget/TextView;[III)V
 
     return-void
 .end method

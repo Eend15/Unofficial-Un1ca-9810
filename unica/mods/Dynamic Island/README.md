@@ -84,13 +84,17 @@ reported unsupported rather than falsely counted as installed.
 This source module does not retroactively modify already exported ROM ZIPs and
 does not flash any device. The prior Note9 S Pen test ZIP predates this module.
 
-Duplicate-instance protection: process-wide hook initialization is claimed once,
-controller startup is idempotent on the main thread, and only one island window
-can hold ownership. A failure after adding a window now removes it before retrying;
-if removal fails, ownership remains held to prevent an overlapping replacement.
-`source/SingleWindowOwnerTest.java` checks repeated claims, incorrect releases,
-clean reattachment and 32 concurrent attempts. This governs this integration;
-unrelated overlay applications are outside its ownership.
+Duplicate-instance protection: the window lease is process-wide, including
+independent payload class loaders. The lease contains only a UUID string in
+process properties; no view/class-loader references are stored there. Failed
+removal retains ownership. Window attach/detach are serialized and runtime
+initialization is idempotent. Disabling disposes the window immediately and
+cancels fallback/reveal timers; late status-bar callbacks cannot recreate it.
+SingleWindowOwnerTest checks independent gates, independent class loaders,
+foreign release, clean handover and 32 simultaneous competing gates. The
+installed APK's same cross-loader behavior is also tested on Android ART.
+This covers the built-in integration; unrelated overlay applications do not
+participate in its lease.
 
 ## v0.1.13 native compatibility
 

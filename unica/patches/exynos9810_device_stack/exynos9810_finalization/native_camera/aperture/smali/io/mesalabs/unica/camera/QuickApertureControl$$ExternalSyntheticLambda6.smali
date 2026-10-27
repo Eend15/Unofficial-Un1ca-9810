@@ -30,7 +30,7 @@
     .line 0
     iget-object p0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda6;->f$0:Ljava/lang/Runnable;
 
-    invoke-static/range {p0 .. p9}, Lio/mesalabs/unica/camera/QuickApertureControl;->lambda$installStockFeedback$6(Ljava/lang/Runnable;Landroid/view/View;IIIIIIII)V
+    invoke-static/range {p0 .. p9}, Lio/mesalabs/unica/camera/QuickApertureControl;->lambda$installStockFeedback$7(Ljava/lang/Runnable;Landroid/view/View;IIIIIIII)V
 
     return-void
 .end method

@@ -5345,8 +5345,9 @@ PY
     LOG "- Restoring Samsung Photo processing with a dedicated QR callback route"
     python3 "$MODPATH/native_camera/patches/restore_photo_processing.py" "$APK_DIR" || return 1
 
-    # The Android 16 donor only displays the lens aperture. Restore a real,
-    # capability-gated control for the Exynos9810 main rear lens in Pro modes.
+    # Install the shared native scrollable aperture item after Motion Photo.
+    # All three Exynos9810 targets / both filesystems use this capability gate.
+    # Each device keeps its own active Maker, Camera2 capabilities and HAL.
     python3 "$MODPATH/native_camera/aperture/patch_aperture.py" "$APK_DIR" || return 1
 
     # Software decoding takes 500-850 ms on Exynos9810. The stock 500 ms Photo

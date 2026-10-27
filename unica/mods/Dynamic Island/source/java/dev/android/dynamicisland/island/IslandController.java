@@ -109,7 +109,9 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     /** Native runtime disables this process's island before restarting SystemUI. */
     public void onDisabled() {
+        if (Looper.myLooper() != main.getLooper()) { main.post(this::onDisabled); return; }
         disabled = true;
+        placement.dispose();
         main.removeCallbacks(refreshRunnable);
         refreshPosted = false;
         sources.media.cancelPending();
@@ -148,7 +150,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             main.post(this::start);
             return;
         }
-        if (started) return;
+        if (started || disabled) return;
         started = true;
         sources.start(this::requestRefresh);
         // the position settings take effect without a restart (and the sample item comes and goes with them)
@@ -216,6 +218,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     }
 
     public void onStatusBarViewAttached(View statusBar) {
+        if (disabled) return;
         if (placement.statusBar() == statusBar) {
             return;
         }

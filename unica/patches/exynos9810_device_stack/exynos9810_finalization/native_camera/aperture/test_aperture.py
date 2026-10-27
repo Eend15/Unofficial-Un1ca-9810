@@ -66,8 +66,8 @@ for target in ('starlte', 'star2lte', 'crownlte'):
                 (folder / (name + '.smali')).write_text(fixture)
             quick = root / 'smali_classes4/com/sec/android/app/camera/layer/keyscreen/quicksetting/QuickSettingView.smali'
             quick.parent.mkdir(parents=True)
-            quick.write_text(''.join('.method ' + signature + '\n    .locals 1\n    ' + ('return v0' if signature.endswith('Z') else 'return-void') + '\n.end method\n' for signature in ('public showMainList(Z)V', 'private showMainListWithGestureAnimation()V', 'private hideMainListWithGestureAnimation()V', 'public hideMainList(Z)V', 'public hideList(Z)Z')))
-            quick.with_name('QuickSettingView$24.smali').write_text('.method public onAnimationStart(Landroid/animation/Animator;)V\n    .locals 1\n    return-void\n.end method\n')
+            quick.write_text(''.join('.method ' + signature + '\n    .locals 1\n    ' + ('return v0' if signature.endswith('Z') else 'return-void') + '\n.end method\n' for signature in ('public showMainList(Z)V', 'private showMainListWithGestureAnimation()V', 'private hideMainListWithGestureAnimation()V', 'public hideMainList(Z)V', 'public hideList(Z)Z', 'public hideQuickSettingList(ZZ)V')))
+            quick.with_name('QuickSettingView$24.smali').write_text(''.join('.method public '+name+'(Landroid/animation/Animator;)V\n    .locals 1\n    return-void\n.end method\n' for name in ('onAnimationStart','onAnimationEnd')))
             quick.with_name('QuickSettingPresenter.smali').write_text('.method public start()V\n    .locals 1\n    return-void\n.end method\n.method public stop()V\n    .locals 1\n    return-void\n.end method\n')
             lens = root / 'smali_classes3/com/sec/android/app/camera/engine/core/callback/LensInfoCallback.smali'
             lens.parent.mkdir(parents=True)
@@ -75,6 +75,9 @@ for target in ('starlte', 'star2lte', 'crownlte'):
             engine = root / 'smali_classes3/com/sec/android/app/camera/engine/CommonEngine.smali'
             engine.parent.mkdir(parents=True, exist_ok=True)
             engine.write_text(''.join('.method ' + signature + '\n    .locals 1\n    return-void\n.end method\n' for signature in ('public switchCamera(Lcom/sec/android/app/camera/interfaces/CameraId;)V', 'public changeShootingMode(IZ)V', 'public stopEngine()V', 'public changeState(Lcom/sec/android/app/camera/engine/interfaces/Engine$State;)V')))
+            adapter=quick.with_name('QuickSettingViewAdapter.smali')
+            adapter.write_text('.method public refreshItemList(Ljava/util/List;)V\n    .locals 1\n    iput-object p1, p0, Lcom/sec/android/app/camera/layer/keyscreen/quicksetting/QuickSettingViewAdapter;->mItemList:Ljava/util/List;\n    return-void\n.end method\n'+''.join('.method public onBindViewHolder(Lcom/sec/android/app/camera/layer/keyscreen/quicksetting/QuickSettingViewAdapter$ViewHolder;I'+extra+')V\n    .locals 1\n    return-void\n.end method\n' for extra in ('','Ljava/util/List;')))
+            adapter.with_name('QuickSettingViewAdapter$ViewHolder.smali').write_text('.method public onOrientationChanged(I)V\n    .locals 1\n    return-void\n.end method\n')
             patch.apply(root)
             before = {str(f.relative_to(root)): f.read_bytes() for f in root.rglob('*.smali')}
             patch.apply(root)

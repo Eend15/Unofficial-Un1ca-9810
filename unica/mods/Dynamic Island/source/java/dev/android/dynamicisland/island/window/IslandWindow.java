@@ -127,7 +127,7 @@ public final class IslandWindow {
 
     // ---- lifecycle -----------------------------------------------------------------------------
 
-    public void attach() {
+    public synchronized void attach() {
         if (added) {
             return;
         }
@@ -151,7 +151,7 @@ public final class IslandWindow {
         return added;
     }
 
-    public void detach() {
+    public synchronized void detach() {
         if (pillSampler != null) {
             pillSampler.destroy();
             pillSampler = null;

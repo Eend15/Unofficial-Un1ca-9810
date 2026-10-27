@@ -3,7 +3,7 @@
 .source "QuickApertureControl.java"
 
 # interfaces
-.implements Landroid/view/View$OnClickListener;
+.implements Lio/mesalabs/unica/camera/ApertureAdapterItems$Controller;
 
 
 # annotations
@@ -46,21 +46,11 @@
     .end annotation
 .end field
 
-.field final indicatorList:Ljava/lang/ref/WeakReference;
+.field final indicators:Ljava/lang/ref/WeakReference;
     .annotation system Ldalvik/annotation/Signature;
         value = {
             "Ljava/lang/ref/WeakReference<",
             "Landroid/view/ViewGroup;",
-            ">;"
-        }
-    .end annotation
-.end field
-
-.field final list:Ljava/lang/ref/WeakReference;
-    .annotation system Ldalvik/annotation/Signature;
-        value = {
-            "Ljava/lang/ref/WeakReference<",
-            "Landroid/view/View;",
             ">;"
         }
     .end annotation
@@ -77,8 +67,6 @@
 .end field
 
 .field mode:I
-
-.field originalMargin:I
 
 .field ownedCallback:Z
 
@@ -106,20 +94,6 @@
     .end annotation
 .end field
 
-.field selected:Z
-
-.field final slot:I
-
-.field final text:Ljava/lang/ref/WeakReference;
-    .annotation system Ldalvik/annotation/Signature;
-        value = {
-            "Ljava/lang/ref/WeakReference<",
-            "Landroid/widget/TextView;",
-            ">;"
-        }
-    .end annotation
-.end field
-
 .field final timeout:Ljava/lang/Runnable;
 
 
@@ -133,17 +107,17 @@
 .end method
 
 .method constructor <init>(Landroid/view/View;)V
-    .registers 14
+    .registers 9
     .annotation system Ldalvik/annotation/Throws;
         value = {
             Ljava/lang/Exception;
         }
     .end annotation
 
-    .line 188
+    .line 110
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
-    .line 178
+    .line 103
     new-instance v0, Ljava/lang/ref/WeakReference;
 
     const/4 v1, 0x0
@@ -152,398 +126,184 @@
 
     iput-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->engine:Ljava/lang/ref/WeakReference;
 
-    .line 179
     new-instance v0, Ljava/lang/ref/WeakReference;
 
     invoke-direct {v0, v1}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
 
     iput-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->maker:Ljava/lang/ref/WeakReference;
 
+    new-instance v0, Ljava/lang/ref/WeakReference;
+
+    invoke-direct {v0, v1}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
+
+    iput-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->baselineMaker:Ljava/lang/ref/WeakReference;
+
     const/4 v0, 0x0
 
-    .line 183
+    .line 107
     iput v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
 
-    .line 185
-    new-instance v2, Ljava/lang/ref/WeakReference;
+    .line 109
+    new-instance v1, Lio/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda0;
 
-    invoke-direct {v2, v1}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
+    invoke-direct {v1, p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda0;-><init>(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
 
-    iput-object v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->baselineMaker:Ljava/lang/ref/WeakReference;
+    iput-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
 
-    .line 189
+    .line 111
     new-instance v1, Ljava/lang/ref/WeakReference;
 
     invoke-direct {v1, p1}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
 
     iput-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->root:Ljava/lang/ref/WeakReference;
 
-    .line 190
-    const-string v1, "quick_setting_main_list"
+    .line 112
+    const-string v1, "quick_setting_indicator_list_area"
 
-    invoke-static {p1, v1}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$smnamed(Landroid/view/View;Ljava/lang/String;)Landroid/view/View;
-
-    move-result-object v1
-
-    .line 191
-    const-string v2, "quick_setting_close_button"
-
-    invoke-static {p1, v2}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$smnamed(Landroid/view/View;Ljava/lang/String;)Landroid/view/View;
-
-    move-result-object v2
-
-    .line 192
-    const-string v3, "quick_setting_list_wrapper"
-
-    invoke-static {p1, v3}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$smnamed(Landroid/view/View;Ljava/lang/String;)Landroid/view/View;
-
-    move-result-object v3
-
-    check-cast v3, Landroid/view/ViewGroup;
-
-    if-eqz v1, :cond_17e
-
-    if-eqz v2, :cond_17e
-
-    if-eqz v3, :cond_17e
-
-    .line 194
-    new-instance v4, Ljava/lang/ref/WeakReference;
-
-    invoke-direct {v4, v1}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
-
-    iput-object v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->list:Ljava/lang/ref/WeakReference;
-
-    .line 195
-    invoke-virtual {p1}, Landroid/view/View;->getResources()Landroid/content/res/Resources;
-
-    move-result-object v1
-
-    invoke-virtual {v1}, Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;
-
-    move-result-object v1
-
-    iget v1, v1, Landroid/util/DisplayMetrics;->density:F
-
-    const/high16 v4, 0x42600000    # 56.0f
-
-    mul-float/2addr v1, v4
-
-    invoke-static {v1}, Ljava/lang/Math;->round(F)I
-
-    move-result v1
-
-    iput v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->slot:I
-
-    .line 196
-    new-instance v4, Landroid/widget/TextView;
-
-    invoke-virtual {p1}, Landroid/view/View;->getContext()Landroid/content/Context;
-
-    move-result-object v5
-
-    invoke-direct {v4, v5}, Landroid/widget/TextView;-><init>(Landroid/content/Context;)V
-
-    .line 197
-    invoke-virtual {p1}, Landroid/view/View;->getResources()Landroid/content/res/Resources;
-
-    move-result-object v5
-
-    invoke-virtual {p1}, Landroid/view/View;->getContext()Landroid/content/Context;
-
-    move-result-object v6
-
-    invoke-virtual {v6}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
-
-    move-result-object v6
-
-    const-string v7, "SecNumFixedSemiBold"
-
-    const-string v8, "style"
-
-    invoke-virtual {v5, v7, v8, v6}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
-
-    move-result v5
-
-    if-eqz v5, :cond_79
-
-    .line 198
-    invoke-virtual {v4, v5}, Landroid/widget/TextView;->setTextAppearance(I)V
-
-    .line 199
-    :cond_79
-    invoke-static {v4, v0}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$smapplyTypography(Landroid/widget/TextView;I)V
-
-    const/4 v6, -0x1
-
-    .line 200
-    invoke-virtual {v4, v6}, Landroid/widget/TextView;->setTextColor(I)V
-
-    const/16 v6, 0x11
-
-    .line 201
-    invoke-virtual {v4, v6}, Landroid/widget/TextView;->setGravity(I)V
-
-    const/4 v7, 0x1
-
-    .line 202
-    invoke-virtual {v4, v7}, Landroid/widget/TextView;->setClickable(Z)V
-
-    .line 203
-    invoke-virtual {v4, v7}, Landroid/widget/TextView;->setFocusable(Z)V
-
-    const/16 v8, 0x8
-
-    .line 204
-    invoke-virtual {v4, v8}, Landroid/widget/TextView;->setVisibility(I)V
-
-    .line 205
-    invoke-virtual {v4, p0}, Landroid/widget/TextView;->setOnClickListener(Landroid/view/View$OnClickListener;)V
-
-    .line 206
-    invoke-static {v4}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$sminstallStockFeedback(Landroid/widget/TextView;)V
-
-    .line 207
-    invoke-virtual {p1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
-
-    move-result-object v9
-
-    invoke-virtual {v9}, Ljava/lang/Class;->getClassLoader()Ljava/lang/ClassLoader;
-
-    move-result-object v9
-
-    const-string v10, "androidx.constraintlayout.widget.ConstraintLayout$LayoutParams"
-
-    invoke-static {v10, v7, v9}, Ljava/lang/Class;->forName(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;
-
-    move-result-object v9
-
-    .line 208
-    sget-object v10, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
-
-    sget-object v11, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
-
-    filled-new-array {v10, v11}, [Ljava/lang/Class;
-
-    move-result-object v10
-
-    invoke-virtual {v9, v10}, Ljava/lang/Class;->getConstructor([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;
-
-    move-result-object v10
-
-    invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
-
-    move-result-object v1
-
-    invoke-static {v0}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
-
-    move-result-object v11
-
-    filled-new-array {v1, v11}, [Ljava/lang/Object;
-
-    move-result-object v1
-
-    invoke-virtual {v10, v1}, Ljava/lang/reflect/Constructor;->newInstance([Ljava/lang/Object;)Ljava/lang/Object;
-
-    move-result-object v1
-
-    check-cast v1, Landroid/view/ViewGroup$LayoutParams;
-
-    .line 209
-    const-string v10, "endToStart"
-
-    invoke-virtual {v9, v10}, Ljava/lang/Class;->getField(Ljava/lang/String;)Ljava/lang/reflect/Field;
-
-    move-result-object v10
-
-    invoke-virtual {v2}, Landroid/view/View;->getId()I
-
-    move-result v2
-
-    invoke-virtual {v10, v1, v2}, Ljava/lang/reflect/Field;->setInt(Ljava/lang/Object;I)V
-
-    .line 210
-    const-string v2, "topToTop"
-
-    invoke-virtual {v9, v2}, Ljava/lang/Class;->getField(Ljava/lang/String;)Ljava/lang/reflect/Field;
-
-    move-result-object v10
-
-    invoke-virtual {v10, v1, v0}, Ljava/lang/reflect/Field;->setInt(Ljava/lang/Object;I)V
-
-    .line 211
-    const-string v10, "bottomToBottom"
-
-    invoke-virtual {v9, v10}, Ljava/lang/Class;->getField(Ljava/lang/String;)Ljava/lang/reflect/Field;
-
-    move-result-object v10
-
-    invoke-virtual {v10, v1, v0}, Ljava/lang/reflect/Field;->setInt(Ljava/lang/Object;I)V
-
-    .line 212
-    invoke-virtual {v3, v4, v1}, Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
-
-    .line 213
-    new-instance v1, Ljava/lang/ref/WeakReference;
-
-    invoke-direct {v1, v4}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
-
-    iput-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->text:Ljava/lang/ref/WeakReference;
-
-    .line 214
-    const-string v1, "quick_setting_indicator_list"
-
-    invoke-static {p1, v1}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$smnamed(Landroid/view/View;Ljava/lang/String;)Landroid/view/View;
+    invoke-static {p1, v1}, Lio/mesalabs/unica/camera/QuickApertureControl;->named(Landroid/view/View;Ljava/lang/String;)Landroid/view/View;
 
     move-result-object v1
 
     check-cast v1, Landroid/view/ViewGroup;
 
-    .line 215
-    const-string v3, "quick_setting_indicator_list_area"
+    .line 113
+    const-string v2, "quick_setting_indicator_list"
 
-    invoke-static {p1, v3}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$smnamed(Landroid/view/View;Ljava/lang/String;)Landroid/view/View;
-
-    move-result-object v3
-
-    check-cast v3, Landroid/view/ViewGroup;
-
-    if-eqz v1, :cond_176
-
-    if-eqz v3, :cond_176
-
-    .line 217
-    new-instance v4, Ljava/lang/ref/WeakReference;
-
-    invoke-direct {v4, v1}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
-
-    iput-object v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->indicatorList:Ljava/lang/ref/WeakReference;
-
-    .line 218
-    new-instance v1, Landroid/widget/TextView;
-
-    invoke-virtual {p1}, Landroid/view/View;->getContext()Landroid/content/Context;
-
-    move-result-object v4
-
-    invoke-direct {v1, v4}, Landroid/widget/TextView;-><init>(Landroid/content/Context;)V
-
-    if-eqz v5, :cond_115
-
-    .line 219
-    invoke-virtual {v1, v5}, Landroid/widget/TextView;->setTextAppearance(I)V
-
-    .line 220
-    :cond_115
-    invoke-static {v1, v0}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$smapplyTypography(Landroid/widget/TextView;I)V
-
-    .line 221
-    invoke-virtual {v1, v6}, Landroid/widget/TextView;->setGravity(I)V
-
-    invoke-virtual {v1, v8}, Landroid/widget/TextView;->setVisibility(I)V
-
-    .line 222
-    invoke-virtual {v1, v7}, Landroid/widget/TextView;->setClickable(Z)V
-
-    invoke-virtual {v1, v7}, Landroid/widget/TextView;->setFocusable(Z)V
-
-    invoke-virtual {v1, p0}, Landroid/widget/TextView;->setOnClickListener(Landroid/view/View$OnClickListener;)V
-
-    .line 223
-    invoke-static {v1}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$sminstallStockFeedback(Landroid/widget/TextView;)V
-
-    .line 224
-    sget-object v4, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
-
-    sget-object v5, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
-
-    filled-new-array {v4, v5}, [Ljava/lang/Class;
-
-    move-result-object v4
-
-    invoke-virtual {v9, v4}, Ljava/lang/Class;->getConstructor([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;
-
-    move-result-object v4
-
-    invoke-static {v7}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
-
-    move-result-object v5
-
-    invoke-static {v7}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
-
-    move-result-object v6
-
-    filled-new-array {v5, v6}, [Ljava/lang/Object;
-
-    move-result-object v5
-
-    invoke-virtual {v4, v5}, Ljava/lang/reflect/Constructor;->newInstance([Ljava/lang/Object;)Ljava/lang/Object;
-
-    move-result-object v4
-
-    check-cast v4, Landroid/view/ViewGroup$LayoutParams;
-
-    .line 225
-    const-string v5, "leftToLeft"
-
-    invoke-virtual {v9, v5}, Ljava/lang/Class;->getField(Ljava/lang/String;)Ljava/lang/reflect/Field;
-
-    move-result-object v5
-
-    invoke-virtual {v5, v4, v0}, Ljava/lang/reflect/Field;->setInt(Ljava/lang/Object;I)V
-
-    .line 226
-    invoke-virtual {v9, v2}, Ljava/lang/Class;->getField(Ljava/lang/String;)Ljava/lang/reflect/Field;
+    invoke-static {p1, v2}, Lio/mesalabs/unica/camera/QuickApertureControl;->named(Landroid/view/View;Ljava/lang/String;)Landroid/view/View;
 
     move-result-object v2
 
-    invoke-virtual {v2, v4, v0}, Ljava/lang/reflect/Field;->setInt(Ljava/lang/Object;I)V
+    check-cast v2, Landroid/view/ViewGroup;
 
-    .line 227
-    invoke-virtual {v3, v1, v4}, Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
+    if-eqz v1, :cond_ba
 
-    .line 228
+    if-eqz v2, :cond_ba
+
+    .line 115
+    new-instance v3, Ljava/lang/ref/WeakReference;
+
+    invoke-direct {v3, v2}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
+
+    iput-object v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->indicators:Ljava/lang/ref/WeakReference;
+
+    .line 116
+    new-instance v2, Landroid/widget/TextView;
+
+    invoke-virtual {p1}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object v3
+
+    invoke-direct {v2, v3}, Landroid/widget/TextView;-><init>(Landroid/content/Context;)V
+
+    const/16 v3, 0x11
+
+    invoke-virtual {v2, v3}, Landroid/widget/TextView;->setGravity(I)V
+
+    const/16 v3, 0x8
+
+    invoke-virtual {v2, v3}, Landroid/widget/TextView;->setVisibility(I)V
+
+    const/4 v3, 0x1
+
+    .line 117
+    invoke-virtual {v2, v3}, Landroid/widget/TextView;->setClickable(Z)V
+
+    invoke-virtual {v2, v3}, Landroid/widget/TextView;->setFocusable(Z)V
+
+    invoke-virtual {v2, p0}, Landroid/widget/TextView;->setOnClickListener(Landroid/view/View$OnClickListener;)V
+
+    invoke-static {v2}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$sminstallStockFeedback(Landroid/widget/TextView;)V
+
+    .line 118
+    invoke-virtual {p1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+
+    move-result-object v4
+
+    invoke-virtual {v4}, Ljava/lang/Class;->getClassLoader()Ljava/lang/ClassLoader;
+
+    move-result-object v4
+
+    const-string v5, "androidx.constraintlayout.widget.ConstraintLayout$LayoutParams"
+
+    invoke-static {v5, v3, v4}, Ljava/lang/Class;->forName(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;
+
+    move-result-object v4
+
+    .line 119
+    sget-object v5, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
+
+    sget-object v6, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
+
+    filled-new-array {v5, v6}, [Ljava/lang/Class;
+
+    move-result-object v5
+
+    invoke-virtual {v4, v5}, Ljava/lang/Class;->getConstructor([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;
+
+    move-result-object v5
+
+    invoke-static {v3}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
+
+    move-result-object v6
+
+    invoke-static {v3}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
+
+    move-result-object v3
+
+    filled-new-array {v6, v3}, [Ljava/lang/Object;
+
+    move-result-object v3
+
+    invoke-virtual {v5, v3}, Ljava/lang/reflect/Constructor;->newInstance([Ljava/lang/Object;)Ljava/lang/Object;
+
+    move-result-object v3
+
+    check-cast v3, Landroid/view/ViewGroup$LayoutParams;
+
+    .line 120
+    const-string v5, "leftToLeft"
+
+    invoke-virtual {v4, v5}, Ljava/lang/Class;->getField(Ljava/lang/String;)Ljava/lang/reflect/Field;
+
+    move-result-object v5
+
+    invoke-virtual {v5, v3, v0}, Ljava/lang/reflect/Field;->setInt(Ljava/lang/Object;I)V
+
+    const-string v5, "topToTop"
+
+    invoke-virtual {v4, v5}, Ljava/lang/Class;->getField(Ljava/lang/String;)Ljava/lang/reflect/Field;
+
+    move-result-object v4
+
+    invoke-virtual {v4, v3, v0}, Ljava/lang/reflect/Field;->setInt(Ljava/lang/Object;I)V
+
+    .line 121
+    invoke-virtual {v1, v2, v3}, Landroid/view/ViewGroup;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
+
     new-instance v0, Ljava/lang/ref/WeakReference;
 
-    invoke-direct {v0, v1}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
+    invoke-direct {v0, v2}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
 
     iput-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pin:Ljava/lang/ref/WeakReference;
 
-    .line 229
+    .line 122
     invoke-virtual {p1}, Landroid/view/View;->getViewTreeObserver()Landroid/view/ViewTreeObserver;
 
     move-result-object p1
 
-    new-instance v0, Lio/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda0;
+    new-instance v0, Lio/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda1;
 
-    invoke-direct {v0, p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda0;-><init>(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
+    invoke-direct {v0, p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda1;-><init>(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
 
     invoke-virtual {p1, v0}, Landroid/view/ViewTreeObserver;->addOnGlobalLayoutListener(Landroid/view/ViewTreeObserver$OnGlobalLayoutListener;)V
 
-    .line 230
-    new-instance p1, Lio/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda1;
-
-    invoke-direct {p1, p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda1;-><init>(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
-
-    iput-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
-
     return-void
 
-    .line 216
-    :cond_176
+    .line 114
+    :cond_ba
     new-instance p0, Ljava/lang/IllegalStateException;
 
-    const-string p1, "Missing indicator area"
-
-    invoke-direct {p0, p1}, Ljava/lang/IllegalStateException;-><init>(Ljava/lang/String;)V
-
-    throw p0
-
-    .line 193
-    :cond_17e
-    new-instance p0, Ljava/lang/IllegalStateException;
-
-    const-string p1, "Missing quick bar"
+    const-string p1, "Missing Camera indicator area"
 
     invoke-direct {p0, p1}, Ljava/lang/IllegalStateException;-><init>(Ljava/lang/String;)V
 
@@ -555,7 +315,7 @@
 
     const/4 v0, 0x0
 
-    .line 230
+    .line 109
     iput-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
 
     invoke-virtual {p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->update()V
@@ -565,19 +325,59 @@
 
 
 # virtual methods
+.method public available()Z
+    .registers 1
+
+    .line 145
+    iget-boolean p0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
+
+    return p0
+.end method
+
+.method clearPressed()V
+    .registers 2
+
+    .line 163
+    iget-object p0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pin:Ljava/lang/ref/WeakReference;
+
+    invoke-virtual {p0}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+
+    move-result-object p0
+
+    check-cast p0, Landroid/widget/TextView;
+
+    if-eqz p0, :cond_e
+
+    const/4 v0, 0x0
+
+    invoke-virtual {p0, v0}, Landroid/widget/TextView;->setPressed(Z)V
+
+    :cond_e
+    return-void
+.end method
+
 .method close()V
-    .registers 7
+    .registers 6
 
-    .line 270
-    iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->text:Ljava/lang/ref/WeakReference;
+    const/4 v0, 0x0
 
-    invoke-virtual {v0}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+    .line 165
+    iput-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
 
-    move-result-object v0
+    iput-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
 
-    check-cast v0, Landroid/widget/TextView;
+    invoke-static {}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$sfgetmain()Landroid/os/Handler;
 
-    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->list:Ljava/lang/ref/WeakReference;
+    move-result-object v1
+
+    iget-object v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
+
+    invoke-virtual {v1, v2}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
+
+    invoke-virtual {p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->clearPressed()V
+
+    .line 166
+    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->root:Ljava/lang/ref/WeakReference;
 
     invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
 
@@ -585,290 +385,242 @@
 
     check-cast v1, Landroid/view/View;
 
+    if-eqz v1, :cond_1e
+
+    invoke-static {v1}, Lio/mesalabs/unica/camera/ApertureAdapterItems;->detach(Landroid/view/View;)V
+
+    .line 167
+    :cond_1e
+    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pin:Ljava/lang/ref/WeakReference;
+
+    invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+
+    move-result-object v1
+
+    check-cast v1, Landroid/widget/TextView;
+
+    if-eqz v1, :cond_2d
+
     const/16 v2, 0x8
 
-    const/4 v3, 0x0
+    invoke-virtual {v1, v2}, Landroid/widget/TextView;->setVisibility(I)V
 
-    if-eqz v0, :cond_3a
+    .line 168
+    :cond_2d
+    :try_start_2d
+    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->engine:Ljava/lang/ref/WeakReference;
 
-    .line 271
-    invoke-virtual {v0}, Landroid/widget/TextView;->getVisibility()I
-
-    move-result v4
-
-    if-nez v4, :cond_3a
-
-    .line 272
-    invoke-virtual {v0, v3}, Landroid/widget/TextView;->setPressed(Z)V
-
-    .line 273
-    invoke-virtual {v0, v2}, Landroid/widget/TextView;->setVisibility(I)V
-
-    iget-object v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
-
-    invoke-virtual {v0, v4}, Landroid/widget/TextView;->removeCallbacks(Ljava/lang/Runnable;)Z
-
-    if-eqz v1, :cond_3a
-
-    .line 275
-    invoke-virtual {v1}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
-
-    move-result-object v0
-
-    check-cast v0, Landroid/view/ViewGroup$MarginLayoutParams;
-
-    .line 276
-    iget v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->originalMargin:I
-
-    iput v4, v0, Landroid/view/ViewGroup$MarginLayoutParams;->rightMargin:I
-
-    iget v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->originalMargin:I
-
-    invoke-virtual {v0, v4}, Landroid/view/ViewGroup$MarginLayoutParams;->setMarginEnd(I)V
-
-    .line 277
-    invoke-virtual {v1, v0}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
-
-    .line 281
-    :cond_3a
-    :try_start_3a
-    iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->engine:Ljava/lang/ref/WeakReference;
-
-    invoke-virtual {v0}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
-
-    move-result-object v0
-
-    .line 282
-    iget-boolean v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
-
-    if-nez v1, :cond_8a
-
-    iget-boolean v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->ownedCallback:Z
-
-    if-eqz v1, :cond_8a
-
-    if-eqz v0, :cond_8a
-
-    .line 283
-    const-string v1, "getCallbackManager"
-
-    invoke-static {v0, v1}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-
-    move-result-object v0
-
-    .line 284
-    const-string v1, "mLensInfoCallback"
-
-    invoke-static {v0, v1}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+    invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
 
     move-result-object v1
 
-    .line 285
-    const-string v4, "mListenerList"
+    iget-boolean v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->ownedCallback:Z
 
-    invoke-static {v1, v4}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+    if-eqz v2, :cond_77
 
-    move-result-object v1
+    if-eqz v1, :cond_77
 
-    check-cast v1, Ljava/util/List;
+    .line 169
+    const-string v2, "getCallbackManager"
 
-    invoke-interface {v1}, Ljava/util/List;->isEmpty()Z
-
-    move-result v1
-
-    if-eqz v1, :cond_7f
-
-    .line 286
-    invoke-virtual {v0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+    invoke-static {v1, v2}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
     move-result-object v1
 
-    const-string v4, "enableLensInfoCallback"
+    const-string v2, "mLensInfoCallback"
 
-    sget-object v5, Ljava/lang/Boolean;->TYPE:Ljava/lang/Class;
+    invoke-static {v1, v2}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
-    filled-new-array {v5}, [Ljava/lang/Class;
+    move-result-object v2
 
-    move-result-object v5
+    .line 170
+    const-string v3, "mListenerList"
 
-    invoke-virtual {v1, v4, v5}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
+    invoke-static {v2, v3}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
-    move-result-object v1
+    move-result-object v2
 
-    invoke-static {v3}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
+    check-cast v2, Ljava/util/List;
+
+    invoke-interface {v2}, Ljava/util/List;->isEmpty()Z
+
+    move-result v2
+
+    if-eqz v2, :cond_77
+
+    invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+
+    move-result-object v2
+
+    const-string v3, "enableLensInfoCallback"
+
+    sget-object v4, Ljava/lang/Boolean;->TYPE:Ljava/lang/Class;
+
+    filled-new-array {v4}, [Ljava/lang/Class;
 
     move-result-object v4
 
-    filled-new-array {v4}, [Ljava/lang/Object;
+    invoke-virtual {v2, v3, v4}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
-    move-result-object v4
+    move-result-object v2
 
-    invoke-virtual {v1, v0, v4}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
+    invoke-static {v0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
 
-    .line 287
-    :cond_7f
-    iput-boolean v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->ownedCallback:Z
-    :try_end_81
-    .catch Ljava/lang/Exception; {:try_start_3a .. :try_end_81} :catch_82
+    move-result-object v3
 
-    goto :goto_8a
+    filled-new-array {v3}, [Ljava/lang/Object;
 
-    :catch_82
-    move-exception v0
+    move-result-object v3
 
-    .line 289
-    const-string v1, "UnicaAperture"
+    invoke-virtual {v2, v1, v3}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
+    :try_end_6e
+    .catch Ljava/lang/Exception; {:try_start_2d .. :try_end_6e} :catch_6f
 
-    const-string v4, "Quick aperture cleanup"
+    goto :goto_77
 
-    invoke-static {v1, v4, v0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
+    :catch_6f
+    move-exception v1
 
-    .line 290
-    :cond_8a
-    :goto_8a
-    iput-boolean v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
+    .line 171
+    const-string v2, "UnicaAperture"
 
-    .line 291
-    iget-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
+    const-string v3, "Aperture callback cleanup"
 
-    if-nez v0, :cond_a8
+    invoke-static {v2, v3, v1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    const/4 v0, 0x0
+    :cond_77
+    :goto_77
+    iput-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->ownedCallback:Z
 
-    .line 292
-    iput-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
-
-    .line 293
-    iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pin:Ljava/lang/ref/WeakReference;
-
-    invoke-virtual {v0}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
-
-    move-result-object v0
-
-    check-cast v0, Landroid/widget/TextView;
-
-    if-eqz v0, :cond_a8
-
-    .line 294
-    invoke-virtual {v0, v3}, Landroid/widget/TextView;->setPressed(Z)V
-
-    invoke-virtual {v0, v2}, Landroid/widget/TextView;->setVisibility(I)V
-
-    iget-object p0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
-
-    invoke-virtual {v0, p0}, Landroid/widget/TextView;->removeCallbacks(Ljava/lang/Runnable;)Z
-
-    :cond_a8
     return-void
 .end method
 
 .method public onClick(Landroid/view/View;)V
-    .registers 12
+    .registers 11
 
-    .line 349
-    const-string v0, "restartPreviewRepeating"
+    .line 183
+    const-string p1, "restartPreviewRepeating"
 
-    const-string v1, "UnicaAperture"
+    const-string v0, "UnicaAperture"
 
-    iget-object v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->root:Ljava/lang/ref/WeakReference;
+    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->root:Ljava/lang/ref/WeakReference;
+
+    invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+
+    move-result-object v1
+
+    check-cast v1, Landroid/view/View;
+
+    iget-object v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->maker:Ljava/lang/ref/WeakReference;
 
     invoke-virtual {v2}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
 
     move-result-object v2
 
-    check-cast v2, Landroid/view/View;
+    if-eqz v1, :cond_fa
 
-    iget-object v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->maker:Ljava/lang/ref/WeakReference;
+    if-eqz v2, :cond_fa
 
-    invoke-virtual {v3}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+    iget-object v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
 
-    move-result-object v3
+    if-eqz v3, :cond_fa
 
-    iget-object v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
+    iget-boolean v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
 
-    if-eqz v2, :cond_ed
+    if-nez v3, :cond_fa
 
-    if-eqz v3, :cond_ed
+    iget-boolean v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
 
-    if-eqz v4, :cond_ed
+    if-nez v3, :cond_24
 
-    .line 350
-    iget-boolean v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
+    goto/16 :goto_fa
 
-    if-eqz v4, :cond_20
+    :cond_24
+    const/4 v3, 0x0
 
-    goto/16 :goto_ed
+    .line 185
+    :try_start_25
+    const-string v4, "isCapturing"
 
-    :cond_20
-    const/4 v4, 0x0
+    const-string v5, "isCaptureRequested"
 
-    .line 352
-    :try_start_21
-    invoke-virtual {v2}, Landroid/view/View;->getContext()Landroid/content/Context;
+    const-string v6, "isRecording"
 
-    move-result-object v5
+    const-string v7, "isRecordingProcessStarted"
 
-    .line 353
-    const-string v6, "isCapturing"
+    filled-new-array {v4, v5, v6, v7}, [Ljava/lang/String;
 
-    const-string v7, "isCaptureRequested"
+    move-result-object v4
 
-    const-string v8, "isRecording"
-
-    const-string v9, "isRecordingProcessStarted"
-
-    filled-new-array {v6, v7, v8, v9}, [Ljava/lang/String;
-
-    move-result-object v6
-
-    move v7, v4
+    move v5, v3
 
     :goto_32
-    const/4 v8, 0x4
+    const/4 v6, 0x4
 
-    if-ge v7, v8, :cond_48
+    if-ge v5, v6, :cond_4c
 
-    aget-object v8, v6, v7
+    aget-object v6, v4, v5
 
-    .line 354
-    sget-object v9, Ljava/lang/Boolean;->TRUE:Ljava/lang/Boolean;
+    sget-object v7, Ljava/lang/Boolean;->TRUE:Ljava/lang/Boolean;
 
-    invoke-static {v5, v8}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+    invoke-virtual {v1}, Landroid/view/View;->getContext()Landroid/content/Context;
 
     move-result-object v8
 
-    invoke-virtual {v9, v8}, Ljava/lang/Boolean;->equals(Ljava/lang/Object;)Z
+    invoke-static {v8, v6}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
-    move-result v8
+    move-result-object v6
 
-    if-eqz v8, :cond_45
+    invoke-virtual {v7, v6}, Ljava/lang/Boolean;->equals(Ljava/lang/Object;)Z
 
-    goto/16 :goto_ed
+    move-result v6
 
-    :cond_45
-    add-int/lit8 v7, v7, 0x1
+    if-eqz v6, :cond_49
+
+    goto/16 :goto_fa
+
+    :cond_49
+    add-int/lit8 v5, v5, 0x1
 
     goto :goto_32
 
-    .line 355
-    :cond_48
-    invoke-virtual {v2}, Landroid/view/View;->getContext()Landroid/content/Context;
+    .line 186
+    :cond_4c
+    invoke-virtual {v1}, Landroid/view/View;->getContext()Landroid/content/Context;
 
-    move-result-object v2
+    move-result-object v1
 
-    invoke-static {v2, v3}, Lio/mesalabs/unica/camera/ApertureControl;->dualAperture(Landroid/content/Context;Ljava/lang/Object;)Z
+    invoke-static {v1, v2}, Lio/mesalabs/unica/camera/ApertureControl;->dualAperture(Landroid/content/Context;Ljava/lang/Object;)Z
 
-    move-result v2
+    move-result v1
 
-    if-nez v2, :cond_54
+    if-eqz v1, :cond_fa
 
-    goto/16 :goto_ed
+    iget-boolean v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->autoBaselineSaved:Z
 
-    .line 356
-    :cond_54
-    invoke-virtual {v3}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+    if-eqz v1, :cond_fa
 
-    move-result-object v2
+    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->baselineMaker:Ljava/lang/ref/WeakReference;
+
+    invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+
+    move-result-object v1
+
+    if-eq v1, v2, :cond_64
+
+    goto/16 :goto_fa
+
+    .line 187
+    :cond_64
+    iget v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+
+    invoke-static {v1}, Lio/mesalabs/unica/camera/ApertureMode;->next(I)I
+
+    move-result v1
+
+    invoke-virtual {v2}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
+
+    move-result-object v4
 
     const-string v5, "setPublicSetting"
 
@@ -880,127 +632,108 @@
 
     move-result-object v6
 
-    invoke-virtual {v2, v5, v6}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
+    invoke-virtual {v4, v5, v6}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
-    move-result-object v2
+    move-result-object v4
 
-    .line 357
-    iget-boolean v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->autoBaselineSaved:Z
+    .line 188
+    sget-object v5, Landroid/hardware/camera2/CaptureRequest;->LENS_APERTURE:Landroid/hardware/camera2/CaptureRequest$Key;
 
-    if-eqz v5, :cond_ed
-
-    iget-object v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->baselineMaker:Ljava/lang/ref/WeakReference;
-
-    invoke-virtual {v5}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
-
-    move-result-object v5
-
-    if-eq v5, v3, :cond_74
-
-    goto/16 :goto_ed
-
-    .line 358
-    :cond_74
-    iget v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
-
-    invoke-static {v5}, Lio/mesalabs/unica/camera/ApertureMode;->next(I)I
-
-    move-result v5
-
-    .line 359
     iget-object v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->autoBaseline:Ljava/lang/Object;
 
-    invoke-static {v5, v6}, Lio/mesalabs/unica/camera/ApertureMode;->request(ILjava/lang/Object;)Ljava/lang/Object;
+    invoke-static {v1, v6}, Lio/mesalabs/unica/camera/ApertureMode;->request(ILjava/lang/Object;)Ljava/lang/Object;
 
     move-result-object v6
 
-    .line 360
-    sget-object v7, Landroid/hardware/camera2/CaptureRequest;->LENS_APERTURE:Landroid/hardware/camera2/CaptureRequest$Key;
+    filled-new-array {v5, v6}, [Ljava/lang/Object;
 
-    filled-new-array {v7, v6}, [Ljava/lang/Object;
+    move-result-object v5
 
-    move-result-object v7
+    invoke-virtual {v4, v2, v5}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
+    :try_end_8b
+    .catch Ljava/lang/Exception; {:try_start_25 .. :try_end_8b} :catch_ef
 
-    invoke-virtual {v2, v3, v7}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
-    :try_end_89
-    .catch Ljava/lang/Exception; {:try_start_21 .. :try_end_89} :catch_e2
+    .line 189
+    :try_start_8b
+    invoke-static {v2, p1}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+    :try_end_8e
+    .catch Ljava/lang/Exception; {:try_start_8b .. :try_end_8e} :catch_d9
 
-    .line 362
-    :try_start_89
-    invoke-static {v3, v0}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-    :try_end_8c
-    .catch Ljava/lang/Exception; {:try_start_89 .. :try_end_8c} :catch_cc
+    .line 191
+    :try_start_8e
+    iput v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
 
-    .line 368
-    :try_start_8c
-    iput v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+    const/4 p1, 0x1
 
-    const/4 v0, 0x1
-
-    if-eqz v5, :cond_93
-
-    move v2, v0
-
-    goto :goto_94
-
-    :cond_93
-    move v2, v4
-
-    :goto_94
-    iput-boolean v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->selected:Z
-
-    .line 369
-    invoke-static {v5}, Lio/mesalabs/unica/camera/ApertureMode;->name(I)Ljava/lang/String;
-
-    move-result-object v2
-
-    invoke-static {v6}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
-
-    move-result-object v3
-
-    new-instance v5, Ljava/lang/StringBuilder;
-
-    invoke-direct {v5}, Ljava/lang/StringBuilder;-><init>()V
-
-    const-string v6, "Aperture mode="
-
-    invoke-virtual {v5, v6}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    invoke-virtual {v5, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    const-string v2, " request="
-
-    invoke-virtual {v5, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    invoke-virtual {v5, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    invoke-virtual {v5}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
-
-    move-result-object v2
-
-    invoke-static {v1, v2}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
-
-    .line 370
-    iput-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
+    iput-boolean p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
 
     invoke-virtual {p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->update()V
 
-    iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
+    invoke-static {}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$sfgetmain()Landroid/os/Handler;
 
-    invoke-virtual {p1, v0}, Landroid/view/View;->removeCallbacks(Ljava/lang/Runnable;)Z
+    move-result-object p1
 
-    iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
+    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
 
-    const-wide/16 v2, 0x5dc
+    invoke-virtual {p1, v1}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    invoke-virtual {p1, v0, v2, v3}, Landroid/view/View;->postDelayed(Ljava/lang/Runnable;J)Z
+    invoke-static {}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$sfgetmain()Landroid/os/Handler;
+
+    move-result-object p1
+
+    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
+
+    const-wide/16 v4, 0x5dc
+
+    invoke-virtual {p1, v1, v4, v5}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
+
+    .line 192
+    iget p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+
+    invoke-static {p1}, Lio/mesalabs/unica/camera/ApertureMode;->name(I)Ljava/lang/String;
+
+    move-result-object p1
+
+    iget v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+
+    iget-object v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->autoBaseline:Ljava/lang/Object;
+
+    invoke-static {v1, v2}, Lio/mesalabs/unica/camera/ApertureMode;->request(ILjava/lang/Object;)Ljava/lang/Object;
+
+    move-result-object v1
+
+    invoke-static {v1}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v1
+
+    new-instance v2, Ljava/lang/StringBuilder;
+
+    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
+
+    const-string v4, "Aperture mode="
+
+    invoke-virtual {v2, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v2, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    const-string p1, " request="
+
+    invoke-virtual {v2, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v2, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v2}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object p1
+
+    invoke-static {v0, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
     return-void
 
-    :catch_cc
-    move-exception p1
+    :catch_d9
+    move-exception v1
 
-    .line 364
+    .line 190
     sget-object v5, Landroid/hardware/camera2/CaptureRequest;->LENS_APERTURE:Landroid/hardware/camera2/CaptureRequest$Key;
 
     iget v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
@@ -1015,280 +748,222 @@
 
     move-result-object v5
 
-    invoke-virtual {v2, v3, v5}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
+    invoke-virtual {v4, v2, v5}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
 
-    .line 365
-    invoke-static {v3, v0}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+    invoke-static {v2, p1}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
-    .line 366
-    throw p1
-    :try_end_e2
-    .catch Ljava/lang/Exception; {:try_start_8c .. :try_end_e2} :catch_e2
+    throw v1
+    :try_end_ef
+    .catch Ljava/lang/Exception; {:try_start_8e .. :try_end_ef} :catch_ef
 
-    :catch_e2
+    :catch_ef
     move-exception p1
 
-    .line 371
-    iput-boolean v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
+    .line 193
+    iput-boolean v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
 
     invoke-virtual {p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->update()V
 
-    const-string p0, "Quick aperture request failed"
+    const-string p0, "Aperture request failed"
 
-    invoke-static {v1, p0, p1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
+    invoke-static {v0, p0, p1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    :cond_ed
-    :goto_ed
+    :cond_fa
+    :goto_fa
     return-void
 .end method
 
-.method open(Ljava/lang/Object;Ljava/lang/Object;Z)V
-    .registers 13
+.method open(Ljava/lang/Object;Ljava/lang/Object;)V
+    .registers 9
     .annotation system Ldalvik/annotation/Throws;
         value = {
             Ljava/lang/Exception;
         }
     .end annotation
 
-    .line 234
-    iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->list:Ljava/lang/ref/WeakReference;
+    .line 125
+    iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->maker:Ljava/lang/ref/WeakReference;
 
     invoke-virtual {v0}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
 
     move-result-object v0
 
-    check-cast v0, Landroid/view/View;
+    const/4 v1, 0x0
 
-    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->text:Ljava/lang/ref/WeakReference;
+    const/4 v2, 0x1
 
-    invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+    if-eq v0, p2, :cond_c
 
-    move-result-object v1
+    move v0, v2
 
-    check-cast v1, Landroid/widget/TextView;
+    goto :goto_d
 
-    if-eqz v0, :cond_12a
+    :cond_c
+    move v0, v1
 
-    if-nez v1, :cond_16
+    .line 126
+    :goto_d
+    new-instance v3, Ljava/lang/ref/WeakReference;
 
-    goto/16 :goto_12a
+    invoke-direct {v3, p1}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
 
-    .line 236
-    :cond_16
-    invoke-virtual {v1}, Landroid/widget/TextView;->getVisibility()I
+    iput-object v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->engine:Ljava/lang/ref/WeakReference;
 
-    move-result v2
+    new-instance v3, Ljava/lang/ref/WeakReference;
 
-    const/4 v3, 0x1
+    invoke-direct {v3, p2}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
 
-    const/4 v4, 0x0
+    iput-object v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->maker:Ljava/lang/ref/WeakReference;
 
-    if-nez v2, :cond_20
+    .line 127
+    const-string v3, "mCamDevice"
 
-    move v2, v3
+    invoke-static {p2, v3}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
-    goto :goto_21
+    move-result-object v3
 
-    :cond_20
-    move v2, v4
+    const-string v4, "n"
 
-    .line 237
-    :goto_21
-    new-instance v5, Ljava/lang/ref/WeakReference;
+    invoke-static {v3, v4}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
-    invoke-direct {v5, p1}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
+    move-result-object v3
 
-    iput-object v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->engine:Ljava/lang/ref/WeakReference;
+    check-cast v3, Ljava/lang/String;
 
-    new-instance v5, Ljava/lang/ref/WeakReference;
+    iput-object v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->cameraId:Ljava/lang/String;
 
-    invoke-direct {v5, p2}, Ljava/lang/ref/WeakReference;-><init>(Ljava/lang/Object;)V
+    .line 128
+    const-string v3, "getCallbackManager"
 
-    iput-object v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->maker:Ljava/lang/ref/WeakReference;
-
-    .line 238
-    const-string v5, "mCamDevice"
-
-    invoke-static {p2, v5}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-
-    move-result-object v5
-
-    const-string v6, "n"
-
-    invoke-static {v5, v6}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-
-    move-result-object v5
-
-    check-cast v5, Ljava/lang/String;
-
-    iput-object v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->cameraId:Ljava/lang/String;
-
-    .line 239
-    const-string v5, "getCallbackManager"
-
-    invoke-static {p1, v5}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+    invoke-static {p1, v3}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
     move-result-object p1
 
-    .line 240
-    const-string v5, "mLensInfoCallback"
+    .line 129
+    const-string v3, "mLensInfoCallback"
 
-    invoke-static {p1, v5}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+    invoke-static {p1, v3}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
-    move-result-object v5
+    move-result-object v3
 
-    .line 241
-    const-string v6, "mAperture"
+    .line 130
+    iget-boolean v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
 
-    invoke-static {v5, v6}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+    if-eqz v4, :cond_3d
 
-    move-result-object v6
+    if-eqz v0, :cond_69
 
-    check-cast v6, Ljava/lang/Float;
+    .line 131
+    :cond_3d
+    iget-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->ownedCallback:Z
 
-    iput-object v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
+    const-string v4, "mListenerList"
 
-    .line 242
-    iget-object v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
+    invoke-static {v3, v4}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
-    if-eqz v6, :cond_82
+    move-result-object v4
 
-    iget-object v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
+    check-cast v4, Ljava/util/List;
 
-    invoke-virtual {v6}, Ljava/lang/Float;->floatValue()F
+    invoke-interface {v4}, Ljava/util/List;->isEmpty()Z
 
-    move-result v6
+    move-result v4
 
-    const/high16 v7, 0x3fc00000    # 1.5f
+    or-int/2addr v0, v4
 
-    sub-float/2addr v6, v7
+    iput-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->ownedCallback:Z
 
-    invoke-static {v6}, Ljava/lang/Math;->abs(F)F
-
-    move-result v6
-
-    const v7, 0x3c23d70a    # 0.01f
-
-    cmpl-float v6, v6, v7
-
-    if-lez v6, :cond_82
-
-    iget-object v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
-
-    invoke-virtual {v6}, Ljava/lang/Float;->floatValue()F
-
-    move-result v6
-
-    const v8, 0x4019999a    # 2.4f
-
-    sub-float/2addr v6, v8
-
-    invoke-static {v6}, Ljava/lang/Math;->abs(F)F
-
-    move-result v6
-
-    cmpl-float v6, v6, v7
-
-    if-lez v6, :cond_82
-
-    const/4 v6, 0x0
-
-    iput-object v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
-
-    .line 244
-    :cond_82
-    iget-boolean v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
-
-    if-nez v6, :cond_b2
-
-    .line 245
-    iget-boolean v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->ownedCallback:Z
-
-    const-string v7, "mListenerList"
-
-    invoke-static {v5, v7}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
-
-    move-result-object v5
-
-    check-cast v5, Ljava/util/List;
-
-    invoke-interface {v5}, Ljava/util/List;->isEmpty()Z
-
-    move-result v5
-
-    or-int/2addr v5, v6
-
-    iput-boolean v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->ownedCallback:Z
-
-    .line 246
+    .line 132
     invoke-virtual {p1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
-    move-result-object v5
+    move-result-object v0
 
-    sget-object v6, Ljava/lang/Boolean;->TYPE:Ljava/lang/Class;
+    sget-object v4, Ljava/lang/Boolean;->TYPE:Ljava/lang/Class;
 
-    filled-new-array {v6}, [Ljava/lang/Class;
+    filled-new-array {v4}, [Ljava/lang/Class;
 
-    move-result-object v6
+    move-result-object v4
 
-    const-string v7, "enableLensInfoCallback"
+    const-string v5, "enableLensInfoCallback"
 
-    invoke-virtual {v5, v7, v6}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
+    invoke-virtual {v0, v5, v4}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
-    move-result-object v5
+    move-result-object v0
 
-    .line 247
-    invoke-static {v3}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
+    invoke-static {v2}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
 
-    move-result-object v6
+    move-result-object v4
 
-    filled-new-array {v6}, [Ljava/lang/Object;
+    filled-new-array {v4}, [Ljava/lang/Object;
 
-    move-result-object v6
+    move-result-object v4
 
-    invoke-virtual {v5, p1, v6}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
+    invoke-virtual {v0, p1, v4}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
 
-    :cond_b2
-    if-eqz p3, :cond_d0
+    .line 134
+    :cond_69
+    const-string p1, "mAperture"
 
-    if-nez v2, :cond_d0
-
-    .line 250
-    invoke-virtual {v0}, Landroid/view/View;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
+    invoke-static {v3, p1}, Lio/mesalabs/unica/camera/ApertureControl;->field(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
 
     move-result-object p1
 
-    check-cast p1, Landroid/view/ViewGroup$MarginLayoutParams;
+    check-cast p1, Ljava/lang/Float;
 
-    .line 251
-    iget v2, p1, Landroid/view/ViewGroup$MarginLayoutParams;->rightMargin:I
+    iput-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
 
-    iput v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->originalMargin:I
+    .line 135
+    iget-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
 
-    .line 252
-    iget v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->slot:I
+    if-eqz p1, :cond_a0
 
-    add-int/2addr v2, v5
+    iget-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
 
-    iput v2, p1, Landroid/view/ViewGroup$MarginLayoutParams;->rightMargin:I
+    invoke-virtual {p1}, Ljava/lang/Float;->floatValue()F
 
-    .line 253
-    iget v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->originalMargin:I
+    move-result p1
 
-    iget v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->slot:I
+    const/high16 v0, 0x3fc00000    # 1.5f
 
-    add-int/2addr v2, v5
+    sub-float/2addr p1, v0
 
-    invoke-virtual {p1, v2}, Landroid/view/ViewGroup$MarginLayoutParams;->setMarginEnd(I)V
+    invoke-static {p1}, Ljava/lang/Math;->abs(F)F
 
-    .line 254
-    invoke-virtual {v0, p1}, Landroid/view/View;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+    move-result p1
 
-    .line 256
-    :cond_d0
+    const v0, 0x3c23d70a    # 0.01f
+
+    cmpl-float p1, p1, v0
+
+    if-lez p1, :cond_a0
+
+    iget-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
+
+    invoke-virtual {p1}, Ljava/lang/Float;->floatValue()F
+
+    move-result p1
+
+    const v3, 0x4019999a    # 2.4f
+
+    sub-float/2addr p1, v3
+
+    invoke-static {p1}, Ljava/lang/Math;->abs(F)F
+
+    move-result p1
+
+    cmpl-float p1, p1, v0
+
+    if-lez p1, :cond_a0
+
+    const/4 p1, 0x0
+
+    iput-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
+
+    .line 136
+    :cond_a0
     iget-boolean p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->autoBaselineSaved:Z
 
-    if-eqz p1, :cond_dc
+    if-eqz p1, :cond_ac
 
     iget-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->baselineMaker:Ljava/lang/ref/WeakReference;
 
@@ -1296,10 +971,10 @@
 
     move-result-object p1
 
-    if-eq p1, p2, :cond_11e
+    if-eq p1, p2, :cond_ec
 
-    .line 259
-    :cond_dc
+    .line 137
+    :cond_ac
     invoke-virtual {p2}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
     move-result-object p1
@@ -1310,13 +985,12 @@
 
     move-result-object v0
 
-    const-string v2, "getPublicSetting"
+    const-string v3, "getPublicSetting"
 
-    invoke-virtual {p1, v2, v0}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
+    invoke-virtual {p1, v3, v0}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object p1
 
-    .line 260
     sget-object v0, Landroid/hardware/camera2/CaptureRequest;->LENS_APERTURE:Landroid/hardware/camera2/CaptureRequest$Key;
 
     filled-new-array {v0}, [Ljava/lang/Object;
@@ -1329,8 +1003,8 @@
 
     iput-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->autoBaseline:Ljava/lang/Object;
 
-    .line 261
-    iput-boolean v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->autoBaselineSaved:Z
+    .line 138
+    iput-boolean v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->autoBaselineSaved:Z
 
     new-instance p1, Ljava/lang/ref/WeakReference;
 
@@ -1338,12 +1012,9 @@
 
     iput-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->baselineMaker:Ljava/lang/ref/WeakReference;
 
-    .line 262
-    iput v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+    iput v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
 
-    iput-boolean v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->selected:Z
-
-    .line 263
+    .line 139
     iget-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->autoBaseline:Ljava/lang/Object;
 
     invoke-static {p1}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
@@ -1366,29 +1037,262 @@
 
     invoke-static {p2, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 265
-    :cond_11e
-    iput-boolean v3, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
+    .line 141
+    :cond_ec
+    iput-boolean v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
 
-    .line 266
-    iput-boolean v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
+    .line 142
+    iget-object p1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->root:Ljava/lang/ref/WeakReference;
 
-    if-eqz p3, :cond_127
+    invoke-virtual {p1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
 
-    invoke-virtual {v1, v4}, Landroid/widget/TextView;->setVisibility(I)V
+    move-result-object p1
 
-    :cond_127
+    check-cast p1, Landroid/view/View;
+
+    if-eqz p1, :cond_fb
+
+    invoke-static {p1, p0}, Lio/mesalabs/unica/camera/ApertureAdapterItems;->attach(Landroid/view/View;Lio/mesalabs/unica/camera/ApertureAdapterItems$Controller;)V
+
+    .line 143
+    :cond_fb
     invoke-virtual {p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->update()V
 
-    :cond_12a
-    :goto_12a
+    return-void
+.end method
+
+.method public paint(Landroid/widget/TextView;Landroid/view/View;)V
+    .registers 11
+
+    .line 147
+    iget v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+
+    invoke-static {p1, v0}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$smapplyTypography(Landroid/widget/TextView;I)V
+
+    iget v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+
+    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
+
+    invoke-static {v0, v1}, Lio/mesalabs/unica/camera/ApertureMode;->label(ILjava/lang/Float;)Ljava/lang/String;
+
+    move-result-object v0
+
+    invoke-virtual {p1, v0}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
+
+    .line 148
+    iget-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
+
+    const/4 v1, 0x1
+
+    const/4 v2, 0x0
+
+    if-eqz v0, :cond_20
+
+    iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
+
+    if-eqz v0, :cond_20
+
+    iget-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
+
+    if-nez v0, :cond_20
+
+    move v0, v1
+
+    goto :goto_21
+
+    :cond_20
+    move v0, v2
+
+    .line 149
+    :goto_21
+    invoke-virtual {p1}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
+
+    move-result-object v3
+
+    invoke-virtual {p1}, Landroid/widget/TextView;->getContext()Landroid/content/Context;
+
+    move-result-object v4
+
+    invoke-virtual {v4}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
+
+    move-result-object v4
+
+    const-string v5, "quick_setting_indicator_ev_text_color"
+
+    const-string v6, "color"
+
+    invoke-virtual {v3, v5, v6, v4}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+
+    move-result v3
+
+    .line 150
+    iget v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+
+    if-eqz v4, :cond_44
+
+    if-eqz v3, :cond_44
+
+    invoke-virtual {p1}, Landroid/widget/TextView;->getContext()Landroid/content/Context;
+
+    move-result-object v4
+
+    invoke-virtual {v4, v3}, Landroid/content/Context;->getColor(I)I
+
+    move-result v3
+
+    goto :goto_45
+
+    :cond_44
+    const/4 v3, -0x1
+
+    .line 151
+    :goto_45
+    invoke-virtual {p1}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
+
+    move-result-object v4
+
+    if-eqz v0, :cond_4e
+
+    const-string v5, "default_enable_alpha"
+
+    goto :goto_50
+
+    :cond_4e
+    const-string v5, "default_disable_alpha"
+
+    :goto_50
+    invoke-virtual {p1}, Landroid/widget/TextView;->getContext()Landroid/content/Context;
+
+    move-result-object v6
+
+    invoke-virtual {v6}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
+
+    move-result-object v6
+
+    const-string v7, "integer"
+
+    invoke-virtual {v4, v5, v7, v6}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+
+    move-result v4
+
+    if-eqz v4, :cond_7f
+
+    .line 152
+    invoke-static {v3}, Landroid/graphics/Color;->alpha(I)I
+
+    move-result v5
+
+    invoke-virtual {p1}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
+
+    move-result-object v6
+
+    invoke-virtual {v6, v4}, Landroid/content/res/Resources;->getInteger(I)I
+
+    move-result v4
+
+    mul-int/2addr v5, v4
+
+    div-int/lit16 v5, v5, 0xff
+
+    invoke-static {v3}, Landroid/graphics/Color;->red(I)I
+
+    move-result v4
+
+    invoke-static {v3}, Landroid/graphics/Color;->green(I)I
+
+    move-result v6
+
+    invoke-static {v3}, Landroid/graphics/Color;->blue(I)I
+
+    move-result v3
+
+    invoke-static {v5, v4, v6, v3}, Landroid/graphics/Color;->argb(IIII)I
+
+    move-result v3
+
+    .line 153
+    :cond_7f
+    invoke-virtual {p1, v3}, Landroid/widget/TextView;->setTextColor(I)V
+
+    invoke-virtual {p1, v0}, Landroid/widget/TextView;->setEnabled(Z)V
+
+    .line 154
+    invoke-virtual {p1}, Landroid/widget/TextView;->getText()Ljava/lang/CharSequence;
+
+    move-result-object v3
+
+    invoke-static {v3}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
+
+    move-result-object v3
+
+    iget v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+
+    invoke-static {v4}, Lio/mesalabs/unica/camera/ApertureMode;->next(I)I
+
+    move-result v4
+
+    invoke-static {v4}, Lio/mesalabs/unica/camera/ApertureMode;->name(I)Ljava/lang/String;
+
+    move-result-object v4
+
+    new-instance v5, Ljava/lang/StringBuilder;
+
+    const-string v6, "Aperture "
+
+    invoke-direct {v5, v6}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+
+    invoke-virtual {v5, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    const-string v3, ". Tap for "
+
+    invoke-virtual {v5, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v5, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    invoke-virtual {v5}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object v3
+
+    .line 155
+    invoke-virtual {p2, v3}, Landroid/view/View;->setContentDescription(Ljava/lang/CharSequence;)V
+
+    invoke-virtual {p2, v0}, Landroid/view/View;->setEnabled(Z)V
+
+    iget p0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+
+    if-eqz p0, :cond_b8
+
+    goto :goto_b9
+
+    :cond_b8
+    move v1, v2
+
+    :goto_b9
+    invoke-virtual {p2, v1}, Landroid/view/View;->setSelected(Z)V
+
+    if-eq p2, p1, :cond_c5
+
+    .line 156
+    invoke-virtual {p2, v3}, Landroid/view/View;->setTooltipText(Ljava/lang/CharSequence;)V
+
+    const/4 p0, 0x0
+
+    invoke-virtual {p1, p0}, Landroid/widget/TextView;->setContentDescription(Ljava/lang/CharSequence;)V
+
+    :cond_c5
+    if-nez v0, :cond_ca
+
+    .line 157
+    invoke-virtual {p2, v2}, Landroid/view/View;->setPressed(Z)V
+
+    :cond_ca
     return-void
 .end method
 
 .method positionPin()V
     .registers 8
 
-    .line 329
+    .line 174
     iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pin:Ljava/lang/ref/WeakReference;
 
     invoke-virtual {v0}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
@@ -1397,59 +1301,52 @@
 
     check-cast v0, Landroid/widget/TextView;
 
-    iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->indicatorList:Ljava/lang/ref/WeakReference;
+    iget-object p0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->indicators:Ljava/lang/ref/WeakReference;
 
-    invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+    invoke-virtual {p0}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
 
-    move-result-object v1
+    move-result-object p0
 
-    check-cast v1, Landroid/view/ViewGroup;
+    check-cast p0, Landroid/view/ViewGroup;
 
-    if-eqz v0, :cond_96
+    if-eqz v0, :cond_92
 
-    if-eqz v1, :cond_96
-
-    .line 330
-    iget-boolean p0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
-
-    if-eqz p0, :cond_96
+    if-eqz p0, :cond_92
 
     invoke-virtual {v0}, Landroid/widget/TextView;->getVisibility()I
 
-    move-result p0
+    move-result v1
 
-    if-eqz p0, :cond_20
+    if-eqz v1, :cond_1c
 
-    goto/16 :goto_96
+    goto/16 :goto_92
 
-    :cond_20
-    const/4 p0, 0x0
+    :cond_1c
+    const/4 v1, 0x0
 
     const/4 v2, 0x0
 
-    move v3, p0
+    move v3, v1
 
-    .line 332
-    :goto_23
-    invoke-virtual {v1}, Landroid/view/ViewGroup;->getChildCount()I
+    .line 175
+    :goto_1f
+    invoke-virtual {p0}, Landroid/view/ViewGroup;->getChildCount()I
 
     move-result v4
 
-    if-ge v3, v4, :cond_43
+    if-ge v3, v4, :cond_3f
 
-    .line 333
-    invoke-virtual {v1, v3}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
+    invoke-virtual {p0, v3}, Landroid/view/ViewGroup;->getChildAt(I)Landroid/view/View;
 
     move-result-object v4
 
-    .line 334
     invoke-virtual {v4}, Landroid/view/View;->getVisibility()I
 
     move-result v5
 
-    if-nez v5, :cond_40
+    if-nez v5, :cond_3c
 
-    if-eqz v2, :cond_3f
+    if-eqz v2, :cond_3b
 
     invoke-virtual {v4}, Landroid/view/View;->getLeft()I
 
@@ -1459,37 +1356,36 @@
 
     move-result v6
 
-    if-ge v5, v6, :cond_40
+    if-ge v5, v6, :cond_3c
 
-    :cond_3f
+    :cond_3b
     move-object v2, v4
 
-    :cond_40
+    :cond_3c
     add-int/lit8 v3, v3, 0x1
 
-    goto :goto_23
+    goto :goto_1f
 
-    :cond_43
-    if-eqz v2, :cond_96
+    :cond_3f
+    if-eqz v2, :cond_92
 
-    .line 336
+    .line 176
     invoke-virtual {v2}, Landroid/view/View;->getWidth()I
 
-    move-result v1
+    move-result p0
 
-    if-nez v1, :cond_4c
+    if-nez p0, :cond_48
 
-    goto :goto_96
+    goto :goto_92
 
-    :cond_4c
-    const/4 v1, 0x2
+    :cond_48
+    const/4 p0, 0x2
 
-    .line 337
-    new-array v3, v1, [I
+    .line 177
+    new-array v3, p0, [I
 
-    new-array v1, v1, [I
+    new-array p0, p0, [I
 
-    .line 338
     invoke-virtual {v2, v3}, Landroid/view/View;->getLocationOnScreen([I)V
 
     invoke-virtual {v0}, Landroid/widget/TextView;->getParent()Landroid/view/ViewParent;
@@ -1498,9 +1394,9 @@
 
     check-cast v4, Landroid/view/View;
 
-    invoke-virtual {v4, v1}, Landroid/view/View;->getLocationOnScreen([I)V
+    invoke-virtual {v4, p0}, Landroid/view/View;->getLocationOnScreen([I)V
 
-    .line 339
+    .line 178
     invoke-virtual {v2}, Landroid/view/View;->getWidth()I
 
     move-result v4
@@ -1509,74 +1405,71 @@
 
     move-result v2
 
-    .line 340
-    aget v5, v3, p0
+    aget v5, v3, v1
 
-    aget v6, v1, p0
+    aget v6, p0, v1
 
     sub-int/2addr v5, v6
 
     sub-int/2addr v5, v4
 
-    invoke-static {p0, v5}, Ljava/lang/Math;->max(II)I
+    invoke-static {v1, v5}, Ljava/lang/Math;->max(II)I
 
-    move-result p0
+    move-result v1
 
     const/4 v5, 0x1
 
     aget v3, v3, v5
 
-    aget v1, v1, v5
+    aget p0, p0, v5
 
-    sub-int/2addr v3, v1
+    sub-int/2addr v3, p0
 
-    .line 341
+    .line 179
     invoke-virtual {v0}, Landroid/widget/TextView;->getLayoutParams()Landroid/view/ViewGroup$LayoutParams;
 
-    move-result-object v1
+    move-result-object p0
 
-    check-cast v1, Landroid/view/ViewGroup$MarginLayoutParams;
+    check-cast p0, Landroid/view/ViewGroup$MarginLayoutParams;
 
-    .line 342
-    iget v5, v1, Landroid/view/ViewGroup$MarginLayoutParams;->width:I
+    .line 180
+    iget v5, p0, Landroid/view/ViewGroup$MarginLayoutParams;->width:I
 
-    if-ne v5, v4, :cond_8b
+    if-ne v5, v4, :cond_87
 
-    iget v5, v1, Landroid/view/ViewGroup$MarginLayoutParams;->height:I
+    iget v5, p0, Landroid/view/ViewGroup$MarginLayoutParams;->height:I
 
-    if-ne v5, v2, :cond_8b
+    if-ne v5, v2, :cond_87
 
-    iget v5, v1, Landroid/view/ViewGroup$MarginLayoutParams;->leftMargin:I
+    iget v5, p0, Landroid/view/ViewGroup$MarginLayoutParams;->leftMargin:I
 
-    if-ne v5, p0, :cond_8b
+    if-ne v5, v1, :cond_87
 
-    iget v5, v1, Landroid/view/ViewGroup$MarginLayoutParams;->topMargin:I
+    iget v5, p0, Landroid/view/ViewGroup$MarginLayoutParams;->topMargin:I
 
-    if-eq v5, v3, :cond_96
+    if-eq v5, v3, :cond_92
 
-    .line 343
-    :cond_8b
-    iput v4, v1, Landroid/view/ViewGroup$MarginLayoutParams;->width:I
+    :cond_87
+    iput v4, p0, Landroid/view/ViewGroup$MarginLayoutParams;->width:I
 
-    iput v2, v1, Landroid/view/ViewGroup$MarginLayoutParams;->height:I
+    iput v2, p0, Landroid/view/ViewGroup$MarginLayoutParams;->height:I
 
-    iput p0, v1, Landroid/view/ViewGroup$MarginLayoutParams;->leftMargin:I
+    iput v1, p0, Landroid/view/ViewGroup$MarginLayoutParams;->leftMargin:I
 
-    iput v3, v1, Landroid/view/ViewGroup$MarginLayoutParams;->topMargin:I
+    iput v3, p0, Landroid/view/ViewGroup$MarginLayoutParams;->topMargin:I
 
-    .line 344
-    invoke-virtual {v0, v1}, Landroid/widget/TextView;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
+    invoke-virtual {v0, p0}, Landroid/widget/TextView;->setLayoutParams(Landroid/view/ViewGroup$LayoutParams;)V
 
-    :cond_96
-    :goto_96
+    :cond_92
+    :goto_92
     return-void
 .end method
 
 .method update()V
-    .registers 10
+    .registers 3
 
-    .line 299
-    iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->text:Ljava/lang/ref/WeakReference;
+    .line 160
+    iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pin:Ljava/lang/ref/WeakReference;
 
     invoke-virtual {v0}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
 
@@ -1584,301 +1477,33 @@
 
     check-cast v0, Landroid/widget/TextView;
 
-    if-nez v0, :cond_c
+    if-eqz v0, :cond_1f
 
-    goto/16 :goto_110
+    invoke-virtual {p0, v0, v0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->paint(Landroid/widget/TextView;Landroid/view/View;)V
 
-    .line 300
-    :cond_c
+    iget-boolean v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
+
+    if-eqz v1, :cond_17
+
     iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
 
-    .line 301
-    iget v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+    if-eqz v1, :cond_17
 
-    invoke-static {v2, v1}, Lio/mesalabs/unica/camera/ApertureMode;->label(ILjava/lang/Float;)Ljava/lang/String;
+    const/4 v1, 0x0
 
-    move-result-object v2
+    goto :goto_19
 
-    invoke-virtual {v0, v2}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
+    :cond_17
+    const/16 v1, 0x8
 
-    .line 302
-    iget v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
+    :goto_19
+    invoke-virtual {v0, v1}, Landroid/widget/TextView;->setVisibility(I)V
 
-    invoke-static {v0, v2}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$smapplyTypography(Landroid/widget/TextView;I)V
-
-    const/4 v2, 0x1
-
-    const/4 v3, 0x0
-
-    if-eqz v1, :cond_26
-
-    .line 303
-    iget-boolean v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
-
-    if-nez v4, :cond_26
-
-    move v4, v2
-
-    goto :goto_27
-
-    :cond_26
-    move v4, v3
-
-    :goto_27
-    invoke-virtual {v0, v4}, Landroid/widget/TextView;->setEnabled(Z)V
-
-    .line 304
-    iget-boolean v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->selected:Z
-
-    invoke-virtual {v0, v4}, Landroid/widget/TextView;->setSelected(Z)V
-
-    .line 305
-    invoke-virtual {v0}, Landroid/widget/TextView;->getText()Ljava/lang/CharSequence;
-
-    move-result-object v4
-
-    invoke-static {v4}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
-
-    move-result-object v4
-
-    iget v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
-
-    invoke-static {v5}, Lio/mesalabs/unica/camera/ApertureMode;->next(I)I
-
-    move-result v5
-
-    invoke-static {v5}, Lio/mesalabs/unica/camera/ApertureMode;->name(I)Ljava/lang/String;
-
-    move-result-object v5
-
-    new-instance v6, Ljava/lang/StringBuilder;
-
-    const-string v7, "Aperture "
-
-    invoke-direct {v6, v7}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
-
-    invoke-virtual {v6, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    const-string v4, ". Tap for "
-
-    invoke-virtual {v6, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    invoke-virtual {v6, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
-
-    invoke-virtual {v6}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
-
-    move-result-object v4
-
-    invoke-virtual {v0, v4}, Landroid/widget/TextView;->setContentDescription(Ljava/lang/CharSequence;)V
-
-    .line 306
-    invoke-virtual {v0}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
-
-    move-result-object v4
-
-    invoke-virtual {v0}, Landroid/widget/TextView;->getContext()Landroid/content/Context;
-
-    move-result-object v5
-
-    invoke-virtual {v5}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
-
-    move-result-object v5
-
-    const-string v6, "quick_setting_indicator_ev_text_color"
-
-    const-string v7, "color"
-
-    invoke-virtual {v4, v6, v7, v5}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
-
-    move-result v4
-
-    .line 307
-    iget-boolean v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->selected:Z
-
-    if-eqz v5, :cond_7d
-
-    if-eqz v4, :cond_7d
-
-    invoke-virtual {v0}, Landroid/widget/TextView;->getContext()Landroid/content/Context;
-
-    move-result-object v5
-
-    invoke-virtual {v5, v4}, Landroid/content/Context;->getColor(I)I
-
-    move-result v4
-
-    goto :goto_7e
-
-    :cond_7d
-    const/4 v4, -0x1
-
-    .line 308
-    :goto_7e
-    invoke-virtual {v0}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
-
-    move-result-object v5
-
-    if-eqz v1, :cond_8b
-
-    iget-boolean v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
-
-    if-nez v6, :cond_8b
-
-    const-string v6, "default_enable_alpha"
-
-    goto :goto_8d
-
-    :cond_8b
-    const-string v6, "default_disable_alpha"
-
-    :goto_8d
-    invoke-virtual {v0}, Landroid/widget/TextView;->getContext()Landroid/content/Context;
-
-    move-result-object v7
-
-    invoke-virtual {v7}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
-
-    move-result-object v7
-
-    const-string v8, "integer"
-
-    invoke-virtual {v5, v6, v8, v7}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
-
-    move-result v5
-
-    if-eqz v5, :cond_bc
-
-    .line 310
-    invoke-virtual {v0}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
-
-    move-result-object v6
-
-    invoke-virtual {v6, v5}, Landroid/content/res/Resources;->getInteger(I)I
-
-    move-result v5
-
-    .line 311
-    invoke-static {v4}, Landroid/graphics/Color;->alpha(I)I
-
-    move-result v6
-
-    mul-int/2addr v6, v5
-
-    div-int/lit16 v6, v6, 0xff
-
-    invoke-static {v4}, Landroid/graphics/Color;->red(I)I
-
-    move-result v5
-
-    invoke-static {v4}, Landroid/graphics/Color;->green(I)I
-
-    move-result v7
-
-    invoke-static {v4}, Landroid/graphics/Color;->blue(I)I
-
-    move-result v4
-
-    invoke-static {v6, v5, v7, v4}, Landroid/graphics/Color;->argb(IIII)I
-
-    move-result v4
-
-    :cond_bc
-    if-eqz v1, :cond_c2
-
-    .line 313
-    iget-boolean v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
-
-    if-eqz v5, :cond_c5
-
-    :cond_c2
-    invoke-virtual {v0, v3}, Landroid/widget/TextView;->setPressed(Z)V
-
-    .line 314
-    :cond_c5
-    invoke-virtual {v0, v4}, Landroid/widget/TextView;->setTextColor(I)V
-
-    .line 315
-    iget-object v5, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pin:Ljava/lang/ref/WeakReference;
-
-    invoke-virtual {v5}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
-
-    move-result-object v5
-
-    check-cast v5, Landroid/widget/TextView;
-
-    if-eqz v5, :cond_110
-
-    .line 317
-    iget v6, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->mode:I
-
-    invoke-static {v5, v6}, Lio/mesalabs/unica/camera/QuickApertureControl;->-$$Nest$smapplyTypography(Landroid/widget/TextView;I)V
-
-    .line 318
-    invoke-virtual {v0}, Landroid/widget/TextView;->getText()Ljava/lang/CharSequence;
-
-    move-result-object v6
-
-    invoke-virtual {v5, v6}, Landroid/widget/TextView;->setText(Ljava/lang/CharSequence;)V
-
-    invoke-virtual {v5, v4}, Landroid/widget/TextView;->setTextColor(I)V
-
-    if-eqz v1, :cond_e8
-
-    .line 319
-    iget-boolean v4, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
-
-    if-nez v4, :cond_e8
-
-    goto :goto_e9
-
-    :cond_e8
-    move v2, v3
-
-    :goto_e9
-    invoke-virtual {v5, v2}, Landroid/widget/TextView;->setEnabled(Z)V
-
-    if-eqz v1, :cond_f2
-
-    .line 320
-    iget-boolean v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
-
-    if-eqz v2, :cond_f5
-
-    :cond_f2
-    invoke-virtual {v5, v3}, Landroid/widget/TextView;->setPressed(Z)V
-
-    .line 321
-    :cond_f5
-    iget-boolean v2, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->selected:Z
-
-    invoke-virtual {v5, v2}, Landroid/widget/TextView;->setSelected(Z)V
-
-    .line 322
-    invoke-virtual {v0}, Landroid/widget/TextView;->getContentDescription()Ljava/lang/CharSequence;
-
-    move-result-object v0
-
-    invoke-virtual {v5, v0}, Landroid/widget/TextView;->setContentDescription(Ljava/lang/CharSequence;)V
-
-    .line 323
-    iget-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->bound:Z
-
-    if-eqz v0, :cond_108
-
-    if-eqz v1, :cond_108
-
-    goto :goto_10a
-
-    :cond_108
-    const/16 v3, 0x8
-
-    :goto_10a
-    invoke-virtual {v5, v3}, Landroid/widget/TextView;->setVisibility(I)V
-
-    .line 324
     invoke-virtual {p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->positionPin()V
 
-    :cond_110
-    :goto_110
+    .line 161
+    :cond_1f
+    invoke-static {p0}, Lio/mesalabs/unica/camera/ApertureAdapterItems;->repaint(Lio/mesalabs/unica/camera/ApertureAdapterItems$Controller;)V
+
     return-void
 .end method

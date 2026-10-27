@@ -19,6 +19,7 @@ def verify(apk):
         b'Lio/mesalabs/unica/camera/QuickApertureControl$Session;',
         b'resetEngine', b'onLensInfo', b'positionPin', b'installStockFeedback', b'applyTypography', b'onEngineState',
         b'quick_setting_indicator_list_area', b'LENS_APERTURE',
+        b'quick_setting_item_size', b'mMainAdapter', b'mItemList', b'Lio/mesalabs/unica/camera/ApertureAdapterItems;', b'UN1CA_NATIVE_APERTURE_ITEM', b'MOTION_PHOTO_MENU', b'settle',
         b'Lio/mesalabs/unica/camera/ApertureMode;', b'getPublicSetting', b'AUTO',
     ):
         if not any(token in data for data in dex):

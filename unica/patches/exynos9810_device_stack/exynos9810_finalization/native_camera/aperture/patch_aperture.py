@@ -5,6 +5,7 @@ import argparse
 import re
 import shutil
 import hashlib
+import json
 
 HERE = Path(__file__).resolve().parent
 MARKER = '    # UN1CA physical aperture control\n'
@@ -63,6 +64,44 @@ def hook(text, signature, call, returns=False):
             raise ValueError('Unexpected quick bar register layout')
     return text[:matches[0].start()] + new + text[matches[0].end():]
 
+def adapter_bind(text, signature):
+    pattern = r'(?ms)^\.method ' + re.escape(signature) + r'\n.*?^\.end method'
+    matches = list(re.finditer(pattern, text))
+    if len(matches) != 1:
+        raise ValueError('Missing native Camera adapter binder: ' + signature)
+    method = matches[0].group()
+    marker = '# UN1CA native aperture adapter binder'
+    if marker in method:
+        return text
+    registers = re.search(r'^    \.(locals|registers) (\d+)\n', method, re.M)
+    if not registers:
+        raise ValueError('Unknown native binder registers')
+    # Existing binders each have at least one free local; do not shift parameters.
+    args = signature.split('(',1)[1].split(')',1)[0]
+    params = 1 + len(re.findall(r'\[*L[^;]+;|\[*[ZBCSIFJD]', args))
+    local = int(registers.group(2)) if registers.group(1)=='locals' else int(registers.group(2))-params
+    if local < 1:
+        raise ValueError('No free native binder local register')
+    insertion = ('\n    '+marker+'\n'
+        '    invoke-static {p0, p1, p2}, Lio/mesalabs/unica/camera/ApertureAdapterItems;->bind(Ljava/lang/Object;Ljava/lang/Object;I)Z\n'
+        '    move-result v0\n    if-eqz v0, :unica_aperture_regular_item\n'
+        '    return-void\n    :unica_aperture_regular_item\n')
+    method = method[:registers.end()] + insertion + method[registers.end():]
+    return text[:matches[0].start()]+method+text[matches[0].end():]
+
+def adapter_refresh(text):
+    instruction = '    iput-object p1, p0, Lcom/sec/android/app/camera/layer/keyscreen/quicksetting/QuickSettingViewAdapter;->mItemList:Ljava/util/List;\n'
+    insertion = ('\n    # UN1CA native aperture model insertion\n'
+                 '    invoke-static {p0}, Lio/mesalabs/unica/camera/ApertureAdapterItems;->refresh(Ljava/lang/Object;)Z\n')
+    pattern = r'(?ms)^\.method public refreshItemList\(Ljava/util/List;\)V\n.*?^\.end method'
+    matches = list(re.finditer(pattern,text))
+    if len(matches)!=1 or matches[0].group().count(instruction)!=1:
+        raise ValueError('Unknown native Camera adapter list assignment')
+    method=matches[0].group()
+    if '# UN1CA native aperture model insertion' not in method:
+        method=method.replace(instruction,instruction+insertion)
+    return text[:matches[0].start()]+method+text[matches[0].end():]
+
 def apply(root):
     root = Path(root)
     for row in (HERE / 'SHA256SUMS').read_text().splitlines():
@@ -85,12 +124,22 @@ def apply(root):
     updated = hook(original, 'public showMainList(Z)V', '    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->show(Ljava/lang/Object;)V\n', True)
     updated = hook(updated, 'private showMainListWithGestureAnimation()V', '    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->show(Ljava/lang/Object;)V\n', True)
     updated = hook(updated, 'private hideMainListWithGestureAnimation()V', '    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->hide(Ljava/lang/Object;)V\n')
-    for signature in ('public hideMainList(Z)V', 'public hideList(Z)Z'):
+    for signature in ('public hideMainList(Z)V', 'public hideList(Z)Z', 'public hideQuickSettingList(ZZ)V'):
         updated = hook(updated, signature, '    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->hide(Ljava/lang/Object;)V\n')
     changes.append((quick[0], original, updated))
     animation = quick[0].with_name('QuickSettingView$24.smali')
     original = animation.read_text()
     updated = hook(original, 'public onAnimationStart(Landroid/animation/Animator;)V', '    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->show(Ljava/lang/Object;)V\n')
+    end_signature = 'public onAnimationEnd(Landroid/animation/Animator;)V'
+    if '.method ' + end_signature + '\n' not in updated:
+        if '.super Landroid/animation/AnimatorListenerAdapter;' not in updated:
+            raise ValueError('Unknown Camera animation listener superclass')
+        updated += ('\n.method ' + end_signature + '\n    .locals 0\n'
+                    '    invoke-super {p0, p1}, Landroid/animation/AnimatorListenerAdapter;->onAnimationEnd(Landroid/animation/Animator;)V\n'
+                    '    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->settle(Ljava/lang/Object;)V\n'
+                    '    return-void\n.end method\n')
+    else:
+        updated = hook(updated, end_signature, '    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->settle(Ljava/lang/Object;)V\n')
     changes.append((animation, original, updated))
     presenter = quick[0].with_name('QuickSettingPresenter.smali')
     original = presenter.read_text()
@@ -110,7 +159,33 @@ def apply(root):
         updated = hook(updated, signature, '    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->resetEngine(Ljava/lang/Object;)V\n')
     updated = hook(updated, 'public changeState(Lcom/sec/android/app/camera/engine/interfaces/Engine$State;)V', '    invoke-static {p0, p1}, Lio/mesalabs/unica/camera/QuickApertureControl;->onEngineState(Ljava/lang/Object;Ljava/lang/Object;)V\n', True)
     changes.append((engines[0], original, updated))
-    payload = sorted((HERE / 'smali/io/mesalabs/unica/camera').glob('*.smali'))
+    adapter=quick[0].with_name('QuickSettingViewAdapter.smali')
+    original=adapter.read_text()
+    updated=adapter_refresh(original)
+    for signature in (
+        'public onBindViewHolder(Lcom/sec/android/app/camera/layer/keyscreen/quicksetting/QuickSettingViewAdapter$ViewHolder;I)V',
+        'public onBindViewHolder(Lcom/sec/android/app/camera/layer/keyscreen/quicksetting/QuickSettingViewAdapter$ViewHolder;ILjava/util/List;)V',
+    ):
+        updated=adapter_bind(updated,signature)
+    changes.append((adapter,original,updated))
+    holder=quick[0].with_name('QuickSettingViewAdapter$ViewHolder.smali')
+    original=holder.read_text()
+    signature='public onOrientationChanged(I)V'
+    pattern=r'(?ms)^\.method '+re.escape(signature)+r'\n.*?^\.end method'
+    matches=list(re.finditer(pattern,original))
+    if len(matches)!=1:
+        raise ValueError('Missing native Camera holder orientation method')
+    method=matches[0].group()
+    if '# UN1CA native aperture orientation' not in method:
+        method=re.sub(r'(^    \.(?:locals|registers) \d+\n)',lambda m:m.group()+'\n    # UN1CA native aperture orientation\n    invoke-static {p0, p1}, Lio/mesalabs/unica/camera/ApertureAdapterItems;->rotate(Ljava/lang/Object;I)Z\n    move-result v0\n    if-eqz v0, :unica_aperture_regular_orientation\n    return-void\n    :unica_aperture_regular_orientation\n',method,count=1,flags=re.M)
+    updated=original[:matches[0].start()]+method+original[matches[0].end():]
+    changes.append((holder,original,updated))
+    runtime_names=json.loads((HERE/'runtime-classes.json').read_text())
+    if not runtime_names or len(runtime_names)!=len(set(runtime_names)) or any(Path(name).name!=name or not name.endswith('.smali') for name in runtime_names):
+        raise ValueError('Invalid aperture runtime class manifest')
+    payload=[HERE/'smali/io/mesalabs/unica/camera'/name for name in runtime_names]
+    if any(not file.is_file() for file in payload):
+        raise ValueError('Missing source-matched aperture runtime class')
     if not payload:
         raise ValueError('Missing repository-provided aperture runtime smali')
     # Preflight both methods and payload before changing either presenter.
@@ -121,6 +196,12 @@ def apply(root):
     dexroot = next(parent for parent in changes[0][0].parents if parent.parent == root)
     destination = dexroot / 'io/mesalabs/unica/camera'
     destination.mkdir(parents=True, exist_ok=True)
+    # Replace only this module's generated namespace in the decoded build input.
+    # Old source/artifact backups are not removed, and no Samsung classes change.
+    prefixes=('ApertureControl', 'QuickApertureControl', 'ApertureMode', 'ApertureAdapterItems')
+    for stale in destination.glob('*.smali'):
+        if stale.name.startswith(prefixes) and stale.name not in runtime_names:
+            stale.unlink()
     for file in payload:
         target = destination / file.name
         if not target.exists() or target.read_bytes() != file.read_bytes():

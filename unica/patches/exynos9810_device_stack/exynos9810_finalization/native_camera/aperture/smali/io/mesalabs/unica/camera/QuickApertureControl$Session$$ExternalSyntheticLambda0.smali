@@ -3,7 +3,7 @@
 .source "D8$$SyntheticClass"
 
 # interfaces
-.implements Landroid/view/ViewTreeObserver$OnGlobalLayoutListener;
+.implements Ljava/lang/Runnable;
 
 
 # instance fields
@@ -24,13 +24,13 @@
 
 
 # virtual methods
-.method public final onGlobalLayout()V
+.method public final run()V
     .registers 1
 
     .line 0
     iget-object p0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda0;->f$0:Lio/mesalabs/unica/camera/QuickApertureControl$Session;
 
-    invoke-virtual {p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->positionPin()V
+    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->$r8$lambda$axiPJT7AH-ejpR2AuqITsaU_Wrg(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
 
     return-void
 .end method

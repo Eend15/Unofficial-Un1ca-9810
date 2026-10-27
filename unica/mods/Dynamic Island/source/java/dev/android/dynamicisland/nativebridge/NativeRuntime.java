@@ -121,7 +121,10 @@ public final class NativeRuntime {
         }
     }
 
-    public static void init(Application app, ClassLoader systemLoader) throws Throwable {
+    private static boolean initialized;
+    public static synchronized void init(Application app, ClassLoader systemLoader) throws Throwable {
+        if (initialized) return;
+        initialized = true;
         application = app;
         enabled = Settings.Global.getInt(app.getContentResolver(), KEY, 1) == 1;
         checkRestartToken();

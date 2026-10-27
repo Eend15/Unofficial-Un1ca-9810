@@ -68,6 +68,7 @@ final class IslandPlacement {
     private View statusBarView;
     private IslandView view;
     private IslandWindow window;
+    private boolean disposed;
 
     // System UI state that decides whether the island may be shown.
     private int barState;
@@ -88,6 +89,7 @@ final class IslandPlacement {
     private final int[] screenPos = new int[2];
 
     private final Runnable revealTimer = this::onRevealDelayElapsed;
+    private final Runnable fallbackTimer = this::createWindowWithoutStatusBar;
     private final View.OnLayoutChangeListener statusBarLayoutListener;
 
     IslandPlacement(Context ctx, Handler main, ClassLoader classLoader, IslandHost host,
@@ -125,11 +127,11 @@ final class IslandPlacement {
     // ---- status bar and window -----------------------------------------------------------------
 
     void scheduleFallbackWindow() {
-        main.postDelayed(this::createWindowWithoutStatusBar, WINDOW_FALLBACK_MS);
+        if (!disposed) { main.removeCallbacks(fallbackTimer); main.postDelayed(fallbackTimer, WINDOW_FALLBACK_MS); }
     }
 
     private void createWindowWithoutStatusBar() {
-        if (window == null) {
+        if (!disposed && window == null) {
             XLog.i("status bar view never attached, creating the island window without it");
             Diagnostics.fact("window", "created by fallback timer (status bar view not seen)");
             ensureWindow(true);
@@ -137,6 +139,7 @@ final class IslandPlacement {
     }
 
     void statusBarAttached(View statusBar) {
+        if (disposed) return;
         if (statusBarView == statusBar) {
             return;
         }
@@ -160,6 +163,7 @@ final class IslandPlacement {
     }
 
     void ensureWindow(boolean withoutStatusBar) {
+        if (disposed) return;
         if (window != null || (statusBarView == null && !withoutStatusBar)) {
             return;
         }
@@ -183,6 +187,23 @@ final class IslandPlacement {
             if (window != null) window.detach();
             window = null;
             view = null;
+        }
+    }
+
+    /** Remove the old root before SystemUI is recreated; late hooks cannot reattach it. */
+    void dispose() {
+        if (disposed) return;
+        disposed = true;
+        main.removeCallbacks(fallbackTimer);
+        main.removeCallbacks(revealTimer);
+        revealPending = false;
+        if (statusBarView != null) statusBarView.removeOnLayoutChangeListener(statusBarLayoutListener);
+        fader.detach();
+        statusBarView = null;
+        if (window != null) {
+            window.hideReply();
+            window.setShown(false);
+            window.detach();
         }
     }
 
