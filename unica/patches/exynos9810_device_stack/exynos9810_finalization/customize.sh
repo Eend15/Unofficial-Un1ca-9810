@@ -5345,6 +5345,10 @@ hal_replacement = """.method public isQrCodeDetectionInHalAvailable()Z
     # Exynos9810 has no One UI 8 HAL QR metadata; use Core2 software decode.
     const/4 v0, 0x0
 
+    # The Android 16 donor only displays the lens aperture. Restore a real,
+    # capability-gated control for the Exynos9810 main rear lens in Pro modes.
+    python3 "$MODPATH/native_camera/aperture/patch_aperture.py" "$APK_DIR" || return 1
+
     return v0
 .end method"""
 if "Exynos9810 has no One UI 8 HAL QR metadata" not in text:
