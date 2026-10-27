@@ -1,0 +1,19 @@
+Hi! I found another native crash in Notes and made a new test fix. There is also a separate Air Actions scan patch, because your pen is advertising but the system scan is not passing it through to AirCommand.
+
+On your current Note9 EXT4 build with v5 installed:
+1. Back up important notes. Boot into TWRP.
+2. Install UN1CA-Note9-SPen-EXT4-v6-20261026.zip.
+3. If that succeeds, install UN1CA-Note9-AirActions-scan-TEST-v6-20261026.zip in the same TWRP session.
+4. Reboot System and unlock straight away. DO NOT Format Data or clear Notes/Bluetooth storage. If either ZIP fails, stop and send recovery.log.
+
+Please start testing as soon as Android is unlocked; the logger records one session for about eight minutes:
+- Leave Notes on its main list for a minute, open/create a note, use handwriting-to-text, save it and return to the list a few times.
+- During the first few minutes, turn the screen off, remove the pen and draw a long continuous line WITHOUT lifting it. Repeat with AOD on and off. Tell me whether the ink follows the pen or only appears after lifting. Save and reopen the memo too.
+- Insert the pen, turn Bluetooth on and open S Pen > Air actions. Try connecting, then battery display and camera/music button actions if it connects. Tell me exactly where it fails.
+- Check Quick notes, hover and Air Command still work.
+
+After testing, leave the phone unlocked for the full dumpstate to finish. Open Internal storage > Download and send the NEW UN1CA-SPen-Logs-date-time archive privately. It can contain personal diagnostic information. A video filmed with another phone showing the pen tip and screen together is especially helpful for the delayed ink.
+
+The Notes change targets the crash found in your logs. The Air Actions patch is a compatibility test, and delayed screen-off ink is still being investigated; please do not assume all three issues are already fixed.
+
+If you need to undo these patches: in TWRP install the AirActions scan restore ZIP first, then the SPen v6 restore ZIP from the restore folder. This returns the changed files to their pre-v6 versions. No data wipe.

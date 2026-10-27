@@ -22,6 +22,8 @@ import zlib
 AIRCOMMAND_MARKERS = (
     b"EDFEC62E-9910-0BAC-5241-D8BDA6932A2F",
     b"prepareTicToc : crown advertisement off",
+    b"v9 Note9 built-in pen legacy firmware accepted",
+    b"v8 direct GATT attempt for saved Crown address; service validation unchanged",
 )
 SERVICES_MARKERS = (
     b"UN1CA Note9 direct BLE sysfs write succeeded",
@@ -144,8 +146,21 @@ def verify_crown_discovery(smali: str) -> None:
 
 
 def verify_aircommand_methods(apk: Path) -> None:
-    classes = _disassemble_required(apk, ("b3/b", "U2/k", "j3/a", "A/j", "R2/b"))
+    classes = _disassemble_required(apk, ("b3/b", "U2/k", "j3/a", "A/j", "R2/b", "G2/e", "L2/p", "L2/m"))
     verify_crown_discovery(classes["R2/b"])
+    # EJ-PN960 reports fw 23; the donor rejects fw <= 0x30 as a "sticky" pen.
+    firmware = classes["G2/e"]
+    if not all(text in firmware for text in (
+            "STICKY S-Pen detected", "v9 Note9 built-in pen legacy firmware accepted",
+            '"N960F"', '"N960N"', "ro.bootloader")):
+        raise ValueError("Note9 compiled legacy S Pen firmware acceptance missing")
+    direct = _method(classes["L2/p"], "unicaTryKnownCrownGatt()Z")
+    if not all(text in direct for text in (
+            "ro.bootloader", "checkBluetoothAddress", "getRemoteDevice",
+            "unicaDirectEpoch:J", "LL2/p;->c()V")):
+        raise ValueError("Note9 compiled saved-address Crown GATT path missing")
+    if "LL2/p;->unicaTryKnownCrownGatt()Z" not in classes["L2/m"]:
+        raise ValueError("Note9 saved-address Crown GATT path is not reachable")
     profile = _method(classes["b3/b"], "<clinit>()V")
     if not re.search(
             r'(?s)const-string\s+(v\d+),\s+"EDFEC62E-9910-0BAC-5241-D8BDA6932A2F"'
@@ -226,7 +241,17 @@ def verify_platform_signatures(apks: tuple[Path, ...], cert: Path) -> None:
 
 
 def verify(work_dir: Path, platform_cert: Path | None = None) -> None:
+    from stage_notes_native import APK_SHA, stage
+    import hashlib
+    for notes in (work_dir / "system/system").glob("**/Notes33.apk"):
+        if hashlib.sha256(notes.read_bytes()).hexdigest() == APK_SHA:
+            stage(notes, notes.parent / "lib/arm64", verify=True)
     system = work_dir / "system/system"
+    import smartcapture_engine
+    smartcapture = system / "app/SmartCapture/SmartCapture.apk"
+    if (smartcapture.is_file() and
+            hashlib.sha256(smartcapture.read_bytes()).hexdigest() == smartcapture_engine.APK_SHA):
+        smartcapture_engine.stage(smartcapture, smartcapture.parent / "lib/arm64", verify=True)
     aircommand = system / "priv-app/AirCommand/AirCommand.apk"
     factory = system / "app/FactoryAirCommandManager/FactoryAirCommandManager.apk"
     verify_archive(aircommand, AIRCOMMAND_MARKERS, signed=True)

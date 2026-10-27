@@ -3998,8 +3998,9 @@ _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN()
     # Neither the S22 system image nor the S Pen prebuilts contain that APK;
     # merely showing the S Pen toggles would leave those actions unhandled.
     # Prefer an existing compatible modern Notes package if one is staged.
-    # Otherwise use the target-matched SM-N960F Notes33 app, copied unchanged
-    # into this repository so the build does not depend on FUS availability.
+    # Otherwise use the original Samsung-signed Galaxy Store Notes update, stored
+    # here so builds need no network download. Keep the Notes33 installation
+    # path for package continuity; its contents are now the modern application.
     local NOTES_STAGED=""
     local NOTES_CANDIDATE
     for NOTES_CANDIDATE in \
@@ -4015,23 +4016,49 @@ _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN()
             break
         fi
     done
+    local NOTES_UPGRADE_PATH=""
+    # Notes33's Android-9 HWUI functor has no drawing callback on Android 16.
+    # Upgrade only that exact known legacy donor; keep other staged Notes apps.
+    if [ -n "$NOTES_STAGED" ] && \
+            [ "$(sha256sum "$NOTES_STAGED" | cut -d ' ' -f 1)" = "7efba32e183e6ace5291f7d80c8cf00022c6374a4c7e5e5c8d1d03aad917239f" ]; then
+        NOTES_UPGRADE_PATH="$NOTES_STAGED"
+        NOTES_STAGED=""
+    fi
     if [ -z "$NOTES_STAGED" ]; then
-        local NOTES_SRC="$MODPATH/spen/notes/Notes33.apk"
-        local NOTES_SHA="7efba32e183e6ace5291f7d80c8cf00022c6374a4c7e5e5c8d1d03aad917239f"
-        local NOTES_DST="$WORK_DIR/system/system/app/Notes33/Notes33.apk"
+        local NOTES_SRC="$MODPATH/spen/notes/SamsungNotes-4.4.45.37.apk"
+        local NOTES_SHA="daed1eff8c8ee9dfb8afe2771e39e893a8808f3230d6d522a8aa647db09b8667"
+        local NOTES_DST="${NOTES_UPGRADE_PATH:-$WORK_DIR/system/system/app/Notes33/Notes33.apk}"
+        local NOTES_REL="${NOTES_DST#"$WORK_DIR/system/"}"
         if [ ! -s "$NOTES_SRC" ] || \
                 [ "$(sha256sum "$NOTES_SRC" | cut -d ' ' -f 1)" != "$NOTES_SHA" ]; then
-            LOGE "Note9 Samsung Notes popup/composer donor is missing or modified"
+            LOGE "Note9 Samsung Notes 4.4.45.37 donor is missing or modified"
             return 1
         fi
-        LOG "- Staging stock Note9 Samsung Notes for Quick Notes and screen-off memos"
+        LOG "- Staging Samsung Notes 4.4.45.37 for Android 16 Note9 rendering"
         install -D -m 0644 "$NOTES_SRC" "$NOTES_DST" || return 1
-        _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/Notes33" 0 0 755 \
+        _EXYNOS9810_FINAL_SET_METADATA "system" "${NOTES_REL%/*}" 0 0 755 \
             "u:object_r:system_file:s0"
-        _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/Notes33/Notes33.apk" 0 0 644 \
+        _EXYNOS9810_FINAL_SET_METADATA "system" "$NOTES_REL" 0 0 644 \
             "u:object_r:system_file:s0"
     else
         LOG "- Keeping existing Samsung Notes package for Note9 S Pen shortcuts"
+    fi
+
+    # Preinstalled packages with extractNativeLibs=true need app-local native
+    # files in the image. PackageManager does not extract these from /system APKs.
+    local NOTES_RUNTIME="${NOTES_STAGED:-$NOTES_DST}"
+    if [ "$(sha256sum "$NOTES_RUNTIME" | cut -d ' ' -f 1)" = "daed1eff8c8ee9dfb8afe2771e39e893a8808f3230d6d522a8aa647db09b8667" ]; then
+        python3 "$MODPATH/spen/stage_notes_native.py" --apk "$NOTES_RUNTIME" \
+            --output "${NOTES_RUNTIME%/*}/lib/arm64" || return 1
+        local NOTES_NATIVE_REL="${NOTES_RUNTIME#"$WORK_DIR/system/"}"
+        NOTES_NATIVE_REL="${NOTES_NATIVE_REL%/*}/lib"
+        _EXYNOS9810_FINAL_SET_METADATA "system" "$NOTES_NATIVE_REL" 0 0 755 "u:object_r:system_file:s0"
+        _EXYNOS9810_FINAL_SET_METADATA "system" "$NOTES_NATIVE_REL/arm64" 0 0 755 "u:object_r:system_file:s0"
+        local NOTES_NATIVE_FILE
+        for NOTES_NATIVE_FILE in "${NOTES_RUNTIME%/*}/lib/arm64/"*.so; do
+            _EXYNOS9810_FINAL_SET_METADATA "system" "$NOTES_NATIVE_REL/arm64/${NOTES_NATIVE_FILE##*/}" \
+                0 0 644 "u:object_r:system_file:s0"
+        done
     fi
 
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_SPEN_VERSION" "40"
@@ -4280,9 +4307,17 @@ _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_BLE_PROTOCOL()
         return 1
     }
 
+    # The Note9 EJ-PN960 reports firmware 23. BuiltInSpenDriver.readFirmwareVersion
+    # treats any built-in pen with fw <= 0x30 as a "STICKY S-Pen" and ends the
+    # connection sequence with NOT_SUPPORTED after GATT, encryption, battery and
+    # button setup already succeeded (field logs 2026-10-27). Accept it on
+    # N960F/N960N only, scoped to that one comparison, and fail closed otherwise.
     LOG "- Patching AirCommand BLE firmware check to accept Note9 S Pen"
-
-    sed -i 's|const/16 v3, 0x30|const/16 v3, 0x9|g' "$FIRMWARE_CHECK"
+    python3 "$MODPATH/spen/patch_crown_fw_v9.py" "$FIRMWARE_CHECK" || return 1
+    grep -q "UN1CA_CROWN_LEGACY_FW_V9" "$FIRMWARE_CHECK" || {
+        LOGE "Note9 S Pen legacy firmware acceptance did not survive patching"
+        return 1
+    }
 
     LOG "- Translating One UI 8 S Pen BLE commands to the Note9 Wacom protocol"
     python3 - "$RUNNABLE" <<'PY' || return 1
@@ -4767,6 +4802,45 @@ path.write_text(text)
 print("ok")
 PY
     python3 "$MODPATH/spen/patch_crown_scan.py" "$APK_DIR/smali/R2/b.smali" || return 1
+
+    # Crown advertisements reach the HCI layer but no scan result reaches
+    # AirCommand on the Android 16 stack. Use the public scan mode for the
+    # Crown UUID, and connect a pen whose address is already saved directly
+    # over GATT once per connection attempt; the original GATT service
+    # validation, retries and discovery fallback are unchanged. This is the
+    # same patch chain the field-tested v9 AirCommand was built from.
+    python3 "$MODPATH/spen/patch_crown_standard_scan.py" "$APK_DIR/smali/R2/b.smali" || return 1
+    python3 "$MODPATH/spen/patch_crown_direct_gatt_v8.py" \
+        "$APK_DIR/smali/L2/p.smali" "$APK_DIR/smali/L2/m.smali" || return 1
+    grep -q "UN1CA_CROWN_STANDARD_SCAN_V6" "$APK_DIR/smali/R2/b.smali" && \
+        grep -q "UN1CA_CROWN_DIRECT_GATT_V8" "$APK_DIR/smali/L2/m.smali" || {
+        LOGE "Note9 Crown scan/direct GATT patches did not survive patching"
+        return 1
+    }
+}
+
+_EXYNOS9810_FINAL_STAGE_SMARTCAPTURE_SPEN_ENGINE()
+{
+    # Screen write (SmartCapture) bundles its own libSPenEngine.so, which uses
+    # front-buffer rendering; on the Exynos9810 display stack its ink then only
+    # appears on pen-up. Stage an app-local override whose FbrDrawPadGlue
+    # capability check returns false, the same fallback Notes uses. The APK and
+    # its signature are untouched: nativeLibraryDir precedes APK!/lib in the
+    # class loader search path. Other SmartCapture builds are left as they are.
+    [[ "$TARGET_CODENAME" == "crownlte" ]] || return 0
+    local SC_APK="$WORK_DIR/system/system/app/SmartCapture/SmartCapture.apk"
+    [ -f "$SC_APK" ] || return 0
+    if ! python3 "$MODPATH/spen/smartcapture_engine.py" --apk "$SC_APK" \
+            --output "${SC_APK%/*}/lib/arm64"; then
+        LOGW "SmartCapture differs from the audited build; screen write keeps its bundled engine"
+        return 0
+    fi
+    LOG "- Staging SmartCapture screen write normal-renderer engine"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/SmartCapture/lib" 0 0 755 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/SmartCapture/lib/arm64" 0 0 755 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/app/SmartCapture/lib/arm64/libSPenEngine.so" \
+        0 0 644 "u:object_r:system_file:s0"
+    return 0
 }
 
 _EXYNOS9810_FINAL_RESTORE_TARGET_WIDEVINE()
@@ -5223,10 +5297,6 @@ hal_replacement = """.method public isQrCodeDetectionInHalAvailable()Z
     # Exynos9810 has no One UI 8 HAL QR metadata; use Core2 software decode.
     const/4 v0, 0x0
 
-    # The Android 16 donor only displays the lens aperture. Restore a real,
-    # capability-gated control for the Exynos9810 main rear lens in Pro modes.
-    python3 "$MODPATH/native_camera/aperture/patch_aperture.py" "$APK_DIR" || return 1
-
     return v0
 .end method"""
 if "Exynos9810 has no One UI 8 HAL QR metadata" not in text:
@@ -5274,6 +5344,10 @@ PY
     # callback when migrating an already decoded APK to the Samsung route.
     LOG "- Restoring Samsung Photo processing with a dedicated QR callback route"
     python3 "$MODPATH/native_camera/patches/restore_photo_processing.py" "$APK_DIR" || return 1
+
+    # The Android 16 donor only displays the lens aperture. Restore a real,
+    # capability-gated control for the Exynos9810 main rear lens in Pro modes.
+    python3 "$MODPATH/native_camera/aperture/patch_aperture.py" "$APK_DIR" || return 1
 
     # Software decoding takes 500-850 ms on Exynos9810. The stock 500 ms Photo
     # cadence can overlap decoder work until the legacy HAL stops returning
@@ -6723,7 +6797,7 @@ PY
     if grep -q '^debug.sf.disable_backpressure=' "$WORK_DIR/vendor/build.prop"; then
         LOGE "Unverified legacy SurfaceFlinger backpressure override remains"
         return 1
-    }
+    fi
     grep -q '^debug.sf.latch_unsignaled=0$' "$WORK_DIR/vendor/build.prop" || {
         LOGE "Exynos9810 SurfaceFlinger latch policy is not applied"
         return 1
@@ -6812,7 +6886,7 @@ _EXYNOS9810_FINAL_VERIFY_ENFORCING_BOOT_STATE()
     [ -f "$CIL" ] || {
         LOGE "Final Exynos9810 vendor SELinux policy is missing"
         return 1
-    fi
+    }
 
     for RULE in \
         '(allow vendor_init radio_prop (file (read open getattr)))' \
@@ -6944,6 +7018,7 @@ fi
 _EXYNOS9810_FINAL_PATCH_AIRCOMMAND_BLE_CONTROLLER_NULL || return 1
 _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_SYSFS_BRIDGE || return 1
 _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_BLE_PROTOCOL || return 1
+_EXYNOS9810_FINAL_STAGE_SMARTCAPTURE_SPEN_ENGINE || return 1
 _EXYNOS9810_FINAL_FIX_NOTE9_CHARGE_SETTLE || return 1
 _EXYNOS9810_FINAL_VERIFY_NOTE9_SPEN_PAYLOAD || return 1
 _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY

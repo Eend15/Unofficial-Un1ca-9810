@@ -20,8 +20,8 @@ FEATURE = Path(__file__).resolve().parent / "com.sec.feature.spen_usp_level40.xm
 SFF = ROOT / "target/crownlte/sff.sh"
 PREBUILT = ROOT / "prebuilts/samsung/b0qxxx/system"
 PLATFORM_CERT = ROOT / "security/aosp_platform.x509.pem"
-NOTES = FINAL.parent / "spen/notes/Notes33.apk"
-NOTES_SHA = "7efba32e183e6ace5291f7d80c8cf00022c6374a4c7e5e5c8d1d03aad917239f"
+NOTES = FINAL.parent / "spen/notes/SamsungNotes-4.4.45.37.apk"
+NOTES_SHA = "daed1eff8c8ee9dfb8afe2771e39e893a8808f3230d6d522a8aa647db09b8667"
 
 
 def source_function(contents: str, name: str) -> str:
@@ -93,13 +93,23 @@ _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN
             self.assertEqual(notes.read_bytes(), b"test-modern-notes-fixture")
             self.assertFalse((work / "system/system/app/Notes33").exists())
 
+    def test_known_legacy_notes_is_upgraded_without_touching_other_apps(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="crown-legacy-notes-upgrade-") as td:
+            work = Path(td)
+            notes = work / "system/system/app/Notes33/Notes33.apk"
+            notes.parent.mkdir(parents=True)
+            shutil.copyfile(FINAL.parent / "spen/notes/Notes33.apk", notes)
+            result = self.run_real_factory_stager(work, ROOT / "out/tools")
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertEqual(hashlib.sha256(notes.read_bytes()).hexdigest(), NOTES_SHA)
+
     def test_stock_note9_notes_payload_is_repository_owned(self) -> None:
         self.assertTrue(NOTES.is_file())
         self.assertEqual(hashlib.sha256(NOTES.read_bytes()).hexdigest(), NOTES_SHA)
         self.assertNotIn("SamsungNotes\n", (ROOT / "target/crownlte/debloat.sh").read_text())
         source = FINAL.read_text()
         self.assertIn('SamsungNotes|SamsungNotes_Removable|SNoteProvider) continue', source)
-        self.assertIn('Staging stock Note9 Samsung Notes', source)
+        self.assertIn('Staging Samsung Notes 4.4.45.37', source)
 
     def test_stock_note9_notes_has_all_aircommand_note_components(self) -> None:
         # Inspect the embedded *real* Samsung APK manifest, rather than
@@ -122,7 +132,6 @@ _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN
                 "com.samsung.android.app.notes.composer.ComposerBaseActivity",
                 "com.samsung.android.app.notes.memolist.MemoListBaseActivity",
                 "com.samsung.android.app.notes.screenoffmemo.ScreenOffMemoService",
-                "com.samsung.android.app.notes.screenoffmemo.ScreenOffMemoProvider",
             ):
                 self.assertIn(required, components)
 

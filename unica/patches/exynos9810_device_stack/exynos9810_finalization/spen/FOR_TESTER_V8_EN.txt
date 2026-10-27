@@ -1,0 +1,17 @@
+Hi! Use this v8 ZIP instead of the two v7 test ZIPs. It combines the ink test and a new Air Actions connection attempt in one file, while keeping the Notes crash fix that already works.
+
+For your current Note9 EXT4 ROM with the v6 fixes:
+1. Back up important notes and boot into TWRP.
+2. Install UN1CA-Note9-SPen-EXT4-TEST-v8-20261027.zip.
+3. Reboot System and unlock straight away. DO NOT Format Data, clear Notes storage or reset Bluetooth. If installation fails, stop and send recovery.log.
+
+Test during the first eight minutes after unlocking:
+- Turn the screen off, remove the pen and draw a long continuous line without lifting it. Does ink follow the pen immediately now? Repeat with AOD on and off; save and reopen the memo.
+- Check Notes, Quick notes, erasing, pressure and handwriting-to-text still work. Return to the Notes list a few times.
+- Dock the same pen and open Settings > Advanced features > S Pen > Air actions. The new connection path uses its previously saved address. If connected, check battery percentage, camera/music button actions and reconnection after docking/removing the pen.
+
+Tell me the ink result and Air Actions result separately. Leave the phone unlocked until the full dumpstate finishes, then send the NEW UN1CA-SPen-Logs-date-time archive from Internal storage > Download privately. The existing logger is rearmed once; no extra logger is installed.
+
+This is a test build: connection and real-time ink still need your confirmation. It does not pretend the pen connected or change global Bluetooth/display settings.
+
+To undo v8, flash the matching v8-restore ZIP from the restore folder in TWRP, then reboot. It restores your previous AirCommand and Notes renderer while retaining the working v6 Notes crash fix and saved notes. Restore v8 before trying any older restore ZIP. No data wipe.

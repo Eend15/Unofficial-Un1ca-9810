@@ -1,0 +1,13 @@
+{
+  "package": "com.samsung.android.app.notes",
+  "version": "4.4.45.37",
+  "version_code": 444537000,
+  "source": "Samsung Galaxy Store official stubDownload endpoint, SM-S908B SDK36 EUX",
+  "listing": "https://galaxystore.samsung.com/detail/com.samsung.android.app.notes",
+  "sha256": "daed1eff8c8ee9dfb8afe2771e39e893a8808f3230d6d522a8aa647db09b8667",
+  "size": 206721727,
+  "signer_certificate_sha256": "34df0e7a9f1cf1892e45c056b4973cd81ccf148a4050d11aea4ac5a65f900a42",
+  "original_samsung_signature_preserved": true,
+  "reason": "Known Android-9 Notes33 HWUI callback unavailable on Android16; modern default uses DrawLoopHwBuffer (type3).",
+  "physical_note9_acceptance": "pending tester"
+}

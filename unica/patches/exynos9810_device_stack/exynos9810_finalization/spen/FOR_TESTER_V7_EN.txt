@@ -1,0 +1,18 @@
+Hi! Your new logs confirm the v6 Notes crash fix is installed, and your results confirm Notes and handwriting work now. These two v7 ZIPs target the remaining issues separately.
+
+Please install BOTH numbered ZIPs on your current Note9 EXT4 ROM:
+1. Back up important notes, then boot TWRP.
+2. Flash 1-UN1CA-Note9-Notes-INK-TEST-v7-20261027.zip.
+3. If it succeeds, flash 2-UN1CA-Note9-AirActions-scan-TEST-v7-20261027.zip.
+4. Reboot System and unlock. DO NOT Format Data, clear Notes storage or reset Bluetooth. If a ZIP fails, stop and send recovery.log.
+
+Start testing immediately after unlocking; the existing logger records one session for about eight minutes:
+- Screen-off memo: draw a long line slowly without lifting the pen. Does the ink follow it now? Try AOD on and off, then save and reopen the memo.
+- Check ordinary Notes, Quick notes, pressure, erasing and handwriting-to-text still work. Return to the Notes list a few times to check the previous crash is still gone.
+- Insert the pen and open Settings > Advanced features > S Pen > Air actions. Try connecting. If it connects, check the battery display and camera/music button actions, then dock/remove it and check reconnection.
+
+Send your results for ink and Air Actions separately. Leave the phone unlocked while the full dumpstate finishes, then send the NEW UN1CA-SPen-Logs-date-time archive from Internal storage > Download privately. Yes, both patches rearm the same logger; they do not install a second logger. It automatically becomes inactive after this one session.
+
+These are test fixes, not confirmed solutions yet. The ink ZIP uses the SDK's normal drawing path instead of its front-buffer path; your v6 crash fix and saved notes stay in place. The Air Actions ZIP keeps the original pen filters but moves filtering into the app to test the controller-filter boundary.
+
+To undo v7, use the two matching restore ZIPs in the restore folder: restore AirActions v7, then Notes INK v7. Undo v7 before any earlier v6 patch. No data wipe.
