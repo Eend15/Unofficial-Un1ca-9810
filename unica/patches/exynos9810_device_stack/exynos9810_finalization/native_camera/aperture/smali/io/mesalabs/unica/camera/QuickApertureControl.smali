@@ -93,7 +93,7 @@
 .method private static applyTypography(Landroid/widget/TextView;I)V
     .registers 6
 
-    .line 149
+    .line 160
     invoke-virtual {p0}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
@@ -120,7 +120,7 @@
 
     const/high16 p1, 0x41300000    # 11.0f
 
-    .line 151
+    .line 162
     invoke-virtual {p0, v1, p1}, Landroid/widget/TextView;->setTextSize(IF)V
 
     return-void
@@ -128,7 +128,7 @@
     :cond_1d
     if-eqz v0, :cond_2c
 
-    .line 153
+    .line 164
     invoke-virtual {p0}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
 
     move-result-object p1
@@ -146,7 +146,7 @@
     :cond_2c
     const p1, 0x413b3333    # 11.7f
 
-    .line 155
+    .line 166
     invoke-virtual {p0, v1, p1}, Landroid/widget/TextView;->setTextSize(IF)V
 
     return-void
@@ -245,7 +245,7 @@
 .method private static installStockFeedback(Landroid/widget/TextView;)V
     .registers 6
 
-    .line 128
+    .line 139
     invoke-virtual {p0}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
@@ -266,7 +266,7 @@
 
     move-result v0
 
-    .line 129
+    .line 140
     invoke-virtual {p0}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
 
     move-result-object v1
@@ -291,7 +291,7 @@
 
     if-eqz v1, :cond_4a
 
-    .line 131
+    .line 142
     invoke-virtual {p0}, Landroid/widget/TextView;->getResources()Landroid/content/res/Resources;
 
     move-result-object v2
@@ -302,29 +302,29 @@
 
     const/4 v2, -0x1
 
-    .line 132
+    .line 143
     filled-new-array {v2, v2}, [I
 
     move-result-object v2
 
-    .line 133
-    new-instance v3, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda4;
+    .line 144
+    new-instance v3, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda5;
 
-    invoke-direct {v3, p0, v2, v1, v0}, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda4;-><init>(Landroid/widget/TextView;[III)V
+    invoke-direct {v3, p0, v2, v1, v0}, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda5;-><init>(Landroid/widget/TextView;[III)V
 
-    .line 143
-    new-instance v0, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda5;
+    .line 154
+    new-instance v0, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda6;
 
-    invoke-direct {v0, v3}, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda5;-><init>(Ljava/lang/Runnable;)V
+    invoke-direct {v0, v3}, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda6;-><init>(Ljava/lang/Runnable;)V
 
     invoke-virtual {p0, v0}, Landroid/widget/TextView;->addOnLayoutChangeListener(Landroid/view/View$OnLayoutChangeListener;)V
 
-    .line 144
+    .line 155
     invoke-virtual {p0, v3}, Landroid/widget/TextView;->post(Ljava/lang/Runnable;)Z
 
     return-void
 
-    .line 130
+    .line 141
     :cond_4a
     new-instance p0, Ljava/lang/IllegalStateException;
 
@@ -450,10 +450,10 @@
     return-void
 .end method
 
-.method static synthetic lambda$installStockFeedback$4(Landroid/widget/TextView;[III)V
+.method static synthetic lambda$installStockFeedback$5(Landroid/widget/TextView;[III)V
     .registers 15
 
-    .line 134
+    .line 145
     invoke-virtual {p0}, Landroid/widget/TextView;->getWidth()I
 
     move-result v0
@@ -468,7 +468,7 @@
 
     const/4 v2, 0x0
 
-    .line 135
+    .line 146
     aget v3, p1, v2
 
     const/4 v4, 0x1
@@ -481,7 +481,7 @@
 
     goto :goto_44
 
-    .line 136
+    .line 147
     :cond_17
     invoke-static {v0, v1}, Ljava/lang/Math;->min(II)I
 
@@ -493,14 +493,14 @@
 
     sub-int v3, v0, p2
 
-    .line 137
+    .line 148
     div-int/lit8 v7, v3, 0x2
 
     sub-int p2, v1, p2
 
     div-int/lit8 v8, p2, 0x2
 
-    .line 138
+    .line 149
     invoke-virtual {p0}, Landroid/widget/TextView;->getContext()Landroid/content/Context;
 
     move-result-object p2
@@ -513,7 +513,7 @@
 
     move-result-object v6
 
-    .line 139
+    .line 150
     new-instance v5, Landroid/graphics/drawable/InsetDrawable;
 
     move v9, v7
@@ -524,10 +524,10 @@
 
     invoke-virtual {p0, v5}, Landroid/widget/TextView;->setBackground(Landroid/graphics/drawable/Drawable;)V
 
-    .line 140
+    .line 151
     invoke-virtual {p0, v2, v2, v2, v2}, Landroid/widget/TextView;->setPadding(IIII)V
 
-    .line 141
+    .line 152
     aput v0, p1, v2
 
     aput v1, p1, v4
@@ -537,19 +537,81 @@
     return-void
 .end method
 
-.method static synthetic lambda$installStockFeedback$5(Ljava/lang/Runnable;Landroid/view/View;IIIIIIII)V
+.method static synthetic lambda$installStockFeedback$6(Ljava/lang/Runnable;Landroid/view/View;IIIIIIII)V
     .registers 10
 
-    .line 143
+    .line 154
     invoke-interface {p0}, Ljava/lang/Runnable;->run()V
 
     return-void
 .end method
 
-.method static synthetic lambda$onLensInfo$2(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
+.method static synthetic lambda$onEngineState$2(Ljava/lang/Object;)V
+    .registers 4
+
+    .line 95
+    new-instance v0, Ljava/util/ArrayList;
+
+    sget-object v1, Lio/mesalabs/unica/camera/QuickApertureControl;->sessions:Ljava/util/WeakHashMap;
+
+    invoke-virtual {v1}, Ljava/util/WeakHashMap;->values()Ljava/util/Collection;
+
+    move-result-object v1
+
+    invoke-direct {v0, v1}, Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V
+
+    invoke-virtual {v0}, Ljava/util/ArrayList;->iterator()Ljava/util/Iterator;
+
+    move-result-object v0
+
+    :cond_f
+    :goto_f
+    invoke-interface {v0}, Ljava/util/Iterator;->hasNext()Z
+
+    move-result v1
+
+    if-eqz v1, :cond_32
+
+    invoke-interface {v0}, Ljava/util/Iterator;->next()Ljava/lang/Object;
+
+    move-result-object v1
+
+    check-cast v1, Lio/mesalabs/unica/camera/QuickApertureControl$Session;
+
+    .line 96
+    iget-object v2, v1, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->root:Ljava/lang/ref/WeakReference;
+
+    invoke-virtual {v2}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+
+    move-result-object v2
+
+    check-cast v2, Landroid/view/View;
+
+    if-eqz v2, :cond_f
+
+    .line 97
+    iget-object v1, v1, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->engine:Ljava/lang/ref/WeakReference;
+
+    invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
+
+    move-result-object v1
+
+    if-ne v1, p0, :cond_f
+
+    const/4 v1, 0x0
+
+    invoke-static {v2, v1}, Lio/mesalabs/unica/camera/QuickApertureControl;->bind(Ljava/lang/Object;Z)V
+
+    goto :goto_f
+
+    :cond_32
+    return-void
+.end method
+
+.method static synthetic lambda$onLensInfo$3(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
     .registers 2
 
-    .line 100
+    .line 111
     sget-object v0, Lio/mesalabs/unica/camera/QuickApertureControl;->active:Lio/mesalabs/unica/camera/QuickApertureControl$Session;
 
     if-ne v0, p0, :cond_d
@@ -568,20 +630,20 @@
     return-void
 .end method
 
-.method static synthetic lambda$onLensInfo$3(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
+.method static synthetic lambda$onLensInfo$4(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
     .registers 3
 
-    .line 110
+    .line 121
     sget-object v0, Lio/mesalabs/unica/camera/QuickApertureControl;->active:Lio/mesalabs/unica/camera/QuickApertureControl$Session;
 
     if-ne v0, p0, :cond_28
 
     const/4 v0, 0x0
 
-    .line 111
+    .line 122
     iput-boolean v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pending:Z
 
-    .line 112
+    .line 123
     iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->text:Ljava/lang/ref/WeakReference;
 
     invoke-virtual {v0}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
@@ -592,12 +654,12 @@
 
     if-eqz v0, :cond_16
 
-    .line 113
+    .line 124
     iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
 
     invoke-virtual {v0, v1}, Landroid/widget/TextView;->removeCallbacks(Ljava/lang/Runnable;)Z
 
-    .line 114
+    .line 125
     :cond_16
     iget-object v0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->pin:Ljava/lang/ref/WeakReference;
 
@@ -609,12 +671,12 @@
 
     if-eqz v0, :cond_25
 
-    .line 115
+    .line 126
     iget-object v1, p0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->timeout:Ljava/lang/Runnable;
 
     invoke-virtual {v0, v1}, Landroid/widget/TextView;->removeCallbacks(Ljava/lang/Runnable;)Z
 
-    .line 116
+    .line 127
     :cond_25
     invoke-virtual {p0}, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->update()V
 
@@ -634,7 +696,7 @@
 .method private static named(Landroid/view/View;Ljava/lang/String;)Landroid/view/View;
     .registers 5
 
-    .line 123
+    .line 134
     invoke-virtual {p0}, Landroid/view/View;->getResources()Landroid/content/res/Resources;
 
     move-result-object v0
@@ -660,15 +722,54 @@
     return-object p0
 .end method
 
+.method public static onEngineState(Ljava/lang/Object;Ljava/lang/Object;)V
+    .registers 3
+
+    .line 93
+    instance-of v0, p1, Ljava/lang/Enum;
+
+    if-eqz v0, :cond_1d
+
+    check-cast p1, Ljava/lang/Enum;
+
+    invoke-virtual {p1}, Ljava/lang/Enum;->name()Ljava/lang/String;
+
+    move-result-object p1
+
+    const-string v0, "PREVIEWING"
+
+    invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+
+    move-result p1
+
+    if-nez p1, :cond_13
+
+    goto :goto_1d
+
+    .line 94
+    :cond_13
+    sget-object p1, Lio/mesalabs/unica/camera/QuickApertureControl;->main:Landroid/os/Handler;
+
+    new-instance v0, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda4;
+
+    invoke-direct {v0, p0}, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda4;-><init>(Ljava/lang/Object;)V
+
+    invoke-virtual {p1, v0}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
+
+    :cond_1d
+    :goto_1d
+    return-void
+.end method
+
 .method public static onLensInfo(Ljava/lang/Object;Ljava/lang/Object;)V
     .registers 5
 
-    .line 93
+    .line 104
     sget-object v0, Lio/mesalabs/unica/camera/QuickApertureControl;->active:Lio/mesalabs/unica/camera/QuickApertureControl$Session;
 
     if-eqz v0, :cond_84
 
-    .line 94
+    .line 105
     iget-object v1, v0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->root:Ljava/lang/ref/WeakReference;
 
     invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
@@ -679,7 +780,7 @@
 
     goto/16 :goto_84
 
-    .line 96
+    .line 107
     :cond_e
     :try_start_e
     const-string v1, "a"
@@ -690,7 +791,7 @@
 
     check-cast p0, Ljava/lang/Float;
 
-    .line 97
+    .line 108
     const-string v1, "n"
 
     invoke-static {p1, v1}, Lio/mesalabs/unica/camera/ApertureControl;->call(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
@@ -699,7 +800,7 @@
 
     check-cast p1, Ljava/lang/String;
 
-    .line 98
+    .line 109
     iget-object v1, v0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->cameraId:Ljava/lang/String;
 
     invoke-virtual {p1, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
@@ -708,7 +809,7 @@
 
     if-nez p1, :cond_31
 
-    .line 99
+    .line 110
     sget-object p0, Lio/mesalabs/unica/camera/QuickApertureControl;->main:Landroid/os/Handler;
 
     new-instance p1, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda2;
@@ -722,7 +823,7 @@
     :cond_31
     if-eqz p0, :cond_84
 
-    .line 105
+    .line 116
     invoke-virtual {p0}, Ljava/lang/Float;->floatValue()F
 
     move-result p1
@@ -759,13 +860,13 @@
 
     goto :goto_84
 
-    .line 106
+    .line 117
     :cond_56
     iget-object p1, v0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
 
     if-eqz p1, :cond_6f
 
-    .line 107
+    .line 118
     invoke-virtual {p1}, Ljava/lang/Float;->floatValue()F
 
     move-result p1
@@ -788,11 +889,11 @@
 
     goto :goto_84
 
-    .line 108
+    .line 119
     :cond_6f
     iput-object p0, v0, Lio/mesalabs/unica/camera/QuickApertureControl$Session;->reported:Ljava/lang/Float;
 
-    .line 109
+    .line 120
     sget-object p0, Lio/mesalabs/unica/camera/QuickApertureControl;->main:Landroid/os/Handler;
 
     new-instance p1, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda3;
@@ -808,7 +909,7 @@
     :catch_7c
     move-exception p0
 
-    .line 119
+    .line 130
     const-string p1, "UnicaAperture"
 
     const-string v0, "Lens result unavailable"

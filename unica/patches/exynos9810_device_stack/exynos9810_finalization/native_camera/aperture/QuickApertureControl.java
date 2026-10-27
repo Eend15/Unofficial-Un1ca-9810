@@ -88,6 +88,17 @@ public final class QuickApertureControl {
         }
     }
 
+    /** Rebind only on a real engine-ready event, never a timer/polling loop. */
+    public static void onEngineState(Object engine, Object state) {
+        if (!(state instanceof Enum) || !"PREVIEWING".equals(((Enum<?>) state).name())) return;
+        main.post(() -> {
+            for (Session session : new java.util.ArrayList<>(sessions.values())) {
+                View root = session.root.get();
+                if (root != null && session.engine.get() == engine) bind(root, false);
+            }
+        });
+    }
+
     /** Runs on Samsung's lens callback thread; UI work only when value changes. */
     public static void onLensInfo(Object info, Object device) {
         Session session = active;

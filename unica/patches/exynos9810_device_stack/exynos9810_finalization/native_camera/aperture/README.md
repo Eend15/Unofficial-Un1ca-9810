@@ -81,3 +81,5 @@ quick_setting_indicator_ev_text_size dimension (11.699982 dp in Camera
 retain SecNumFixedSemiBold (sec-num-fixed, weight 600), native colors and ripple
 feedback. The reference photos inform the proportions; a photographed screen
 cannot establish an exact font/pixel match without its original APK/resources.
+
+Camera PREVIEWING events rebind the top control after lens changes; no retry timer or periodic polling is used.

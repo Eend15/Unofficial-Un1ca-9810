@@ -74,7 +74,7 @@ for target in ('starlte', 'star2lte', 'crownlte'):
             lens.write_text('.method public onLensInfoChanged(Ljava/lang/Long;Lcom/samsung/android/camera/core2/callback/LensInfoCallback$LensInfo;Lcom/samsung/android/camera/core2/CamDevice;)V\n    .locals 1\n    return-void\n.end method\n')
             engine = root / 'smali_classes3/com/sec/android/app/camera/engine/CommonEngine.smali'
             engine.parent.mkdir(parents=True, exist_ok=True)
-            engine.write_text(''.join('.method ' + signature + '\n    .locals 1\n    return-void\n.end method\n' for signature in ('public switchCamera(Lcom/sec/android/app/camera/interfaces/CameraId;)V', 'public changeShootingMode(IZ)V', 'public stopEngine()V')))
+            engine.write_text(''.join('.method ' + signature + '\n    .locals 1\n    return-void\n.end method\n' for signature in ('public switchCamera(Lcom/sec/android/app/camera/interfaces/CameraId;)V', 'public changeShootingMode(IZ)V', 'public stopEngine()V', 'public changeState(Lcom/sec/android/app/camera/engine/interfaces/Engine$State;)V')))
             patch.apply(root)
             before = {str(f.relative_to(root)): f.read_bytes() for f in root.rglob('*.smali')}
             patch.apply(root)

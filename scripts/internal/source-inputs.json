@@ -11753,6 +11753,7 @@
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/aperture/smali/io/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda3.smali",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/aperture/smali/io/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda4.smali",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/aperture/smali/io/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda5.smali",
+    "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/aperture/smali/io/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda6.smali",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/aperture/smali/io/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda0.smali",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/aperture/smali/io/mesalabs/unica/camera/QuickApertureControl$Session$$ExternalSyntheticLambda1.smali",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/aperture/smali/io/mesalabs/unica/camera/QuickApertureControl$Session.smali",

@@ -17,7 +17,7 @@ def verify(apk):
     for token in (
         b'Lio/mesalabs/unica/camera/QuickApertureControl;',
         b'Lio/mesalabs/unica/camera/QuickApertureControl$Session;',
-        b'resetEngine', b'onLensInfo', b'positionPin', b'installStockFeedback',
+        b'resetEngine', b'onLensInfo', b'positionPin', b'installStockFeedback', b'applyTypography', b'onEngineState',
         b'quick_setting_indicator_list_area', b'LENS_APERTURE',
         b'Lio/mesalabs/unica/camera/ApertureMode;', b'getPublicSetting', b'AUTO',
     ):

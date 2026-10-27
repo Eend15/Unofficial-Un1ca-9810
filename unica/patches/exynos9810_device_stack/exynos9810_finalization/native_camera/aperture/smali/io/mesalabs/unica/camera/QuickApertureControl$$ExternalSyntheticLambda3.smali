@@ -30,7 +30,7 @@
     .line 0
     iget-object p0, p0, Lio/mesalabs/unica/camera/QuickApertureControl$$ExternalSyntheticLambda3;->f$0:Lio/mesalabs/unica/camera/QuickApertureControl$Session;
 
-    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->lambda$onLensInfo$3(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
+    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->lambda$onLensInfo$4(Lio/mesalabs/unica/camera/QuickApertureControl$Session;)V
 
     return-void
 .end method

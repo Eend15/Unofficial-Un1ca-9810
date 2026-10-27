@@ -48,14 +48,15 @@ def hook(text, signature, call, returns=False):
         if not registers:
             raise ValueError('Unknown quick bar registers')
         kind, number = registers.group(1), int(registers.group(2))
-        parameters = 2 if '(Z)' in signature else 1
+        arguments = signature.split('(', 1)[1].split(')', 1)[0]
+        parameters = 1 + sum(2 if token in ('J', 'D') else 1 for token in re.findall(r'\[*L[^;]+;|\[*[ZBCSIFJD]', arguments))
         local = number if kind == 'locals' else number - parameters
         saved = 'v' + str(local)
         replacement = f'    .{kind} {number + 1}\n\n    # UN1CA quick bar saved receiver\n    move-object {saved}, p0\n'
         method = method[:registers.start()] + replacement + method[registers.end():]
         if '    return-void\n' not in method:
             raise ValueError('Missing quick bar return')
-        new = method.replace('    return-void\n', call.replace('{p0}', '{' + saved + '}') + '    return-void\n')
+        new = method.replace('    return-void\n', call.replace('{p0}', '{' + saved + '}').replace('{p0,', '{' + saved + ',') + '    return-void\n')
     else:
         new, count = re.subn(r'(^    \.(?:locals|registers) \d+\n)', lambda m: m.group() + '\n' + call, method, count=1, flags=re.M)
         if count != 1:
@@ -107,6 +108,7 @@ def apply(root):
     updated = original
     for signature in ('public switchCamera(Lcom/sec/android/app/camera/interfaces/CameraId;)V', 'public changeShootingMode(IZ)V', 'public stopEngine()V'):
         updated = hook(updated, signature, '    invoke-static {p0}, Lio/mesalabs/unica/camera/QuickApertureControl;->resetEngine(Ljava/lang/Object;)V\n')
+    updated = hook(updated, 'public changeState(Lcom/sec/android/app/camera/engine/interfaces/Engine$State;)V', '    invoke-static {p0, p1}, Lio/mesalabs/unica/camera/QuickApertureControl;->onEngineState(Ljava/lang/Object;Ljava/lang/Object;)V\n', True)
     changes.append((engines[0], original, updated))
     payload = sorted((HERE / 'smali/io/mesalabs/unica/camera').glob('*.smali'))
     if not payload:
