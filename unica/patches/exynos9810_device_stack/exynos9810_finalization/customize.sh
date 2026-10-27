@@ -1750,6 +1750,19 @@ _EXYNOS9810_FINAL_PATCH_POWER_MENU_ACCESSIBILITY()
     python3 "$MODPATH/power_menu/patch_reduce_transparency.py" "$DIR" || return 1
 }
 
+_EXYNOS9810_FINAL_PATCH_FROZEN_SOCKET_DESTROY()
+{
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+    local REL="system/framework/framework.jar"
+    local DIR="$APKTOOL_DIR/$REL"
+    [ -d "$DIR" ] || DECODE_APK "system" "$REL" || return 1
+    # ConnectivityService destroys frozen apps' sockets while the phone idles.
+    # On the 4.9 kernel that sock_diag call can block forever and the system
+    # watchdog then reboots the locked phone, so it never gets frozen uids.
+    LOG "- Keeping ConnectivityService off the frozen-uid socket destroy path"
+    python3 "$MODPATH/network/patch_frozen_socket_destroy.py" "$DIR" || return 1
+}
+
 _EXYNOS9810_FINAL_PATCH_BRIEF_HEADSUP_DEFAULT()
 {
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
@@ -7003,6 +7016,7 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK
 _EXYNOS9810_FINAL_PATCH_CAMERA_ACQUIRE_FENCES || return 1
 _EXYNOS9810_FINAL_PATCH_POWER_MENU_ACCESSIBILITY || return 1
 _EXYNOS9810_FINAL_PATCH_BRIEF_HEADSUP_DEFAULT || return 1
+_EXYNOS9810_FINAL_PATCH_FROZEN_SOCKET_DESTROY || return 1
 _EXYNOS9810_FINAL_ENABLE_CAMERA_UHD_60FPS
 _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES

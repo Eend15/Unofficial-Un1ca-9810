@@ -11791,6 +11791,8 @@
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_motionphoto/MotionPhoto.apk",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_motionphoto/libapex_motionphoto_utils_jni.media.samsung.so",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_motionphoto/libmotionphoto_jni.media.samsung.so",
+    "unica/patches/exynos9810_device_stack/exynos9810_finalization/network/patch_frozen_socket_destroy.py",
+    "unica/patches/exynos9810_device_stack/exynos9810_finalization/network/test_frozen_socket_destroy.py",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/notifications/BRIEF_EDGE_LIGHTING.md",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/notifications/patch_brief_heads_up.py",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/notifications/test_brief_heads_up.py",
