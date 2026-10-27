@@ -216,6 +216,7 @@ system/app/ClockPackage
 # permission metadata and SCPMAgent shared-UID anchor so a Galaxy Store
 # install under /data/app remains valid across reboots.
 SYSTEM_DEBLOAT+="
+system/priv-app/SamsungCloud
 system/priv-app/SamsungCloudClient
 "
 

@@ -812,6 +812,7 @@ _EXYNOS9810_FINAL_DEBLOAT()
         MultiControl \
         MyDevice \
         ParentalCare \
+        SamsungCloud \
         SamsungCloudClient \
         SPPPushClient \
         FaceService \
@@ -826,6 +827,10 @@ _EXYNOS9810_FINAL_DEBLOAT()
         SamsungNotes \
         SamsungNotes_Removable \
         SamsungVoiceRecorder \
+        SmartSwitch \
+        SmartSwitchMobile \
+        EasyMover \
+        EasyMoverAgent \
         SmartSwitchAgent \
         SmartSwitchAssistant \
         SmartSwitchStub \
@@ -911,106 +916,17 @@ _EXYNOS9810_FINAL_DEBLOAT()
         _EXYNOS9810_FINAL_DELETE_SYSTEM_ENTRY "$REL"
     done
 
-    # Samsung's removable-preload catalogue and userdata APK list can make
-    # SetupWizard/Galaxy Store download optional packages as soon as networking
-    # is available even after their system APKs have been removed. Delete both
-    # triggers late, after all donor overlays have been restored.
-    local PRELOAD_LIST="$WORK_DIR/system/system/etc/removable_preload.txt"
-    local USERDATA_LIST="$WORK_DIR/system/system/etc/userdata_apks_count_list.txt"
-
-    if [ -f "$PRELOAD_LIST" ]; then
-        LOG "- Removing Smart Switch, Samsung Kids and Samsung Cloud from removable-preload catalogue"
-        python3 - "$PRELOAD_LIST" <<'PY' || return 1
-from pathlib import Path
-import re
-import sys
-
-path = Path(sys.argv[1])
-text = path.read_text()
-for section in ("SmartSwitch", "KidsHome", "SamsungCloud", "SamsungCloudClient"):
-    text, count = re.subn(
-        rf"(?ms)^\[{re.escape(section)}\]\n.*?(?=^\[|\Z)",
-        "",
-        text,
-    )
-    if count > 1:
-        raise SystemExit(f"unexpected {section} preload block count: {count}")
-path.write_text(text)
-PY
-    fi
-
-    if [ -f "$USERDATA_LIST" ]; then
-        LOG "- Removing Smart Switch, Samsung Kids and Samsung Cloud userdata preload triggers"
-        sed -i -e '\|/data/app/SmartSwitch/SmartSwitch.apk|d' \
-            -e '\|/data/app/KidsHome/KidsHome.apk|d' \
-            -e '/[Ss]amsung[Cc]loud/d' \
-            -e '/[Ss]cloud/d' "$USERDATA_LIST" || return 1
-    fi
+    # Match package identity and all known installer aliases, not only an INI label.
+    # This does not disable Samsung Account, Galaxy Store or global restore.
+    python3 "$MODPATH/optional_apps/optional_preload_policy.py" \
+        --work-dir "$WORK_DIR" --target "$TARGET_CODENAME" --apply || return 1
 }
 
 _EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT()
 {
-    local FOUND FILE REL
-    local -a SEARCH_ROOTS
-
-    LOG "- Verifying Samsung Cloud is optional while its shared-UID contract remains"
-
-    SEARCH_ROOTS=("$WORK_DIR/system")
-    if [ -d "$WORK_DIR/product" ]; then
-        SEARCH_ROOTS+=("$WORK_DIR/product")
-    fi
-
-    FOUND="$(find "${SEARCH_ROOTS[@]}" -type d \
-        \( -iname 'SamsungCloud' -o -iname 'SamsungCloudClient' \) \
-        -print -quit)"
-    [ -z "$FOUND" ] || {
-        LOGE "Samsung Cloud APK directory remains in the final workdir: $FOUND"
-        return 1
-    }
-
-    FOUND="$(find "${SEARCH_ROOTS[@]}" -type f \
-        ! -name 'privapp-permissions-com.samsung.android.scloud.xml' \
-        ! -name 'unica_exynos9810_scloud_components.xml' \
-        -iname '*scloud*' -print -quit)"
-    [ -z "$FOUND" ] || {
-        LOGE "Samsung Cloud support file remains in the final workdir: $FOUND"
-        return 1
-    }
-
-    for REL in \
-        system/priv-app/SCPMAgent \
-        system/etc/permissions/privapp-permissions-com.samsung.android.scloud.xml; do
-        [ -e "$WORK_DIR/system/$REL" ] || {
-            LOGE "Samsung Cloud shared-UID anchor is missing: $WORK_DIR/system/$REL"
-            return 1
-        }
-    done
-
-    FILE="$WORK_DIR/system/system/etc/sysconfig/package-shareduid-allowlist.xml"
-    [ -f "$FILE" ] || {
-        LOGE "Samsung package shared-UID allowlist is missing: $FILE"
-        return 1
-    }
-    grep -qF 'package="com.samsung.android.scloud" shareduid="android.uid.samsungcloud"' "$FILE" || {
-        LOGE "Samsung Cloud shared-UID allowlist entry is missing"
-        return 1
-    }
-    grep -qF 'package="com.samsung.android.scpm" shareduid="android.uid.samsungcloud"' "$FILE" || {
-        LOGE "SCPMAgent shared-UID allowlist entry is missing"
-        return 1
-    }
-
-    for FILE in \
-        "$WORK_DIR/system/system/etc/removable_preload.txt" \
-        "$WORK_DIR/system/system/etc/userdata_apks_count_list.txt"; do
-        [ -f "$FILE" ] || continue
-        if grep -qi -E 'samsungcloud|scloud' "$FILE"; then
-            LOGE "Samsung Cloud preload trigger remains in $FILE"
-            return 1
-        fi
-    done
-
-    return 0
+    LOG "- Verifying optional Samsung Cloud without preinstallation or auto-download"
+    python3 "$MODPATH/optional_apps/samsung_cloud_policy.py" \
+        --work-dir "$WORK_DIR" --target "$TARGET_CODENAME" || return 1
 }
 
 _EXYNOS9810_FINAL_STAGE_SCPM_ANCHOR()
@@ -7106,11 +7022,11 @@ _EXYNOS9810_FINAL_RESTORE_LEGACY_RADIO_STACK
 _EXYNOS9810_FINAL_RESTORE_RADIO_VINTF
 _EXYNOS9810_FINAL_APPLY_TESTED_RADIO_RESTORE_V5
 _EXYNOS9810_FINAL_KEEP_STORE_UPDATABLE_APPS_SIGNED
-_EXYNOS9810_FINAL_DEBLOAT
+_EXYNOS9810_FINAL_DEBLOAT || return 1
 _EXYNOS9810_FINAL_RESTORE_ACCESSORY_STACK || return 1
 _EXYNOS9810_FINAL_PATCH_LED_ICON_EDITOR || return 1
 _EXYNOS9810_FINAL_STAGE_SCPM_ANCHOR || return 1
-_EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT
+_EXYNOS9810_FINAL_VERIFY_SAMSUNG_CLOUD_ABSENT || return 1
 _EXYNOS9810_FINAL_VERIFY_REMOVED_OPTIONAL_COMPONENTS
 _EXYNOS9810_FINAL_RESTORE_BOOT_PARITY_OVERLAYS
 _EXYNOS9810_FINAL_RESTORE_DAAGENT
