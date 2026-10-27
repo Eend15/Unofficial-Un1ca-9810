@@ -76,10 +76,18 @@ public final class SystemUiHooks {
             }
         });
         runGroup("data changes", () -> hookDataChanges(cl));
+        runGroup("foreground task changes", () -> hookForegroundTaskChanges(cl));
         runGroup("calls", () -> hookCalls(cl));
         runGroup("cast", () -> hookCast(cl));
         runGroup("flashlight", () -> hookFlashlight(cl));
         runGroup("signals", () -> hookSignals(cl));
+        runGroup("charging animation", () -> {
+            try {
+                ChargingAnimation.install(cl);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("charging presentation API changed", e);
+            }
+        });
         // Android 16 only: newer System UI builds (One UI 9 / SDK 37) ship the AOSP chip classes too,
         // but hooking them there is exactly what the original module avoided.
         // One UI 7 has no Samsung call controller either: it uses the same AOSP one
@@ -386,6 +394,22 @@ public final class SystemUiHooks {
         }));
         refreshAfter(cl, OA_CONTROLLER, "OA change", OA_CONTROLLER_CHANGES);
         refreshAfter(cl, OA_DATA_HELPER, "OA change", OA_DATA_HELPER_CHANGES);
+    }
+
+    /** Optional callbacks only: no new binder listener, polling loop, or mandatory OEM symbol. */
+    private static void hookForegroundTaskChanges(ClassLoader cl) {
+        int attached = 0;
+        XC_MethodHook hook = SafeHook.after("foreground task change", p -> refresh());
+        for (String name : new String[]{
+                "com.android.systemui.shared.system.TaskStackChangeListeners$Impl",
+                "com.android.wm.shell.common.TaskStackListenerImpl"}) {
+            if (!Refl.hasClass(name, cl)) continue;
+            for (String method : new String[]{"onTaskStackChanged", "onTaskMovedToFront", "onTaskFocusChanged",
+                    "onActivityPinned", "onActivityUnpinned"}) {
+                attached += Refl.hookAllHierarchy(cl, name, method, hook);
+            }
+        }
+        Diagnostics.fact("foreground task hooks", String.valueOf(attached));
     }
 
     /** Captures Samsung's flashlight controller: it sets the torch level and remembers it for the quick settings tile. */

@@ -6,7 +6,6 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.SafeHook;
 import dev.android.dynamicisland.xposed.XLog;
@@ -19,7 +18,7 @@ import java.util.WeakHashMap;
 
 /**
  * Small System UI performance hooks that keep the shade smooth while the island runs: no repeated
- * frame-rate or blur calls, no GPU cache trimming each time the shade closes, remembered tile
+ * blur calls, no GPU cache trimming each time the shade closes, remembered tile
  * animation frames and less log spam. Each hook only skips work that would be redone for nothing.
  * Hooks run on whichever thread System UI calls them from; shared state is thread-safe or main-thread only.
  */
@@ -69,27 +68,11 @@ public final class ShadePerf {
     }
 
     static void install(ClassLoader cl) {
-        skipUnchangedFrameRate();
         keepGpuCachesOnShadeClose();
         dropDebugStacks(cl);
         dropLogNoise();
         skipRepeatedBlurReset();
         rememberTileFrames();
-    }
-
-    /** {@code View.setRequestedFrameRate} with the value the view already has only re-triggers frame-rate voting. */
-    private static void skipUnchangedFrameRate() {
-        try {
-            XposedBridge.hookMethod(View.class.getDeclaredMethod("setRequestedFrameRate", Float.TYPE),
-                    SafeHook.before("frame rate", p -> {
-                        float requested = (Float) p.args[0];
-                        if (Float.compare(requested, ((View) p.thisObject).getRequestedFrameRate()) == 0) {
-                            p.setResult((Object) null);
-                        }
-                    }));
-        } catch (Throwable t) {
-            XLog.e("frame rate hook failed", t);
-        }
     }
 
     /**

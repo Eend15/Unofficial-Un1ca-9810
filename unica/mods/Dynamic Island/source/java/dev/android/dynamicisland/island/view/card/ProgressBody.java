@@ -106,7 +106,7 @@ public final class ProgressBody extends CardBody {
         owner.barClip.rewind();
         owner.barClip.addRoundRect(owner.tmpRect, height / 2.0f, height / 2.0f, Path.Direction.CW);
         c.clipPath(owner.barClip);
-        owner.fillPaint.setColor(Colors.withAlpha(item.accent, alpha));
+        owner.fillPaint.setColor(Colors.withAlpha(item.fillAccent(), alpha));
         c.drawRect(Math.max(left, start), top, Math.min(right, start + sweep), top + height, owner.fillPaint);
         c.restoreToCount(save);
     }
@@ -119,7 +119,7 @@ public final class ProgressBody extends CardBody {
         float fill = (right - left) * IslandView.clamp01(item.progress);
         if (fill > 0.0f) {
             owner.tmpRect.right = Math.min(right, Math.max(height, fill) + left);
-            owner.fillPaint.setColor(Colors.withAlpha(item.accent, alpha));
+            owner.fillPaint.setColor(Colors.withAlpha(item.fillAccent(), alpha));
             c.drawRoundRect(owner.tmpRect, height / 2.0f, height / 2.0f, owner.fillPaint);
         }
     }

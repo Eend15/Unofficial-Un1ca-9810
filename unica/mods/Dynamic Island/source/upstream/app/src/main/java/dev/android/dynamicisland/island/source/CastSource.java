@@ -3,6 +3,7 @@ package dev.android.dynamicisland.island.source;
 import android.content.Context;
 import android.os.SystemClock;
 import android.view.View;
+import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.xposed.Refl;
 import java.time.Duration;
@@ -24,19 +25,85 @@ public final class CastSource {
 
     /** System UI's cast controller; its {@code chipView} is clicked to stop. Set by the hooks. */
     public Object castController;
-    private Object bundle;
+    private volatile Object bundle;
+    private long lifecycleGeneration;
+    private long startGeneration;
+    private String lastRecorderPackage;
+    private boolean observedStop;
+    private volatile RecorderLifecycle lifecycle = new RecorderLifecycle(null, 0L, 0L);
+
+    public static final class RecorderLifecycle {
+        final String pkg;
+        public final long generation;
+        public final long start;
+
+        RecorderLifecycle(String pkg, long generation, long start) {
+            this.pkg = pkg;
+            this.generation = generation;
+            this.start = start;
+        }
+    }
 
     /** {@code ctx} is accepted for symmetry with the other sources; the chip model needs no context. */
     private volatile Set<String> recordingPackages = Collections.emptySet();
     /** Told when the recorder whose notification is hidden starts or stops, so the shade list is built again. */
     public volatile Runnable onRecordersChanged;
 
-    public CastSource(Context ctx) {
+    private final Context ctx;
+
+    public CastSource(Context ctx) { this.ctx = ctx; }
+
+    /** Snapshot lifecycle changes now, even when UI refresh requests are later coalesced. */
+    public synchronized void onBundle(Object b) {
+        bundle = b;
+        Object record = Refl.get(b, "screenRecord");
+        Object share = Refl.get(b, "shareToApp");
+        String shareOwner = isActive(share) ? ownerPackage(share) : null;
+        String pkg = null;
+        if (isActive(record)) {
+            pkg = ownerPackage(record);
+        } else if ("com.samsung.android.app.smartcapture".equals(shareOwner)) {
+            pkg = shareOwner;
+        }
+        RecorderLifecycle old = lifecycle;
+        if (pkg == null) {
+            // Missing/unknown models invalidate continuity but are not a confirmed stop.
+            boolean otherOwner = shareOwner != null && !shareOwner.isEmpty() && !shareOwner.equals(lastRecorderPackage);
+            if (isInactive(record) && (isInactive(share) || otherOwner)) observedStop = true;
+            lifecycle = new RecorderLifecycle(null, 0L, startGeneration);
+        } else if (!pkg.equals(old.pkg)) {
+            if (observedStop || !pkg.equals(lastRecorderPackage)) ++startGeneration;
+            lifecycle = new RecorderLifecycle(pkg, ++lifecycleGeneration, startGeneration);
+            lastRecorderPackage = pkg;
+            observedStop = false;
+        }
     }
 
-    /** Latest chip models of the status bar (a bundle of the three chip states). */
-    public void onBundle(Object b) {
-        bundle = b;
+    /** Atomically pairs continuity and start generation for notification consumers. */
+    public RecorderLifecycle recorderLifecycle(String pkg) {
+        RecorderLifecycle state = lifecycle;
+        return pkg != null && pkg.equals(state.pkg) ? state : null;
+    }
+
+    /** Zero is unknown, not evidence of recording termination. */
+    public long recorderSession(String pkg) {
+        RecorderLifecycle state = lifecycle;
+        return pkg != null && pkg.equals(state.pkg) ? state.generation : 0L;
+    }
+
+    /** Changes only after an observed stop/start or a different recorder owner, not a read failure. */
+    public long recorderStart(String pkg) {
+        RecorderLifecycle state = lifecycle;
+        return pkg != null && pkg.equals(state.pkg) ? state.start : 0L;
+    }
+
+    private static String ownerPackage(Object model) {
+        Object value = Refl.get(model, "managingPackageName");
+        return value instanceof String && !((String) value).isEmpty() ? (String) value : null;
+    }
+
+    private static boolean isInactive(Object model) {
+        return model != null && model.getClass().getName().endsWith("$Inactive");
     }
 
     /** True when {@code notificationKey} is the notification of the screen recorder that has a card on the island. */
@@ -72,7 +139,7 @@ public final class CastSource {
         Object share = Refl.get(bundle, "shareToApp");
         Object cast = Refl.get(bundle, "castToOtherDevice");
         if (isActive(record)) {
-            IslandItem card = item("cast:record", record, IslandItem.Kind.RECORDING, RED, tr("Screen recording", "Запись экрана"));
+            IslandItem card = item("cast:record", record, IslandItem.Kind.RECORDING, RED, IslandText.get(ctx, "island_screen_recording"));
             out.add(card);
             if (card.packageName != null) {
                 recorders.add(card.packageName);
@@ -80,8 +147,8 @@ public final class CastSource {
         } else if (isActive(share)) {
             String manager = (String) Refl.get(share, "managingPackageName");
             // Samsung's own recorder reports itself as a share
-            boolean ownRecorder = manager != null && manager.contains("com.samsung.android.app.smartcapture");
-            String title = ownRecorder ? tr("Screen recording", "Запись экрана") : tr("Sharing screen", "Демонстрация экрана");
+            boolean ownRecorder = "com.samsung.android.app.smartcapture".equals(manager);
+            String title = ownRecorder ? IslandText.get(ctx, "island_screen_recording") : IslandText.get(ctx, "island_sharing_screen");
             IslandItem card = item("cast:share", share, IslandItem.Kind.RECORDING, RED, title);
             out.add(card);
             if (ownRecorder && card.packageName != null) {
@@ -89,7 +156,7 @@ public final class CastSource {
             }
         }
         if (isActive(cast)) {
-            out.add(item("cast:device", cast, IslandItem.Kind.LIVE, BLUE, tr("Casting screen", "Трансляция экрана")));
+            out.add(item("cast:device", cast, IslandItem.Kind.LIVE, BLUE, IslandText.get(ctx, "island_casting_screen")));
         }
     }
 
@@ -112,7 +179,7 @@ public final class CastSource {
         }
         Object chip = castController == null ? null : Refl.get(castController, "chipView");
         if (chip instanceof View) {
-            it.actions.add(new IslandItem.Action(tr("Stop", "Остановить"), null, null, () -> clickStopChip((View) chip), true));
+            it.actions.add(new IslandItem.Action(IslandText.get(ctx, "island_stop"), null, null, () -> clickStopChip((View) chip), true));
         }
         it.postTime = Long.MAX_VALUE - 1; // above everything else of its kind
         return it;
@@ -128,9 +195,6 @@ public final class CastSource {
         }
     }
 
-    private static String tr(String english, String russian) {
-        return "ru".equals(Locale.getDefault().getLanguage()) ? russian : english;
-    }
 
     private static boolean isActive(Object model) {
         return model != null && model.getClass().getName().endsWith("$Active");

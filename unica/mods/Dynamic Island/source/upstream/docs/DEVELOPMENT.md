@@ -27,6 +27,19 @@ settings/          preferences, the settings activity (One UI style hub) and the
 
 `island/detect` has no Android service or view dependencies.
 
+### System typography
+
+`Fonts` resolves Samsung's device-provided `sec` family for canvas text. `Typeface.DEFAULT`
+can remain Roboto even when native One UI views use `sec`; no font files are bundled.
+Android falls back to its default family when `sec` is unavailable. Samsung flip-font
+selection still takes priority, preserving its regular/bold behaviour.
+
+The refresh key includes the resolved family, flip-font mode and native regular/bold
+handles. A live font change remeasures compact content and open card geometry without
+changing which popup cards are open. Diagnostics reports the selected source as
+`island font`. See Samsung's [Typeface family and flip-font handling](https://github.com/488315/samsung_framework/blob/30cd25b68f67be792ab78fb46fb9f63af0964522/framework/sources/android/graphics/Typeface.java#L536)
+and the native [media capsule font family](https://github.com/488315/samsung_framework/blob/30cd25b68f67be792ab78fb46fb9f63af0964522/SystemUI-Jadx/resources/res/layout/sec_media_capsule.xml).
+
 ## Runtime behaviour
 
 - The module code runs inside System UI. Settings are read there through `XSharedPreferences` on a background thread every few seconds (`ModuleSettings`); every getter falls back to its default when the file is unreadable.
@@ -37,7 +50,7 @@ settings/          preferences, the settings activity (One UI style hub) and the
 
 ## Rules
 
-Delivery, ride, route and device-connection cards, the code words of the verification-code detector and the words of the text-progress detector come from rule files in LiveBridge's dictionary format. The module ships two rule files of its own, `builtin-ko.json` (built from recorded Korean notifications) and `builtin-en.json` (written for English-language apps; no LiveBridge file is copied or bundled), merged with each other and with the user's own file. Stage names are filed per language (`ko`, `en`); a phone shows its own language and falls back to English. Patterns that could backtrack without end are refused when a file is read, and notification text is capped before matching. Extra fields: `ttl_min`, `final_ttl_min`, `cooldown_min`, and a signal's `percent_group`.
+Delivery, ride, route and device-connection cards, the code words of the verification-code detector and the words of the text-progress detector come from rule files in LiveBridge's dictionary format. The module ships two rule files of its own, `builtin-ko.json` (built from recorded Korean notifications) and `builtin-en.json` (written for English-language apps; no LiveBridge file is copied or bundled), merged with each other and with the user's own file. Stage names and module-owned UI text come from the English-first Android string resources, with generated classloader catalogs for SystemUI. English, Korean, Japanese, Simplified Chinese, Russian and Turkish are registered in `res/xml/locales_config.xml`; unknown locales fall back to English. See [TRANSLATING.md](TRANSLATING.md). User labels override shipped translations; legacy English-only user edits remain visible in newly translated languages unless explicitly overridden. Patterns that could backtrack without end are refused when a file is read, and notification text is capped before matching. Extra fields: `ttl_min`, `final_ttl_min`, `cooldown_min`, and a signal's `percent_group`.
 
 ## Rule manager
 
@@ -56,9 +69,23 @@ KEYSTORE_PASSWORD=... scripts/sign.sh   # -> release/DynamicIsland-<versionName>
 
 `scripts/sign.sh` takes the keystore password from `KEYSTORE_PASSWORD` and creates a self-signed key in `release-keys/` on first run (git-ignored); keep it, updates must use the same key. To release: bump `versionCode` / `versionName` in `app/build.gradle` and `CrashGuard.BUILD`, run the tests, sign.
 
+## Optional device data
+
+`ChargingSource` and `HeadsetSource` join the existing source collector. Their preferences default to false and settings reload starts/stops their listeners on the main thread. The charging card keeps `EVENT` priority. Statistics are subordinate to it; disabling measurement clears its checkpoint and stops charge-counter reads. Live polling runs every 5 seconds while interactive (15 seconds in low-performance mode), and stops while the screen is off. Battery/screen events close measurement intervals without a wake lock.
+
+`ChargingSession` uses elapsed time, including deep sleep, and signed charge-counter/percentage changes. Each change is distributed across the screen-state durations accumulated since that value last changed, rather than assigned entirely to the last instant. These state splits are estimates, not separate hardware measurements. Unsupported charge counters stay unknown. A checkpoint can retain measured totals across a short SystemUI restart only after boot, plug, age and counter/level checks; the unobserved gap is excluded. An unverified restart starts a new measurement; these totals are not a complete charging-history log.
+
+`SourcePeekRequests` is prepared behind `ENABLE_SOURCE_PEEKS = false`; there is no settings entry or preference key. If enabled later, the controller requires the ordinary auto-open option, a free/peekable view and one successful request at a time. Event identity and expiry prevent repeated or stale announcements. Existing heads-up/OTP handling remains separate.
+
+Camera text clearance defaults to zero additional dp and uses the existing live calibration broadcast, preference reload and calibration reset. Rendering limits the extra clearance to the available pill width.
+
 ## README pictures
 
-`ScreenshotsTest` draws the island on a mock phone (`app/build/screenshots`) and the settings render tests write the settings pages (`app/build/render`) when `./gradlew testReleaseUnitTest` runs; `python3 scripts/readme_images.py` (needs Pillow) turns them into `docs/screenshots/` and the strip `docs/banner.png` / `docs/banner_ko.png` at the top of the README. `docs/icon.png` is the app icon rendered from the launcher layers, and `docs/social.png` (1280 x 640, from `scripts/social.html`) is the social preview to upload in the repository settings, and `docs/hero.png` / `docs/hero_ko.png` are the title pictures, made from `scripts/hero.html` / `scripts/hero_ko.html` (open in a browser at 1800 x 600 and save a screenshot; the Korean one uses the Pretendard font, SIL OFL). Run both again after a change of the look and commit the pictures.
+Run `./gradlew testReleaseUnitTest -Prender --tests '*settings.Settings*Test' --tests '*ScreenshotsTest'` to generate README pictures. `ScreenshotsTest` draws the island on a mock phone (`app/build/screenshots`), while the settings captures write all six locales to `app/build/render`. Then `python3 scripts/readme_images.py` (needs Pillow) turns them into `docs/screenshots/` and the strip `docs/banner.png` / `docs/banner_ko.png` at the top of the README. For settings alone, omit `--tests '*ScreenshotsTest'` and pass `--settings-only` to the Python script. `docs/icon.png` is the app icon rendered from the launcher layers, and `docs/social.png` (1280 x 640, from `scripts/social.html`) is the social preview to upload in the repository settings, and `docs/hero.png` / `docs/hero_ko.png` are the title pictures, made from `scripts/hero.html` / `scripts/hero_ko.html` (open in a browser at 1800 x 600 and save a screenshot; the Korean one uses the Pretendard font, SIL OFL). Refresh and commit the pictures after a change of the look.
+
+## README translations
+
+`README.md` is the source; `README.ko.md`, `README.ja.md`, `README.zh.md` (Simplified Chinese) and `README.ru.md` follow it section by section and use the same pictures (`docs/hero.png`, `docs/banner.png`, ...; only Korean has its own title pictures). When `README.md` changes, change the translations too. Each file links to the others in the line under the badges.
 
 ## Releases
 
@@ -80,12 +107,52 @@ To release: raise `versionCode` / `versionName` in `app/build.gradle` and `Crash
 ./gradlew testReleaseUnitTest
 ```
 
-The unit tests include headless Robolectric renders of cards and settings pages, written as PNGs to `app/build/render/`. With network access the Robolectric jar is downloaded; offline, pass the folder that holds `android-all-instrumented-15-robolectric-13954326-i7.jar` with `-ProbolectricDir=<folder>`.
+The default suite runs behavior, lifecycle, pixel and layout regressions. It checks every settings page once and compares the Android resources with the System UI catalog in all six languages. It does not export PNGs or repeat the entire settings layout for every language.
+
+```bash
+./gradlew testReleaseUnitTest -Prender        # also run visual captures and export PNGs
+./gradlew testReleaseUnitTest -Prender --tests '*SettingsCaptureTest' --tests '*SettingsRenderTest'
+```
+
+Capture-only tests use the JUnit `RenderCapture` category and are excluded from regular CI. These images are review aids, without automatic screenshot baselines. Use `RenderCapture.write` for optional image exports. The default suite is intentionally small: startup, representative card processing, settings persistence, localization and basic drawing/lifecycle checks. Repetitive per-variant, frame-rate and low-level helper tests have been removed. Add focused tests when they offer useful coverage beyond these checks; avoid retaining one-off design proposals or repeating every previously fixed bug scenario.
+
+With network access the Robolectric jar is downloaded; offline, pass the folder that holds `android-all-instrumented-15-robolectric-13954326-i7.jar` with `-ProbolectricDir=<folder>`.
+
+## Testing status
+
+- Automated: `./gradlew testReleaseUnitTest` (unit tests and headless renders; no real System UI and no blur). It runs on every push (`ci.yml`) and before every release.
+- On phones: One UI 8 and 9 have been used on real phones; One UI 7 and Nothing OS have not (details and what the words mean in [COMPATIBILITY.md](COMPATIBILITY.md)).
+
+## Release process
+
+1. Work in small steps; every change gets its own commit and the version in `app/build.gradle` / `CrashGuard.BUILD` goes up with a test build.
+2. A test build is published as a GitHub **pre-release** (`v<version>-devN` or `-dev`), with notes in `docs/release-notes/` in English and Korean. Testers install it, and what they report is fixed in the next test build.
+3. When the test builds have been tried on real phones, the stable release (`v<version>`) collects the working changes into one set of notes. What was not confirmed on a phone is left out of the notes.
+4. Releases come fast while the project is young, so a stable release is only cut after the test builds before it have been used for a while; regressions are checked on a phone before it, not after.
+
+## Maintenance
+
+The module hooks private System UI classes by name, so each One UI update can break a hook. The way to keep up is in [COMPATIBILITY.md](COMPATIBILITY.md): run `scripts/check_systemui.py` on the new System UI, read the diagnostics report of a tester on that version (`hooks not attached`, `older names used`), and add the new name next to the old one (`"new|old"`). A missing target skips its hook group, it does not stop the module.
+
+## 0.1.12 validation
+
+The stable release consolidates the 0.1.12 development series. Its local release candidate passes 355 Android unit/render tests, the six-language catalog check and two translation-tool tests. Device feedback confirmed the voice-recorder duplicate-player fix and the revised shade/expand/collapse motion. The final compact-focus timing adjustment is covered by regression tests; device coverage is not exhaustive. GPU display-list/effect lifecycle checks do not replace observing the final Gaussian appearance on a phone.
+
+## 0.1.13 validation
+
+This stable release consolidates the 0.1.13 development series and subsequent card, recording and compatibility fixes. The default suite contains 102 focused tests; the six language catalogs each contain 515 strings. The opt-in `AllCardsOverviewRenderTest` captures all nine card body implementations in 36 examples. Voice-waveform capture and smoother movement were tried on the maintainer's device; the concurrent microphone feature remains experimental and off by default. Issue #16 was traced to Samsung's unconditional expanded-child hit-test dereference, reproduced and fixed in a focused test; the reporting phone has not yet confirmed the fix. See the [release notes](release-notes/0.1.13.md) for evidence and installation details.
 
 ## Known limitations
 
+Open bugs are tracked as issues; the ones that are planned carry the `planned` label.
+
+- The status bar icons can come back a moment late after the shade is closed again; the cause is not known and has not been confirmed to be this module.
 - Tapping a shade card does not remove the notification.
 - After dragging the stack sideways, the tap position of `IslandView.onTap` can be off by the drag.
 - The call card green differs slightly between sources (0xFF30D158 / 0xFF34C759).
 - A verification code made only of lowercase letters and digits is not detected.
-- Nothing has been verified on a real device, only in the headless test and render environment.
+- One UI 7 and Nothing OS are not confirmed on a real device (see [COMPATIBILITY.md](COMPATIBILITY.md)).
+
+## Icons
+
+The island's pictograms (`GlyphIcon`) play Lottie animations. The animations live in `tools/lottie/json`; `tools/lottie/embed.py` packs them into `LottieData.java`, because a System UI process cannot read this module's resources. `LottiePlayer` is a small player that handles what these files use (shape and pre-composition layers, mattes, trim, merge and round-corner modifiers, bezier-eased keyframes) and paints every shape in the colour the island asks for. `tools/lottie/mk.py` draws the icons that are not from the ColorOS pack; run `python3 tools/lottie/mk.py <dir>` and copy the result into `json/` to change them. `LottieFilmTest` writes a strip of frames per icon to `app/build/render/lottie` with `-Prender`. The canvas drawings in `GlyphIcon` remain as the fallback if an animation fails to parse.

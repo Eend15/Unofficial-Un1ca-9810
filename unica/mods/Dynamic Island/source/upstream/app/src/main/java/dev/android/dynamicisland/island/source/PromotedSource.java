@@ -115,10 +115,13 @@ public final class PromotedSource {
             return;
         }
         Set<String> shown = new HashSet<>();
+        Set<String> existing = new HashSet<>();
+        for (IslandItem item : out) if (item.sourceKey != null) existing.add(item.sourceKey);
         for (IslandItem it : items.values()) {
             if (it.packageName != null && it.packageName.equals(foregroundPackage)) {
                 continue;
             }
+            if (existing.contains(it.sourceKey)) continue;
             out.add(it);
             shown.add(it.sourceKey);
         }

@@ -10,6 +10,7 @@ import android.provider.Settings;
 import android.util.Log;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import dev.android.dynamicisland.island.IslandController;
 import dev.android.dynamicisland.xposed.Entry;
 import java.lang.reflect.*;
 import java.nio.charset.StandardCharsets;
@@ -133,6 +134,10 @@ public final class NativeRuntime {
                         boolean next = Settings.Global.getInt(app.getContentResolver(), KEY, 1) == 1;
                         if (next == enabled) return;
                         enabled = next;
+                        if (!next) {
+                            IslandController island = IslandController.get();
+                            if (island != null) island.onDisabled();
+                        }
                         // Recreate just SystemUI so both the native island and stock capsule get
                         // a clean lifecycle. No reboot, permission changes or cached hidden views.
                         new Handler(Looper.getMainLooper()).postDelayed(

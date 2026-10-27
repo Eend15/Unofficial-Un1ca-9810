@@ -7,6 +7,8 @@ import android.os.Handler;
 import android.os.Looper;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.xposed.XLog;
+import dev.android.dynamicisland.settings.ModuleSettings;
+import dev.android.dynamicisland.xposed.Refl;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -49,14 +51,41 @@ public final class OaSource {
     }
 
     /**
+     * Samsung's non-media recorder activity is the recording signal, including paused recordings.
+     * Read the raw store: foreground suppression must not turn a recording into a music player.
+     * Playback activities from the same app keep their media flag and are left alone.
+     */
+    public boolean isVoiceRecording(String pkg, int userId) {
+        if (!"com.sec.android.app.voicenote".equals(pkg) || userId < 0 || !reader.available()) {
+            return false;
+        }
+        for (Object data : reader.allActivities()) {
+            if (data == null) {
+                continue;
+            }
+            OaActivity a = new OaActivity(data);
+            int owner = a.sbn != null ? a.sbn.getUserId() : Refl.getInt(data, "mUserId", -1);
+            if (pkg.equals(a.pkg) && owner == userId && a.key != null && !a.isMedia()
+                    && !a.isGroupSummary() && !a.isDemoted()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Adds a card per mirrored ongoing activity plus the call card. Packages that own an activity are
      * added to {@code packages}; keys of cards whose app is on screen go to {@code hiddenByForeground}.
      */
     public void collect(List<IslandItem> out, Set<String> hiddenByForeground, Collection<String> packages) {
+        collect(out, hiddenByForeground, packages, foregroundPackage());
+    }
+
+    /** Shares the same foreground snapshot as the media and ordinary-notification sources. */
+    public void collect(List<IslandItem> out, Set<String> hiddenByForeground, Collection<String> packages, String foreground) {
         if (!reader.available()) {
             return;
         }
-        String foreground = foregroundPackage();
         Set<String> pip = reader.pipPackages();
         int order = 0;
         for (Object data : reader.activities()) {
@@ -77,7 +106,7 @@ public final class OaSource {
             if (a.isMedia() || a.key == null || a.pkg == null) {
                 return order;
             }
-            if (a.isGroupSummary() || a.isNowBarStyle() || a.isCallStyle() || a.isDemoted()) {
+            if (a.isGroupSummary() || (a.isNowBarStyle() && !ModuleSettings.experimentalRecovery()) || a.isCallStyle() || a.isDemoted()) {
                 return order;
             }
             String target = a.targetPackage();
@@ -118,7 +147,7 @@ public final class OaSource {
     }
 
     private IslandItem shadeCard(OaActivity a) {
-        if (a.isMedia() || a.pkg == null || a.isNowBarStyle()) {
+        if (a.isMedia() || a.pkg == null || (a.isNowBarStyle() && !ModuleSettings.experimentalRecovery())) {
             return null;
         }
         Notification n = a.notification;

@@ -1,9 +1,10 @@
 package dev.android.dynamicisland.island.source;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.app.Notification;
@@ -18,10 +19,7 @@ import android.service.notification.StatusBarNotification;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -56,51 +54,28 @@ public class ProgressSourceTest {
         return b;
     }
 
+    /** An app's Android 16 ProgressStyle notification, as an installer posts it. */
+    private Notification.Builder progressStyle(String title, int progress, int max) {
+        Notification.Builder b = download(title, progress, max);
+        b.addExtras(androidx_style());
+        return b;
+    }
+
+    private android.os.Bundle androidx_style() {
+        android.os.Bundle extras = new android.os.Bundle();
+        extras.putString(Notification.EXTRA_TEMPLATE, "android.app.Notification$ProgressStyle");
+        return extras;
+    }
+
+    @Test
+    public void aProgressStyleNotificationBecomesAProgressCard() throws Exception {
+        IslandItem it = source().build(sbn("com.example.installer", 9, progressStyle("Installing app", 40, 100)));
+        assertNotNull(it);
+        assertEquals(0.4f, it.progress, 0.001f);
+    }
+
     private ProgressSource source() {
         return new ProgressSource(app, new Handler(Looper.getMainLooper()), () -> { });
-    }
-
-    @Test
-    public void downloadBecomesAProgressCard() throws Exception {
-        ProgressSource s = source();
-        IslandItem it = s.build(sbn("com.example.files", 7, download("movie.mkv", 37, 100)));
-        assertNotNull(it);
-        assertEquals(IslandItem.Kind.TASK, it.kind);
-        assertEquals(0.37f, it.progress, 0.001f);
-        assertEquals("movie.mkv", it.title.toString());
-        assertEquals(2, it.actions.size());
-        assertTrue(it.actions.get(0).destructive); // "Cancel"
-        render("task_download", it);
-    }
-
-    @Test
-    public void originalIsOnlyHiddenWhileItsCardIsOnTheIsland() throws Exception {
-        ProgressSource s = source();
-        int[] changes = {0};
-        s.setOnShownChanged(() -> changes[0]++);
-        StatusBarNotification n = sbn("com.example.files", 7, download("movie.mkv", 37, 100));
-        s.update(java.util.Collections.singletonList(n));
-        List<IslandItem> out = new ArrayList<>();
-        s.collect(out, "com.example.other");
-        assertEquals(1, out.size());
-        assertTrue(s.isShownOnIsland(n.getKey()));
-        assertEquals(1, changes[0]);
-        // the app is on screen: no card, so the shade row must come back
-        out.clear();
-        s.collect(out, "com.example.files");
-        assertTrue(out.isEmpty());
-        assertTrue(!s.isShownOnIsland(n.getKey()));
-        assertEquals(2, changes[0]);
-    }
-
-    @Test
-    public void onlyEndingActionsAreDestructive() {
-        for (String title : new String[]{"Cancel", "End call", "Stop", "Hang up", "Decline", "종료", "Отмена"}) {
-            assertTrue(title, OaSource.isDestructive(title));
-        }
-        for (String title : new String[]{"Send", "Resend", "Calendar", "Pause", "Open", "Reply", "Weekend", "Mark as read", "일시중지", "일시정지", "Приостановить", "一時停止"}) {
-            assertTrue(title, !OaSource.isDestructive(title));
-        }
     }
 
     @Test
@@ -123,23 +98,6 @@ public class ProgressSourceTest {
                 .setContentTitle("Hello").setOngoing(true))));
     }
 
-    @Test
-    public void snapshotKeepsTwoPackagesAndCollectHidesTheForegroundApp() throws Exception {
-        ProgressSource s = source();
-        List<StatusBarNotification> list = new ArrayList<>();
-        list.add(sbn("com.a", 1, download("a1", 10, 100)));
-        list.add(sbn("com.a", 2, download("a2", 20, 100)));   // same package: only the first
-        list.add(sbn("com.b", 3, download("b", 30, 100)));
-        list.add(sbn("com.c", 4, download("c", 40, 100)));    // beyond the limit
-        s.update(list);
-        assertEquals(2, s.snapshot().size());
-
-        List<IslandItem> out = new ArrayList<>();
-        s.collect(out, "com.a");
-        assertEquals(1, out.size());
-        assertEquals("com.b", out.get(0).packageName);
-    }
-
     private void render(String name, IslandItem item) throws Exception {
         IslandView view = new IslandView(app, null);
         float w = 360f * app.getResources().getDisplayMetrics().density;
@@ -150,22 +108,7 @@ public class ProgressSourceTest {
         view.drawShadeCard(c, item, w);
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, name + ".png"))) {
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
-    }
-
-    @Test
-    public void aPercentageOnlyInTheTextStillMakesAProgressCard() throws Exception {
-        Notification.Builder b = new Notification.Builder(app, "dl")
-                .setSmallIcon(android.R.drawable.stat_sys_download)
-                .setContentTitle("새 버전 다운로드")
-                .setContentText("업데이트 설치 중 73%")
-                .setOngoing(true);
-        IslandItem it = source().build(sbn("com.example.updater", 21, b));
-        assertNotNull(it);
-        assertEquals(0.73f, it.progress, 0.001f);
-        assertEquals(IslandItem.Trailing.PROGRESS_RING, it.trailing);
+        RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
 
     @Test

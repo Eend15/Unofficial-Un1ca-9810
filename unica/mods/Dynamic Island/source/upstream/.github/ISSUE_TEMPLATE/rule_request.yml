@@ -1,0 +1,32 @@
+name: "📋 App or notification rule / 앱·알림 규칙 요청"
+description: An app whose notification should become a card (delivery, ride, parcel, ...) / 카드로 만들고 싶은 앱의 알림(배달, 택시, 택배 등)
+title: "[Rule] "
+labels: [enhancement, rules]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The module turns text-only notifications into cards with a rule file. Send the notification text and we can write the rule.
+        텍스트로만 오는 알림은 규칙 파일로 카드가 됩니다. 알림 문구를 보내 주시면 규칙을 만들 수 있습니다.
+
+        **Remove personal details** (names, numbers, addresses). / **개인정보**(이름, 번호, 주소)는 지워 주세요.
+  - type: input
+    id: app
+    attributes:
+      label: App and package name / 앱과 패키지명
+      placeholder: Coupang Eats, com.coupang.mobile.eats
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example notification / 알림 예시
+      description: The exact title and text of the notification, one example per stage (ordered, on the way, arrived, ...). / 알림의 제목과 문구를 그대로, 단계마다 하나씩(주문, 배달 중, 도착 ...)
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: wanted
+    attributes:
+      label: What the card should show / 카드에 보여 줄 것
+      description: "For example a progress bar, a timer, the courier's name. / 예: 진행바, 타이머, 배달 기사 이름"

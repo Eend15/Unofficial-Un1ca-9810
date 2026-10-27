@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds the README pictures in docs/screenshots from the test renders.
 
-Run `./gradlew testReleaseUnitTest` first: ScreenshotsTest writes the island on a mock phone to app/build/screenshots and
+Run `./gradlew testReleaseUnitTest -Prender` first: ScreenshotsTest writes the island on a mock phone to app/build/screenshots and
 SettingsRender*Test the settings pages to app/build/render. This script crops them to the top of the phone, fades the cut
 edge out, and puts the settings pages into the same phone frame. Needs Pillow.
 """
@@ -86,9 +86,13 @@ STRIP_PICTURE_H = 360
 FONT_DIRS = ("/usr/share/fonts/opentype/inter", os.path.expanduser("~/.fonts"), "/usr/share/fonts/truetype")
 LABELS = {
     "": {"island": ["Pill", "Live notification", "Call", "Music", "Several at once"],
-         "app": ["Settings", "Notification cards", "Rules", "One rule", "Try a notification"]},
+         "app": ["Settings", "Notifications", "Appearance", "Behavior", "Advanced"]},
+    "_ja": {"app": ["設定", "通知", "外観", "動作", "詳細設定"]},
+    "_zh": {"app": ["设置", "通知", "外观", "行为", "高级设置"]},
+    "_ru": {"app": ["Настройки", "Уведомления", "Оформление", "Поведение", "Дополнительно"]},
+    "_tr": {"app": ["Ayarlar", "Bildirimler", "Görünüm", "Davranış", "Gelişmiş"]},
     "_ko": {"island": ["알약", "라이브 알림", "통화", "음악", "여러 개"],
-            "app": ["설정", "알림 카드", "규칙", "규칙 하나", "알림 시험"]},
+            "app": ["설정", "알림과 활동", "모양", "동작", "고급 설정"]},
 }
 
 
@@ -101,6 +105,9 @@ def caption_font(lang: str, size: int):
             path = os.path.join(folder, name)
             if os.path.exists(path):
                 return ImageFont.truetype(path, size)
+    fallback = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc" if lang in ("_ko", "_ja", "_zh") else "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"
+    if os.path.exists(fallback):
+        return ImageFont.truetype(fallback, size, index={"_ko": 1, "_zh": 2}.get(lang, 0))
     return ImageFont.load_default()
 
 
@@ -125,20 +132,30 @@ def strip(lang: str, row: str, files: list) -> None:
     panel.save(os.path.join(os.path.dirname(OUT), "strip_" + row + lang + ".png"), optimize=True)
 
 
+def settings_images() -> None:
+    """Refresh all six settings strips without changing island artwork."""
+    os.makedirs(OUT, exist_ok=True)
+    for lang in ("", "_ko", "_ja", "_zh", "_ru", "_tr"):
+        prefix = "settings" + lang + "_"
+        for page, key in (("hub", "hub"), ("notificationsPage", "notifications"), ("displayPage", "appearance"),
+                          ("behaviorPage", "behavior"), ("advancedPage", "advanced")):
+            screen = Image.open(os.path.join(RENDER, prefix + page + ".png")).convert("RGBA")
+            finish(phone_from_screen(screen, VISIBLE_APP), "app_" + key + lang, VISIBLE_APP)
+        strip(lang, "app", ["app_hub", "app_notifications", "app_appearance", "app_behavior", "app_advanced"])
+
+
 def main() -> int:
+    if "--settings-only" in sys.argv:
+        settings_images()
+        return 0
     os.makedirs(OUT, exist_ok=True)
     for lang in ("", "_ko"):
         for name in ("pill", "live", "call", "music", "stack"):
             src = os.path.join(SHOTS, name + lang + ".png")
             finish(Image.open(src), "island_" + name + lang)
-        prefix = "settings_ko_" if lang else "settings_"
-        for page, key in (("hub", "hub"), ("notificationsPage", "notifications"), ("rulesList", "rules"),
-                          ("rulesDetail", "rule"), ("rulesTestFilled", "tester")):
-            screen = Image.open(os.path.join(RENDER, prefix + page + ".png")).convert("RGBA")
-            finish(phone_from_screen(screen, VISIBLE_APP), "app_" + key + lang, VISIBLE_APP)
         banner(lang)
         strip(lang, "island", ["island_pill", "island_live", "island_call", "island_music", "island_stack"])
-        strip(lang, "app", ["app_hub", "app_notifications", "app_rules", "app_rule", "app_tester"])
+    settings_images()
     print("wrote", len(os.listdir(OUT)), "pictures to", OUT)
     return 0
 

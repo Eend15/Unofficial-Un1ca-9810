@@ -39,6 +39,22 @@ def verify(work_dir,cert):
         di=[x for x in xml if b'unica_dynamic_island_enabled' in x]
         if len(di)!=1 or b'LiveBlurPreferenceController' not in di[0]:raise RuntimeError('Dynamic Island must occur only in UN1CA UI settings')
         if any(b'unica_bixby_action' in x and b'unica_dynamic_island_enabled' in x for x in xml):raise RuntimeError('Duplicate Extra settings entry')
+    # New upstream hooks must be real compiled wrappers, not only DEX strings.
+    from extend_call_sites import SPECS, METHOD, identity, BRIDGE
+    path=REPO/'unica/patches/exynos9810_device_stack/exynos9810_finalization/spen/verify_note9_rebuilt_artifacts.py'
+    hook_spec=importlib.util.spec_from_file_location('di_hook_contract',path)
+    hook_module=importlib.util.module_from_spec(hook_spec);hook_spec.loader.exec_module(hook_module)
+    decoded=hook_module._disassemble_required(ui,tuple(c.replace('.','/') for c in SPECS))
+    for cls,names in SPECS.items():
+        text=decoded[cls.replace('.','/')]
+        entries={m.group('sig'):m for m in METHOD.finditer(text)}
+        for name in names:
+            wanted=[sig for sig in entries if sig.startswith(name+'(')]
+            if not wanted:raise RuntimeError('Missing compiled upstream hook '+cls+'#'+name)
+            for sig in wanted:
+                renamed=identity(sig)+sig[len(name):]
+                if renamed not in entries or BRIDGE+'->invoke' not in entries[sig].group('body'):
+                    raise RuntimeError('Missing real static adapter '+cls+'#'+sig)
     dex_bytes(native)
     with zipfile.ZipFile(HERE.parent/'payload/UnicaDynamicIsland.apk') as expected,zipfile.ZipFile(native) as actual:
         expected_names={n for n in expected.namelist() if not n.startswith('META-INF/')}
@@ -51,7 +67,7 @@ def verify(work_dir,cert):
     spec=importlib.util.spec_from_file_location('di_signature_verifier',path)
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     module.verify_platform_signatures((ui,settings,native),cert)
-    print('PASS built-in Dynamic Island 0.1.10: preserved original classes, compiled hooks, UI settings, exact native payload and platform signatures')
+    print('PASS built-in Dynamic Island 0.1.13: preserved original classes, compiled hooks, UI settings, exact native payload and platform signatures')
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--work-dir',type=Path,required=True);p.add_argument('--platform-cert',type=Path,required=True)

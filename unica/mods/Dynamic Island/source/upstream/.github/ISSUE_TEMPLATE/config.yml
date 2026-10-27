@@ -1,1 +1,8 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
+contact_links:
+  - name: "📖 Compatibility notes / 호환성 안내"
+    url: https://github.com/sampple-korea/dynamicisland/blob/main/docs/COMPATIBILITY.md
+    about: Which System UI versions and phones are supported, and what to check first. / 지원하는 시스템 UI 버전과 기기, 먼저 확인할 것
+  - name: "⬇️ Latest release / 최신 릴리스"
+    url: https://github.com/sampple-korea/dynamicisland/releases/latest
+    about: Check that the issue is still there in the latest version. / 최신 버전에서도 같은 문제인지 확인해 보세요.

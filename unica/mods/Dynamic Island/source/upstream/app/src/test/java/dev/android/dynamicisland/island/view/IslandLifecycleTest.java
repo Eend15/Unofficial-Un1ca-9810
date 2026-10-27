@@ -1,6 +1,8 @@
 package dev.android.dynamicisland.island.view;
 
-import static org.junit.Assert.assertNotNull;
+import dev.android.dynamicisland.testutil.RenderCapture;
+
+import static org.junit.Assert.assertFalse;
 
 import android.app.Application;
 import android.content.Context;
@@ -10,10 +12,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import android.view.MotionEvent;
-import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,44 +82,10 @@ public class IslandLifecycleTest {
             if (frame == 40 || frame == 150) {
                 File dir = new File("build/render");
                 dir.mkdirs();
-                try (FileOutputStream out = new FileOutputStream(new File(dir, "life_" + name + "_" + frame + ".png"))) {
-                    bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-                }
+                RenderCapture.write(bmp, new File(dir, "life_" + name + "_" + frame + ".png"));
             }
         }
-        assertNotNull(view);
-    }
-
-    @Test
-    public void liveWithProgressAndChronometer() throws Exception {
-        Context ctx = RuntimeEnvironment.getApplication();
-        IslandItem a = item(ctx, "a", IslandItem.Kind.LIVE);
-        a.progress = 0.3f;
-        a.trailing = IslandItem.Trailing.PROGRESS_RING;
-        IslandItem b = item(ctx, "b", IslandItem.Kind.TIMER);
-        b.chronoBase = System.currentTimeMillis() - 5000;
-        b.chronoMillis = true;
-        b.trailing = IslandItem.Trailing.CHRONOMETER;
-        List<IslandItem> items = new ArrayList<>();
-        items.add(a);
-        items.add(b);
-        run("live", items);
-    }
-
-    @Test
-    public void chargingEventPill() throws Exception {
-        Context ctx = RuntimeEnvironment.getApplication();
-        IslandItem e = item(ctx, "event:charging", IslandItem.Kind.EVENT);
-        e.icon = GlyphIcon.battery(0.54f, true);
-        e.iconIsImage = false;
-        e.title = "Charging";
-        e.subtitle = "Fast charging";
-        e.progress = 0.54f;
-        e.trailing = IslandItem.Trailing.TEXT;
-        e.trailingText = "54%";
-        List<IslandItem> items = new ArrayList<>();
-        items.add(e);
-        run("event", items);
+        assertFalse("card returns to the compact state", view.isExpanded());
     }
 
     @Test

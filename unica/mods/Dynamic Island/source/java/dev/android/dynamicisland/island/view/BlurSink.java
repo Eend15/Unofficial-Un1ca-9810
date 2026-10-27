@@ -14,6 +14,11 @@ public interface BlurSink {
     /** Places (or moves) the blurred backdrop identified by {@code key} over {@code bounds}. */
     void place(Object key, RectF bounds, float corner, float alpha);
 
+    /** Independently fades only the backdrop; the card's opaque fold must keep painting above it. */
+    default void place(Object key, RectF bounds, float corner, float alpha, float backdropAlpha) {
+        place(key, bounds, corner, alpha);
+    }
+
     /** Drops the backdrop identified by {@code key}. */
     void release(Object key);
 

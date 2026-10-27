@@ -1,5 +1,5 @@
 from pathlib import Path
-import tempfile,shutil,json,hashlib,unittest
+import tempfile,shutil,json,hashlib,unittest,re
 import apply as mod
 HERE=Path(__file__).resolve().parent
 REPO=HERE.parents[3]
@@ -24,13 +24,25 @@ class IntegrationTest(unittest.TestCase):
 
     def test_all_three_real_decode_trees_and_repeat(self):
         for target in mod.TARGETS:
-            with self.subTest(target=target),tempfile.TemporaryDirectory(prefix='di-source-',dir=REPO/'out') as tmp:
-                root=Path(tmp);ui,settings=self.fixture(target,root)
-                mod.apply(root,target)
-                self.assertTrue((ui/'smali/io/mesalabs/unica/dynamicisland/Bootstrap.smali').is_file())
-                self.assertNotIn('unica_dynamic_island_enabled',(settings/'unica_extra_settings.xml').read_text())
-                self.assertEqual((settings/'unica_ui_settings.xml').read_text().count('android:key="unica_dynamic_island_enabled"'),1)
-                first=snapshot(root);mod.apply(root,target);self.assertEqual(snapshot(root),first)
+            for filesystem in ('ext4','erofs'):
+                # Dynamic Island sources do not vary with the system image
+                # format; explicitly exercise both supported target routes.
+                with self.subTest(target=target,filesystem=filesystem),tempfile.TemporaryDirectory(prefix='di-source-',dir=REPO/'out') as tmp:
+                    root=Path(tmp);ui,settings=self.fixture(target,root)
+                    mod.apply(root,target)
+                    self.assertTrue((ui/'smali/io/mesalabs/unica/dynamicisland/Bootstrap.smali').is_file())
+                    self.assertNotIn('unica_dynamic_island_enabled',(settings/'unica_extra_settings.xml').read_text())
+                    self.assertEqual((settings/'unica_ui_settings.xml').read_text().count('android:key="unica_dynamic_island_enabled"'),1)
+                    first=snapshot(root);mod.apply(root,target);self.assertEqual(snapshot(root),first)
+
+    def test_missing_new_longpress_hook_does_not_modify_tree(self):
+        with tempfile.TemporaryDirectory(prefix='di-new-hook-negative-') as tmp:
+            root=Path(tmp);ui,settings=self.fixture('star2lte',root)
+            file=next(ui.glob('smali*/com/android/systemui/statusbar/notification/row/ExpandableNotificationRow.smali'))
+            text,count=re.subn(r'(?m)^(\.method[^\n]*?) isActionButtonLongClick\(',r'\1 missingLongPressHook(',file.read_text())
+            self.assertEqual(count,1);file.write_text(text);before=snapshot(root)
+            with self.assertRaises((RuntimeError,ValueError)):mod.apply(root,'star2lte')
+            self.assertEqual(snapshot(root),before)
 
     def test_reject_unknown_target(self):
         with self.assertRaises(ValueError):mod.apply(Path('/nonexistent'),'other')

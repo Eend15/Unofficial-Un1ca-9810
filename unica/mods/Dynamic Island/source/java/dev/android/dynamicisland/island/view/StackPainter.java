@@ -36,6 +36,9 @@ final class StackPainter {
     /** Opening fraction from which a card turns from the pill's black into its own colour and glass. */
     private static final float CARD_MATERIAL_FROM = 0.35f;
     private static final float GLASS_FROM = 0.1f;
+    /** Stop the native backdrop well before the compact pill takes over; its compositor can lag a frame. */
+    private static final float FOLD_BLUR_FADE_FROM = 0.1f;
+    private static final float FOLD_BLUR_FADE_TO = 0.55f;
     /** Necks thinner than this are not drawn; they reach full opacity this much wider. */
     private static final float NECK_FADE_FROM_DP = 4.0f;
     private static final float NECK_FADE_RANGE_DP = 6.0f;
@@ -70,19 +73,31 @@ final class StackPainter {
 
     /** Fade of a card's content: in once the card is nearly open, out quickly when it leaves. */
     static float contentAlpha(Card c, long t, float opening) {
+        if (c.handoff != null) return clamp01(c.handoff.expanded(t) * c.handoffScale);
         if (c.leaving) {
             if (ModuleSettings.legacyAnimation()) {
-                return 1.0f - clamp01((t - c.leaveAt) / LEAVING_CONTENT_FADE_MS);
+                return c.leaveContentAlpha * (1.0f - clamp01((t - c.leaveAt) / LEAVING_CONTENT_FADE_MS));
             }
-            // the content stays crisp and fades out in the first part of the fold, while the card is still large; what
+            // the content blurs and fades out in the first part of the fold, while the card is still large; what
             // travels back into the pill is the plain shape, which does not leave a smear of tiny text behind
-            return 1.0f - Easing.easeInOut(clamp01(foldProgress(c) / FOLD_FADE_TO));
+            return c.leaveContentAlpha * (1.0f - Easing.easeInOut(clamp01(foldProgress(c) / FOLD_FADE_TO)));
         }
         if (!ModuleSettings.legacyAnimation()) {
             // the mirror of folding: the content grows with the card from the first moment instead of appearing in an empty shape
             return clamp01(opening / OPEN_FADE_TO);
         }
         return clamp01((opening - 0.85f) / IslandView.PAUSED_SPEED) * clamp01((t - c.contentStart) / 150.0f);
+    }
+
+    /** Internal material transition, independent of the card surface and its native backdrop. */
+    static float contentBlurAmount(Card card, long time, float opening) {
+        if (card.leaving) {
+            float fade = 1 - contentAlpha(card, time, opening) / Math.max(.001f, card.leaveContentAlpha);
+            return lerp(card.leaveContentBlur, 1, clamp01(fade));
+        }
+        if (card.handoff != null) return 1 - contentAlpha(card, time, opening);
+        float clarity = Easing.easeInOut(clamp01((opening - 0.08f) / 0.82f));
+        return Math.max(1 - clarity, 1 - contentAlpha(card, time, opening));
     }
 
     /** How far a leaving card has folded towards the size it is going to (0 = not yet, 1 = there). */
@@ -103,15 +118,38 @@ final class StackPainter {
         return clamp01((waist - m.dp(NECK_FADE_FROM_DP)) / m.dp(NECK_FADE_RANGE_DP));
     }
 
+    /**
+     * How much of the card's glass look is kept while it folds back into the pill (0..1): it turns from the grey glass
+     * into the pill's black gradually along the fold. Taken in one go (as soon as the card's height was nearly the
+     * pill's) it showed as a flash of flat grey just before the black.
+     */
+    float blurFraction(Card c, float opening) {
+        if (c.leaving) {
+            float fold = (foldProgress(c) - FOLD_BLUR_FADE_FROM) / (FOLD_BLUR_FADE_TO - FOLD_BLUR_FADE_FROM);
+            return 1.0f - Easing.easeInOut(clamp01(fold));
+        }
+        return ModuleSettings.legacyAnimation() ? 1 : Easing.easeInOut(clamp01((opening - GLASS_FROM) / 0.6f));
+    }
+
+    /** The "opening" a card is drawn with: a leaving card goes back to the pill's black along its fold, not along its height. */
+    float visualOpening(Card c, float opening) {
+        if (c.leaving && !ModuleSettings.legacyAnimation()) {
+            return Math.min(opening, 1.0f - Easing.easeInOut(foldProgress(c)));
+        }
+        return opening;
+    }
+
     /** The card's fill: the pill's black while it pours out, turning into the card colour (and glass) as it opens. */
-    int fillColor(float opening) {
+    int fillColor(float opening, float blurFraction) {
+        if (ModuleSettings.lowPerformance()) return Colors.BLACK;
         boolean glass = scene.blur != null && scene.blur.available();
         float material = Easing.easeInOut(clamp01((opening - CARD_MATERIAL_FROM) / (1.0f - CARD_MATERIAL_FROM)));
         int fill = Colors.blend(Colors.BLACK, glass ? Colors.CARD_GLASS : Colors.CARD_SOLID, material);
         // the see-through glass comes in over the whole opening: squeezing it into the last stretch made the black
         // turn transparent in one jump
         float glassIn = Easing.easeInOut(clamp01((opening - GLASS_FROM) / (1.0f - GLASS_FROM)));
-        return Colors.withAlpha(fill, lerp(1.0f, glass ? 0.46f : 0.9f, glassIn));
+        // the see-through part only counts as far as the real blur is there behind it
+        return Colors.withAlpha(fill, lerp(1.0f, glass ? 0.46f : 0.9f, glassIn * (glass ? blurFraction : 1.0f)));
     }
 
     /** Blur callback: paints a card into its blur slot, whose canvas origin is the slot, not the view. */
@@ -142,7 +180,8 @@ final class StackPainter {
                 Card c = scene.cards.get(legacy ? n : scene.cards.size() - 1 - n);
                 shapes.card(c, slot);
                 if (slot.width() >= 1.0f && slot.height() >= 1.0f) {
-                    blur.place(c, slot, Math.min(slot.height() / 2.0f, m.cardRadius), alpha);
+                    float opening = visualOpening(c, shapes.expansion(c));
+                    blur.place(c, slot, c.body.cornerRadius(m.cardRadius, slot.height()), alpha, blurFraction(c, opening));
                 }
             }
         }
@@ -187,16 +226,18 @@ final class StackPainter {
 
     /** Draws one card whose rectangle {@code r} was already computed. */
     void drawCard(Canvas canvas, Card c, RectF r, long t, float opening) {
-        float corner = Math.min(r.height() / 2.0f, m.cardRadius);
+        float corner = c.body.cornerRadius(m.cardRadius, r.height());
         float rimSettled = clamp01((opening - 0.82f) / 0.18f);
         // while it pours out of (or back into) the pill the card is the pill's black, but it wears a clearly
         // visible outline from the first frame, so the changing shape can be followed on a black screen; the card
         // colour and glass fade in as it settles, and the outline turns into the card's light rim
-        paints.card.setColor(fillColor(opening));
+        opening = visualOpening(c, opening);
+        paints.card.setColor(fillColor(opening, blurFraction(c, opening)));
         canvas.drawRoundRect(r, corner, corner, paints.card);
+        int morphOutline = Colors.withAlpha(c.leaving ? Colors.PILL_OUTLINE : MORPH_OUTLINE, scene.pillOutlineOpacity());
         paints.cardStroke.setShader(ModuleSettings.legacyAnimation()
-                ? rimShader(r, rimSettled, 1.0f, MORPH_OUTLINE) // before 0.1.4: no outline until the card has nearly opened
-                : rimShader(r, 1.0f, rimSettled, c.leaving ? Colors.PILL_OUTLINE : MORPH_OUTLINE));
+                ? rimShader(r, rimSettled, 1.0f, MORPH_OUTLINE)
+                : rimShader(r, 1.0f, rimSettled, morphOutline));
         inner.set(r);
         inner.inset(m.outlineW / 2.0f, m.outlineW / 2.0f);
         canvas.drawRoundRect(inner, corner, corner, paints.cardStroke);
@@ -209,24 +250,32 @@ final class StackPainter {
         clip.addRoundRect(r, corner, corner, Path.Direction.CW);
         canvas.clipPath(clip);
         drawBackground(c.body, canvas, r, alpha);
-        if (!c.leaving && alpha < 1.0f && ModuleSettings.legacyAnimation()) {
-            // the content rises into place and settles from a slightly smaller size while it fades in
-            float settle = easeOutBack(alpha);
-            float scale = CONTENT_SCALE_FROM + ((1.0f - CONTENT_SCALE_FROM) * settle);
-            canvas.translate(0.0f, (1.0f - settle) * m.dp(CONTENT_RISE_DP));
-            canvas.scale(scale, scale, r.centerX(), r.top);
+        Canvas target = canvas;
+        canvas = c.contentBlur.begin(target, r, contentBlurAmount(c, t, opening), m.dp(ContentBlur.RADIUS_DP));
+        int contentSave = canvas.save();
+        try {
+            if (!c.leaving && alpha < 1.0f && ModuleSettings.legacyAnimation()) {
+                // the content rises into place and settles from a slightly smaller size while it fades in
+                float settle = easeOutBack(alpha);
+                float scale = CONTENT_SCALE_FROM + ((1.0f - CONTENT_SCALE_FROM) * settle);
+                canvas.translate(0.0f, (1.0f - settle) * m.dp(CONTENT_RISE_DP));
+                canvas.scale(scale, scale, r.centerX(), r.top);
+            }
+            // the content follows the card's current shape (squashed while it bounces, shrinking into the pill
+            // when it leaves) instead of keeping its laid-out size and being cut off at the edges
+            long elapsed = c.leaving || c.handoff != null ? LEAVING_CONTENT_ELAPSED_MS : t - c.contentStart;
+            if (c.leaving && !ModuleSettings.legacyAnimation()) {
+                // a leaving card keeps its content at its true size, centred, and the shrinking card clips it
+                drawBody(c.body, canvas, r.left + ((r.width() - c.body.w) / 2.0f), r.top, alpha, elapsed);
+            } else {
+                canvas.scale(r.width() / c.body.w, r.height() / c.body.h, r.left, r.top);
+                drawBody(c.body, canvas, r.left, r.top, alpha, elapsed);
+            }
+        } finally {
+            canvas.restoreToCount(contentSave);
+            c.contentBlur.end(target, canvas);
+            target.restoreToCount(save);
         }
-        // the content follows the card's current shape (squashed while it bounces, shrinking into the pill
-        // when it leaves) instead of keeping its laid-out size and being cut off at the edges
-        long elapsed = c.leaving ? LEAVING_CONTENT_ELAPSED_MS : t - c.contentStart;
-        if (c.leaving && !ModuleSettings.legacyAnimation()) {
-            // a leaving card keeps its content at its true size, centred, and the shrinking card clips it
-            drawBody(c.body, canvas, r.left + ((r.width() - c.body.w) / 2.0f), r.top, alpha, elapsed);
-        } else {
-            canvas.scale(r.width() / c.body.w, r.height() / c.body.h, r.left, r.top);
-            drawBody(c.body, canvas, r.left, r.top, alpha, elapsed);
-        }
-        canvas.restoreToCount(save);
     }
 
     /** The light rim gradient of a card; rebuilt only when the card moved or changed height noticeably. */

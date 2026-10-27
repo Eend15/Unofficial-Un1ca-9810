@@ -44,6 +44,13 @@ final class IconLoader {
         return load(icon, null);
     }
 
+    String resourceName(Icon icon, String pkg) {
+        if (icon == null || icon.getType() != Icon.TYPE_RESOURCE) return "";
+        try {
+            return ctx.getPackageManager().getResourcesForApplication(pkg).getResourceEntryName(icon.getResId());
+        } catch (Throwable ignored) { return ""; }
+    }
+
     /**
      * Drawable of a notification icon; {@code ownerPackage} resolves resource icons that carry no package
      * of their own. Null when the icon is missing or cannot be loaded.

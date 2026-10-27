@@ -18,6 +18,9 @@ final class Shapes {
     /** A card that grows in height fast narrows by this fraction (and widens a little when it bounces back). */
     private static final float CARD_SQUASH = 0.05f;
     private static final float CARD_SQUASH_SPEED_DP = 1200.0f;
+    /** Keep the small shade-return overshoot in geometry, independently of opacity's 0..1 range. */
+    private static final float MAX_SHADE_GATE = 1.08f;
+    private static final float SHADE_DOT = 0.65f;
 
     private final Metrics m;
     private final Springs sp;
@@ -47,10 +50,34 @@ final class Shapes {
         out.set(left, top, left + w, top + h);
     }
 
+    /** The on-screen pill after the shade transition, shared by painting and touch bounds. */
+    void paintedMain(RectF out) {
+        main(out);
+        shadePill(out, out);
+    }
+
+    void shadePill(RectF full, RectF out) {
+        float gate = Math.max(0.0f, Math.min(MAX_SHADE_GATE, sp.shadeGate.value()));
+        float dot = full.height() * SHADE_DOT;
+        float width = dot + (full.width() - dot) * gate;
+        float height = dot + (full.height() - dot) * gate;
+        // Do not add clipping at a user-selected screen-edge position or maximum pill width.
+        float room = 2.0f * Math.min(full.centerX() - m.outlineW, m.screenW - m.outlineW - full.centerX());
+        width = Math.min(width, Math.max(full.width(), room));
+        height = Math.min(height, Math.max(full.height(), 2.0f * (full.centerY() - m.outlineW)));
+        float cx = full.centerX();
+        float cy = full.centerY();
+        out.set(cx - width / 2.0f, cy - height / 2.0f, cx + width / 2.0f, cy + height / 2.0f);
+    }
+
     /** The bubble: a circle that grows out of the pill's right end as the split progresses. */
     void bubble(RectF main, RectF out) {
+        bubble(main, sp.split.value(), out);
+    }
+
+    /** The bubble for an explicit split (the shade gate merges it back into the pill before the pill shrinks). */
+    void bubble(RectF main, float s, RectF out) {
         float pillRadius = main.height() / 2.0f;
-        float s = sp.split.value();
         float radius = lerp(IslandView.PAUSED_GLOW * pillRadius, m.bubbleR, IslandView.clamp01(s));
         float restDistance = m.bubbleGap + pillRadius + m.bubbleR;
         float centerX = (restDistance * s) + (main.right - pillRadius);

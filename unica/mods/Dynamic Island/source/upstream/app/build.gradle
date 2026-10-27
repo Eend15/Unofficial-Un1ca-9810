@@ -10,8 +10,8 @@ android {
         applicationId 'dev.android.dynamicisland'
         minSdk 35
         targetSdk 36
-        versionCode 49
-        versionName '0.1.10'
+        versionCode 87
+        versionName '0.1.13'
     }
 
     buildTypes {
@@ -29,9 +29,13 @@ android {
                     systemProperty 'robolectric.offline', 'true'
                     systemProperty 'robolectric.dependency.dir', project.property('robolectricDir')
                 }
-                // -Pfilm writes every frame of MotionFilmTest to app/build/film
-                if (project.hasProperty('film')) {
-                    systemProperty 'film', 'true'
+                // Visual review captures are opt-in; pixel/layout regressions still run normally.
+                if (project.hasProperty('render')) {
+                    systemProperty 'render', 'true'
+                } else {
+                    useJUnit {
+                        excludeCategories 'dev.android.dynamicisland.testutil.RenderCapture'
+                    }
                 }
             }
             returnDefaultValues = true
@@ -44,7 +48,26 @@ android {
     }
 }
 
+// Hidden framework API signatures only; never add these sources to an Android source set.
+// Keep android.jar on the ordinary classpath: javac 17 rejects -bootclasspath with target 17.
+def compileCompositionSamplingStubs = tasks.register('compileCompositionSamplingStubs', JavaCompile) {
+    source rootProject.file('tools/framework-stubs/android/view/CompositionSamplingListener.java')
+    classpath = files(providers.provider { android.bootClasspath })
+    sourceCompatibility = android.compileOptions.sourceCompatibility.toString()
+    targetCompatibility = android.compileOptions.targetCompatibility.toString()
+    destinationDirectory.set(layout.buildDirectory.dir('generated/stubs/composition-sampling/classes'))
+    options.encoding = 'UTF-8'
+}
+
+def compositionSamplingStubsJar = tasks.register('compositionSamplingStubsJar', Jar) {
+    from(compileCompositionSamplingStubs.flatMap { it.destinationDirectory })
+    destinationDirectory.set(layout.buildDirectory.dir('generated/stubs/composition-sampling'))
+    archiveFileName.set('composition-sampling-stubs.jar')
+}
+
 dependencies {
+    compileOnly files(compositionSamplingStubsJar.flatMap { it.archiveFile })
+            .builtBy(compositionSamplingStubsJar)
     compileOnly files('libs/xposed-api-82.jar')
 
     testImplementation files('libs/xposed-api-82.jar')
@@ -55,3 +78,5 @@ dependencies {
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-Xmaxerrs' << '1000'
 }
+
+apply from: rootProject.file('gradle/localization.gradle')

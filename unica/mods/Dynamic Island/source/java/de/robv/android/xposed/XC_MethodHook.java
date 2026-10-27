@@ -4,6 +4,9 @@ public abstract class XC_MethodHook {
  public static class MethodHookParam {
   public Member method; public Object thisObject; public Object[] args;
   Object result; Throwable error; boolean early;
+  private final java.util.Map<String,Object> extras = new java.util.HashMap<>();
+  public void setObjectExtra(String key,Object value){ if(value==null)extras.remove(key); else extras.put(key,value); }
+  public Object getObjectExtra(String key){return extras.get(key);}
   public Object getResult(){return result;}
   public void setResult(Object r){result=r;error=null;early=true;}
   public Throwable getThrowable(){return error;}

@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.source;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -12,7 +14,6 @@ import android.os.Looper;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,11 @@ import org.robolectric.shadows.ShadowSystemClock;
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35)
 public class PrivacySourceTest {
+    static {
+        // icons play as animations; draw their finished frame so renders do not depend on the clock
+        dev.android.dynamicisland.island.graphics.GlyphIcon.setPlaybackFrozen(true);
+    }
+
     private PrivacySource source() {
         Application app = RuntimeEnvironment.getApplication();
         return new PrivacySource(app, new Handler(Looper.getMainLooper()), () -> { });
@@ -89,8 +95,6 @@ public class PrivacySourceTest {
         view.drawShadeCard(c, item, w);
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, name + ".png"))) {
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
+        RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
 }

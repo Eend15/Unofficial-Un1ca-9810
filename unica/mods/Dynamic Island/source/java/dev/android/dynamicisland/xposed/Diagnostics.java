@@ -21,6 +21,33 @@ public final class Diagnostics {
     /** Name of the global setting that holds the report. */
     public static final String SETTING = "dynamicisland_report";
 
+    public static final String ACTION_STATUS_PING = "dev.android.dynamicisland.STATUS_PING";
+    public static final String STATUS_SETTING = "dynamicisland_status_ack";
+
+    /** A new challenge prevents a report left by a previous process from looking connected. */
+    public static long requestStatus(Context ctx) {
+        long nonce = Math.max(1, SystemClock.elapsedRealtimeNanos());
+        android.content.Intent request = new android.content.Intent(ACTION_STATUS_PING).setPackage("com.android.systemui");
+        request.putExtra("nonce", nonce);
+        android.app.BroadcastOptions options = android.app.BroadcastOptions.makeBasic();
+        options.setShareIdentityEnabled(true);
+        try { ctx.sendBroadcast(request, null, options.toBundle()); }
+        catch (RuntimeException ignored) { /* Show an unconfirmed connection if broadcasts are unavailable. */ }
+        return nonce;
+    }
+
+    public static void acknowledgeStatus(Context ctx, long nonce) {
+        if (nonce <= 0) return;
+        try { Settings.Global.putString(ctx.getContentResolver(), STATUS_SETTING, Long.toString(nonce)); }
+        catch (RuntimeException ignored) { }
+    }
+
+    public static boolean statusAcknowledged(Context ctx, long nonce) {
+        if (nonce <= 0) return false;
+        try { return Long.toString(nonce).equals(Settings.Global.getString(ctx.getContentResolver(), STATUS_SETTING)); }
+        catch (RuntimeException ignored) { return false; }
+    }
+
     private static final int MAX_ERRORS = 8;
     private static final int MAX_EVENTS = 60;
     private static final int MAX_CHARS = 12000;

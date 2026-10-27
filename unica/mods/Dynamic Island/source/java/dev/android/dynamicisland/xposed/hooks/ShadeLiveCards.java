@@ -24,11 +24,24 @@ public final class ShadeLiveCards {
     /** Position of the row argument in {@code NotificationRowContentBinderImpl.Companion.access$apply}. */
     private static final int APPLY_ROW_ARG = 8;
 
+    private static final java.util.Map<View, Boolean> boundRows = new java.util.WeakHashMap<>();
+
+    /** Reconcile already-bound rows when the overlay opens, closes or gives way to the shade. */
+    public static void refreshVisibleCards() {
+        for (View row : new java.util.ArrayList<>(boundRows.keySet())) bind(row);
+    }
+
     private ShadeLiveCards() {
     }
 
     static void install(ClassLoader cl) {
         try {
+            Class<?> rowClass = Refl.findClass(ROW_PACKAGE + "ExpandableNotificationRow", cl);
+            if (rowClass == null) return;
+            // Older builds without this Samsung hit test do not need the guard. When it
+            // exists, install the guard before allowing any stock content to be replaced.
+            if (Refl.method(rowClass, "isActionButtonLongClick", 2) != null
+                    && Refl.hookAll(rowClass, "isActionButtonLongClick", new ActionButtonHitTestHook()) == 0) return;
             if (Refl.hookAll(cl, CONTENT_BINDER + "$Companion", "access$apply", new ReapplyHook()) == 0) {
                 return;
             }
@@ -56,6 +69,26 @@ public final class ShadeLiveCards {
     /** True when the row's content view currently holds (or is just rebinding) one of our cards. */
     static boolean isCardRow(View row) {
         return CardRowState.owns(Refl.get(row, "mPrivateLayout"));
+    }
+
+    /** Covers both SwipeHelper's row long press and LiveCardView's forwarded long press. */
+    private static final class ActionButtonHitTestHook extends SafeHook {
+        private static final String SCOPE = "dynamicisland.actionButtonHitTest";
+
+        ActionButtonHitTestHook() { super("shade card long-press hit test"); }
+
+        @Override protected void before(XC_MethodHook.MethodHookParam p) {
+            Object layout = Refl.get(p.thisObject, "mPrivateLayout");
+            CardRowState state = CardRowState.installedIn(layout);
+            if (state == null || state.isRestored()) return;
+            ActionButtonHitTest scope = ActionButtonHitTest.begin(layout, state.card);
+            if (scope != null) p.setObjectExtra(SCOPE, scope);
+        }
+
+        @Override protected void after(XC_MethodHook.MethodHookParam p) {
+            Object scope = p.getObjectExtra(SCOPE);
+            if (scope instanceof ActionButtonHitTest) ((ActionButtonHitTest) scope).close();
+        }
     }
 
     /**
@@ -146,15 +179,20 @@ public final class ShadeLiveCards {
             return;
         }
         String key = (String) Refl.call(Refl.get(row, "mEntryAdapter|mEntry"), "getKey");
+        boundRows.put((View) row, Boolean.TRUE);
         IslandItem item = item(key);
         Object layout = Refl.get(row, "mPrivateLayout");
-        if (item == null || !(layout instanceof ViewGroup)) {
+        if (!(layout instanceof ViewGroup)) {
             return;
         }
         CardRowState previous = CardRowState.installedIn(layout);
+        if (previous == null) previous = CardRowState.exposedIn(layout);
         if (previous != null) {
             previous.restore();
         }
+        IslandController controller = IslandController.get();
+        // Restore first: an earlier binding may already contain our duplicate card.
+        if (item == null || controller != null && controller.isShownAsCard(item)) return;
         ViewGroup group = (ViewGroup) layout;
         for (int i = group.getChildCount() - 1; i >= 0; i--) {
             View child = group.getChildAt(i);

@@ -3,14 +3,16 @@ package dev.android.dynamicisland.island.graphics;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import java.io.File;
-import java.io.FileOutputStream;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import dev.android.dynamicisland.testutil.RenderCapture;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.annotation.GraphicsMode;
 
 /** Draws every pictogram once so a broken path is visible at a glance. */
+@Category(RenderCapture.class)
 @RunWith(RobolectricTestRunner.class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35)
@@ -35,8 +37,6 @@ public class GlyphSheetTest {
         }
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, "glyph_sheet.png"))) {
-            sheet.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
+        RenderCapture.write(sheet, new File(dir, "glyph_sheet.png"));
     }
 }

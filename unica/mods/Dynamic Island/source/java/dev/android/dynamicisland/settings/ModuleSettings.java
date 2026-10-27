@@ -25,14 +25,31 @@ public final class ModuleSettings {
     public static final String KEY_CARD_HEADER = "card_header";
     public static final String KEY_VISUALIZER = "visualizer";
     public static final String KEY_COLOR_ICONS = "compact_color_icons";
+    /** The island's music card in place of the stock music player of the notification shade. */
+    public static final String KEY_SHADE_MEDIA = "shade_media_player";
     public static final String KEY_EVENT_CHARGING = "event_charging";
+    public static final String KEY_STOCK_CHARGING_ANIMATION = "stock_charging_animation";
+    /** Experimental concurrent input; opt-in because vendor recording policies differ. */
+    public static final String KEY_CONCURRENT_RECORDING_INPUT = "concurrent_recording_input";
+    public static final String KEY_CHARGING_INFO = "charging_info";
+    public static final String KEY_CHARGING_STATS = "charging_statistics";
+    public static final String KEY_EVENT_HEADSET = "event_headset";
     public static final String KEY_EVENT_RINGER = "event_ringer";
     public static final String KEY_EVENT_BLUETOOTH = "event_bluetooth";
     public static final String KEY_HAPTICS = "haptics";
+    /** Rendering overrides only; individual preferences are retained. */
+    public static final String KEY_LOW_PERFORMANCE = "low_performance_mode";
+    /** Keep active content visible when a portrait app hides the status bar. */
+    public static final String KEY_SHOW_IN_FULLSCREEN = "show_in_fullscreen";
     /** Plays the animations of version 0.1.3 and before instead of the smoothed ones. */
     public static final String KEY_LEGACY_ANIMATION = "legacy_animation";
     /** Where the island sits: {@link #ANCHOR_AUTO} (on the camera hole), the middle, the left or the right of the status bar. */
     public static final String KEY_PILL_ANCHOR = "pill_anchor";
+    /** Outline policy: automatic contrast detection, always visible, or never drawn. */
+    public static final String KEY_PILL_OUTLINE = "pill_outline";
+    public static final int PILL_OUTLINE_AUTO = 0;
+    public static final int PILL_OUTLINE_ALWAYS = 1;
+    public static final int PILL_OUTLINE_NONE = 2;
     public static final String KEY_PILL_X_DP = "pill_x_dp";
     public static final String KEY_PILL_Y_DP = "pill_y_dp";
     /** Wall-clock time until which the position page is open; a slower way (the settings file) to ask for the sample. */
@@ -48,6 +65,8 @@ public final class ModuleSettings {
     public static final String KEY_HOLE_D_DP = "hole_d_dp";
     public static final String KEY_HOLE_X_DP = "hole_x_dp";
     public static final String KEY_HOLE_Y_DP = "hole_y_dp";
+    public static final String KEY_HOLE_TEXT_PADDING_DP = "hole_text_padding_dp";
+    public static final int HOLE_TEXT_PADDING_MAX_DP = 16;
     public static final int HOLE_AUTO = 0;
     public static final int HOLE_MANUAL = 1;
     public static final int HOLE_NONE = 2;
@@ -62,6 +81,8 @@ public final class ModuleSettings {
     public static final String KEY_PILL_MIN_W_DP = "pill_min_w_dp";
     public static final String KEY_PILL_MAX_W_DP = "pill_max_w_dp";
     public static final String KEY_PILL_KEEP_WIDTH = "pill_keep_width";
+    public static final String KEY_CARD_CORNER_RADIUS_DP = "card_corner_radius_dp";
+    public static final String KEY_CUSTOM_CARD_ROUNDNESS = "custom_card_roundness";
     public static final int PILL_H_MIN_PCT = -20;
     public static final int PILL_H_MAX_PCT = 40;
     public static final int PILL_MIN_W_MAX_DP = 420;
@@ -75,6 +96,24 @@ public final class ModuleSettings {
     public static final int PILL_Y_MIN_DP = -16;
     public static final int PILL_Y_MAX_DP = 64;
     public static final String KEY_HEADS_UP_ISLAND = "heads_up_island";
+    public static final String KEY_FOREGROUND_NOTIFICATIONS = "foreground_notifications";
+    public static final String KEY_AUTO_OPEN_CARDS = "auto_open_cards";
+    public static final String KEY_EXPERIMENTAL_RECOVERY = "experimental_notification_recovery";
+    public static final String KEY_COMPACT_EVENT_ICONS = "compact_event_icons";
+    public static final String KEY_HIDE_BATTERY_ICON = "hide_battery_icon";
+    public static final String KEY_ACCENT_CUSTOM = "accent_custom";
+    public static final String KEY_ACCENT_COLOR = "accent_color";
+    public static final int DEFAULT_ACCENT = 0xFF3E91FF;
+    public static final String KEY_AMBIENT_GLOW = "ambient_glow";
+    public static final String KEY_GLOW_STRENGTH = "ambient_glow_strength";
+    public static final String KEY_GLOW_MOTION = "ambient_glow_motion";
+    public static final String KEY_GLOW_MUSIC_ONLY = "ambient_glow_music_only";
+    public static final String KEY_GLOW_COLOUR = "ambient_glow_colour";
+    public static final String KEY_GLOW_ALBUM = "ambient_glow_album";
+    public static final String KEY_GLOW_FOLLOW_THEME = "ambient_glow_follow_theme";
+    public static final int DEFAULT_GLOW_COLOUR = 0xFFE0A97D;
+    public static final int DEFAULT_GLOW_STRENGTH = 45;
+    public static final int DEFAULT_GLOW_MOTION = 50;
     public static final String KEY_ALL_NOTIFICATIONS = "all_notifications_island";
     public static final String KEY_PROGRESS_NOTIFICATIONS = "progress_notifications";
     public static final String KEY_HIDE_PROGRESS_ORIGINALS = "hide_progress_originals";
@@ -85,6 +124,8 @@ public final class ModuleSettings {
     /** Ids of the smart rules switched off. */
     public static final String KEY_RULES_DISABLED = "rules_disabled";
     public static final String KEY_EVENT_TOGGLES = "event_toggles";
+    /** The flashlight card shown on the island while the torch is on. */
+    public static final String KEY_TORCH_PILL = "torch_pill";
     public static final String KEY_PRIVACY = "privacy_indicator";
     public static final String KEY_PRIVACY_LOCATION = "privacy_location";
     public static final String KEY_OTP_CARD = "otp_card";
@@ -111,17 +152,43 @@ public final class ModuleSettings {
     private static volatile boolean cardHeader = true;
     private static volatile boolean visualizer = true;
     private static volatile boolean colorIcons;
+    private static volatile boolean shadeMedia = true;
     private static volatile boolean eventCharging = true;
+    private static volatile boolean stockChargingAnimation;
+    private static volatile boolean concurrentRecordingInput;
+    private static volatile boolean chargingInfo;
+    private static volatile boolean chargingStats;
+    private static volatile boolean eventHeadset;
     private static volatile boolean eventRinger = true;
     private static volatile boolean eventBluetooth = true;
     private static volatile boolean haptics = true;
+    private static volatile boolean lowPerformance;
+    private static volatile boolean showInFullscreen;
     private static volatile boolean legacyAnimation;
     private static volatile boolean headsUpIsland = true;
     private static volatile boolean allNotifications;
+    private static volatile boolean foregroundNotifications;
+    private static volatile boolean autoOpenCards;
+    private static volatile int autoOpenS = 4;
+    private static volatile boolean experimentalRecovery;
+    private static volatile boolean hideBatteryIcon = true;
+    private static volatile boolean compactEventIcons;
+    private static volatile boolean accentCustom;
+    private static volatile int accentColor = DEFAULT_ACCENT;
+    private static volatile boolean ambientGlow = true;
+    private static volatile boolean glowMusicOnly = true;
+    private static volatile boolean glowAlbum = true;
+    private static volatile boolean glowFollowTheme;
+    private static volatile int glowStrength = DEFAULT_GLOW_STRENGTH;
+    private static volatile int glowMotion = DEFAULT_GLOW_MOTION;
+    private static volatile int glowColour = DEFAULT_GLOW_COLOUR;
     private static volatile boolean progressNotifications = true;
     private static volatile boolean hideProgressOriginals = true;
     private static volatile boolean smartRules = true;
     private static volatile int pillAnchor = ANCHOR_AUTO;
+    private static volatile int pillOutlineMode = PILL_OUTLINE_AUTO;
+    private static volatile int cardCornerRadiusDp = 28;
+    private static volatile boolean customCardRoundness;
     private static volatile int pillXDp;
     private static volatile int pillYDp;
     /** Told (on the reload thread) when the island's position settings changed. */
@@ -130,6 +197,7 @@ public final class ModuleSettings {
     private static volatile int holeDDp = HOLE_D_DEFAULT_DP;
     private static volatile int holeXDp;
     private static volatile int holeYDp;
+    private static volatile int holeTextPaddingDp;
     private static volatile int pillHPct;
     private static volatile int pillMinWDp;
     private static volatile int pillMaxWDp;
@@ -143,6 +211,7 @@ public final class ModuleSettings {
     /** Told (on the reload thread) when any switch changed, so what is on the island follows without waiting for the next event. */
     private static volatile Runnable onSwitchesChanged;
     private static volatile boolean eventToggles = true;
+    private static volatile boolean torchPill = true;
     private static volatile boolean privacyIndicator = true;
     private static volatile boolean privacyLocation = false;
     private static volatile boolean otpCard = true;
@@ -151,6 +220,7 @@ public final class ModuleSettings {
     private static volatile AppFilter appFilter = AppFilter.OFF;
 
     private static boolean started;
+    private static boolean previewProcess;
     private static XSharedPreferences prefs;
     private static boolean loaded;
     /** True while the values come from {@link SettingsProvider} because the preference file was empty or unreadable. */
@@ -170,6 +240,7 @@ public final class ModuleSettings {
      * the saved settings do not override the position (they are written when the finger lets go).
      */
     public static void applyPlacementPreview(android.content.Intent i) {
+        holeTextPaddingDp = clampHoleTextPadding(i.getIntExtra(KEY_HOLE_TEXT_PADDING_DP, holeTextPaddingDp));
         holeMode = Math.max(HOLE_AUTO, Math.min(HOLE_NONE, i.getIntExtra(KEY_HOLE_MODE, holeMode)));
         holeDDp = Math.max(HOLE_D_MIN_DP, Math.min(HOLE_D_MAX_DP, i.getIntExtra(KEY_HOLE_D_DP, holeDDp)));
         holeXDp = Math.max(-HOLE_X_MAX_DP, Math.min(HOLE_X_MAX_DP, i.getIntExtra(KEY_HOLE_X_DP, holeXDp)));
@@ -202,6 +273,22 @@ public final class ModuleSettings {
 
     private static int clampMaxWidth(int dp) {
         return dp < PILL_MAX_W_MIN_DP ? 0 : Math.min(PILL_MAX_W_MAX_DP, dp);
+    }
+
+    /** Outline policy, independent of animation style. Auto uses contrast with the actual background. */
+    public static int pillOutlineMode() {
+        ensureStarted();
+        return pillOutlineMode;
+    }
+
+    /** Used by the settings UI, preview, and both preference sources; invalid values mean Auto. */
+    static int readPillOutlineMode(SharedPreferences source) {
+        try {
+            int mode = source.getInt(KEY_PILL_OUTLINE, PILL_OUTLINE_AUTO);
+            return mode >= PILL_OUTLINE_AUTO && mode <= PILL_OUTLINE_NONE ? mode : PILL_OUTLINE_AUTO;
+        } catch (ClassCastException corrupt) {
+            return PILL_OUTLINE_AUTO;
+        }
     }
 
     /** Height of the pill in percent of the normal one, minus 0: -20..+40. */
@@ -278,7 +365,7 @@ public final class ModuleSettings {
 
     /** Starts the background reload loop on first use; later calls do nothing. */
     public static synchronized void ensureStarted() {
-        if (started) {
+        if (started || previewProcess) {
             return;
         }
         started = true;
@@ -384,11 +471,15 @@ public final class ModuleSettings {
             cardHeader = source.getBoolean(KEY_CARD_HEADER, true);
             visualizer = source.getBoolean(KEY_VISUALIZER, true);
             colorIcons = source.getBoolean(KEY_COLOR_ICONS, false);
+            shadeMedia = source.getBoolean(KEY_SHADE_MEDIA, true);
             eventCharging = source.getBoolean(KEY_EVENT_CHARGING, true);
+            readOptionalDeviceSettings(source);
             eventRinger = source.getBoolean(KEY_EVENT_RINGER, true);
             eventBluetooth = source.getBoolean(KEY_EVENT_BLUETOOTH, true);
             haptics = source.getBoolean(KEY_HAPTICS, true);
+            lowPerformance = source.getBoolean(KEY_LOW_PERFORMANCE, false);
             legacyAnimation = source.getBoolean(KEY_LEGACY_ANIMATION, false);
+            pillOutlineMode = readPillOutlineMode(source);
             headsUpIsland = source.getBoolean(KEY_HEADS_UP_ISLAND, true);
             progressNotifications = source.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
             allNotifications = source.getBoolean(KEY_ALL_NOTIFICATIONS, false);
@@ -399,6 +490,9 @@ public final class ModuleSettings {
             int anchorBefore = pillAnchor;
             int xBefore = pillXDp;
             int yBefore = pillYDp;
+            int textPaddingBefore = holeTextPaddingDp;
+            boolean fullscreenBefore = showInFullscreen;
+            showInFullscreen = source.getBoolean(KEY_SHOW_IN_FULLSCREEN, false);
             boolean previewBefore = placementPreviewActive();
             previewWallUntil = source.getLong(KEY_PILL_PREVIEW_UNTIL, 0L);
             if (!placementPreviewActive()) {
@@ -413,9 +507,12 @@ public final class ModuleSettings {
                 holeDDp = Math.max(HOLE_D_MIN_DP, Math.min(HOLE_D_MAX_DP, source.getInt(KEY_HOLE_D_DP, HOLE_D_DEFAULT_DP)));
                 holeXDp = Math.max(-HOLE_X_MAX_DP, Math.min(HOLE_X_MAX_DP, source.getInt(KEY_HOLE_X_DP, 0)));
                 holeYDp = Math.max(HOLE_Y_MIN_DP, Math.min(HOLE_Y_MAX_DP, source.getInt(KEY_HOLE_Y_DP, 0)));
+                holeTextPaddingDp = clampHoleTextPadding(source.getInt(KEY_HOLE_TEXT_PADDING_DP, 0));
             }
             Runnable placementListener = onPlacementChanged;
             if (placementListener != null && (anchorBefore != pillAnchor || xBefore != pillXDp || yBefore != pillYDp
+                    || fullscreenBefore != showInFullscreen
+                    || textPaddingBefore != holeTextPaddingDp
                     || previewBefore != placementPreviewActive()
                     || sizeBefore != pillHPct * 1_000_000 + pillMinWDp * 1000 + pillMaxWDp + (keepPillWidth ? 1 : 0) * 100_000_000
                     || holeBefore != holeMode * 1_000_000 + holeDDp * 10_000 + holeXDp * 100 + holeYDp)) {
@@ -427,7 +524,17 @@ public final class ModuleSettings {
             if (listener != null && rulesConfig.revision != before.revision) {
                 listener.run();
             }
+            foregroundNotifications = source.getBoolean(KEY_FOREGROUND_NOTIFICATIONS, false);
+            autoOpenCards = source.getBoolean(KEY_AUTO_OPEN_CARDS, false);
+            autoOpenS = Math.max(2, Math.min(30, source.getInt(KEY_AUTO_OPEN_S, 4)));
+            experimentalRecovery = source.getBoolean(KEY_EXPERIMENTAL_RECOVERY, false);
+            compactEventIcons = source.getBoolean(KEY_COMPACT_EVENT_ICONS, false);
+            hideBatteryIcon = source.getBoolean(KEY_HIDE_BATTERY_ICON, true);
+            accentCustom = source.getBoolean(KEY_ACCENT_CUSTOM, false);
+            accentColor = source.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT) | 0xFF000000;
+            readGlow(source);
             eventToggles = source.getBoolean(KEY_EVENT_TOGGLES, true);
+            torchPill = source.getBoolean(KEY_TORCH_PILL, true);
             privacyIndicator = source.getBoolean(KEY_PRIVACY, true);
             privacyLocation = source.getBoolean(KEY_PRIVACY_LOCATION, false);
             otpCard = source.getBoolean(KEY_OTP_CARD, true);
@@ -450,22 +557,97 @@ public final class ModuleSettings {
         }
     }
 
+    public static boolean foregroundNotifications() { return foregroundNotifications; }
+    public static final String KEY_AUTO_OPEN_S = "auto_open_s";
+    public static long autoOpenMs() { return autoOpenS * 1000L; }
+
+    /** Settings-process preview only; does not start the System UI preference reader. */
+    public static void configurePreview(SharedPreferences settings) {
+        previewProcess = true;
+        legacyAnimation = settings.getBoolean(KEY_LEGACY_ANIMATION, false);
+        pillOutlineMode = readPillOutlineMode(settings);
+        lowPerformance = settings.getBoolean(KEY_LOW_PERFORMANCE, false);
+        showInFullscreen = settings.getBoolean(KEY_SHOW_IN_FULLSCREEN, false);
+        eventCharging = settings.getBoolean(KEY_EVENT_CHARGING, true);
+        readOptionalDeviceSettings(settings);
+        holeTextPaddingDp = clampHoleTextPadding(settings.getInt(KEY_HOLE_TEXT_PADDING_DP, 0));
+        cardHeader = settings.getBoolean(KEY_CARD_HEADER, true);
+        colorIcons = settings.getBoolean(KEY_COLOR_ICONS, false);
+        accentCustom = settings.getBoolean(KEY_ACCENT_CUSTOM, false);
+        accentColor = settings.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT);
+        readGlow(settings);
+    }
+
+    private static void readGlow(SharedPreferences source) {
+        ambientGlow = source.getBoolean(KEY_AMBIENT_GLOW, true);
+        glowMusicOnly = source.getBoolean(KEY_GLOW_MUSIC_ONLY, true);
+        glowAlbum = source.getBoolean(KEY_GLOW_ALBUM, true);
+        glowFollowTheme = source.getBoolean(KEY_GLOW_FOLLOW_THEME, false);
+        glowStrength = Math.max(0, Math.min(100, source.getInt(KEY_GLOW_STRENGTH, DEFAULT_GLOW_STRENGTH)));
+        glowMotion = Math.max(0, Math.min(100, source.getInt(KEY_GLOW_MOTION, DEFAULT_GLOW_MOTION)));
+        glowColour = source.getInt(KEY_GLOW_COLOUR, DEFAULT_GLOW_COLOUR) | 0xFF000000;
+    }
+
+    public static boolean ambientGlow() { ensureStarted(); return ambientGlow && glowStrength > 0 && !lowPerformance; }
+    public static boolean glowAlbum() { return glowAlbum; }
+    public static boolean glowMusicOnly() { return glowMusicOnly; }
+    public static int glowStrength() { return glowStrength; }
+    public static int glowMotion() { return glowMotion; }
+    public static int glowColour() {
+        return glowFollowTheme ? (accentCustom ? accentColor : DEFAULT_ACCENT) : glowColour;
+    }
+
+    public static boolean lowPerformance() { ensureStarted(); return lowPerformance; }
+    public static boolean showInFullscreen() { ensureStarted(); return showInFullscreen; }
+    public static boolean chargingInfo() { ensureStarted(); return eventCharging && chargingInfo; }
+    public static boolean stockChargingAnimation() { ensureStarted(); return stockChargingAnimation; }
+    public static boolean concurrentRecordingInput() { ensureStarted(); return concurrentRecordingInput && !lowPerformance; }
+    public static boolean chargingStats() { return chargingInfo() && chargingStats; }
+    public static boolean eventHeadset() { ensureStarted(); return eventHeadset; }
+    public static int holeTextPaddingDp() { ensureStarted(); return holeTextPaddingDp; }
+    public static int cardCornerRadiusDp() { ensureStarted(); return cardCornerRadiusDp; }
+    public static boolean customCardRoundness() { ensureStarted(); return customCardRoundness; }
+
+    private static int clampHoleTextPadding(int value) {
+        return Math.max(0, Math.min(HOLE_TEXT_PADDING_MAX_DP, value));
+    }
+
+    private static void readOptionalDeviceSettings(SharedPreferences source) {
+        customCardRoundness = source.getBoolean(KEY_CUSTOM_CARD_ROUNDNESS, false);
+        cardCornerRadiusDp = Math.max(0, Math.min(48, source.getInt(KEY_CARD_CORNER_RADIUS_DP, 28)));
+        stockChargingAnimation = source.getBoolean(KEY_STOCK_CHARGING_ANIMATION, false);
+        concurrentRecordingInput = source.getBoolean(KEY_CONCURRENT_RECORDING_INPUT, false);
+        chargingInfo = source.getBoolean(KEY_CHARGING_INFO, false);
+        chargingStats = source.getBoolean(KEY_CHARGING_STATS, false);
+        eventHeadset = source.getBoolean(KEY_EVENT_HEADSET, false);
+    }
+
+    public static boolean autoOpenCards() { return autoOpenCards; }
+    public static boolean experimentalRecovery() { return experimentalRecovery; }
+    public static boolean compactEventIcons() { return compactEventIcons; }
+    public static boolean hideBatteryIcon() { return hideBatteryIcon; }
+    public static boolean accentCustom() { return accentCustom; }
+    public static int accentColor() { return accentColor; }
+
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + eventCharging + eventRinger + eventBluetooth + eventToggles + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
-                + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + cardHeader
-                + appFilter.onlyListed() + appFilter.size();
+        return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
+                + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
+                + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/stockCharging=" + stockChargingAnimation + "/recordingInput=" + concurrentRecordingInput
+                + "/roundness=" + customCardRoundness + "/" + cardCornerRadiusDp + "/outline=" + pillOutlineMode + "/" + appFilter.onlyListed() + appFilter.size();
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
     private static void logChanges(SharedPreferences source) {
-        String now = "haptics=" + haptics + " legacyAnimation=" + legacyAnimation + " visualizer=" + visualizer + " cardHeader=" + cardHeader
-                + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
+        String now = "glow=" + ambientGlow + "/" + glowAlbum + "/" + glowFollowTheme + "/" + glowStrength + "/" + glowColour + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + " lowPerformance=" + lowPerformance + " haptics=" + haptics + " legacyAnimation=" + legacyAnimation + " visualizer=" + visualizer + " cardHeader=" + cardHeader
+                + " recovery=" + experimentalRecovery + " foregroundNotifications=" + foregroundNotifications + " autoOpen=" + autoOpenCards + " customAccent=" + accentCustom + " hideBattery=" + hideBatteryIcon + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
                 + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
                 + " privacy=" + privacyIndicator + "/" + privacyLocation + " events=" + eventCharging + "/" + eventRinger + "/" + eventBluetooth
                 + " pill=" + pillAnchor + "/" + pillXDp + "/" + pillYDp + " size=" + pillHPct + "/" + pillMinWDp + "/" + pillMaxWDp + "/" + keepPillWidth + " hole=" + holeMode + "/" + holeDDp + "/" + holeXDp + "/" + holeYDp + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision
-                + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
+                + " pillOutline=" + pillOutlineMode + " showInFullscreen=" + showInFullscreen + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
+        Diagnostics.fact("pill outline mode", Integer.toString(pillOutlineMode));
+        Diagnostics.fact("optional device cards", "charging=" + chargingInfo + " statistics=" + chargingStats + " headset=" + eventHeadset + " stockCharging=" + stockChargingAnimation);
         Diagnostics.fact("settings file", prefs.getFile() + " readable=" + prefs.getFile().canRead() + " keys=" + prefs.getAll().size());
         Diagnostics.fact("settings source", viaProvider ? "provider (" + source.getAll().size() + " keys)" : "preference file (" + source.getAll().size() + " keys)");
         if (!now.equals(lastLogged)) {
@@ -510,6 +692,12 @@ public final class ModuleSettings {
     public static boolean cardHeader() {
         ensureStarted();
         return cardHeader;
+    }
+
+    /** The island's music card in the notification shade; off leaves the stock music player there (see {@link #KEY_SHADE_MEDIA}). */
+    public static boolean shadeMediaPlayer() {
+        ensureStarted();
+        return shadeMedia;
     }
 
     /** Keep the real colours of an app's icon or a team's logo in the small pill, instead of a grey version of it. */
@@ -594,6 +782,12 @@ public final class ModuleSettings {
     public static boolean eventToggles() {
         ensureStarted();
         return eventToggles;
+    }
+
+    /** The flashlight card while the torch is on (see {@link #KEY_TORCH_PILL}). */
+    public static boolean torchPill() {
+        ensureStarted();
+        return torchPill;
     }
 
     /** Camera / microphone in use island. */

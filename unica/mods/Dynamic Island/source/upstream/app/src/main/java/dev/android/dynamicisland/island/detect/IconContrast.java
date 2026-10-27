@@ -25,6 +25,40 @@ public final class IconContrast {
     private static final float OPAQUE_RATIO = 0.72f;
     private static final int DISC = Color.rgb(38, 48, 47);
 
+    /**
+     * True when an icon has internal colour or tone detail that a solid tint would erase. Ongoing
+     * activity chip icons can be app logos on opaque discs, not just single-colour glyphs. Sample
+     * only nearly opaque pixels so the antialiased edge of a plain glyph does not count as detail.
+     */
+    public static boolean isArtwork(Drawable icon) {
+        if (icon == null) {
+            return false;
+        }
+        Bitmap bitmap = render(icon);
+        if (bitmap == null) {
+            return false;
+        }
+        int first = -1;
+        for (int r = 0; r < SAMPLE; r++) {
+            int y = (int) ((r + 0.5f) * RENDER / SAMPLE);
+            for (int c = 0; c < SAMPLE; c++) {
+                int x = (int) ((c + 0.5f) * RENDER / SAMPLE);
+                int color = bitmap.getPixel(x, y);
+                if (Color.alpha(color) < 200) {
+                    continue;
+                }
+                if (first == -1) {
+                    first = color & 0xFFFFFF;
+                } else if (Math.abs(Color.red(color) - Color.red(first)) > 48
+                        || Math.abs(Color.green(color) - Color.green(first)) > 48
+                        || Math.abs(Color.blue(color) - Color.blue(first)) > 48) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /** Colour statistics of a sampled icon. */
     public static final class Stats {
         /** Almost every visible pixel is white: a glyph meant to be tinted. */

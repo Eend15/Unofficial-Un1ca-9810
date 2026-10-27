@@ -11,6 +11,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.service.notification.StatusBarNotification;
 import de.robv.android.xposed.XC_MethodHook;
+import dev.android.dynamicisland.island.DeadlineGate;
 import dev.android.dynamicisland.island.IslandController;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.SafeHook;
@@ -60,6 +61,16 @@ public final class HideDuplicated {
     private static final Map<String, Long> LAST_HIDDEN = new HashMap<>();
     private static final Map<String, String> APP_LABELS = new HashMap<>();
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
+    /** Expiry action asks the current filter to rebuild; it stores no old entry snapshots. */
+    private static final DeadlineGate GRACE_REBUILD = new DeadlineGate(
+            new DeadlineGate.Scheduler() {
+                @Override public boolean postAtTime(Runnable r, long uptime) {
+                    return MAIN.postAtTime(r, uptime);
+                }
+                @Override public void removeCallbacks(Runnable r) {
+                    MAIN.removeCallbacks(r);
+                }
+            }, HideDuplicated::rebuild);
 
     private static Class<?> entryClass;
     /** One of the list builder's pre-group filters, kept to ask the builder for a rebuild. */
@@ -153,6 +164,9 @@ public final class HideDuplicated {
         COPIES_OF.clear();
         ORIGINAL_BY_COPY_TEXT.clear();
         LAST_HIDDEN.keySet().retainAll(present);
+        if (LAST_HIDDEN.isEmpty()) {
+            GRACE_REBUILD.cancel();
+        }
         for (StatusBarNotification source : snapshot) {
             if (isCopy(source) || isSummary(source.getNotification())) {
                 continue;
@@ -344,6 +358,15 @@ public final class HideDuplicated {
         return (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0;
     }
 
+    /**
+     * A group summary that is marked as a live notification (Samsung's ongoing-activity style). System UI folds the
+     * live cards of one app (the Google sports matches) into a stack under such a summary; without it they come
+     * out of the shade as separate cards. The summary itself is not cancelled, it only leaves the shade list.
+     */
+    static boolean isLiveSummary(Notification n) {
+        return isSummary(n) && n.extras != null && n.extras.containsKey(EXTRA_ONGOING_STYLE);
+    }
+
     // ---- hiding --------------------------------------------------------------------------------
 
     /** True when the list entry is an original that must stay out of the shade right now. */
@@ -351,6 +374,9 @@ public final class HideDuplicated {
         StatusBarNotification sbn = sbn(entry);
         if (sbn == null || LIVEBRIDGE_PKG.equals(sbn.getPackageName())) {
             return false;
+        }
+        if (isLiveSummary(sbn.getNotification())) {
+            return true;
         }
         String key = sbn.getKey();
         long now = SystemClock.uptimeMillis();
@@ -370,7 +396,11 @@ public final class HideDuplicated {
         }
         long sinceHidden = now - hiddenAt;
         if (sinceHidden < GRACE_MS) {
-            MAIN.postDelayed(HideDuplicated::rebuild, GRACE_MS - sinceHidden + REBUILD_SLACK_MS);
+            // Filter passes may occur many times per frame. Schedule only
+            // the earliest expiry, and reschedule only when an earlier key
+            // needs its row restored. Never pile up redundant invalidations.
+            long deadline = hiddenAt + GRACE_MS + REBUILD_SLACK_MS;
+            GRACE_REBUILD.scheduleEarliest(deadline);
             return true;
         }
         LAST_HIDDEN.remove(key);
@@ -401,6 +431,11 @@ public final class HideDuplicated {
         if (filter != null) {
             Refl.call(filter, "invalidateList", "duplicate copy gone");
         }
+    }
+
+    /** Called when the native runtime disables the island before restarting SystemUI. */
+    public static void cancelPending() {
+        GRACE_REBUILD.cancel();
     }
 
     /** The launcher label of a package, cached; the package name itself when it cannot be resolved. */

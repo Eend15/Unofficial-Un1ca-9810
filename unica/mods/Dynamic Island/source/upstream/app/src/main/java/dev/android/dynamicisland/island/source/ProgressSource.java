@@ -29,7 +29,7 @@ import java.util.Set;
  */
 public final class ProgressSource {
     private static final String TASK_PREFIX = "task:";
-    private static final int MAX_ITEMS = 2;
+    private static final int MAX_ITEMS = 4;
     private static final long NOTIFY_INTERVAL_MS = 500;
     private static final int MAX_ACTIONS = 3;
     private static final int DEFAULT_ACCENT = 0xFF0A84FF;
@@ -68,7 +68,7 @@ public final class ProgressSource {
             if (fresh.size() >= MAX_ITEMS) {
                 break;
             }
-            IslandItem it = PromotedSource.enabled() && PromotedSource.isPromoted(sbn) ? null : build(sbn);
+            IslandItem it = !ModuleSettings.experimentalRecovery() && PromotedSource.enabled() && PromotedSource.isPromoted(sbn) ? null : build(sbn);
             if (it != null && packages.add(sbn.getPackageName())) {
                 fresh.put(it.key, it);
             }
@@ -77,7 +77,7 @@ public final class ProgressSource {
         if (!changed) {
             for (Map.Entry<String, IslandItem> e : fresh.entrySet()) {
                 IslandItem old = items.get(e.getKey());
-                if (old == null || old.progress != e.getValue().progress || !String.valueOf(old.title).equals(String.valueOf(e.getValue().title))
+                if (old == null || old.progressIndeterminate != e.getValue().progressIndeterminate || old.progress != e.getValue().progress || !String.valueOf(old.title).equals(String.valueOf(e.getValue().title))
                         || !String.valueOf(old.subtitle).equals(String.valueOf(e.getValue().subtitle))) {
                     changed = true;
                     break;
@@ -89,6 +89,9 @@ public final class ProgressSource {
         }
         items.clear();
         items.putAll(fresh);
+        java.util.TreeSet<String> packagesShown = new java.util.TreeSet<>();
+        for (IslandItem item : items.values()) packagesShown.add(item.packageName + (item.progressIndeterminate ? " (indeterminate)" : ""));
+        dev.android.dynamicisland.xposed.Diagnostics.fact("progress cards", packagesShown.isEmpty() ? "none" : String.join(" | ", packagesShown));
         notifyChanged();
     }
 
@@ -114,8 +117,9 @@ public final class ProgressSource {
         }
         Set<String> promoted = new HashSet<>();
         for (IslandItem it : out) {
-            if (it.key.startsWith("oa:")) {
-                promoted.add(it.key.substring(3));
+            if (it.key.startsWith("oa:") || it.key.startsWith("live:")) {
+                if (it.sourceKey != null) promoted.add(it.sourceKey);
+                else if (it.key.startsWith("oa:")) promoted.add(it.key.substring(3));
             }
         }
         Set<String> shown = new HashSet<>();
@@ -163,7 +167,7 @@ public final class ProgressSource {
         if (!ongoing || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) {
             return null;
         }
-        if (isSpecial(n, extras)) {
+        if (isSpecial(sbn, n, extras)) {
             return null;
         }
         int max = extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0);
@@ -182,7 +186,7 @@ public final class ProgressSource {
                 fraction = percent / 100.0f;
             }
         }
-        if (!determinate && !(indeterminate && Notification.CATEGORY_PROGRESS.equals(n.category))) {
+        if (!determinate && !(indeterminate && (Notification.CATEGORY_PROGRESS.equals(n.category) || ModuleSettings.experimentalRecovery()))) {
             return null;
         }
         CharSequence title = extras.getCharSequence(Notification.EXTRA_TITLE);
@@ -226,11 +230,18 @@ public final class ProgressSource {
         return it;
     }
 
-    /** Media, calls, conversations and system notifications that merely carry a progress bar. */
-    private static boolean isSpecial(Notification n, Bundle extras) {
+    /**
+     * Media, calls, conversations and system notifications that merely carry a progress bar. An Android 16
+     * ProgressStyle notification is a progress notification and stays here, unless another source already makes a card
+     * of it: One UI's own live ones (the ongoing-activity extras below) and the promoted ones of the live source.
+     */
+    private static boolean isSpecial(StatusBarNotification sbn, Notification n, Bundle extras) {
         String template = extras.getString(Notification.EXTRA_TEMPLATE);
         if (template != null && (template.endsWith("$MediaStyle") || template.endsWith("$DecoratedMediaCustomViewStyle")
-                || template.endsWith("$CallStyle") || template.endsWith("$ProgressStyle"))) {
+                || template.endsWith("$CallStyle"))) {
+            return true;
+        }
+        if (!ModuleSettings.experimentalRecovery() && template != null && template.endsWith("$ProgressStyle") && PromotedSource.enabled() && PromotedSource.isPromoted(sbn)) {
             return true;
         }
         if (extras.containsKey(Notification.EXTRA_MEDIA_SESSION) || Notification.CATEGORY_CALL.equals(n.category)

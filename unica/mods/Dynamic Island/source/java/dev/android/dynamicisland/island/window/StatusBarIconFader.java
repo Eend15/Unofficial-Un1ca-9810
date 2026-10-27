@@ -266,8 +266,10 @@ public final class StatusBarIconFader {
 
         float targetAlpha = covered ? 0.0f : 1.0f;
         if (fade == null) {
-            if (targetAlpha == 1.0f && icon.getTransitionAlpha() == 1.0f) {
-                return; // never faded and nothing to fade
+            if (targetAlpha == 1.0f) {
+                // never hidden by the island: whatever transition alpha it has is System UI's own (it fades the
+                // icons in and out with the shade), and taking it over would fight that animation
+                return;
             }
             fade = new IconAlphaFade(icon);
             fades.put(icon, fade);

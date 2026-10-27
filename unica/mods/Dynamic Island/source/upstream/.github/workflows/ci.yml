@@ -26,5 +26,32 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Unit tests and render tests
+      - name: Validate translations
+        run: |
+          python3 scripts/translations.py check
+          python3 -m unittest discover -s scripts/tests
+
+      - name: Regression tests and APK build
         run: ./gradlew --no-daemon testReleaseUnitTest assembleRelease
+
+      - name: Verify framework stubs are not packaged
+        run: |
+          if ! command -v rg > /dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y ripgrep
+          fi
+          command -v rg > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" dex packages --defined-only app/build/outputs/apk/release/app-release-unsigned.apk > /tmp/defined-packages.txt
+          if rg -q 'android\.view\.CompositionSamplingListener' /tmp/defined-packages.txt; then
+            echo 'Compile-only framework stub must never be packaged into the APK'
+            exit 1
+          fi
+
+      - name: Test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: app/build/reports/tests/testReleaseUnitTest/
+          if-no-files-found: ignore
+          retention-days: 7

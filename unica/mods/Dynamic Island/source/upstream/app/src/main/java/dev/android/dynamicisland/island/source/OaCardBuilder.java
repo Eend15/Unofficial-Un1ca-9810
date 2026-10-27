@@ -6,6 +6,7 @@ import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
 import android.widget.RemoteViews;
+import dev.android.dynamicisland.island.detect.IconContrast;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
@@ -84,10 +85,12 @@ final class OaCardBuilder {
         Bundle extras = n != null ? n.extras : new Bundle();
 
         IslandItem it = new IslandItem("oa:" + a.key);
+        it.sourceKey = a.sbn == null ? null : a.sbn.getKey();
         it.packageName = pkg;
         it.userId = Refl.getInt(data, "mUserId", 0);
         it.progressStyle = OaActivity.isProgressStyle(n);
         it.kind = kindOf(n, pkg);
+        it.voiceRecording = it.kind == IslandItem.Kind.RECORDING && "com.sec.android.app.voicenote".equals(pkg);
         it.transfer = n != null && (Notification.CATEGORY_PROGRESS.equals(n.category)
                 || (it.kind == IslandItem.Kind.LIVE && !it.progressStyle && extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0) > 0));
         bindPillIcon(it, data, n, pkg);
@@ -97,6 +100,7 @@ final class OaCardBuilder {
         it.pillColor = 0;
 
         OaViews.Chrono chrono = views.readChrono(data, n);
+        it.voiceRecordingPaused = it.voiceRecording && (chrono == null || !chrono.running);
         progress.bindBar(it, data, extras, pkg);
         bindTrailing(it, a, chrono, chipScore, (CharSequence) Refl.get(data, "mExpandedChipText"),
                 extras.getCharSequence("android.shortCriticalText"));
@@ -144,6 +148,9 @@ final class OaCardBuilder {
             icon = (Icon) Refl.get(data, "mCardIcon");
         }
         it.icon = icons.load(icon, pkg);
+        // Some apps send a logo on an opaque disc. Tinting it as a glyph erases its inner detail
+        // in both the pill and the live card (#8); artwork uses the existing grayscale/colour path.
+        it.iconIsImage = IconContrast.isArtwork(it.icon);
 
         int color = Refl.getInt(data, "mChipBackground", 0);
         if (color == 0) {
@@ -300,8 +307,14 @@ final class OaCardBuilder {
             if (action.actionIntent == null || action.title == null) {
                 continue;
             }
-            it.actions.add(new IslandItem.Action(action.title, icons.load(action.getIcon(), pkg),
-                    action.actionIntent, null, ActionWords.isDestructive(action.title)));
+            IslandItem.Action button = new IslandItem.Action(action.title, icons.load(action.getIcon(), pkg),
+                    action.actionIntent, null, ActionWords.isDestructive(action.title));
+            if (it.voiceRecording) {
+                String resource = icons.resourceName(action.getIcon(), pkg);
+                button.recordingControl = resource.endsWith("record_pause") ? 1
+                        : resource.endsWith("record_resume") ? 2 : resource.endsWith("record_stop") ? 3 : 0;
+            }
+            it.actions.add(button);
             if (it.actions.size() == MAX_BUTTONS) {
                 break;
             }

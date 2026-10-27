@@ -1,9 +1,9 @@
 # Dynamic Island — built into UN1CA
 
-Dynamic Island **0.1.10**, release commit
-`32e55b6e220bc872dcab415fd7f5326c3576fbf8`, MIT licensed by sampple-korea.
+Dynamic Island **0.1.13**, release commit
+`db3cc0530b59f0fcc3833c44ed157ea0e68d17d4`, MIT licensed by sampple-korea.
 `UPSTREAM.json` pins the source. `source/upstream` preserves the original project;
-`source/java` contains the native UN1CA adaptation, including every v0.1.10 change.
+`source/java` contains the native UN1CA adaptation, merging the v0.1.13 Java/resources while retaining native lifecycle and scheduler guards.
 
 Enabled for Exynos9810 **starlte, star2lte and crownlte**, Android 16 / One UI 8.
 Works with EXT4 and EROFS ROM builds; EXT4 is needed only for convenient live
@@ -50,7 +50,7 @@ ROM platform key. Editing Java/resources without rebuilding deliberately fails
 the fingerprint guard. D8 uses API 34 to emit supported 112-byte DEX 039 headers;
 the manifest still requires Android 16. Do not restore malformed DEX 041 output.
 
-The generated static adapters are source in the numbered SystemUI patch. Their
+The base static adapters are in the numbered SystemUI patch; source/extend_call_sites.py adds the v0.1.13 adapters transactionally through source/apply.py. Their
 bootstrap Java is also in `source/Bootstrap.java`; `source/weave-report.json`
 records the audited method/constructor coverage. Changes to hook sites require
 updating the patch and coverage together and repeating the ART checks.
@@ -67,10 +67,15 @@ The matrix test uses existing decoded trees as read-only inputs and applies the
 patches only to temporary fixtures. It checks all three targets, repeat application,
 UI placement, unsupported targets and incompatible source without partial edits.
 
-Live S9+ acceptance: Android boots with Enforcing SELinux, native runtime/window,
-no root modules, hidden launcher, settings app and switch. The v0.1.10 ART checks
-loaded all 34 affected classes, validated dispatch/controller and six constructor
-sites; 11 upstream switch-gate/AOSP-chip/dark-text tests passed on real Android.
+Live S9+ acceptance (2026-10-27): Android boots with Enforcing SELinux and
+read-only system, native runtime/window, settings activity and master switch.
+The switch was tested off/on and restored to enabled; one island window returned.
+ART loaded 752 companion classes; nine upstream tests covering AOSP chips,
+recording waveform, charging transitions and long-press hit testing passed.
+All four extended SystemUI classes linked on ART with nine required adapters;
+the compiled APK retains every original defined class. Charging, heads-up and
+shade live-card hook groups attach. Stock One UI 7 shade rows do not support
+upstream's newer card-theme/media-takeover path; that optional path stays off.
 S9 and Note9 physical acceptance is pending; source compatibility is verified.
 Real-message reply delivery and every third-party media/app scenario are not
 claimed fully tested. Framework optimization hooks without static callsites are
@@ -86,3 +91,7 @@ if removal fails, ownership remains held to prevent an overlapping replacement.
 `source/SingleWindowOwnerTest.java` checks repeated claims, incorrect releases,
 clean reattachment and 32 concurrent attempts. This governs this integration;
 unrelated overlay applications are outside its ownership.
+
+## v0.1.13 native compatibility
+
+The hidden CompositionSamplingListener signature is compiled from upstream tools/framework-stubs as compile-only input, never shipped as an android.* class. Method-hook extras are per invocation, enabling the upstream long-press scope cleanup fix. Original release sources remain unmodified under source/upstream; UN1CA adaptations are under source/java. New framework hooks still require matching static SystemUI callsites; absent callsites remain explicitly unsupported and are not reported as installed. Physical S9/Note9 acceptance and all third-party app combinations remain pending.

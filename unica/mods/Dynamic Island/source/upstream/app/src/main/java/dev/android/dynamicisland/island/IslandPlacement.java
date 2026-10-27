@@ -75,6 +75,7 @@ final class IslandPlacement {
     private boolean lastSuppressed;
     private int statusBarWindowState;
     private boolean landscapeSuppressed;
+    private boolean portrait;
     /** Unlock just happened: the island stays hidden until the reveal timer fires. */
     private boolean revealPending;
 
@@ -229,7 +230,7 @@ final class IslandPlacement {
             return;
         }
         boolean locked = barState == BAR_STATE_KEYGUARD || barState == BAR_STATE_SHADE_LOCKED;
-        boolean fullscreen = statusBarWindowState != 0;
+        boolean fullscreen = statusBarWindowState != 0 && !(portrait && ModuleSettings.showInFullscreen());
         boolean suppressed = locked || dozing || fullscreen || landscapeSuppressed || revealPending;
         if (suppressed != lastSuppressed) {
             lastSuppressed = suppressed;
@@ -252,6 +253,7 @@ final class IslandPlacement {
         if (width <= 0 || height <= 0) {
             return;
         }
+        portrait = height > width;
         float centerX = pillCenterX(width);
         float centerY = pillCenterY();
         // where the camera hole is: found from the cutout, or set by hand (then the island grows from that spot)
@@ -286,6 +288,7 @@ final class IslandPlacement {
             }
         }
         view.setPillSize(ModuleSettings.pillHeightPercent(), ModuleSettings.pillMinWidthDp(), ModuleSettings.pillMaxWidthDp());
+        view.setHoleTextPadding(ModuleSettings.holeTextPaddingDp());
         view.setGeometry(width, centerX, centerY, holeD, tablet);
         // while the settings page is open the hole set by hand is drawn as a ring, to line it up with the real camera
         boolean marker = manualHole && ModuleSettings.placementPreviewActive();

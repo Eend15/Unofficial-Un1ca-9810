@@ -10,6 +10,7 @@ import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.island.view.Tween;
+import dev.android.dynamicisland.settings.ModuleSettings;
 
 /**
  * Animation state of one media item's card: the colourful glow behind the music card (three drifting blobs
@@ -72,6 +73,9 @@ public final class MediaFx {
     public float seekPhase;
     final ToneSet setFrom;
     final ToneSet setTo;
+    /** Separate from the scalar accent/ToneSet: secondary artwork colours only affect the waveform. */
+    private final WaveformPaletteTransition waveformPalette = new WaveformPaletteTransition();
+    private final WaveformGradient waveformGradient = new WaveformGradient();
     /** Drift speed easing between paused and playing. */
     final Tween speed;
 
@@ -98,6 +102,7 @@ public final class MediaFx {
             return;
         }
         lastSeq = item.seq;
+        waveformPalette.sync(item.mediaPalette, item.accent, item.seq, now);
         float targetSpeed = item.playing ? 1.0f : IslandView.PAUSED_SPEED;
         float targetGlow = item.playing ? 1.0f : IslandView.PAUSED_GLOW;
         if (!primed) {
@@ -148,7 +153,7 @@ public final class MediaFx {
      * both directions. Returns null when the art is missing or cannot be processed.
      */
     private Drawable makeBlur(Bitmap art) {
-        if (art == null) {
+        if (art == null || ModuleSettings.lowPerformance()) {
             return null;
         }
         try {
@@ -209,12 +214,29 @@ public final class MediaFx {
 
     /** The glow accent, cross-fading to the item's latest accent colour. */
     public int accent(long now) {
+        if (ModuleSettings.lowPerformance()) return accentTo;
         return Colors.blend(accentFrom, accentTo, IslandView.easeInOut((now - accentStart) / ACCENT_FADE_MS));
+    }
+
+    /** Current waveform colour at a clamped horizontal position (0..1), without allocating a palette. */
+    public int waveformColorAt(float position, long now) {
+        return waveformPalette.colorAt(position, ModuleSettings.lowPerformance() ? now + IslandView.FX_COLOR_MS : now);
+    }
+
+    /**
+     * Borrowed per-item paint, valid until the next call; draw immediately and do not mutate it.
+     * Its normalized shader spans the complete waveform bounds. Never touches the shared Paints.fill.
+     */
+    public Paint waveformPaint(float left, float width, float alpha, long now) {
+        return waveformGradient.paint(waveformColorAt(0.0f, now), waveformColorAt(0.5f, now),
+                waveformColorAt(1.0f, now), left, width, alpha);
     }
 
     /** Whether something is still easing, so the view must keep redrawing. */
     public boolean animating(long now) {
-        return speed.running(now) || glow.running(now) || now - accentStart < IslandView.FX_COLOR_MS || now - flipStart < IslandView.FLIP_MS;
+        if (ModuleSettings.lowPerformance()) return false;
+        return speed.running(now) || glow.running(now) || waveformPalette.running(now)
+                || now - accentStart < IslandView.FX_COLOR_MS || now - flipStart < IslandView.FLIP_MS;
     }
 
     /** Advances the blob phases by the time since the previous frame; call once per drawn frame. */
@@ -226,6 +248,7 @@ public final class MediaFx {
         lastFrameNanos = frame;
         lastAdvance = now;
         lastDt = dt;
+        if (ModuleSettings.lowPerformance()) return;
         float speedFactor = speed.value(now);
         for (int i = 0; i < 3; i++) {
             phase[i] = phase[i] + (IslandView.GLOW_RATE[i] * dt * speedFactor);
@@ -241,6 +264,12 @@ public final class MediaFx {
 
     /** Draws the glow into the card rectangle at ({@code x}, {@code y}) of size {@code w} x {@code h}. */
     public void drawGlow(Canvas c, float x, float y, float w, float h, float alpha, long now) {
+        if (ModuleSettings.lowPerformance()) {
+            basePaint.setShader(null);
+            basePaint.setColor(Colors.withAlpha(accentTo, alpha * .16f));
+            c.drawRect(x, y, x + w, y + h, basePaint);
+            return;
+        }
         float fade = IslandView.easeInOut((now - accentStart) / ACCENT_FADE_MS);
         if (setTo.h != h || setTo.accent != accentTo) {
             setTo.build(accentTo, h);
@@ -299,6 +328,12 @@ public final class MediaFx {
      */
     public long shownPosition(IslandItem item, long nowElapsed) {
         long position = item.currentMediaPosition(nowElapsed);
+        if (ModuleSettings.lowPerformance()) {
+            posItem = item;
+            posOffset = 0;
+            lastShown = position;
+            return position;
+        }
         if (item != posItem) {
             boolean sameTrack = posItem != null && TextUtils.equals(posItem.title, item.title) && posItem.mediaDuration == item.mediaDuration;
             boolean smooth = sameTrack && lastShown >= 0 && position >= 0 && Math.abs(lastShown - position) < POSITION_JUMP_MS;
@@ -319,6 +354,11 @@ public final class MediaFx {
      * the vertical axis and is replaced halfway by the new one, each with its blurred ghost fading in and out.
      */
     public void drawArt(Canvas c, float left, float top, float size, float alpha, float corner, long now) {
+        if (ModuleSettings.lowPerformance()) {
+            if (artCur != null) owner.drawDrawable(c, artCur, true, 0, left, top, size, alpha, corner);
+            return;
+        }
+
         float t = (now - flipStart) / FLIP_DURATION_MS;
         if (artPrev != null && t < 1.0f) {
             float eased = IslandView.easeInOut(t);

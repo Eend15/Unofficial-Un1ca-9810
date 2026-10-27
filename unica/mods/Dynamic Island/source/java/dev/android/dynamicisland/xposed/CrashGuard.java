@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
  */
 public final class CrashGuard {
     /** Bump together with the module version: a new build gets a fresh chance. */
-    static final String BUILD = "0.1.10";
+    static final String BUILD = "0.1.13";
 
     private static final long STABLE_AFTER_MS = 45_000;
     // two quick restarts (theme / font change, double reboot) are normal; three in a row are a loop

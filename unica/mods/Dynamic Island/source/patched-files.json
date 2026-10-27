@@ -9,10 +9,12 @@
   "smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceNormalPicker.smali",
   "smali_classes3/com/android/systemui/shade/ShadeExpansionStateManager.smali",
   "smali_classes3/com/android/systemui/statusbar/StatusBarStateControllerImpl.smali",
+  "smali_classes3/com/android/systemui/statusbar/events/SystemStatusAnimationSchedulerImpl.smali",
   "smali_classes3/com/android/systemui/statusbar/notification/collection/NotificationEntry.smali",
   "smali_classes3/com/android/systemui/statusbar/notification/collection/ShadeListBuilder.smali",
   "smali_classes3/com/android/systemui/statusbar/notification/headsup/HeadsUpManagerImpl.smali",
   "smali_classes3/com/android/systemui/statusbar/notification/row/ActivatableNotificationView.smali",
+  "smali_classes3/com/android/systemui/statusbar/notification/row/ExpandableNotificationRow.smali",
   "smali_classes3/com/android/systemui/statusbar/notification/row/NotificationBackgroundView.smali",
   "smali_classes3/com/android/systemui/statusbar/notification/row/NotificationContentView.smali",
   "smali_classes3/com/android/systemui/statusbar/notification/row/NotificationRowContentBinderImpl$AsyncInflationTask.smali",
@@ -26,5 +28,6 @@
   "smali_classes3/com/android/systemui/statusbar/phone/ongoingcall/OngoingCallController.smali",
   "smali_classes3/com/android/systemui/statusbar/pipeline/shared/ui/binder/HomeStatusBarViewBinderImpl.smali",
   "smali_classes3/com/android/systemui/statusbar/policy/SecFlashlightControllerImpl.smali",
-  "smali_classes3/com/android/systemui/statusbar/window/StatusBarWindowStateController.smali"
+  "smali_classes3/com/android/systemui/statusbar/window/StatusBarWindowStateController.smali",
+  "smali_classes3/com/android/wm/shell/common/TaskStackListenerImpl.smali"
 ]

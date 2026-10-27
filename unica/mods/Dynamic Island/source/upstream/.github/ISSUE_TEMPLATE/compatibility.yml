@@ -1,0 +1,37 @@
+name: "📱 Phone or system support / 기기·시스템 지원"
+description: It does not work on your phone or system at all, or parts are missing / 내 기기나 시스템에서 전혀 안 되거나 일부가 빠짐
+title: "[Support] "
+labels: [compatibility]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Besides One UI the module has a first, best-effort support for Nothing OS and other AOSP-like System UIs (see `docs/COMPATIBILITY.md`).
+        One UI 외에 Nothing OS와 AOSP 계열 시스템 UI는 첫 지원 단계이며 가능한 범위에서 맞춥니다(`docs/COMPATIBILITY.md` 참고).
+
+        A **Diagnostics report** is needed to see which parts of System UI differ. / 시스템 UI의 어떤 부분이 다른지 보려면 **진단 리포트**가 필요합니다.
+  - type: input
+    id: device
+    attributes:
+      label: Phone and system / 기기와 시스템
+      placeholder: Nothing Phone (2), Nothing OS 4.0 (Android 16)
+    validations:
+      required: true
+  - type: textarea
+    id: missing
+    attributes:
+      label: What does not work / 안 되는 것
+      description: "For example the island does not show at all, the stock chips stay, a card is missing. / 예: 아일랜드가 아예 안 보임, 기본 칩이 남아 있음, 어떤 카드가 안 나옴"
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Diagnostics report / 진단 리포트
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots / 스크린샷

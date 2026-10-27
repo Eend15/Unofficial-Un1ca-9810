@@ -15,8 +15,8 @@ import org.json.JSONObject;
 public final class UserRules {
     /** Language key of the stage names written here: the fallback every language reads. */
     static final String LABEL_LANGUAGE = "en";
-    /** The user's stage names are written for these languages: English is the fallback, Korean beats it on Korean phones. */
-    private static final String[] LABEL_LANGUAGES = {"en", "ko"};
+    /** Write user stage names for every shipped label language, ahead of the built-in translations. */
+    private static final java.util.List<String> LABEL_LANGUAGES = dev.android.dynamicisland.island.IslandText.languages();
     static final int MAX_STAGE = 9;
 
     private JSONObject root;
@@ -391,9 +391,11 @@ public final class UserRules {
     /** Drops what became empty, so the stored file does not keep husks of rules the user undid. */
     private void tidy(String id) {
         JSONObject rule = find(id, false);
-        JSONObject labels = labelsOf(id, false);
-        JSONObject koLabels = labelsFor(id, "ko", false);
-        boolean noLabels = (labels == null || labels.length() == 0) && (koLabels == null || koLabels.length() == 0);
+        boolean noLabels = true;
+        for (String language : LABEL_LANGUAGES) {
+            JSONObject labels = labelsFor(id, language, false);
+            noLabels &= labels == null || labels.length() == 0;
+        }
         if (rule != null) {
             for (String key : new String[] {"signals", "package_hints", "exclude_patterns", "text_triggers"}) {
                 JSONArray array = rule.optJSONArray(key);

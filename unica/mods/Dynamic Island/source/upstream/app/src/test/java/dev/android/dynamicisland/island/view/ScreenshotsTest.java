@@ -20,11 +20,12 @@ import android.os.SystemClock;
 import android.view.MotionEvent;
 import dev.android.dynamicisland.island.model.IslandItem;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import dev.android.dynamicisland.testutil.RenderCapture;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
@@ -37,6 +38,7 @@ import org.robolectric.shadows.ShadowSystemClock;
  * pictures used in the README to {@code build/screenshots/}. They come from the same drawing code as on a device, not
  * from a device.
  */
+@Category(RenderCapture.class)
 @RunWith(RobolectricTestRunner.class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35, qualifiers = "w360dp-h780dp-xxhdpi")
@@ -267,9 +269,7 @@ public class ScreenshotsTest {
         c.clipPath(clip);
         c.drawBitmap(screen, BEZEL, BEZEL, null);
         c.restore();
-        try (FileOutputStream f = new FileOutputStream(new File(dir, name + ".png"))) {
-            out.compress(Bitmap.CompressFormat.PNG, 100, f);
-        }
+        RenderCapture.write(out, new File(dir, name + ".png"));
     }
 
     // ---------------------------------------------------------------- icons made of shapes

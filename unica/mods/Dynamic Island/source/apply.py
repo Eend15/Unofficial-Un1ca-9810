@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Apply audited source patches without replacing unrelated ROM code."""
 from pathlib import Path
-import argparse,subprocess,shutil,xml.etree.ElementTree as ET
+import argparse,subprocess,shutil,json,tempfile,xml.etree.ElementTree as ET
+import extend_call_sites
 HERE=Path(__file__).resolve().parent
 TARGETS=('starlte','star2lte','crownlte')
 ANDROID='http://schemas.android.com/apk/res/android'
@@ -42,15 +43,37 @@ def apply(apktool,target):
     existing=list(settings.glob('smali*/'+str(controller_rel)))
     if len(existing)>1 or (existing and existing[0].read_bytes()!=controller):
         raise RuntimeError('Refusing an unknown/duplicate Dynamic Island Settings controller')
-    check=git_apply(systemui,'--check')
-    already=False
-    if check.returncode:
-        reverse=git_apply(systemui,'--reverse','--check')
-        if reverse.returncode:raise RuntimeError('Incompatible SystemUI; no changes applied:\n'+check.stderr)
-        already=True
-    if not already:
-        result=git_apply(systemui)
-        if result.returncode:raise RuntimeError(result.stderr)
+    # Plan in a bounded source-only sandbox. Any incompatible new hook must
+    # fail before changing either Settings or the real decoded SystemUI tree.
+    files=json.loads((HERE/'patched-files.json').read_text())
+    with tempfile.TemporaryDirectory(prefix='di-source-plan-') as temporary:
+        staged=Path(temporary)/'SystemUI'
+        for rel in files:
+            src=systemui/rel
+            if src.is_file():
+                dst=staged/rel;dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst)
+        check=git_apply(staged,'--check')
+        already=False
+        if check.returncode:
+            reverse=git_apply(staged,'--reverse','--check')
+            if reverse.returncode:
+                # New wrappers can change context adjacent to the base patch.
+                # Remove exactly our generated extension in the sandbox only.
+                from extend_call_sites import strip
+                for file in staged.glob('smali*/**/*.smali'):
+                    text=file.read_text()
+                    clean=strip(text)
+                    if clean!=text:file.write_text(clean)
+                reverse=git_apply(staged,'--reverse','--check')
+                if reverse.returncode:raise RuntimeError('Incompatible SystemUI; no changes applied:\n'+check.stderr)
+            already=True
+        if not already:
+            result=git_apply(staged)
+            if result.returncode:raise RuntimeError(result.stderr)
+        extend_call_sites.apply(staged)
+        staged_files={str(p.relative_to(staged)):p.read_bytes() for p in staged.rglob('*') if p.is_file()}
+        for rel,data in staged_files.items():
+            destination=systemui/rel;destination.parent.mkdir(parents=True,exist_ok=True);destination.write_bytes(data)
     for p,text in prepared.items():p.write_text(text)
     dest=existing[0] if existing else settings/'smali_classes5'/controller_rel
     dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(controller)

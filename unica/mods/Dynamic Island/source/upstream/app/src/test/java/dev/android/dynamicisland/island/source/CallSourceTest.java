@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.source;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -7,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -20,11 +21,7 @@ import dev.android.dynamicisland.island.graphics.Glyphs;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -94,24 +91,6 @@ public class CallSourceTest {
     }
 
     @Test
-    public void discordVoiceChannelNeedsNoClockInTheNotification() throws Exception {
-        NotificationChannel ch = new NotificationChannel("mediaConnections", "Voice", android.app.NotificationManager.IMPORTANCE_LOW);
-        app.getSystemService(android.app.NotificationManager.class).createNotificationChannel(ch);
-        Notification.Builder b = new Notification.Builder(app, "mediaConnections")
-                .setSmallIcon(android.R.drawable.stat_sys_phone_call)
-                .setContentTitle("Voice Connected")
-                .setContentText("#general / My Server")
-                .setOngoing(true);
-        b.addAction(new Notification.Action.Builder(null, "Disconnect", pi("leave")).build());
-        IslandItem it = source().build(sbn("com.discord", 2, b));
-        assertNotNull(it);
-        assertEquals("Voice Connected", it.title.toString());
-        assertTrue(it.chronoBase > 0);
-        assertEquals(1, it.actions.size());
-        assertTrue(it.actions.get(0).destructive);
-    }
-
-    @Test
     public void ringingNativeDialerAndOrdinaryOngoingAreLeftAlone() throws Exception {
         Notification.Builder ringing = new Notification.Builder(app, "call").setSmallIcon(android.R.drawable.stat_sys_phone_call)
                 .setContentTitle("홍길동").setContentText("수신 전화").setOngoing(true).setCategory(Notification.CATEGORY_CALL);
@@ -124,27 +103,6 @@ public class CallSourceTest {
         assertNull(source().build(sbn("com.example.mail", 5, sync)));
     }
 
-    @Test
-    public void updateAndCollectKeepOneCardAndYieldToTheSystemCallCard() throws Exception {
-        CallSource s = source();
-        long when = System.currentTimeMillis() - 5_000;
-        s.update(Collections.singletonList(sbn("com.kakao.talk", 1, voiceCall(when))));
-        assertEquals(1, s.snapshot().size());
-        List<IslandItem> out = new ArrayList<>();
-        s.collect(out, "other.app");
-        assertEquals(1, out.size());
-        out.clear();
-        s.collect(out, "com.kakao.talk"); // you are in the app already
-        assertTrue(out.isEmpty());
-        IslandItem system = new IslandItem("call:x");
-        system.kind = IslandItem.Kind.CALL;
-        out.add(system);
-        s.collect(out, "other.app");
-        assertEquals(1, out.size());
-        s.update(Collections.<StatusBarNotification>emptyList());
-        assertTrue(s.snapshot().isEmpty());
-    }
-
     private void render(String name, IslandItem item) throws Exception {
         IslandView view = new IslandView(app, null);
         float w = 360f * app.getResources().getDisplayMetrics().density;
@@ -155,8 +113,6 @@ public class CallSourceTest {
         view.drawShadeCard(c, item, w);
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, name + ".png"))) {
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
+        RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
 }

@@ -65,7 +65,7 @@ final class CardBridge {
         float topHalf = flatHalf + (pillRadius * ROUND_END);
         float inset = topHalf - flatHalf;
         float topY = pill.centerY() + (float) Math.sqrt(Math.max(0.0f, (pillRadius * pillRadius) - (inset * inset))) - TUCK;
-        float cardCorner = Math.min(cardRect.height() / 2.0f, m.cardRadius);
+        float cardCorner = first.body.cornerRadius(m.cardRadius, cardRect.height());
         float bottomHalf = Math.min(Math.max(0.0f, (cardRect.width() / 2.0f) - cardCorner), Math.max(topHalf * CARD_SPREAD, m.dp(MIN_CARD_HALF_DP)));
         LiquidBridge bridge = first.bridge;
         bridge.breakDistance = m.dp(BREAK_DP);
@@ -76,7 +76,7 @@ final class CardBridge {
         } else if (event == LiquidBridge.MERGED) {
             wobble(MERGE_KICK_DP);
         }
-        cardColor = stack.fillColor(shapes.expansion(first));
+        cardColor = stack.fillColor(shapes.expansion(first), stack.blurFraction(first, shapes.expansion(first)));
         return bridge;
     }
 

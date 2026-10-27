@@ -55,9 +55,11 @@ public final class AudioLevels {
         }
     }
 
-    /** Starts or stops capturing; capturing also requires the visualizer setting to be on. */
+    /** Shared output capture for the waveform and subtle music glow; never captures the microphone. */
     public void setActive(boolean wantActive) {
-        final boolean active = wantActive && ModuleSettings.visualizer();
+        final boolean active = wantActive && (ModuleSettings.visualizer()
+                || (ModuleSettings.ambientGlow() && ModuleSettings.glowMotion() > 0))
+                && !ModuleSettings.lowPerformance();
         if (active == wanted) {
             return;
         }

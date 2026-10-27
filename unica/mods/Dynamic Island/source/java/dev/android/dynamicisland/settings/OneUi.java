@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
+import dev.android.dynamicisland.R;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -81,7 +82,7 @@ final class OneUi {
 
     /** Big centred title with an optional line under it; {@code top} is the space above in dp. */
     void title(LinearLayout page, CharSequence title, CharSequence tagline, int top) {
-        TextView t = text(title, 32, textColor);
+        TextView t = text(title, 28, textColor);
         t.setGravity(Gravity.CENTER);
         t.setPadding(0, dp(top), 0, dp(6));
         page.addView(t, new LinearLayout.LayoutParams(-1, -2));
@@ -92,6 +93,30 @@ final class OneUi {
             sub.setVisibility(View.GONE);
         }
         page.addView(sub, new LinearLayout.LayoutParams(-1, -2));
+    }
+
+    void pageHeader(LinearLayout page, CharSequence title, Runnable back) {
+        LinearLayout bar = new LinearLayout(ctx);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setPadding(0, dp(10), dp(8), dp(12));
+        TextView arrow = text("‹", 34, textColor);
+        arrow.setGravity(Gravity.CENTER);
+        arrow.setContentDescription(ctx.getString(R.string.back));
+        arrow.setBackground(ripple());
+        arrow.setOnClickListener(v -> back.run());
+        bar.addView(arrow, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        TextView name = text(title, 23, textColor);
+        name.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        name.setPadding(dp(8), 0, 0, 0);
+        bar.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
+        page.addView(bar, new LinearLayout.LayoutParams(-1, -2));
+    }
+
+    void details(LinearLayout page, CharSequence title, CharSequence description) {
+        LinearLayout card = card(page);
+        linkRow(card, title, title.equals(ctx.getString(R.string.ui_details)) ? null : ctx.getString(R.string.ui_details), () ->
+                new android.app.AlertDialog.Builder(ctx).setTitle(title).setMessage(description)
+                        .setPositiveButton(android.R.string.ok, null).show());
     }
 
     /** The round back button of sub pages. */
@@ -119,7 +144,7 @@ final class OneUi {
         TextView status = text("", 18, textColor);
         status.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         status.setPadding(dp(10), 0, 0, 0);
-        line.addView(status);
+        line.addView(status, new LinearLayout.LayoutParams(0, -2, 1));
         card.addView(line);
         TextView detail = text("", 13, muted);
         detail.setPadding(dp(20), dp(6), 0, 0);
@@ -184,7 +209,7 @@ final class OneUi {
         words.addView(text(title, 17, textColor));
         TextView detail = text(summary == null ? "" : summary, 14, summaryColor);
         detail.setPadding(0, dp(2), dp(8), 0);
-        detail.setMaxLines(5);
+        detail.setMaxLines(2);
         detail.setEllipsize(TextUtils.TruncateAt.END);
         if (summary == null || summary.length() == 0) {
             detail.setVisibility(View.GONE);
@@ -206,22 +231,20 @@ final class OneUi {
     /** On / off setting; the summary explains it. {@code onChange} gets the new state. */
     Switch switchRow(LinearLayout group, CharSequence title, CharSequence summary, boolean checked, Consumer<Boolean> onChange) {
         LinearLayout box = box(group, title, summary, muted, null, false);
-        Switch sw = new Switch(ctx);
+        Switch sw = new GalaxySwitch(ctx);
+        sw.setMinHeight(dp(48));
+        sw.setMinWidth(dp(48));
         sw.setContentDescription(title);
-        sw.setClickable(false);
-        sw.setFocusable(false);
         sw.setChecked(checked);
         box.addView(sw);
         box.setBackground(ripple());
         List<Consumer<Boolean>> listeners = new ArrayList<>();
         listeners.add(onChange);
         sw.setTag(listeners);
-        box.setOnClickListener(v -> {
-            sw.setChecked(!sw.isChecked());
-            for (Consumer<Boolean> listener : listeners) {
-                listener.accept(sw.isChecked());
-            }
+        sw.setOnCheckedChangeListener((button, on) -> {
+            for (Consumer<Boolean> listener : listeners) listener.accept(on);
         });
+        box.setOnClickListener(v -> sw.toggle());
         return sw;
     }
 
@@ -244,7 +267,9 @@ final class OneUi {
         line.leftMargin = dp(4);
         line.rightMargin = dp(12);
         box.addView(divider, line);
-        Switch sw = new Switch(ctx);
+        Switch sw = new GalaxySwitch(ctx);
+        sw.setMinHeight(dp(48));
+        sw.setMinWidth(dp(48));
         sw.setContentDescription(title);
         sw.setChecked(checked);
         sw.setOnCheckedChangeListener((button, on) -> onChange.accept(on));

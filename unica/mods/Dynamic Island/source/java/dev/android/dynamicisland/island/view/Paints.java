@@ -7,6 +7,7 @@ import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.graphics.Fonts;
+import dev.android.dynamicisland.xposed.Diagnostics;
 import java.util.Objects;
 
 /** The paints the island draws with, including the text paints that follow the system font. */
@@ -96,6 +97,7 @@ final class Paints {
 
     private void applyFonts() {
         fontKey = Fonts.key();
+        Diagnostics.fact("island font", Fonts.source());
         Typeface regular = Fonts.of(400);
         Typeface semibold = Fonts.of(600);
         Typeface medium = Fonts.of(500);

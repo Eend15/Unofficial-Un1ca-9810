@@ -24,6 +24,8 @@ final class IconPainter {
     private final Metrics m;
     private final Paints paints;
     private final Waveform waveform;
+    private final RecordingWaveform recordingWaveform;
+    private final dev.android.dynamicisland.island.graphics.BatteryGauge batteryGauge = new dev.android.dynamicisland.island.graphics.BatteryGauge();
     private final DigitClock clock;
     private final MediaFxCache mediaFx;
     /** Scratch objects owned by the view; the card bodies share them. */
@@ -31,10 +33,11 @@ final class IconPainter {
     private final Path barClip;
     private final Path imageClip = new Path();
 
-    IconPainter(Metrics m, Paints paints, Waveform waveform, DigitClock clock, MediaFxCache mediaFx, RectF scratch, Path barClip) {
+    IconPainter(Metrics m, Paints paints, Waveform waveform, RecordingWaveform recordingWaveform, DigitClock clock, MediaFxCache mediaFx, RectF scratch, Path barClip) {
         this.m = m;
         this.paints = paints;
         this.waveform = waveform;
+        this.recordingWaveform = recordingWaveform;
         this.clock = clock;
         this.mediaFx = mediaFx;
         this.scratch = scratch;
@@ -49,6 +52,15 @@ final class IconPainter {
 
     /** Leading icon of the compact pill: monochrome unless the icon is artwork. */
     void drawLeadingMono(Canvas c, IslandItem item, float left, float midY, float size, float alpha) {
+        if (item.eventLayout == IslandItem.EventLayout.BATTERY && item.batteryPercent >= 0) {
+            batteryGauge.draw(c, left + size / 2, midY, size, item.batteryPercent, item.fillAccent(), alpha,
+                    false, item.batteryCharging && !ModuleSettings.hideBatteryIcon());
+            return;
+        }
+        if (item.voiceRecording && ModuleSettings.concurrentRecordingInput()) {
+            recordingWaveform.draw(c, item, left, midY, size, size * .85f, alpha);
+            return;
+        }
         if (item.pulsingDot || item.icon == null) {
             drawLeading(c, item, left, midY, size, alpha);
             return;
@@ -90,14 +102,14 @@ final class IconPainter {
         }
     }
 
-    /** Draws {@code d} in a square; images are centre-cropped into rounded corners, icons are tinted. */
+    /** Draws in a square slot: artwork is centre-cropped; tinted icons fit inside without stretching. */
     void drawDrawable(Canvas c, Drawable d, boolean image, int tint, float left, float top, float size, float alpha, float corner) {
         int l = Math.round(left);
         int t = Math.round(top);
         int sz = Math.round(size);
         d.setAlpha(Math.round(255.0f * alpha));
         if (!image) {
-            d.setBounds(l, t, l + sz, t + sz);
+            d.setBounds(centerInside(d, l, t, sz));
             d.setTint(tint);
             d.draw(c);
             return;
@@ -111,6 +123,21 @@ final class IconPainter {
         d.setTintList(null);
         d.draw(c);
         c.restoreToCount(save);
+    }
+
+    /** Fits a symbol inside its slot, preserving its intrinsic aspect ratio and centring both axes. */
+    private static android.graphics.Rect centerInside(Drawable d, int l, int t, int sz) {
+        int iw = d.getIntrinsicWidth();
+        int ih = d.getIntrinsicHeight();
+        if (sz <= 0 || iw <= 0 || ih <= 0 || iw == ih) {
+            return new android.graphics.Rect(l, t, l + sz, t + sz);
+        }
+        float scale = Math.min(sz / (float) iw, sz / (float) ih);
+        int width = Math.max(1, Math.round(iw * scale));
+        int height = Math.max(1, Math.round(ih * scale));
+        int left = l + ((sz - width) / 2);
+        int top = t + ((sz - height) / 2);
+        return new android.graphics.Rect(left, top, left + width, top + height);
     }
 
     /**
@@ -135,7 +162,7 @@ final class IconPainter {
         switch (item.trailing) {
             case TEXT:
             case CHRONOMETER:
-                return text == null ? 0.0f : paints.trail.measureText(text);
+                return text == null ? 0.0f : DigitClock.width(paints.trail, text);
             case PROGRESS_RING:
                 return m.ringSize;
             case WAVEFORM:
@@ -151,17 +178,25 @@ final class IconPainter {
             case CHRONOMETER:
                 if (text != null) {
                     Paint.FontMetrics fm = paints.trail.getFontMetrics();
-                    paints.trail.setColor(Colors.withAlpha(item.kind == IslandItem.Kind.CALL ? item.accent : -1, alpha));
+                    paints.trail.setColor(Colors.withAlpha(item.voiceRecording && ModuleSettings.concurrentRecordingInput()
+                            ? 0xFFFF5B62 : item.kind == IslandItem.Kind.CALL ? item.accent : -1, alpha));
                     float baseline = midY - ((fm.ascent + fm.descent) / 2.0f);
-                    clock.draw(c, item.key + "#compact", text, paints.trail, right - w, baseline, item.chronoCountDown);
+                    float natural = DigitClock.width(paints.trail, text);
+                    int save = c.save();
+                    if (DigitClock.isClock(text) && w > 0 && natural > w) c.scale(w / natural, w / natural, right, midY);
+                    clock.draw(c, item.key + "#compact", text, paints.trail, right - natural, baseline, item.chronoCountDown);
+                    c.restoreToCount(save);
                 }
                 break;
             case PROGRESS_RING:
                 drawRing(c, right - (m.ringSize / 2.0f), midY, m.ringSize / 2.0f, item.progress, -1, alpha);
                 break;
             case WAVEFORM:
-                int barColor = item.isMedia ? mediaFx.obtain(item).accent(IslandView.now()) : item.accent;
-                waveform.draw(c, paints.fill, scratch, right - w, midY, barColor, alpha);
+                if (item.isMedia) {
+                    waveform.draw(c, scratch, right - w, midY, mediaFx.obtain(item), alpha, IslandView.now());
+                } else {
+                    waveform.draw(c, scratch, right - w, midY, item.accent, alpha);
+                }
                 break;
             default:
                 break;

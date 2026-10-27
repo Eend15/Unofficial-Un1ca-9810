@@ -5,7 +5,6 @@ import android.content.res.ColorStateList;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import dev.android.dynamicisland.R;
@@ -33,6 +32,7 @@ final class PositionScreen {
     };
     /** Value the sliders show now; saved when the finger lets go. */
     private boolean running;
+    private boolean calibrating;
     /** While the widest is being set the sample holds a long text, so the pill grows to that width; else a short one. */
     private boolean sampleLong;
     /** The values on the page right now, by settings key; the finger changes them before they are saved. */
@@ -54,90 +54,97 @@ final class PositionScreen {
     }
 
     void open() {
+        calibrating = false;
+        begin(R.string.pos_title);
         LinearLayout page = activity.page();
-        activity.subPage(activity.getString(R.string.pos_title));
-
-        ui.note(page, activity.getString(R.string.pos_live));
-        live.clear();
-        handler.removeCallbacks(heartbeat);
-        running = true;
-        heartbeat.run(); // the real island shows a sample and follows every change below
-
-        ui.category(page, activity.getString(R.string.pos_where));
         LinearLayout where = ui.card(page);
-        int current = anchor();
-        choice(where, R.string.pos_auto, R.string.pos_auto_desc, current == ModuleSettings.ANCHOR_AUTO).setOnClickListener(v -> pick(ModuleSettings.ANCHOR_AUTO));
-        choice(where, R.string.pos_center, R.string.pos_center_desc, current == ModuleSettings.ANCHOR_CENTER).setOnClickListener(v -> pick(ModuleSettings.ANCHOR_CENTER));
-        choice(where, R.string.pos_left, R.string.pos_left_desc, current == ModuleSettings.ANCHOR_LEFT).setOnClickListener(v -> pick(ModuleSettings.ANCHOR_LEFT));
-        choice(where, R.string.pos_right, R.string.pos_right_desc, current == ModuleSettings.ANCHOR_RIGHT).setOnClickListener(v -> pick(ModuleSettings.ANCHOR_RIGHT));
-
-        ui.category(page, activity.getString(R.string.pos_shift));
-        LinearLayout shift = ui.card(page);
-        slider(shift, R.string.pos_shift_x, -ModuleSettings.PILL_X_MAX_DP, ModuleSettings.PILL_X_MAX_DP, ModuleSettings.KEY_PILL_X_DP, 0);
-        slider(shift, R.string.pos_shift_y, ModuleSettings.PILL_Y_MIN_DP, ModuleSettings.PILL_Y_MAX_DP, ModuleSettings.KEY_PILL_Y_DP, 0);
-
+        activity.choice(where, R.string.pos_where, new int[]{R.string.pos_auto, R.string.pos_center, R.string.pos_left, R.string.pos_right},
+                Math.max(0, Math.min(3, anchor())), selected -> prefs.edit().putInt(ModuleSettings.KEY_PILL_ANCHOR, selected).apply());
+        slider(where, R.string.pos_shift_x, -ModuleSettings.PILL_X_MAX_DP, ModuleSettings.PILL_X_MAX_DP, ModuleSettings.KEY_PILL_X_DP, 0);
+        slider(where, R.string.pos_shift_y, ModuleSettings.PILL_Y_MIN_DP, ModuleSettings.PILL_Y_MAX_DP, ModuleSettings.KEY_PILL_Y_DP, 0);
+        ui.actionRow(where, activity.getString(R.string.pos_reset), activity.getString(R.string.ui_reset_position_summary), () -> { resetPosition(); rebuild(); });
         ui.category(page, activity.getString(R.string.size_title));
         LinearLayout sizing = ui.card(page);
         slider(sizing, R.string.size_height, ModuleSettings.PILL_H_MIN_PCT, ModuleSettings.PILL_H_MAX_PCT, ModuleSettings.KEY_PILL_H_PCT, 0);
-        slider(sizing, R.string.size_min, 0, ModuleSettings.PILL_MIN_W_MAX_DP, ModuleSettings.KEY_PILL_MIN_W_DP, 0);
-        slider(sizing, R.string.size_max, 0, ModuleSettings.PILL_MAX_W_MAX_DP, ModuleSettings.KEY_PILL_MAX_W_DP, 0);
+        width(sizing, R.string.size_min, ModuleSettings.KEY_PILL_MIN_W_DP, 64, 64);
+        width(sizing, R.string.size_max, ModuleSettings.KEY_PILL_MAX_W_DP, 100, Math.min(300, screenLimit()));
         ui.switchRow(sizing, activity.getString(R.string.size_keep), activity.getString(R.string.size_keep_sum),
                 prefs.getBoolean(ModuleSettings.KEY_PILL_KEEP_WIDTH, false), on -> {
-                    prefs.edit().putBoolean(ModuleSettings.KEY_PILL_KEEP_WIDTH, on).apply();
-                    send(true);
+                    prefs.edit().putBoolean(ModuleSettings.KEY_PILL_KEEP_WIDTH, on).apply(); send(true);
                 });
-        ui.note(page, activity.getString(R.string.size_note));
-
-        ui.category(page, activity.getString(R.string.hole_title));
-        ui.note(page, activity.getString(R.string.hole_note));
-        LinearLayout hole = ui.card(page);
-        int holeNow = holeMode();
-        choice(hole, R.string.hole_auto, R.string.hole_auto_desc, holeNow == ModuleSettings.HOLE_AUTO).setOnClickListener(v -> pickHole(ModuleSettings.HOLE_AUTO));
-        choice(hole, R.string.hole_manual, R.string.hole_manual_desc, holeNow == ModuleSettings.HOLE_MANUAL).setOnClickListener(v -> pickHole(ModuleSettings.HOLE_MANUAL));
-        choice(hole, R.string.hole_none, R.string.hole_none_desc, holeNow == ModuleSettings.HOLE_NONE).setOnClickListener(v -> pickHole(ModuleSettings.HOLE_NONE));
-        if (holeNow == ModuleSettings.HOLE_MANUAL) {
-            LinearLayout holeSize = ui.card(page);
-            slider(holeSize, R.string.hole_size, ModuleSettings.HOLE_D_MIN_DP, ModuleSettings.HOLE_D_MAX_DP, ModuleSettings.KEY_HOLE_D_DP, ModuleSettings.HOLE_D_DEFAULT_DP);
-            slider(holeSize, R.string.hole_x, -ModuleSettings.HOLE_X_MAX_DP, ModuleSettings.HOLE_X_MAX_DP, ModuleSettings.KEY_HOLE_X_DP, 0);
-            slider(holeSize, R.string.hole_y, ModuleSettings.HOLE_Y_MIN_DP, ModuleSettings.HOLE_Y_MAX_DP, ModuleSettings.KEY_HOLE_Y_DP, 0);
-        }
-
-        LinearLayout reset = ui.card(page);
-        ui.actionRow(reset, activity.getString(R.string.pos_reset), activity.getString(R.string.pos_reset_sum), () -> {
-            prefs.edit().putInt(ModuleSettings.KEY_PILL_ANCHOR, ModuleSettings.ANCHOR_AUTO)
-                    .putInt(ModuleSettings.KEY_PILL_X_DP, 0).putInt(ModuleSettings.KEY_PILL_Y_DP, 0)
-                    .putInt(ModuleSettings.KEY_HOLE_MODE, ModuleSettings.HOLE_AUTO).putInt(ModuleSettings.KEY_HOLE_D_DP, ModuleSettings.HOLE_D_DEFAULT_DP)
-                    .putInt(ModuleSettings.KEY_HOLE_X_DP, 0).putInt(ModuleSettings.KEY_HOLE_Y_DP, 0)
-                    .putInt(ModuleSettings.KEY_PILL_H_PCT, 0).putInt(ModuleSettings.KEY_PILL_MIN_W_DP, 0)
-                    .putInt(ModuleSettings.KEY_PILL_MAX_W_DP, 0).putBoolean(ModuleSettings.KEY_PILL_KEEP_WIDTH, false).apply();
-            rebuild();
-        });
-        ui.note(page, activity.getString(R.string.pos_note));
+        ui.actionRow(sizing, activity.getString(R.string.ui_reset_size), activity.getString(R.string.ui_reset_size_summary), () -> { resetSize(); rebuild(); });
+        ui.details(page, activity.getString(R.string.ui_details), activity.getString(R.string.size_note));
     }
 
-    private void pick(int anchor) {
-        if (anchor() != anchor) {
-            prefs.edit().putInt(ModuleSettings.KEY_PILL_ANCHOR, anchor).apply();
-            send(true);
-            rebuild();
+    void calibration() {
+        calibrating = true;
+        begin(R.string.ui_camera_calibration);
+        LinearLayout page = activity.page();
+        ui.note(page, activity.getString(R.string.hole_note));
+        LinearLayout hole = ui.card(page);
+        activity.choice(hole, R.string.hole_title, new int[]{R.string.hole_auto, R.string.hole_manual, R.string.hole_none},
+                Math.max(0, Math.min(2, holeMode())), selected -> prefs.edit().putInt(ModuleSettings.KEY_HOLE_MODE, selected).apply());
+        if (holeMode() == ModuleSettings.HOLE_MANUAL) {
+            slider(hole, R.string.hole_size, ModuleSettings.HOLE_D_MIN_DP, ModuleSettings.HOLE_D_MAX_DP, ModuleSettings.KEY_HOLE_D_DP, ModuleSettings.HOLE_D_DEFAULT_DP);
+            slider(hole, R.string.hole_x, -ModuleSettings.HOLE_X_MAX_DP, ModuleSettings.HOLE_X_MAX_DP, ModuleSettings.KEY_HOLE_X_DP, 0);
+            slider(hole, R.string.hole_y, ModuleSettings.HOLE_Y_MIN_DP, ModuleSettings.HOLE_Y_MAX_DP, ModuleSettings.KEY_HOLE_Y_DP, 0);
         }
+        if (holeMode() != ModuleSettings.HOLE_NONE) {
+            slider(hole, R.string.hole_text_padding, 0, ModuleSettings.HOLE_TEXT_PADDING_MAX_DP,
+                    ModuleSettings.KEY_HOLE_TEXT_PADDING_DP, 0);
+            ui.note(page, activity.getString(R.string.hole_text_padding_desc));
+        }
+        ui.actionRow(hole, activity.getString(R.string.ui_reset_calibration), activity.getString(R.string.ui_reset_calibration_summary), () -> { resetCalibration(); rebuild(); });
+    }
+
+    private void begin(int title) {
+        activity.subPage(activity.getString(title));
+        ui.note(activity.page(), activity.getString(R.string.pos_live));
+        live.clear();
+        handler.removeCallbacks(heartbeat);
+        running = true;
+        heartbeat.run();
+    }
+
+    int screenLimit() {
+        return Math.max(100, Math.min(ModuleSettings.PILL_MAX_W_MAX_DP,
+                (int) (activity.getResources().getDisplayMetrics().widthPixels / activity.getResources().getDisplayMetrics().density * .96f)));
+    }
+
+    private void width(LinearLayout group, int title, String key, int minimum, int initial) {
+        int stored = prefs.getInt(key, 0);
+        boolean custom = stored >= (key.equals(ModuleSettings.KEY_PILL_MIN_W_DP) ? 1 : 100);
+        activity.choice(group, title, new int[]{R.string.ui_auto, R.string.ui_custom}, custom ? 1 : 0,
+                selected -> setWidthMode(key, selected == 1, minimum, initial));
+        if (custom) slider(group, R.string.ui_precise_value, minimum, screenLimit(), key, initial);
+    }
+
+    void setWidthMode(String key, boolean custom, int minimum, int initial) {
+        int chosen = Math.max(minimum, Math.min(screenLimit(), initial));
+        if (custom) chosen = limitWidth(key, chosen);
+        prefs.edit().putInt(key, custom ? chosen : 0).apply();
+    }
+
+    void resetPosition() {
+        prefs.edit().remove(ModuleSettings.KEY_PILL_ANCHOR).remove(ModuleSettings.KEY_PILL_X_DP).remove(ModuleSettings.KEY_PILL_Y_DP).apply();
+    }
+    void resetSize() {
+        prefs.edit().remove(ModuleSettings.KEY_PILL_H_PCT).remove(ModuleSettings.KEY_PILL_MIN_W_DP)
+                .remove(ModuleSettings.KEY_PILL_MAX_W_DP).remove(ModuleSettings.KEY_PILL_KEEP_WIDTH).apply();
+    }
+    void resetCalibration() {
+        prefs.edit().remove(ModuleSettings.KEY_HOLE_MODE).remove(ModuleSettings.KEY_HOLE_D_DP)
+                .remove(ModuleSettings.KEY_HOLE_X_DP).remove(ModuleSettings.KEY_HOLE_Y_DP)
+                .remove(ModuleSettings.KEY_HOLE_TEXT_PADDING_DP).apply();
     }
 
     private int holeMode() {
         return prefs.getInt(ModuleSettings.KEY_HOLE_MODE, ModuleSettings.HOLE_AUTO);
     }
 
-    private void pickHole(int mode) {
-        if (holeMode() != mode) {
-            prefs.edit().putInt(ModuleSettings.KEY_HOLE_MODE, mode).apply();
-            send(true);
-            rebuild();
-        }
-    }
-
     private void rebuild() {
         activity.page().removeAllViews();
-        open();
+        if (calibrating) calibration(); else open();
     }
 
     /** Leaves the page: the real island goes back to the saved position and stops showing the sample. */
@@ -167,6 +174,7 @@ final class PositionScreen {
             intent.putExtra(ModuleSettings.KEY_HOLE_D_DP, value(ModuleSettings.KEY_HOLE_D_DP, ModuleSettings.HOLE_D_DEFAULT_DP));
             intent.putExtra(ModuleSettings.KEY_HOLE_X_DP, value(ModuleSettings.KEY_HOLE_X_DP, 0));
             intent.putExtra(ModuleSettings.KEY_HOLE_Y_DP, value(ModuleSettings.KEY_HOLE_Y_DP, 0));
+            intent.putExtra(ModuleSettings.KEY_HOLE_TEXT_PADDING_DP, value(ModuleSettings.KEY_HOLE_TEXT_PADDING_DP, 0));
             intent.putExtra(ModuleSettings.EXTRA_SAMPLE_LONG, sampleLong);
             intent.putExtra(ModuleSettings.EXTRA_ACTIVE, active);
             // System UI only accepts it from this app, so the sender has to let it see who sent it (API 34)
@@ -180,7 +188,7 @@ final class PositionScreen {
 
     /** A title with the value on the right and a seek bar under it; saved when the finger lets go. */
     private void slider(LinearLayout group, int title, int min, int max, String key, int def) {
-        int value = prefs.getInt(key, def);
+        int value = Math.max(min, Math.min(max, prefs.getInt(key, def)));
         live.put(key, value);
         if (group.getChildCount() > 0) {
             View line = new View(activity);
@@ -197,9 +205,12 @@ final class PositionScreen {
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.addView(ui.text(activity.getString(title), 18, ui.textColor), new LinearLayout.LayoutParams(0, -2, 1));
         TextView shown = ui.text(describe(key, value), 15, ui.accent);
+        shown.setPadding(ui.dp(8), ui.dp(10), ui.dp(8), ui.dp(10));
+        shown.setMinHeight(ui.dp(48));
         top.addView(shown);
         box.addView(top, new LinearLayout.LayoutParams(-1, -2));
         SeekBar bar = new SeekBar(activity);
+        bar.setContentDescription(activity.getString(title));
         bar.setMax(max - min);
         bar.setProgress(value - min);
         bar.setProgressTintList(ColorStateList.valueOf(ui.accent));
@@ -231,18 +242,51 @@ final class PositionScreen {
                 prefs.edit().putInt(key, seekBar.getProgress() + min).apply();
             }
         });
-        box.addView(bar, new LinearLayout.LayoutParams(-1, ui.dp(40)));
+        shown.setOnClickListener(v -> {
+            android.widget.EditText input = new android.widget.EditText(activity);
+            input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
+            input.setText(Integer.toString(bar.getProgress() + min));
+            input.setSelectAllOnFocus(true);
+            android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(activity).setTitle(title)
+                    .setMessage(activity.getString(R.string.ui_input_range, min, max)).setView(input)
+                    .setNegativeButton(android.R.string.cancel, null).setPositiveButton(R.string.save, null).create();
+            dialog.setOnShowListener(d -> dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(button -> {
+                try {
+                    int number = Integer.parseInt(input.getText().toString().trim());
+                    if (number < min || number > max || limitWidth(key, number) != number) throw new NumberFormatException();
+                    bar.setProgress(number - min);
+                    prefs.edit().putInt(key, number).apply();
+                    dialog.dismiss();
+                } catch (NumberFormatException invalid) { input.setError(activity.getString(R.string.ui_input_range, min, max)); }
+            }));
+            dialog.show();
+        });
+        LinearLayout adjustment = new LinearLayout(activity);
+        adjustment.setGravity(Gravity.CENTER_VERTICAL);
+        for (int direction : new int[]{-1, 1}) {
+            TextView step = ui.text(direction < 0 ? "−" : "+", 24, ui.accent);
+            step.setGravity(Gravity.CENTER);
+            step.setContentDescription(activity.getString(direction < 0 ? R.string.ui_decrease : R.string.ui_increase));
+            step.setOnClickListener(v -> {
+                int next = Math.max(min, Math.min(max, limitWidth(key, bar.getProgress() + min + direction)));
+                bar.setProgress(next - min);
+                prefs.edit().putInt(key, next).apply();
+            });
+            adjustment.addView(step, new LinearLayout.LayoutParams(ui.dp(48), ui.dp(48)));
+            if (direction < 0) adjustment.addView(bar, new LinearLayout.LayoutParams(0, ui.dp(48), 1));
+        }
+        box.addView(adjustment, new LinearLayout.LayoutParams(-1, -2));
         group.addView(box, new LinearLayout.LayoutParams(-1, -2));
     }
 
     /** Keeps the narrowest at or below the widest (when that is set), and the widest at or above the narrowest. */
     private int limitWidth(String key, int dp) {
         if (ModuleSettings.KEY_PILL_MIN_W_DP.equals(key)) {
-            int widest = live.containsKey(ModuleSettings.KEY_PILL_MAX_W_DP) ? live.get(ModuleSettings.KEY_PILL_MAX_W_DP) : 0;
+            int widest = Math.min(screenLimit(), value(ModuleSettings.KEY_PILL_MAX_W_DP, 0));
             return widest >= ModuleSettings.PILL_MAX_W_MIN_DP ? Math.min(dp, widest) : dp;
         }
         if (ModuleSettings.KEY_PILL_MAX_W_DP.equals(key) && dp >= ModuleSettings.PILL_MAX_W_MIN_DP) {
-            int narrowest = live.containsKey(ModuleSettings.KEY_PILL_MIN_W_DP) ? live.get(ModuleSettings.KEY_PILL_MIN_W_DP) : 0;
+            int narrowest = Math.min(screenLimit(), Math.max(64, value(ModuleSettings.KEY_PILL_MIN_W_DP, 0)));
             return Math.max(dp, narrowest);
         }
         return dp;
@@ -259,33 +303,4 @@ final class PositionScreen {
         return value == 0 ? "0 dp" : (value > 0 ? "+" : "") + value + " dp";
     }
 
-    private LinearLayout choice(LinearLayout group, int title, int summary, boolean checked) {
-        if (group.getChildCount() > 0) {
-            View line = new View(activity);
-            line.setBackgroundColor(ui.divider);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, Math.max(1, ui.dp(1) / 2));
-            lp.leftMargin = ui.dp(70);
-            lp.rightMargin = ui.dp(22);
-            group.addView(line, lp);
-        }
-        LinearLayout box = new LinearLayout(activity);
-        box.setGravity(Gravity.TOP);
-        box.setPadding(ui.dp(22), ui.dp(16), ui.dp(22), ui.dp(16));
-        RadioButton radio = new RadioButton(activity);
-        radio.setChecked(checked);
-        radio.setClickable(false);
-        radio.setFocusable(false);
-        radio.setButtonTintList(ColorStateList.valueOf(checked ? ui.accent : ui.muted));
-        box.addView(radio, new LinearLayout.LayoutParams(ui.dp(40), ui.dp(40)));
-        LinearLayout words = new LinearLayout(activity);
-        words.setOrientation(LinearLayout.VERTICAL);
-        words.setPadding(ui.dp(14), 0, 0, 0);
-        words.addView(ui.text(activity.getString(title), 18, ui.textColor));
-        TextView detail = ui.text(activity.getString(summary), 14, ui.muted);
-        detail.setPadding(0, ui.dp(4), 0, 0);
-        words.addView(detail);
-        box.addView(words, new LinearLayout.LayoutParams(0, -2, 1));
-        group.addView(box, new LinearLayout.LayoutParams(-1, -2));
-        return box;
-    }
 }

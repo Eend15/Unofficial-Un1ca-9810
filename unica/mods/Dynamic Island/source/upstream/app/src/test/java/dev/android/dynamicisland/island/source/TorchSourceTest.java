@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.source;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -12,7 +14,6 @@ import android.os.Looper;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
@@ -27,6 +28,11 @@ import org.robolectric.annotation.GraphicsMode;
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35)
 public class TorchSourceTest {
+    static {
+        // icons play as animations; draw their finished frame so renders do not depend on the clock
+        dev.android.dynamicisland.island.graphics.GlyphIcon.setPlaybackFrozen(true);
+    }
+
     private final Application app = RuntimeEnvironment.getApplication();
 
     private TorchSource source(int levels, int level, boolean on) {
@@ -51,36 +57,11 @@ public class TorchSourceTest {
     }
 
     @Test
-    public void recognisesTheStockFlashlightNotification() {
-        assertTrue(TorchSource.isStockNotification("0|com.android.systemui|4660|Flashlight|10161"));
-        org.junit.Assert.assertFalse(TorchSource.isStockNotification("0|com.android.systemui|1234|Other|10161"));
-        org.junit.Assert.assertFalse(TorchSource.isStockNotification("0|com.example|4660|Flashlight|10161"));
-        org.junit.Assert.assertFalse(TorchSource.isStockNotification(null));
-    }
-
-    @Test
-    public void cardReplacesTheStockNotificationOnlyWhileOn() {
-        assertTrue(source(5, 3, true).replacesStockNotification());
-        org.junit.Assert.assertFalse(source(5, 3, false).replacesStockNotification());
-    }
-
-    @Test
     public void noCardWhileOff() {
         TorchSource s = source(5, 3, false);
         List<IslandItem> out = new ArrayList<>();
         s.collect(out);
         assertTrue(out.isEmpty());
-    }
-
-    @Test
-    public void lowestAndHighestLevel() throws Exception {
-        List<IslandItem> out = new ArrayList<>();
-        source(5, 1, true).collect(out);
-        source(5, 5, true).collect(out);
-        assertEquals(0.0f, out.get(0).sliderValue, 0.001f);
-        assertEquals(1.0f, out.get(1).sliderValue, 0.001f);
-        render("torch_card_low", out.get(0));
-        render("torch_card_full", out.get(1));
     }
 
     private void render(String name, IslandItem item) throws Exception {
@@ -93,8 +74,6 @@ public class TorchSourceTest {
         view.drawShadeCard(c, item, w);
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, name + ".png"))) {
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
+        RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
 }

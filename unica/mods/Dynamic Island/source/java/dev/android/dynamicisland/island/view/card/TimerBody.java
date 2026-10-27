@@ -8,7 +8,7 @@ import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 
 /**
- * Single-row card for timers, stopwatches and calls.
+ * Responsive card for timers, stopwatches and calls.
  *
  * <pre>
  * +----------------------------------------------+
@@ -18,8 +18,9 @@ import dev.android.dynamicisland.island.view.IslandView;
  * </pre>
  *
  * Left: the item's leading icon (the caller photo for calls). Middle: the big time with the label under it;
- * for a call the caller name is the main line and the call duration sits under it in green. Right: up to three
- * round or pill buttons, laid out from the right edge.
+ * for a call the caller name is the main line and the call duration sits under it in green. Actions use
+ * individual round or pill buttons, moving below the time when the available width would make the time
+ * too small.
  */
 public final class TimerBody extends CardBody {
     private static final int MAX_BUTTONS = 3;
@@ -30,15 +31,19 @@ public final class TimerBody extends CardBody {
     final float iconSize;
     final String label;
     final float pad;
-
+    final boolean stacked;
+    final float stackedMiddle;
     public TimerBody(IslandView owner, IslandItem item, float w) {
         super(owner, item, w);
-        pad = owner.dp(16.0f);
+        pad = owner.dp(18.0f);
         call = item.kind == IslandItem.Kind.CALL;
         iconSize = owner.dp(call ? 40.0f : 30.0f);
         h = owner.dp(84.0f);
         CharSequence labelText = item.title != null ? item.title : item.appName;
-        label = labelText == null ? null : labelText.toString();
+        label = labelText == null || labelText.toString().equals(owner.trailingString(item)) ? null : labelText.toString();
+        Paint.FontMetrics clockMetrics = owner.bigTimePaint.getFontMetrics();
+        float textBlock = clockMetrics.descent - clockMetrics.ascent + (label == null ? 0 : owner.smallPaint.getTextSize() + owner.dp(4));
+        h = Math.max(h, textBlock + pad * 2);
         float circleSize = owner.dp(46.0f);
         float gap = owner.dp(10.0f);
         float right = w - pad;
@@ -62,7 +67,7 @@ public final class TimerBody extends CardBody {
                 b.bg = action.active ? Colors.WHITE : Colors.BUTTON_GRAY;
             } else if (!usedAccent && i == 0) {
                 // the primary (first) action gets the accent colour, darkened
-                b.bg = call ? Colors.CALL_GREEN : Colors.blend(item.accent, Colors.BLACK, IslandView.PAUSED_SPEED);
+                b.bg = call ? Colors.CALL_GREEN : Colors.blend(item.fillAccent(), Colors.BLACK, IslandView.PAUSED_SPEED);
                 usedAccent = true;
             } else {
                 b.bg = Colors.BUTTON_GRAY;
@@ -80,6 +85,26 @@ public final class TimerBody extends CardBody {
             right -= buttonWidth + gap;
             buttons.add(b);
         }
+        float headerHeight = Math.max(owner.dp(68), textBlock + owner.dp(16));
+        float clockRoom = buttons.isEmpty() ? w - pad * 2 - iconSize - owner.dp(14)
+                : buttons.get(buttons.size() - 1).r.left - owner.dp(8) - pad - iconSize - owner.dp(14);
+        String clock = owner.trailingString(item);
+        float natural = clock == null ? owner.dp(80) : owner.bigTimePaint.measureText(clock);
+        stacked = !call && !buttons.isEmpty() && clockRoom < Math.min(natural + owner.dp(8), owner.dp(132));
+        stackedMiddle = headerHeight / 2;
+        if (stacked) {
+            float buttonTop = headerHeight + owner.dp(8);
+            h = buttonTop + circleSize + pad;
+            float maxButton = (w - pad * 2 - gap * (buttons.size() - 1)) / buttons.size();
+            float total = gap * (buttons.size() - 1);
+            for (Btn b : buttons) total += Math.min(b.r.width(), maxButton);
+            float rowRight = (w + total) / 2;
+            for (Btn b : buttons) {
+                float buttonWidth = Math.min(b.r.width(), maxButton);
+                b.r.set(rowRight - buttonWidth, buttonTop, rowRight, buttonTop + circleSize);
+                rowRight -= buttonWidth + gap;
+            }
+        }
     }
 
     @Override
@@ -87,7 +112,7 @@ public final class TimerBody extends CardBody {
         float rowAlpha = rowAlpha(elapsed, 0);
         float a = alpha * rowAlpha;
         float dy = (1.0f - rowAlpha) * owner.dp(6.0f);
-        float midY = y + (h / 2.0f) + dy;
+        float midY = y + (stacked ? stackedMiddle : h / 2.0f) + dy;
         float iconX = x + pad;
         if (call && item.cardImage != null) {
             owner.drawDrawable(c, item.cardImage, true, 0, iconX, midY - (iconSize / 2.0f), iconSize, a, iconSize / 2.0f);
@@ -98,7 +123,7 @@ public final class TimerBody extends CardBody {
         // text stops before the leftmost button, or at the card padding when there are none
         float textLimit;
         float textGap;
-        if (buttons.isEmpty()) {
+        if (buttons.isEmpty() || stacked) {
             textLimit = w + x;
             textGap = pad;
         } else {
@@ -126,8 +151,14 @@ public final class TimerBody extends CardBody {
         float blockTop = midY - ((timeHeight + labelHeight) / 2.0f);
         if (time != null) {
             owner.bigTimePaint.setColor(Colors.withAlpha(Colors.WHITE, a));
-            String shownTime = TextUtils.ellipsize(time, owner.bigTimePaint, textRight - textX, TextUtils.TruncateAt.END).toString();
-            owner.drawTime(c, item.key + "#card", shownTime, owner.bigTimePaint, textX, blockTop - timeMetrics.ascent, item.chronoCountDown);
+            float room = Math.max(1, textRight - textX);
+            float natural = Math.max(1, owner.bigTimePaint.measureText(time));
+            float scale = Math.min(1, room / natural);
+            float baseline = blockTop - timeMetrics.ascent;
+            int save = c.save();
+            c.scale(scale, scale, textX, baseline);
+            owner.drawTime(c, item.key + "#card", time, owner.bigTimePaint, textX, baseline, item.chronoCountDown);
+            c.restoreToCount(save);
         }
         if (label != null) {
             owner.smallPaint.setColor(Colors.withAlpha(Colors.TEXT_SECONDARY, a));

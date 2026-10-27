@@ -35,6 +35,7 @@ public final class ShadeMediaPlayer {
 
     /** Stock player views that are drawn by us. */
     private static final Map<View, MediaPlayerBinding> PLAYERS = new WeakHashMap<>();
+    private static final RecordingRows RECORDING_ROWS = new RecordingRows();
     /** Methods already hooked, so a player class shared by several views is hooked once. */
     private static final Set<Method> HOOKED = new HashSet<>();
 
@@ -72,6 +73,29 @@ public final class ShadeMediaPlayer {
         return PLAYERS;
     }
 
+    /** Visual overrides must reach even a paused or otherwise static card. */
+    public static void refreshVisiblePlayers() {
+        for (View player : PLAYERS.keySet()) if (player.isAttachedToWindow() && player.isShown()) player.invalidate();
+    }
+
+    /** Called on source/settings changes as well as bind: GONE rows cannot restore themselves by drawing. */
+    public static void refreshRecordingRows() {
+        Set<View> hidden = new HashSet<>();
+        for (Map.Entry<View, MediaPlayerBinding> entry : PLAYERS.entrySet()) {
+            View player = entry.getKey();
+            try {
+                if (entry.getValue().recording(player)) {
+                    View row = MediaRowBackground.findRow(player);
+                    hidden.add(row != null ? row : player);
+                    entry.getValue().cancel();
+                }
+            } catch (Throwable t) {
+                XLog.once("recording media row", t);
+            }
+        }
+        RECORDING_ROWS.sync(hidden);
+    }
+
     /**
      * After {@code SecMediaControlPanel.bind}: for the shade player hooks the player view's draw, touch
      * and measure methods once and registers a {@link MediaPlayerBinding} for it.
@@ -98,6 +122,7 @@ public final class ShadeMediaPlayer {
         }
         player.invalidate();
         player.requestLayout();
+        refreshRecordingRows();
     }
 
     /** Hooks {@code dispatchDraw(Canvas)} ({@code draw}) or {@code dispatchTouchEvent(MotionEvent)} of the player class. */
@@ -123,6 +148,12 @@ public final class ShadeMediaPlayer {
         }
         View player = (View) p.thisObject;
         try {
+            if (binding.recording(player)) {
+                refreshRecordingRows();
+                binding.cancel();
+                p.setResult(draw ? null : Boolean.TRUE);
+                return;
+            }
             IslandItem item = binding.item(player);
             binding.syncBackground(player, item != null);
             if (item == null) {

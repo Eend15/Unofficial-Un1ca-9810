@@ -31,10 +31,12 @@ final class SecondTicker {
             return;
         }
         posted = true;
-        long now = System.currentTimeMillis();
         IslandItem chrono = firstChronometer();
+        boolean monotonic = chrono != null && chrono.chronoUsesElapsedRealtime;
+        long now = monotonic ? android.os.SystemClock.elapsedRealtime() : System.currentTimeMillis();
+        long base = chrono == null ? 0L : (monotonic ? chrono.chronoElapsedBase : chrono.chronoBase);
         long delay = chrono != null
-                ? Math.floorMod(chrono.chronoBase - now, 1000L) + SLACK_MS
+                ? Math.floorMod(base - now, 1000L) + SLACK_MS
                 : (1000 - (now % 1000)) + SLACK_MS;
         view.postDelayed(tick, delay);
     }
@@ -47,10 +49,7 @@ final class SecondTicker {
     void onTick() {
         try {
             posted = false;
-            if (scene.frozenByShade()) {
-                schedule();
-                return;
-            }
+            if (!needed() || scene.frozenByShade()) return;
             stack.placeBlurs();
             remeasureChronometer();
             view.invalidate();
@@ -75,7 +74,7 @@ final class SecondTicker {
     }
 
     private boolean needed() {
-        if (scene.mode == Mode.HIDDEN || !view.isAttachedToWindow()) {
+        if (scene.mode == Mode.HIDDEN || view.isFullyHidden() || !view.isAttachedToWindow() || !view.isShown() || view.getWindowVisibility() != android.view.View.VISIBLE) {
             return false;
         }
         if (scene.mainIn != null && scene.mainIn.content.item.trailing == IslandItem.Trailing.CHRONOMETER) {

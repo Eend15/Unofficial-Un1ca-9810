@@ -12,6 +12,7 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.telecom.TelecomManager;
 import android.widget.ImageView;
+import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.xposed.Refl;
@@ -186,7 +187,7 @@ final class CallCardBuilder {
         AudioManager audio = ctx.getSystemService(AudioManager.class);
         if (audio != null && (telecom || speaker != null)) {
             PendingIntent viaAction = speaker;
-            IslandItem.Action toggle = new IslandItem.Action("Speaker", null, null, () -> toggleSpeaker(viaAction, telecom), false);
+            IslandItem.Action toggle = new IslandItem.Action(IslandText.get(ctx, "island_speaker"), null, null, () -> toggleSpeaker(viaAction, telecom), false);
             toggle.glyph = GLYPH_SPEAKER;
             toggle.active = isSpeakerRoute(audio);
             it.actions.add(toggle);
@@ -196,7 +197,7 @@ final class CallCardBuilder {
         }
         if (telecom || hangUp != null) {
             PendingIntent viaAction = hangUp;
-            IslandItem.Action end = new IslandItem.Action("End call", hangUpIcon, null, () -> endCall(telecom, viaAction), true);
+            IslandItem.Action end = new IslandItem.Action(IslandText.get(ctx, "island_end_call"), hangUpIcon, null, () -> endCall(telecom, viaAction), true);
             if (hangUpIcon == null) {
                 end.glyph = GLYPH_END_CALL;
             }

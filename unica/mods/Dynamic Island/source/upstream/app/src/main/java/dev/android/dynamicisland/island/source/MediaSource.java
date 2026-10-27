@@ -12,16 +12,19 @@ import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
 import android.os.Handler;
 import android.os.SystemClock;
+import dev.android.dynamicisland.island.graphics.ArtworkPalette;
 import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
+import dev.android.dynamicisland.xposed.Refl;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 /**
  * Tracks the active media sessions and offers the one worth showing as a media card: the playing
@@ -37,6 +40,18 @@ public final class MediaSource {
     private final Context ctx;
     private final Handler main;
     private final Runnable onChange;
+    private final MediaForegroundGate foregroundGate = new MediaForegroundGate();
+    private MediaSession.Token foregroundRetryToken;
+    private final Runnable foregroundRetry = new Runnable() {
+        @Override
+        public void run() {
+            MediaSession.Token expected = foregroundRetryToken;
+            foregroundRetryToken = null;
+            if (expected != null && foregroundGate.owns(expected) && sessions.containsKey(expected)) {
+                onChange.run(); // gather again with fresh task information, never replay an old card
+            }
+        }
+    };
     /** This source's own delayed refresh: sharing {@code onChange} would let another source cancel it. */
     private final Runnable tick = new Runnable() {
         @Override
@@ -60,6 +75,29 @@ public final class MediaSource {
     private final Map<String, Cover> covers = new HashMap<>();
     private final MediaSessionManager.OnActiveSessionsChangedListener sessionsListener = this::sync;
     private OutputSource output;
+    private BiPredicate<String, Integer> recordingFilter = (pkg, userId) -> false;
+    /** Ended recording sessions must not reappear as stock shade players through the retired cache. */
+    private final Map<MediaSession.Token, Boolean> retiredRecordings = new java.util.LinkedHashMap<MediaSession.Token, Boolean>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<MediaSession.Token, Boolean> eldest) {
+            return size() > MAX_RETIRED;
+        }
+    };
+
+    public void setRecordingFilter(BiPredicate<String, Integer> filter) {
+        recordingFilter = filter;
+    }
+
+    /** Whether this session is a recording rather than playback, including a just-ended recording. */
+    public boolean isRecordingSession(MediaSession.Token token) {
+        Session session = sessions.get(token);
+        if (session != null) {
+            return session.blockedByRecording();
+        }
+        IslandItem previous = retired.get(token);
+        return retiredRecordings.containsKey(token) || (previous != null
+                && recordingFilter.test(previous.packageName, previous.userId));
+    }
 
     public MediaSource(Context ctx, Handler main, Runnable onChange) {
         this.ctx = ctx;
@@ -98,8 +136,13 @@ public final class MediaSource {
             gone.getValue().retire();
         }
         retired.keySet().removeAll(next.keySet());
+        retiredRecordings.keySet().removeAll(next.keySet());
         sessions.clear();
         sessions.putAll(next);
+        if (!sessions.containsKey(foregroundGate.token())) {
+            cancelForegroundRetry();
+            foregroundGate.clear();
+        }
         forgetGonePlayers();
         onChange.run();
     }
@@ -114,42 +157,72 @@ public final class MediaSource {
         assets.retainActionIconsOf(live);
     }
 
-    /** Adds the card of the session worth showing, or notes it in {@code hiddenByForeground} when its app is on screen. */
+    /** Existing callers already supply their foreground decision; null means no filtering. */
     public void collect(List<IslandItem> out, String foreground, Set<String> hiddenByForeground, Collection<String> packages) {
+        collect(out, foreground, true, hiddenByForeground, packages);
+    }
+
+    /** A cached/unknown foreground is rechecked before a newly selected session is admitted. */
+    public void collect(List<IslandItem> out, String foreground, boolean confirmedForeground,
+            Set<String> hiddenByForeground, Collection<String> packages) {
+        cancelForegroundRetry();
         long now = SystemClock.uptimeMillis();
         Session shown = pickSession(now);
         if (shown == null) {
+            foregroundGate.clear();
             return;
         }
         if (!shown.isPlaying()) {
-            // come back when the paused card is due to leave
             long remaining = ModuleSettings.pausedTimeoutMs() - (now - shown.lastActive);
             main.removeCallbacks(tick);
             main.postDelayed(tick, Math.max(50L, remaining + 50));
         }
         String pkg = shown.controller.getPackageName();
+        MediaSession.Token token = shown.controller.getSessionToken();
         packages.add(pkg);
         IslandItem card = shown.card();
-        if (pkg.equals(foreground)) {
+        if (foregroundGate.shouldHide(token, pkg, foreground, confirmedForeground, now)) {
             hiddenByForeground.add(card.key);
+            long deadline = foregroundGate.retryAt();
+            if (deadline > now) {
+                foregroundRetryToken = token;
+                main.postDelayed(foregroundRetry, deadline - now);
+            }
         } else {
             out.add(card);
         }
     }
 
+    private void cancelForegroundRetry() {
+        main.removeCallbacks(foregroundRetry);
+        foregroundRetryToken = null;
+    }
+
     /** The most recently active playing session; failing that the most recent one paused within the timeout. */
     private Session pickSession(long now) {
+        return pickSession(now, false);
+    }
+
+    /** Glow follows a real session even while its pill is hidden or its paused-card timeout has elapsed. */
+    public IslandItem glowSession() {
+        Session session = pickSession(SystemClock.uptimeMillis(), true);
+        return session == null ? null : session.card();
+    }
+
+    private Session pickSession(long now, boolean forGlow) {
         Session playing = null;
         Session paused = null;
         for (Session s : sessions.values()) {
-            if (!s.hasContent()) {
+            if (s.blockedByRecording() || !s.hasContent()) {
                 continue;
             }
             if (s.isPlaying()) {
                 if (playing == null || s.lastActive > playing.lastActive) {
                     playing = s;
                 }
-            } else if (s.lastActive > 0 && now - s.lastActive < ModuleSettings.pausedTimeoutMs()
+            } else if (((forGlow && s.state != null && (s.state.getState() == PlaybackState.STATE_PAUSED
+                    || s.state.getState() == PlaybackState.STATE_STOPPED))
+                    || (s.lastActive > 0 && now - s.lastActive < ModuleSettings.pausedTimeoutMs()))
                     && (paused == null || s.lastActive > paused.lastActive)) {
                 paused = s;
             }
@@ -161,9 +234,9 @@ public final class MediaSource {
     public IslandItem itemForSession(MediaSession.Token token) {
         Session s = sessions.get(token);
         if (s != null) {
-            return s.hasContent() ? s.card() : null;
+            return !s.blockedByRecording() && s.hasContent() ? s.card() : null;
         }
-        return retired.get(token);
+        return isRecordingSession(token) ? null : retired.get(token);
     }
 
     /**
@@ -178,7 +251,7 @@ public final class MediaSource {
             }
             if (art != cover.art) {
                 cover.art = art;
-                cover.accent = CoverAccent.of(art);
+                cover.palette = CoverAccent.palette(art);
             }
             cover.track = track;
             cover.pendingTrack = null;
@@ -237,7 +310,7 @@ public final class MediaSource {
     /** The last cover of one player and the track it belonged to. */
     private static final class Cover {
         Bitmap art;
-        int accent = -1;
+        ArtworkPalette palette;
         String track;
         /** Track that arrived without art, and since when we have been waiting for it. */
         String pendingTrack;
@@ -247,16 +320,23 @@ public final class MediaSource {
     /** One media session with the latest playback state and metadata it reported. */
     private final class Session extends MediaController.Callback {
         final MediaController controller;
+        final int userId;
+        /** Cleared only by a fresh playback event after the raw recording activity goes away. */
+        boolean recorded;
+        /** Saved-file metadata can arrive just before the old ongoing activity is removed. */
+        boolean playbackPending;
         MediaMetadata meta;
         PlaybackState state;
         long lastActive;
         /** The card for the current state; null when it must be rebuilt. */
         IslandItem card;
-        private Bitmap accentArt;
-        private int accent = -1;
+        private Bitmap paletteArt;
+        private ArtworkPalette palette;
 
         Session(MediaController controller) {
             this.controller = controller;
+            int uid = Refl.getInt(controller.getSessionToken(), "mUid", -1);
+            userId = uid < 0 ? -1 : uid / 100_000;
             state = controller.getPlaybackState();
             meta = controller.getMetadata();
             if (isPlaying()) {
@@ -267,7 +347,10 @@ public final class MediaSource {
 
         /** Stops listening and keeps the last card for the shade, which may still show this player. */
         void retire() {
-            if (hasContent()) {
+            if (blockedByRecording()) {
+                retired.remove(controller.getSessionToken());
+                retiredRecordings.put(controller.getSessionToken(), Boolean.TRUE);
+            } else if (hasContent()) {
                 IslandItem last = card();
                 last.playing = false;
                 retired.put(controller.getSessionToken(), last);
@@ -306,10 +389,46 @@ public final class MediaSource {
                     || meta.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE) != null);
         }
 
+        boolean recordingNow() {
+            return recordingFilter.test(controller.getPackageName(), userId);
+        }
+
+        boolean blockedByRecording() {
+            if (recordingNow()) {
+                if (!recorded) {
+                    playbackPending = false;
+                }
+                recorded = true;
+                card = null;
+                retired.remove(controller.getSessionToken());
+            } else if (recorded && playbackPending && isPlaying()) {
+                recorded = false;
+                playbackPending = false;
+            }
+            return recorded;
+        }
+
+        /** A stale STATE_PLAYING or blank recording title alone must not revive a stopped recorder. */
+        void allowFreshPlayback() {
+            if (isPlaying() && meta != null) {
+                CharSequence title = firstText(MediaMetadata.METADATA_KEY_TITLE, MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
+                if (title != null && !title.toString().trim().isEmpty()) {
+                    if (!recordingNow()) {
+                        recorded = false;
+                        playbackPending = false;
+                    } else if (recorded && meta.getLong(MediaMetadata.METADATA_KEY_DURATION) > 0) {
+                        playbackPending = true;
+                    }
+                }
+            }
+        }
+
         @Override
         public void onPlaybackStateChanged(PlaybackState newState) {
+            blockedByRecording();
             boolean wasPlaying = isPlaying();
             state = newState;
+            allowFreshPlayback();
             if (wasPlaying || isPlaying()) {
                 lastActive = SystemClock.uptimeMillis();
             }
@@ -319,7 +438,9 @@ public final class MediaSource {
 
         @Override
         public void onMetadataChanged(MediaMetadata newMeta) {
+            blockedByRecording();
             meta = newMeta;
+            allowFreshPlayback();
             card = null;
             onChange.run();
         }
@@ -327,6 +448,10 @@ public final class MediaSource {
         @Override
         public void onSessionDestroyed() {
             if (sessions.remove(controller.getSessionToken()) != null) {
+                if (foregroundGate.owns(controller.getSessionToken())) {
+                    cancelForegroundRetry();
+                    foregroundGate.clear();
+                }
                 retire();
             }
             release();
@@ -348,6 +473,7 @@ public final class MediaSource {
             it.kind = IslandItem.Kind.MEDIA;
             it.isMedia = true;
             it.packageName = pkg;
+            it.userId = userId;
             it.playing = isPlaying();
             it.appName = assets.label(pkg);
             it.trailing = IslandItem.Trailing.WAVEFORM;
@@ -386,10 +512,11 @@ public final class MediaSource {
                 }
             }
             Bitmap art = resolveArt(pkg, fromMeta, track);
-            if (art != accentArt) {
-                accentArt = art;
+            if (art != paletteArt) {
+                paletteArt = art;
                 Cover cover = covers.get(pkg);
-                accent = art == null ? -1 : (cover == null || cover.art != art) ? CoverAccent.of(art) : cover.accent;
+                palette = art == null ? null : (cover == null || cover.art != art)
+                        ? CoverAccent.palette(art) : cover.palette;
             }
             Drawable appIcon = assets.icon(pkg);
             it.art = art;
@@ -402,7 +529,8 @@ public final class MediaSource {
             }
             it.iconIsImage = true;
             it.cardImageIsImage = true;
-            it.accent = accent;
+            it.mediaPalette = palette;
+            it.accent = palette == null ? -1 : palette.primary;
             it.appIcon = appIcon;
             if (appIcon instanceof AdaptiveIconDrawable) {
                 Drawable monochrome = ((AdaptiveIconDrawable) appIcon).getMonochrome();

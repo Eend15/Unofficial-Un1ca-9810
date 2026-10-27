@@ -227,6 +227,7 @@ final class CardRowState {
             return;
         }
         restored = true;
+        EXPOSED.remove(layout);
         XLog.event("shade card restored " + key);
         while (!savedLimits.isEmpty()) {
             endMeasure();

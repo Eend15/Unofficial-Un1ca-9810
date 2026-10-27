@@ -1,37 +1,76 @@
-name: Bug report / 버그 신고
-description: Something does not work / 동작하지 않는 부분
+name: "🐞 Bug report / 버그 신고"
+description: Something does not work or looks wrong / 동작하지 않거나 이상해 보이는 부분
+title: "[Bug] "
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
-        Open **Tools → Diagnostics** in the app, copy the report and paste it below. It lists the hooks that did not attach and the last events.
-        앱의 **도구 → 진단**에서 리포트를 복사해 아래에 붙여 주세요. 연결되지 않은 후크와 최근 이벤트가 들어 있습니다.
+        Thanks for reporting! A screenshot or a **screen recording** and the **Diagnostics report** help the most.
+        신고해 주셔서 감사합니다! 스크린샷이나 **화면 녹화**와 **진단 리포트**가 가장 큰 도움이 됩니다.
+
+        Diagnostics: open the app → **Tools → Diagnostics**, copy the report. / 앱 → **도구 → 진단**에서 리포트를 복사하세요.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it happen / 어디서 생기나요
+      options:
+        - Island pill and cards / 알약과 카드
+        - Notification shade (cards, music player) / 알림창
+        - Music player / 음악 플레이어
+        - Calls, recording, timers / 통화·녹화·타이머
+        - Flashlight and quick toggles / 손전등·빠른 설정 알림
+        - Animation / 애니메이션
+        - Settings app / 설정 앱
+        - Something else / 그 밖
+    validations:
+      required: true
   - type: textarea
     id: what
     attributes:
       label: What happened / 무슨 일이 있었나요
       description: What you did, what you expected and what you saw. / 한 일, 기대한 동작, 실제 동작
+      placeholder: "1. Open ...\n2. Tap ...\n3. The card shows ... but I expected ..."
     validations:
       required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshot or recording / 스크린샷·녹화
+      description: Drag the file here. For a stock-vs-island difference, add both. / 파일을 끌어다 놓으세요. 기본 화면과 비교하는 경우 둘 다 올려 주세요.
   - type: input
     id: device
     attributes:
-      label: Phone and One UI version / 기기와 One UI 버전
-      placeholder: Galaxy S25 Ultra, One UI 8
+      label: Phone / 기기
+      placeholder: Galaxy S25 Ultra
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: System / 시스템
+      options:
+        - One UI 9 (Android 17)
+        - One UI 8.5
+        - One UI 8.0 (Android 16)
+        - One UI 7 (Android 15)
+        - Nothing OS
+        - Other AOSP-like ROM / 그 밖의 AOSP 계열
     validations:
       required: true
   - type: input
     id: version
     attributes:
       label: Module version / 모듈 버전
-      placeholder: "0.1.2"
+      description: Shown on the first line of the Diagnostics report. / 진단 리포트의 첫 줄에 있습니다.
+      placeholder: "0.1.12"
     validations:
       required: true
   - type: textarea
     id: report
     attributes:
       label: Diagnostics report / 진단 리포트
+      description: Lists the hooks that did not attach and the last events. / 연결되지 않은 후크와 최근 이벤트가 들어 있습니다.
       render: text
     validations:
       required: true
@@ -39,4 +78,13 @@ body:
     id: more
     attributes:
       label: Anything else / 그 밖에
-      description: Other modules in the System UI scope, the app that sent the notification, screenshots. / 같은 SystemUI 범위의 다른 모듈, 알림을 보낸 앱, 스크린샷
+      description: Other modules in the System UI scope, the app that sent the notification. / 같은 SystemUI 범위의 다른 모듈, 알림을 보낸 앱
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before sending / 보내기 전에
+      options:
+        - label: I use the latest release or test build. / 최신 릴리스나 테스트 빌드를 쓰고 있습니다.
+          required: true
+        - label: I restarted System UI after installing. / 설치 후 시스템 UI를 재시작했습니다.
+          required: true

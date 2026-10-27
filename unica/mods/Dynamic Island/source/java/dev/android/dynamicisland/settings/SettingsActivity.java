@@ -10,6 +10,13 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
+import android.content.Intent;
+import android.net.Uri;
+import android.provider.Settings;
+import android.app.LocaleManager;
 import android.view.View;
 import android.view.Window;
 import android.window.OnBackInvokedDispatcher;
@@ -46,10 +53,30 @@ public final class SettingsActivity extends Activity {
     private RulesScreen rules;
     private AnimationScreen animation;
     private PositionScreen position;
+    private AppearanceScreen appearance;
     private LinearLayout page;
     private ScrollView scroll;
     /** Builders of the open pages, the visible one on top. */
-    private final Deque<Runnable> stack = new ArrayDeque<>();
+    private static final class PageState {
+        final Runnable build;
+        int scrollY;
+        PageState(Runnable build) { this.build = build; }
+    }
+    private final Deque<PageState> stack = new ArrayDeque<>();
+    private final Handler statusHandler = new Handler(Looper.getMainLooper());
+    private LinearLayout statusHero;
+    private long statusNonce;
+    private long statusRequested;
+    private final Runnable statusPoll = new Runnable() {
+        @Override public void run() {
+            if (statusHero == null || isFinishing() || isDestroyed()) return;
+            boolean connected = Diagnostics.statusAcknowledged(SettingsActivity.this, statusNonce);
+            if (connected) ui.setHero(statusHero, true, getString(R.string.ui_connected), getString(R.string.ui_connected_detail));
+            else if (SystemClock.elapsedRealtime() - statusRequested >= 3000)
+                ui.setHero(statusHero, false, getString(R.string.ui_connection_unknown), getString(R.string.status_waiting_detail));
+            if (!connected && SystemClock.elapsedRealtime() - statusRequested < 3000) statusHandler.postDelayed(this, 250);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +87,7 @@ public final class SettingsActivity extends Activity {
         rules = new RulesScreen(this, ui, prefs);
         animation = new AnimationScreen(this, ui, prefs);
         position = new PositionScreen(this, ui, prefs);
+        appearance = new AppearanceScreen(this, ui, prefs);
         getWindow().setStatusBarColor(ui.background);
         getWindow().setNavigationBarColor(ui.background);
         if (!ui.dark) {
@@ -82,7 +110,10 @@ public final class SettingsActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        saveScroll();
         position.stop();
+        statusHandler.removeCallbacksAndMessages(null);
+        animation.stop();
     }
 
     @Override
@@ -96,31 +127,43 @@ public final class SettingsActivity extends Activity {
     // ---------------------------------------------------------------- navigation
 
     void open(Runnable builder) {
-        stack.push(builder);
+        saveScroll();
+        stack.push(new PageState(builder));
         render();
-        scroll.scrollTo(0, 0);
+    }
+
+    private void saveScroll() {
+        if (!stack.isEmpty()) stack.peek().scrollY = scroll.getScrollY();
     }
 
     void goBack() {
         if (stack.size() > 1) {
             stack.pop();
             render();
-            scroll.scrollTo(0, 0);
         } else {
             finish();
         }
     }
 
     void render() {
-        position.stop(); // a page that moves the real island lets go of it when another page is built
+        position.stop();
+        animation.stop();
+        statusHero = null;
+        statusHandler.removeCallbacksAndMessages(null);
         page.removeAllViews();
-        stack.peek().run();
+        PageState state = stack.peek();
+        state.build.run();
+        scroll.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override public void onGlobalLayout() {
+                scroll.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                if (stack.peek() == state) scroll.scrollTo(0, state.scrollY);
+            }
+        });
     }
 
     /** Header of a sub page: back button and title. */
     void subPage(CharSequence title) {
-        ui.backButton(page, getString(R.string.back), this::goBack);
-        ui.title(page, title, null, 8);
+        ui.pageHeader(page, title, this::goBack);
     }
 
     // ---------------------------------------------------------------- preference access
@@ -131,6 +174,7 @@ public final class SettingsActivity extends Activity {
 
     /** Rebuilds the visible page after something it shows has changed. */
     void refresh() {
+        saveScroll();
         render();
     }
 
@@ -152,47 +196,52 @@ public final class SettingsActivity extends Activity {
     // ---------------------------------------------------------------- hub
 
     private void hub() {
-        ui.title(page, getString(R.string.app_name), getString(R.string.settings_hint), 96);
-        LinearLayout hero = ui.hero(page);
-        String report = Diagnostics.read(this);
-        if (report == null) {
-            ui.setHero(hero, false, getString(R.string.status_waiting), getString(R.string.status_waiting_detail));
-        } else {
-            ui.setHero(hero, true, getString(R.string.status_active), firstLines(report, 4));
-        }
-
+        ui.title(page, getString(R.string.app_name), getString(R.string.ui_home_hint), 28);
+        statusHero = ui.hero(page);
+        ui.setHero(statusHero, false, getString(R.string.ui_checking_connection), getString(R.string.ui_status_hint));
+        statusNonce = Diagnostics.requestStatus(this);
+        statusRequested = SystemClock.elapsedRealtime();
+        statusHandler.post(statusPoll);
         ui.category(page, getString(R.string.hub_settings));
         LinearLayout main = ui.card(page);
-        ui.linkRow(main, getString(R.string.hub_display), getString(R.string.hub_display_sum), () -> open(this::displayPage));
-        ui.linkRow(main, getString(R.string.anim_title), getString(R.string.anim_sum), () -> open(animation::open));
-        ui.linkRow(main, getString(R.string.pos_title), getString(R.string.pos_sum), () -> open(position::open));
-        ui.linkRow(main, getString(R.string.hub_notifications), getString(R.string.hub_notifications_sum), () -> open(this::notificationsPage));
-        ui.linkRow(main, getString(R.string.hub_events), getString(R.string.hub_events_sum), () -> open(this::eventsPage));
+        ui.linkRow(main, getString(R.string.ui_notifications), getString(R.string.ui_notifications_summary), () -> open(this::notificationsPage));
         ui.linkRow(main, getString(R.string.apps_title), appsSummary(), () -> open(this::appsPage));
-        ui.linkRow(main, getString(R.string.rules_title), getString(R.string.hub_rules_sum), () -> open(rules::listPage));
-
-        ui.category(page, getString(R.string.hub_tools));
-        LinearLayout tools = ui.card(page);
-        ui.actionRow(tools, getString(R.string.restart_systemui), getString(R.string.restart_systemui_sum), this::confirmRestart);
-        ui.linkRow(tools, getString(R.string.diagnostics_title), getString(R.string.diagnostics_sum), () -> open(this::diagnosticsPage));
-
-        ui.category(page, getString(R.string.hub_about));
-        LinearLayout about = ui.card(page);
-        ui.actionRow(about, getString(R.string.hub_version), "Dynamic Island " + version(), null);
-        ui.actionRow(about, getString(R.string.hub_author), getString(R.string.hub_author_text), null);
-        ui.actionRow(about, getString(R.string.hub_credits), getString(R.string.hub_credits_text), null);
+        ui.linkRow(main, getString(R.string.ui_appearance), getString(R.string.ui_appearance_summary), () -> open(this::displayPage));
+        ui.linkRow(main, getString(R.string.ui_behavior), getString(R.string.ui_behavior_summary), () -> open(this::behaviorPage));
+        ui.linkRow(main, getString(R.string.ui_advanced), getString(R.string.ui_advanced_summary), () -> open(this::advancedPage));
+        ui.linkRow(main, getString(R.string.ui_about), getString(R.string.ui_about_summary), () -> open(this::aboutPage));
     }
 
-    private static String firstLines(String text, int count) {
-        String[] lines = text.split("\n");
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < Math.min(count, lines.length); i++) {
-            if (sb.length() > 0) {
-                sb.append('\n');
-            }
-            sb.append(lines[i]);
-        }
-        return sb.toString();
+    void choice(LinearLayout group, int title, int[] labels, int selected, java.util.function.IntConsumer save) {
+        ui.valueRow(group, getString(title), getString(labels[selected]), () -> {
+            String[] names = new String[labels.length];
+            for (int i = 0; i < labels.length; i++) names[i] = getString(labels[i]);
+            new AlertDialog.Builder(this).setTitle(title).setSingleChoiceItems(names, selected, (dialog, which) -> {
+                dialog.dismiss(); save.accept(which); refresh();
+            }).setNegativeButton(android.R.string.cancel, null).show();
+        });
+    }
+
+    private void aboutPage() {
+        subPage(getString(R.string.ui_about));
+        LinearLayout about = ui.card(page);
+        ui.valueRow(about, getString(R.string.ui_settings_language), languageLabel(), () -> {
+            try { startActivity(new Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.parse("package:" + getPackageName()))); }
+            catch (RuntimeException unavailable) { startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()))); }
+        });
+        ui.note(page, getString(R.string.ui_language_scope));
+        LinearLayout information = ui.card(page);
+        ui.actionRow(information, getString(R.string.hub_version), "Dynamic Island " + version(), null);
+        ui.actionRow(information, getString(R.string.hub_author), getString(R.string.hub_author_text), null);
+        ui.details(page, getString(R.string.hub_credits), getString(R.string.hub_credits_text));
+    }
+
+    private String languageLabel() {
+        try {
+            android.os.LocaleList locales = getSystemService(LocaleManager.class).getApplicationLocales();
+            if (!locales.isEmpty()) return locales.get(0).getDisplayName(getResources().getConfiguration().getLocales().get(0));
+        } catch (RuntimeException ignored) { }
+        return getString(R.string.ui_follow_system);
     }
 
     private String version() {
@@ -206,53 +255,106 @@ public final class SettingsActivity extends Activity {
     // ---------------------------------------------------------------- pages
 
     private void displayPage() {
-        subPage(getString(R.string.hub_display));
-        ui.category(page, getString(R.string.group_appearance));
+        subPage(getString(R.string.ui_appearance));
+        LinearLayout design = ui.card(page);
+        ui.linkRow(design, getString(R.string.accent_page), getString(R.string.accent_page_sum), () -> open(appearance::open));
+        ui.linkRow(design, getString(R.string.glow_title), getString(R.string.glow_summary),
+                () -> open(() -> new AmbientGlowScreen(this, ui, prefs).open()));
+        ui.linkRow(design, getString(R.string.pos_title), getString(R.string.pos_sum), () -> open(position::open));
+        ui.linkRow(design, getString(R.string.card_roundness), getString(R.string.card_roundness_summary),
+                () -> open(() -> new CardShapeScreen(this, ui, prefs).open()));
+        choice(design, R.string.pill_outline, new int[]{R.string.pill_outline_auto, R.string.pill_outline_always, R.string.pill_outline_none},
+                ModuleSettings.readPillOutlineMode(prefs),
+                selected -> prefs.edit().putInt(ModuleSettings.KEY_PILL_OUTLINE, selected).apply());
+        ui.note(page, getString(R.string.pill_outline_desc));
         LinearLayout look = ui.card(page);
         toggle(look, R.string.setting_card_header, R.string.setting_card_header_desc, ModuleSettings.KEY_CARD_HEADER, true);
-        toggle(look, R.string.setting_visualizer, R.string.setting_visualizer_desc, ModuleSettings.KEY_VISUALIZER, true);
         toggle(look, R.string.setting_color_icons, R.string.setting_color_icons_desc, ModuleSettings.KEY_COLOR_ICONS, false);
+        choice(look, R.string.ui_event_icon_size, new int[]{R.string.ui_size_large, R.string.ui_size_small},
+                flag(ModuleSettings.KEY_COMPACT_EVENT_ICONS, false) ? 1 : 0,
+                selected -> prefs.edit().putBoolean(ModuleSettings.KEY_COMPACT_EVENT_ICONS, selected == 1).apply());
+        ui.switchRow(look, getString(R.string.ui_show_battery_icon), getString(R.string.ui_show_battery_icon_summary),
+                !flag(ModuleSettings.KEY_HIDE_BATTERY_ICON, true), on -> prefs.edit().putBoolean(ModuleSettings.KEY_HIDE_BATTERY_ICON, !on).apply());
+        toggle(look, R.string.setting_shade_media, R.string.setting_shade_media_desc, ModuleSettings.KEY_SHADE_MEDIA, true);
+    }
 
-        ui.category(page, getString(R.string.group_feedback));
-        LinearLayout feedback = ui.card(page);
-        toggle(feedback, R.string.setting_haptics, R.string.setting_haptics_desc, ModuleSettings.KEY_HAPTICS, true);
-
-        ui.category(page, getString(R.string.group_timing));
+    private void behaviorPage() {
+        subPage(getString(R.string.ui_behavior));
+        LinearLayout visibility = ui.card(page);
+        toggle(visibility, R.string.show_in_fullscreen, R.string.show_in_fullscreen_desc,
+                ModuleSettings.KEY_SHOW_IN_FULLSCREEN, false);
+        boolean low = flag(ModuleSettings.KEY_LOW_PERFORMANCE, false);
+        LinearLayout performance = ui.card(page);
+        Switch lowMode = toggle(performance, R.string.low_performance_mode, R.string.low_performance_desc, ModuleSettings.KEY_LOW_PERFORMANCE, false);
+        OneUi.listen(lowMode, on -> refresh());
+        ui.linkRow(performance, getString(R.string.low_performance_details_title), getString(R.string.ui_details), () ->
+                new AlertDialog.Builder(this).setTitle(R.string.low_performance_mode).setMessage(R.string.low_performance_details)
+                        .setPositiveButton(android.R.string.ok, null).show());
+        LinearLayout motion = ui.card(page);
+        ui.linkRow(motion, getString(R.string.anim_title), getString(flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? R.string.anim_legacy : R.string.anim_new), () -> open(animation::open));
+        toggle(motion, R.string.setting_haptics, R.string.setting_haptics_desc, ModuleSettings.KEY_HAPTICS, true);
+        if (low) {
+            ui.actionRow(motion, getString(R.string.ui_wave_motion), getString(R.string.low_performance_static_wave), null);
+        } else {
+            choice(motion, R.string.ui_wave_motion, new int[]{R.string.ui_wave_audio, R.string.ui_wave_demo},
+                    flag(ModuleSettings.KEY_VISUALIZER, true) ? 0 : 1,
+                    selected -> prefs.edit().putBoolean(ModuleSettings.KEY_VISUALIZER, selected == 0).apply());
+        }
+        ui.category(page, getString(R.string.ui_card_timing));
         LinearLayout timing = ui.card(page);
+        Switch auto = toggle(timing, R.string.auto_open_cards, R.string.auto_open_cards_desc, ModuleSettings.KEY_AUTO_OPEN_CARDS, false);
+        TextView automatic = secondsRow(timing, R.string.ui_auto_open_time, ModuleSettings.KEY_AUTO_OPEN_S, 4, AUTO_COLLAPSE_CHOICES);
+        dependent(auto, (View) automatic.getParent().getParent());
         secondsRow(timing, R.string.setting_auto_collapse, ModuleSettings.KEY_AUTO_COLLAPSE_S, ModuleSettings.DEF_AUTO_COLLAPSE_S, AUTO_COLLAPSE_CHOICES);
         secondsRow(timing, R.string.setting_paused_timeout, ModuleSettings.KEY_PAUSED_TIMEOUT_S, ModuleSettings.DEF_PAUSED_TIMEOUT_S, PAUSED_CHOICES);
     }
 
     private void notificationsPage() {
-        subPage(getString(R.string.hub_notifications));
-        ui.category(page, getString(R.string.group_banners));
+        subPage(getString(R.string.ui_notifications));
         LinearLayout banners = ui.card(page);
-        toggle(banners, R.string.setting_heads_up, R.string.setting_heads_up_desc, ModuleSettings.KEY_HEADS_UP_ISLAND, true);
-        toggle(banners, R.string.setting_all_notifications, R.string.setting_all_notifications_desc, ModuleSettings.KEY_ALL_NOTIFICATIONS, false);
-        Switch progress = toggle(banners, R.string.setting_progress, R.string.setting_progress_desc, ModuleSettings.KEY_PROGRESS_NOTIFICATIONS, true);
-        Switch hide = toggle(banners, R.string.setting_hide_progress, R.string.setting_hide_progress_desc, ModuleSettings.KEY_HIDE_PROGRESS_ORIGINALS, true);
+        int mode = flag(ModuleSettings.KEY_ALL_NOTIFICATIONS, false) ? 2 : flag(ModuleSettings.KEY_HEADS_UP_ISLAND, true) ? 1 : 0;
+        choice(banners, R.string.ui_notification_mode, new int[]{R.string.ui_notification_off, R.string.ui_notification_banners, R.string.ui_notification_all}, mode,
+                selected -> prefs.edit().putBoolean(ModuleSettings.KEY_HEADS_UP_ISLAND, selected > 0)
+                        .putBoolean(ModuleSettings.KEY_ALL_NOTIFICATIONS, selected == 2).apply());
+        Switch foreground = toggle(banners, R.string.foreground_notifications, R.string.foreground_notifications_desc, ModuleSettings.KEY_FOREGROUND_NOTIFICATIONS, false);
+        OneUi.setDependentsEnabled(mode > 0 || flag(ModuleSettings.KEY_OTP_CARD, true), OneUi.rowOf(foreground));
+        ui.note(page, getString(R.string.ui_notification_scope));
+        ui.category(page, getString(R.string.ui_activity_types));
+        LinearLayout activity = ui.card(page);
+        ui.linkRow(activity, getString(R.string.hub_events), getString(R.string.hub_events_sum), () -> open(this::eventsPage));
+        ui.linkRow(activity, getString(R.string.rules_title), getString(R.string.hub_rules_sum), () -> open(rules::listPage));
+        Switch progress = toggle(activity, R.string.setting_progress, R.string.setting_progress_desc, ModuleSettings.KEY_PROGRESS_NOTIFICATIONS, true);
+        Switch hide = toggle(activity, R.string.setting_hide_progress, R.string.setting_hide_progress_desc, ModuleSettings.KEY_HIDE_PROGRESS_ORIGINALS, true);
         dependent(progress, OneUi.rowOf(hide));
-
+        toggle(activity, R.string.setting_calls, R.string.setting_calls_desc, ModuleSettings.KEY_THIRD_PARTY_CALLS, true);
         ui.category(page, getString(R.string.group_codes));
         LinearLayout codes = ui.card(page);
         Switch otp = toggle(codes, R.string.setting_otp, R.string.setting_otp_desc, ModuleSettings.KEY_OTP_CARD, true);
         Switch copy = toggle(codes, R.string.setting_otp_copy, R.string.setting_otp_copy_desc, ModuleSettings.KEY_OTP_AUTO_COPY, false);
         dependent(otp, OneUi.rowOf(copy));
-
-        ui.category(page, getString(R.string.group_calls));
-        LinearLayout calls = ui.card(page);
-        toggle(calls, R.string.setting_calls, R.string.setting_calls_desc, ModuleSettings.KEY_THIRD_PARTY_CALLS, true);
+        OneUi.listen(otp, on -> OneUi.setDependentsEnabled(mode > 0 || on, OneUi.rowOf(foreground)));
     }
 
     private void eventsPage() {
         subPage(getString(R.string.hub_events));
-        ui.category(page, getString(R.string.group_charging));
         LinearLayout device = ui.card(page);
-        toggle(device, R.string.setting_event_charging, R.string.setting_event_charging_desc, ModuleSettings.KEY_EVENT_CHARGING, true);
+        Switch charging = toggle(device, R.string.setting_event_charging, R.string.setting_event_charging_desc, ModuleSettings.KEY_EVENT_CHARGING, true);
+        Switch chargingInfo = toggle(device, R.string.setting_charging_info, R.string.setting_charging_info_desc, ModuleSettings.KEY_CHARGING_INFO, false);
+        Switch chargingStats = toggle(device, R.string.setting_charging_stats, R.string.setting_charging_stats_desc, ModuleSettings.KEY_CHARGING_STATS, false);
+        Runnable chargingDependencies = () -> {
+            OneUi.setDependentsEnabled(charging.isChecked(), OneUi.rowOf(chargingInfo));
+            OneUi.setDependentsEnabled(charging.isChecked() && chargingInfo.isChecked(), OneUi.rowOf(chargingStats));
+        };
+        OneUi.listen(charging, on -> chargingDependencies.run());
+        OneUi.listen(chargingInfo, on -> chargingDependencies.run());
+        chargingDependencies.run();
+        toggle(device, R.string.setting_stock_charging_animation, R.string.setting_stock_charging_animation_desc, ModuleSettings.KEY_STOCK_CHARGING_ANIMATION, false);
+        ui.details(page, getString(R.string.ui_details), getString(R.string.charging_statistics_note));
         toggle(device, R.string.setting_event_ringer, R.string.setting_event_ringer_desc, ModuleSettings.KEY_EVENT_RINGER, true);
         toggle(device, R.string.setting_event_bluetooth, R.string.setting_event_bluetooth_desc, ModuleSettings.KEY_EVENT_BLUETOOTH, true);
+        toggle(device, R.string.setting_event_headset, R.string.setting_event_headset_desc, ModuleSettings.KEY_EVENT_HEADSET, false);
         toggle(device, R.string.setting_event_toggles, R.string.setting_event_toggles_desc, ModuleSettings.KEY_EVENT_TOGGLES, true);
-
+        toggle(device, R.string.setting_torch_pill, R.string.setting_torch_pill_desc, ModuleSettings.KEY_TORCH_PILL, true);
         ui.category(page, getString(R.string.group_privacy));
         LinearLayout privacy = ui.card(page);
         Switch indicator = toggle(privacy, R.string.setting_privacy, R.string.setting_privacy_desc, ModuleSettings.KEY_PRIVACY, true);
@@ -260,9 +362,23 @@ public final class SettingsActivity extends Activity {
         dependent(indicator, OneUi.rowOf(location));
     }
 
+    private void advancedPage() {
+        subPage(getString(R.string.ui_advanced));
+        LinearLayout advanced = ui.card(page);
+        ui.linkRow(advanced, getString(R.string.ui_rules_advanced), getString(R.string.ui_rules_advanced_summary), () -> open(rules::advancedPage));
+        ui.linkRow(advanced, getString(R.string.ui_camera_calibration), getString(R.string.ui_camera_calibration_summary), () -> open(position::calibration));
+        toggle(advanced, R.string.experimental_recovery, R.string.ui_recovery_short, ModuleSettings.KEY_EXPERIMENTAL_RECOVERY, false);
+        toggle(advanced, R.string.concurrent_recording_input, R.string.concurrent_recording_input_desc, ModuleSettings.KEY_CONCURRENT_RECORDING_INPUT, false);
+        ui.details(page, getString(R.string.ui_recovery_details), getString(R.string.experimental_recovery_desc));
+        ui.category(page, getString(R.string.hub_tools));
+        LinearLayout tools = ui.card(page);
+        ui.linkRow(tools, getString(R.string.diagnostics_title), getString(R.string.diagnostics_sum), () -> open(this::diagnosticsPage));
+        ui.actionRow(tools, getString(R.string.restart_systemui), getString(R.string.restart_systemui_sum), this::confirmRestart);
+    }
+
     // ---------------------------------------------------------------- timing choices
 
-    private void secondsRow(LinearLayout group, int title, String key, int def, int[] choices) {
+    private TextView secondsRow(LinearLayout group, int title, String key, int def, int[] choices) {
         TextView[] value = new TextView[1];
         value[0] = ui.valueRow(group, getString(title), seconds(prefs.getInt(key, def)), () -> {
             int current = prefs.getInt(key, def);
@@ -283,6 +399,7 @@ public final class SettingsActivity extends Activity {
                     .setNegativeButton(android.R.string.cancel, null)
                     .show();
         });
+        return value[0];
     }
 
     private String seconds(int s) {
@@ -294,6 +411,7 @@ public final class SettingsActivity extends Activity {
     private String appsSummary() {
         boolean only = flag(ModuleSettings.KEY_APPS_ONLY_LISTED, false);
         int count = listedApps().size();
+        if (!only && count == 0) return getString(R.string.ui_apps_all);
         return getString(R.string.apps_summary_format, getString(only ? R.string.apps_whitelist_short : R.string.apps_blacklist_short), count);
     }
 
@@ -313,12 +431,12 @@ public final class SettingsActivity extends Activity {
                     .setSingleChoiceItems(labels, only ? 1 : 0, (dialog, which) -> {
                         dialog.dismiss();
                         prefs.edit().putBoolean(ModuleSettings.KEY_APPS_ONLY_LISTED, which == 1).apply();
-                        mode[0].setText(modeLabel());
+                        refresh();
                     })
                     .setNegativeButton(android.R.string.cancel, null)
                     .show();
         });
-        listed[0] = ui.valueRow(card, getString(R.string.apps_choose), getString(R.string.apps_status, listedApps().size()),
+        listed[0] = ui.valueRow(card, getString(flag(ModuleSettings.KEY_APPS_ONLY_LISTED, false) ? R.string.ui_allowed_apps : R.string.ui_excluded_apps), getString(R.string.apps_status, listedApps().size()),
                 () -> chooseApps(() -> listed[0].setText(getString(R.string.apps_status, listedApps().size()))));
         ui.note(page, getString(R.string.apps_only_listed_desc));
     }
@@ -344,32 +462,12 @@ public final class SettingsActivity extends Activity {
             }
             List<Map.Entry<String, String>> rows = new ArrayList<>(labels.entrySet());
             rows.sort((a, b) -> a.getValue().compareToIgnoreCase(b.getValue()));
-            String[] names = new String[rows.size()];
-            boolean[] checked = new boolean[rows.size()];
-            for (int i = 0; i < names.length; i++) {
-                names[i] = rows.get(i).getValue() + "\n" + rows.get(i).getKey();
-                checked[i] = listed.contains(rows.get(i).getKey());
-            }
             runOnUiThread(() -> {
-                if (isFinishing() || isDestroyed()) {
-                    return;
-                }
-                new AlertDialog.Builder(this)
-                    .setTitle(R.string.apps_choose)
-                    .setMultiChoiceItems(names, checked, (dialog, which, isChecked) -> {
-                        String pkg = rows.get(which).getKey();
-                        if (isChecked) {
-                            listed.add(pkg);
-                        } else {
-                            listed.remove(pkg);
-                        }
-                    })
-                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                        prefs.edit().putStringSet(ModuleSettings.KEY_APPS_LISTED, listed).apply();
-                        done.run();
-                    })
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show();
+                if (isFinishing() || isDestroyed()) return;
+                AppPickerDialog.show(this, ui, rows, listed, selected -> {
+                    prefs.edit().putStringSet(ModuleSettings.KEY_APPS_LISTED, selected).apply();
+                    done.run();
+                });
             });
         }, "list-apps").start();
     }

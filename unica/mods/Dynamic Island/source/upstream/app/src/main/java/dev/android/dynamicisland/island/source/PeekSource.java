@@ -14,6 +14,7 @@ import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.service.notification.StatusBarNotification;
+import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.detect.IconContrast;
 import dev.android.dynamicisland.island.detect.NotificationText;
 import dev.android.dynamicisland.island.detect.OtpDetector;
@@ -23,7 +24,6 @@ import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * A notification that would have popped up as a heads-up banner, shown as an island card instead:
@@ -88,15 +88,23 @@ public final class PeekSource {
 
     /** Which notifications this island takes over from the stock heads-up banner. */
     public static boolean eligible(StatusBarNotification sbn) {
-        Notification n = sbn.getNotification();
+        Notification n = sbn == null ? null : sbn.getNotification();
         if (n == null || n.extras == null) {
             return false;
         }
         if (n.fullScreenIntent != null) {
             return false; // calls and alarms must keep their own full UI
         }
-        if ((n.flags & (Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE | Notification.FLAG_GROUP_SUMMARY)) != 0) {
+        if ((n.flags & (Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE)) != 0) {
             return false;
+        }
+        if ((n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) {
+            if (ModuleSettings.experimentalRecovery()) {
+                // Match the alternate One UI 8 build's summary eligibility in recovery mode.
+                CharSequence title = n.extras.getCharSequence(Notification.EXTRA_TITLE);
+                CharSequence text = n.extras.getCharSequence(Notification.EXTRA_TEXT);
+                if ((title == null || title.length() == 0) && (text == null || text.length() == 0)) return false;
+            } else if (!hasReadableContent(n)) return false;
         }
         String category = n.category;
         if (Notification.CATEGORY_CALL.equals(category) || Notification.CATEGORY_ALARM.equals(category)
@@ -116,6 +124,27 @@ public final class PeekSource {
             if (key.startsWith("android.ongoingActivityNoti")) {
                 return false;
             }
+        }
+        return true;
+    }
+
+    private static boolean hasReadableContent(Notification n) {
+        for (String key : new String[]{Notification.EXTRA_TITLE, Notification.EXTRA_TEXT, Notification.EXTRA_BIG_TEXT}) {
+            CharSequence value = n.extras.getCharSequence(key);
+            if (value != null && value.toString().trim().length() > 0) return true;
+        }
+        return n.extras.getParcelableArray(Notification.EXTRA_MESSAGES, Parcelable.class) != null;
+    }
+
+    /** Prefer a real child to its summary, within the same Android user and notification group. */
+    public static boolean preferred(StatusBarNotification sbn, List<StatusBarNotification> snapshot) {
+        if (sbn == null) return false;
+        if ((sbn.getNotification().flags & Notification.FLAG_GROUP_SUMMARY) == 0) return true;
+        for (StatusBarNotification other : snapshot) {
+            if (other != null && !other.getKey().equals(sbn.getKey()) && other.getUserId() == sbn.getUserId()
+                    && sbn.getPackageName().equals(other.getPackageName())
+                    && java.util.Objects.equals(sbn.getGroupKey(), other.getGroupKey()) && eligible(other)
+                    && (other.getNotification().flags & Notification.FLAG_GROUP_SUMMARY) == 0) return false;
         }
         return true;
     }
@@ -184,6 +213,7 @@ public final class PeekSource {
         boolean personal = avatar != null && avatar != appIcon;
 
         IslandItem it = new IslandItem("peek:" + sbn.getKey());
+        it.sourceKey = sbn.getKey();
         it.kind = IslandItem.Kind.PEEK;
         it.packageName = pkg;
         it.appName = label(pkg);
@@ -207,7 +237,7 @@ public final class PeekSource {
                 }
                 boolean reply = a.getRemoteInputs() != null && a.getRemoteInputs().length > 0;
                 // a reply button asks for the text on the island and sends it with the app's own reply intent
-                IslandItem.Action action = new IslandItem.Action(reply ? t("답장", "Reply") : a.title, null,
+                IslandItem.Action action = new IslandItem.Action(reply ? IslandText.get(ctx, "island_reply") : a.title, null,
                         a.actionIntent, null, !reply && OaSource.isDestructive(a.title));
                 if (reply) {
                     action.remoteInputs = a.getRemoteInputs();
@@ -232,7 +262,7 @@ public final class PeekSource {
         try {
             for (Notification.Action a : new Notification.WearableExtender(n).getActions()) {
                 if (a.getRemoteInputs() != null && a.getRemoteInputs().length > 0 && a.actionIntent != null) {
-                    IslandItem.Action reply = new IslandItem.Action(t("답장", "Reply"), null, a.actionIntent, null, false);
+                    IslandItem.Action reply = new IslandItem.Action(IslandText.get(ctx, "island_reply"), null, a.actionIntent, null, false);
                     reply.remoteInputs = a.getRemoteInputs();
                     it.actions.add(0, reply);
                     return;
@@ -267,6 +297,7 @@ public final class PeekSource {
         String pkg = sbn.getPackageName();
         Drawable appIcon = appIcon(pkg);
         IslandItem it = new IslandItem("peek:" + sbn.getKey());
+        it.sourceKey = sbn.getKey();
         it.kind = IslandItem.Kind.PEEK;
         it.packageName = pkg;
         it.appName = label(pkg);
@@ -275,7 +306,7 @@ public final class PeekSource {
         // who sent it (the SMS sender / service name) reads better than "Messages"
         CharSequence sender = sbn.getNotification().extras.getCharSequence(Notification.EXTRA_TITLE);
         String from = sender != null && sender.toString().trim().length() > 0 ? sender.toString().trim() : String.valueOf(it.appName);
-        it.title = from + " · " + (copied ? t("복사됨", "Copied") : t("인증번호", "Verification code"));
+        it.title = from + " · " + (copied ? IslandText.get(ctx, "island_copied") : IslandText.get(ctx, "island_verification_code"));
         it.contentIntent = sbn.getNotification().contentIntent;
         it.postTime = sbn.getPostTime();
         Notification n = sbn.getNotification();
@@ -289,7 +320,7 @@ public final class PeekSource {
         it.peekMillis = OTP_MS;
         it.otpCode = otp.code;
         final String code = otp.code;
-        IslandItem.Action copy = new IslandItem.Action(copied ? t("복사됨", "Copied") : t("복사", "Copy"), null, null, () -> {
+        IslandItem.Action copy = new IslandItem.Action(copied ? IslandText.get(ctx, "island_copied") : IslandText.get(ctx, "island_copy"), null, null, () -> {
             copy(code);
             show(otpItem(sbn, otp, true), OTP_COPIED_MS);
             onChange.run();
@@ -307,7 +338,7 @@ public final class PeekSource {
             if (cm == null) {
                 return;
             }
-            ClipData clip = ClipData.newPlainText("OTP", code);
+            ClipData clip = ClipData.newPlainText(IslandText.get(ctx, "island_otp"), code);
             PersistableBundle extras = new PersistableBundle();
             extras.putBoolean("android.content.extra.IS_SENSITIVE", true); // keeps the code out of the clipboard preview
             clip.getDescription().setExtras(extras);
@@ -345,8 +376,4 @@ public final class PeekSource {
     }
 
     /** The module has no string resources inside System UI, so pick the language here. */
-    private String t(String ko, String en) {
-        Locale locale = ctx.getResources().getConfiguration().getLocales().get(0);
-        return "ko".equals(locale.getLanguage()) ? ko : en;
-    }
 }

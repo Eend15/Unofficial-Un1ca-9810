@@ -17,11 +17,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/sampple-korea/dynamicisland/releases/latest"><img src="https://img.shields.io/badge/Download-APK-2F80ED?style=for-the-badge&logo=android&logoColor=white" alt="Download the APK"></a>
+  <a href="https://github.com/sampple-korea/dynamicisland/releases/latest"><img src="https://img.shields.io/badge/Download-APK-2F80ED?style=for-the-badge&logo=android&logoColor=white" alt="Download the APK" height="36" align="middle"></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/sampple-korea/dynamicisland"><img src="docs/badge_obtainium.png" alt="Get it on Obtainium" height="36" align="middle"></a>
 </p>
 
 <p align="center">
-  <b>English</b> · <a href="README.ko.md">한국어</a> · <a href="#features">Features</a> · <a href="#install">Install</a>
+  <b>English</b> · <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a> · <a href="README.zh.md">中文</a> · <a href="README.ru.md">Русский</a> · <a href="README.tr.md">Türkçe</a> · <a href="#features">Features</a> · <a href="#install">Install</a>
 </p>
 
 ### Everything the capsule shows, as cards
@@ -32,7 +33,7 @@ The pill sits where the stock Now Bar capsule was and opens into cards.
   <img src="docs/banner.png" alt="The island as a pill, as a live card, as a music player and with several cards stacked">
 </p>
 
-Dynamic Island replaces Samsung's Now Bar capsule in the status bar with a pill that grows into cards. Everything One UI keeps in the capsule (calls, timers, screen recording, casting, navigation, a music player) becomes a card, and so do ordinary notifications: messages, verification codes, downloads and the delivery, ride and route updates that apps only write as text. It is an LSPosed module that runs inside System UI, with a One UI style settings app and a rule manager. Inspired by [@cryyear's DynamicIsland](https://github.com/Spottq); this is a new implementation.
+Dynamic Island replaces Samsung's Now Bar capsule in the status bar with a pill that grows into cards. Everything One UI keeps in the capsule (calls, timers, screen recording, casting, navigation, a music player) becomes a card, and so do ordinary notifications: messages, verification codes, downloads and the delivery, ride and route updates that apps only write as text. It is an LSPosed module that runs inside System UI, with a One UI style settings app and a rule manager.
 
 ## Screenshots
 
@@ -41,14 +42,21 @@ Dynamic Island replaces Samsung's Now Bar capsule in the status bar with a pill 
 </p>
 
 <p align="center">
-  <img src="docs/strip_app.png" alt="The settings app: settings, notification cards, rules, one rule, try a notification">
+  <img src="docs/strip_app.png" alt="Settings app: home, notifications, appearance, behavior and advanced settings">
 </p>
 
 These pictures are drawn by the app's own drawing code on a mock phone in the test environment (see `scripts/readme_images.py`); they are not photos of a device, and the app icons are made of plain shapes.
 
+## New in 0.1.13
+
+This stable release collects the 0.1.13 development builds: shared music-reactive glow, simpler settings, optional charging/headset cards, recording-clock and system-font fixes, and the live-notification long-press crash fix. Cards now use circular battery gauges, clearer compact information and a shared 28dp corner radius, with an optional 0–48dp adjustment. The experimental Samsung Voice Recorder waveform is off by default; enable it under Advanced & troubleshooting when supported by your device.
+
+[Release notes](docs/release-notes/0.1.13.md) · [36 current card examples](docs/cards-overview-0.1.13.png) (illustrative data, including optional features).
+
 ## Features
 
 - **Live notifications as cards:** Every System UI ongoing activity gets a compact pill and an expanded card: header, chronometer, description, plain / segmented / indeterminate progress, icon or text buttons, custom chip views, work profile badge. Calls, cast, screen recording, timers and a music player (seek bar, art-tinted glow, waveform, output route) are included.
+- **Artwork-coloured waveform:** The compact music waveform blends a harmonious three-stop palette derived from the album art, with visible tonal variation and smooth colour changes between covers. Grayscale artwork keeps a neutral gradient.
 - **Ordinary notifications as cards:**
   - Messages and banners open as an island card instead of the stock heads-up banner (calls and alarms keep the stock banner).
   - Verification codes get a card with a Copy button (optional auto-copy, marked sensitive).
@@ -58,7 +66,8 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 - **System events:** Charging, low battery, sound mode, Bluetooth audio with battery, camera / microphone / location in use, and quick-setting feedback (Do Not Disturb, airplane, power saving, torch, hotspot, auto-rotate).
 - **App control:** A blacklist or whitelist of apps for the ordinary-notification features. Live notifications, media, calls and system events are never filtered.
 - **Motion:** Spring-based animations with squash and stretch, a liquid bridge between pill and card, and cards that grow out of the pill.
-- **One UI settings app:** A hub of grouped cards with sub pages, in Korean and English.
+- **One UI settings app:** A hub of grouped cards with sub pages, in English, Korean, Japanese, Chinese (Simplified), Russian and Turkish.
+- **Six-language localization:** Settings, module-generated island text and stage labels share English-first Android string resources. Notification text supplied by other apps is unchanged; built-in detection remains Korean and English. See [Translating](docs/TRANSLATING.md) to add a language without editing Java.
 - **Safety:** A crash guard switches the module off after repeated System UI crashes, hook groups are isolated, and a diagnostics page shows what the module did inside System UI.
 
 ## Features in detail
@@ -68,7 +77,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 - **Pill and cards.** A compact black pill sits around the camera hole and grows out of it. Tap it to open the cards; each card shows the app, what is happening and its buttons. Several things at once are stacked in order of importance (calls first, then heads-up cards, navigation, recording, timers, events, live notifications, tasks, music, charging).
 - **Gestures.** Press and tap the pill to open it, swipe it sideways to cycle between items, swipe an item away to put it aside in a small bubble (tap the bubble to bring it back), drag the open cards (they follow your finger like a rubber band; sideways moves one card), tap a card to open its app, press its buttons, scrub the seek bar of the music card, and drag the pill down to pull the notification shade (the drag is replayed into System UI).
 - **Folds itself away.** An opened island closes after a time you choose, and a paused player leaves after a time you choose.
-- **Stays out of the way.** It hides on the lock screen and the always-on display, in full-screen apps, and on phones in landscape (tablets keep it). After unlocking it waits briefly before it appears. Items of the app you are currently using are held back and fly in once you leave that app.
+- **Stays out of the way.** It hides on the lock screen and the always-on display, in full-screen apps, and on phones in landscape (tablets keep it). After unlocking it waits briefly before it appears. Items of the app you are currently using are held back and fly in once you leave that app. Under **Behavior → Show in portrait full screen** (off by default), active island content can stay visible in portrait apps such as Camera that hide the status bar. Lock-screen/AOD hiding and the normal behavior when there is no active content still apply.
 - **Takes over cleanly.** Samsung's own ongoing-activity chip, its animations and the status bar icons and clock under the pill are faded out or kept hidden, and the island puts the same information in one place. Duplicates of the same notification (for example the LiveBridge app's copies) are not shown twice.
 - **Looks like it belongs.** Frosted glass behind the cards (Samsung's blur), colours taken from the app icon or the album art, white-glyph avatars swapped for the app icon on a dark disc so they stay readable, work profile badges, the system font, and haptic ticks when it opens, closes and when you press a button (can be switched off).
 - **Motion.** Every movement is a spring with its own feel: the pill drops in and bounces once, squashes and stretches when it changes size, pours into its cards and swells back, and cards leave by being drawn back up. Between pill and card a liquid bridge thins like an hourglass, pinches off and snaps back with a small wobble, and merges again when they meet. Pressing a button gives a press effect on that card only.
@@ -127,16 +136,23 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 ### System events
 
 - **Charging** (fast or wireless, with the live percentage), **low battery**, **sound mode** (silent, vibrate, ring), **Bluetooth audio** connecting (with its battery level).
+- **Optional device cards:** Live charging details, charging statistics and wired/USB headset alerts are off by default under **Notifications → System events**. The charging card retains event priority and replaces the brief charging popup while active. Statistics require the charging card; disabling either stops the corresponding collection. Power is estimated at the battery, and screen-state charge changes are estimates based on observed fuel-gauge reporting windows. **Advanced → Camera calibration** offers 0–16dp extra text clearance beside the cutout; 0 preserves the original spacing.
+- **Samsung battery charging effect:** **Notifications → System events → Show Samsung battery charging effect** is off by default. It suppresses the expanding, coloured charging animation in the status bar while retaining the regular battery icon, percentage, charging indicator, sounds and island alerts. Both the checked One UI 9 Compose path and the BatteryEvent scheduler path are handled when present; unsupported builds retain their stock behaviour.
 - **Camera, microphone and location in use:** which app uses which sensor; a tap opens that app's permission page. (Location is off by default because navigation and weather apps use it all day.)
 - **Quick-setting feedback:** Do Not Disturb, airplane mode, power saving, hotspot and auto-rotate being switched on or off.
-- **Flashlight brightness:** While the torch is on, tapping the island opens a card with a big iOS style slider for its brightness levels (5 on Galaxy phones, read from the camera) and a turn-off button. On a phone whose torch has a single level the plain "flashlight on" popup is shown instead.
+- **Flashlight brightness:** While the torch is on, tapping the island opens a card with a big iOS style slider for its brightness levels (5 on Galaxy phones, read from the camera) and a turn-off button. On a phone whose torch has a single level the card has no slider, only the state and the turn-off button (the *Flashlight card* switch can be turned off to get the plain "flashlight on" popup instead).
 - Every group can be switched off separately.
 
 ### Settings app
 
-- A One UI style hub with grouped cards and sub pages: **Display and motion**, **Notification cards**, **System events**, **App control**, **Rules** and **Tools** (restart System UI with root, diagnostics), in Korean and English, light and dark. Changes apply within a few seconds without a reboot.
-- **Island position and size:** put the island on the camera hole (default), in the middle, or on the left or right of the status bar, and shift it sideways or up and down. The island on the real status bar moves while you drag the sliders. The **camera hole** can be found automatically, set by hand (size and place, shown as a blue ring on the real screen) or turned off. Text inside the pill keeps away from the hole. The pill's height, narrowest and widest width can be set too (and it can keep its widest width), with the same live preview.
-- Four kinds of settings: switches, values that open a choice, links to sub pages and actions. A switch that is off dims what depends on it.
+- **Ambient glow (on by default, music sessions only):** all compact pills share the active music session colours and sound response, even when the music pill itself is hidden. Album matching uses the waveform palette. Pausing makes the halo faint; ending the session smoothly fades its last colours out over 1.2 seconds. Choose music-only or all-activity visibility, brightness (default 45%) and dynamic strength (0–100%, default 50%) with a live preview. Theme and separate preset/HSV/HEX colours remain available. Low-performance mode disables the halo.
+- **Low-performance mode (off by default):** replaces content blur with a crossfade and background blur with an opaque black card; keeps static album colours and artwork, static waveforms without audio analysis, and settled icon frames with current battery state. Continuous motion is capped at 30 fps, touch feedback and expansion/collapse at 60 fps. Individual settings are preserved and restored when the mode is turned off; notifications, calls, timers and music controls keep working.
+- Six groups: **Notifications & activities**, **App notifications**, **Appearance**, **Behavior**, **Advanced & troubleshooting** and **App info**. English, Korean, Japanese, Simplified Chinese, Russian and Turkish; light and dark themes. Most changes apply within a few seconds without restarting System UI.
+- **Position and size:** live status-bar preview, automatic or custom widths, sliders, numeric input and one-step adjustment. Position, size and camera calibration reset separately. Camera cutout calibration is under **Advanced & troubleshooting**.
+- **Clear choices:** ordinary notification cards can be off, banner-only or include silent notifications. Foreground-service notifications are optional and off by default. App filters affect ordinary notification cards only; search by name or package, view selected apps and save or cancel changes.
+- **Appearance and behavior:** default/custom accent colour with a cancellable HSV/HEX editor; large event icons by default, optional small icons; charging battery icon hidden by default. Animation uses an actual island-renderer preview and saves immediately. Waveform motion can react to audio or use a demo animation.
+- **Timing and recovery:** automatic activity opening is off by default. When enabled, its display time (default 4 seconds) is separate from manual-card auto-collapse (6 seconds) and paused-music retention (60 seconds). Experimental notification recovery is off by default and intended only for compatibility problems.
+- **Language and status:** settings language is selectable in App info; island cards follow the device language. The home connection check requires a new System UI response, not an old saved report. Back navigation restores scroll position.
 
 ### Reliability
 
@@ -148,7 +164,7 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 
 ## Requirements
 
-- A Samsung device on One UI 7 / 8 / 9 (Android 15 / 16 / 17) with the stock System UI. One UI 7 support is new and checked against one System UI build only (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)).
+- A Samsung device on One UI 7 / 8 / 9 (Android 15 / 16 / 17) with the stock System UI. One UI 8 and 9 are used on real phones; One UI 7 support is new and checked against one System UI build only, not on a device (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)).
 - LSPosed (module minimum SDK 35).
 - Root is only needed for the optional **Restart System UI** button.
 
@@ -163,17 +179,16 @@ These pictures are drawn by the app's own drawing code on a mock phone in the te
 
 | Page | What it holds |
 |---|---|
-| Island position and size | Where the island sits, shift, height, narrowest and widest width, camera hole (automatic, by hand or none) |
-| Display and motion | Card header, audio waveform, haptics, auto-collapse and paused-music timers |
-| Notification cards | Notifications in the island, progress cards, verification codes, voice-chat calls |
-| System events | Charging, sound mode, Bluetooth, setting changes, privacy indicators |
-| App control | Blacklist / whitelist and the app list |
-| Rules | A switch per card rule, stages, apps and wording of each rule (add your own), a tester that shows what a notification text becomes, import / export |
-| Tools | Restart System UI, diagnostics |
+| Notifications & activities | Ordinary notification mode, system events, automatic classification, downloads, calls and verification codes |
+| App notifications | All apps except selected / selected apps only; searchable app list; ordinary cards only |
+| Appearance | Accent colour, position and size, card headers, icon size, charging battery icon and shade music |
+| Behavior | Default / Classic animation, haptics, audio / demo waveform and separate card timers |
+| Advanced & troubleshooting | Rule patterns and stages, clipboard import/export, camera calibration, experimental recovery, diagnostics and System UI restart |
+| App info | Settings language, version, author and credits |
 
 ## If it does not work
 
-Open **Tools → Diagnostics** in the app after restarting System UI. It lists the System UI version, the start-up stages, hooks that could not attach, errors and the previous crash. Use **Copy report** and send it with the issue.
+Open **Advanced & troubleshooting → Diagnostics** in the app after restarting System UI. It lists the System UI version, the start-up stages, hooks that could not attach, errors and the previous crash. Use **Copy report** and send it with the issue.
 
 ## Build from source
 
@@ -183,11 +198,14 @@ Requires JDK 17+ and the Android SDK (compile SDK 36).
 ./gradlew assembleRelease     # unsigned APK in app/build/outputs/apk/release
 KEYSTORE_PASSWORD=... scripts/sign.sh   # builds, aligns and signs -> release/DynamicIsland-<version>.apk
 ./gradlew testReleaseUnitTest # unit tests and headless render tests
+./gradlew testReleaseUnitTest -Prender # optional PNG captures for visual review
 ```
 
 `scripts/sign.sh` takes the keystore password from `KEYSTORE_PASSWORD` and creates a self-signed key in `release-keys/` on first run (git-ignored). Keep it: updates must be signed with the same key. See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the source layout, hook notes, rules format and test setup.
 
 ## Releases
+
+This README describes the current source tree; changes awaiting release may not be in the latest stable APK.
 
 Signed APKs are published on the [Releases](../../releases) page; the build is automated (see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)). Every release is signed with the same key, so a new version installs as an update over the old one.
 
@@ -195,18 +213,21 @@ Signed APKs are published on the [Releases](../../releases) page; the build is a
 
 The module runs inside System UI and reads the notifications System UI already holds. It has no network permission and sends nothing anywhere. Settings and the diagnostics report stay on the device; the report holds no notification text.
 
+The optional concurrent microphone waveform uses short in-memory microphone buffers to compute levels. It is off by default; audio is neither stored nor transmitted.
+
 ## Disclaimer
 
-Dynamic Island is an independent, unofficial project and is not affiliated with or endorsed by Samsung. It hooks private System UI classes that may change with any update, and it has been verified only in a headless test and render environment, not on a device. Use it at your own risk.
-
-## Credits
-
-- [LiveBridge](https://github.com/appsfolder/livebridge) — the rule file format this project reads (no LiveBridge files are bundled)
-- @cryyear's DynamicIsland ([github.com/Spottq](https://github.com/Spottq)), which inspired this project; the code here is a new implementation
-- [Xposed API](https://api.xposed.info/) (Apache-2.0, `app/libs/xposed-api-82.jar`) and [LSPosed](https://github.com/LSPosed/LSPosed)
+Dynamic Island is an independent, unofficial project and is not affiliated with or endorsed by Samsung. It hooks private System UI classes that may change with any update, and it has been used on real phones running One UI 8 and 9, while One UI 7 and Nothing OS are not confirmed on a device (see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)). Use it at your own risk.
 
 ## License
 
 [MIT](LICENSE) © 2026 sampple-korea.
 
 ## Made by [sampple-korea](https://github.com/sampple-korea)
+
+## Credits
+
+- [LiveBridge](https://github.com/appsfolder/livebridge) — the rule file format this project reads (no LiveBridge files are bundled)
+- [Xposed API](https://api.xposed.info/) (Apache-2.0, `app/libs/xposed-api-82.jar`) and [LSPosed](https://github.com/LSPosed/LSPosed)
+* DynamicIsland by @cryyear — This project began as a modification of that module’s APK, but was later reimplemented with its own codebase and architecture. It is now developed and maintained independently.
+- [@UnkilBonki](https://t.me/UnkilBonki) on Telegram — bug fixes, testing and help.

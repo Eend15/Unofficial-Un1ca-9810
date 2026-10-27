@@ -237,6 +237,32 @@ public final class Refl {
     // ---- hooks ---------------------------------------------------------------------------------
 
     /** Hooks every non-abstract method of that name declared by {@code cls}; returns how many. */
+    /** Optional compatibility hooks: visit each declaration once, without reporting every absent name as a failure. */
+    public static int hookAllHierarchy(ClassLoader cl, String className, String name, XC_MethodHook hook) {
+        Class<?> cls = hasClass(className, cl) ? findClass(className, cl) : null;
+        java.util.Set<Class<?>> visited = new java.util.HashSet<>();
+        java.util.ArrayDeque<Class<?>> queue = new java.util.ArrayDeque<>();
+        if (cls != null) queue.add(cls);
+        int count = 0;
+        while (!queue.isEmpty()) {
+            Class<?> level = queue.remove();
+            if (!visited.add(level)) continue;
+            for (Method method : level.getDeclaredMethods()) {
+                if (method.getName().equals(name) && !Modifier.isAbstract(method.getModifiers())) {
+                    try {
+                        XposedBridge.hookMethod(method, hook);
+                        count++;
+                    } catch (Throwable unavailable) {
+                        XLog.once("optional hook " + method.getName(), unavailable);
+                    }
+                }
+            }
+            if (level.getSuperclass() != null) queue.add(level.getSuperclass());
+            java.util.Collections.addAll(queue, level.getInterfaces());
+        }
+        return count;
+    }
+
     public static int hookAll(Class<?> cls, String name, XC_MethodHook hook) {
         if (cls == null) {
             return 0;

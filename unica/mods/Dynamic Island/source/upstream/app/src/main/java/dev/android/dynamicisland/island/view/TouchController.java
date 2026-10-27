@@ -204,7 +204,7 @@ final class TouchController {
     }
 
     private void downOnIsland(float margin) {
-        shapes.main(slot);
+        shapes.paintedMain(slot);
         downOnPill = downX >= slot.left - margin && downX <= slot.right + margin
                 && downY >= slot.top - margin && downY <= slot.bottom + margin;
         if (!downOnPill && sp.split.value() > 0.6f) {

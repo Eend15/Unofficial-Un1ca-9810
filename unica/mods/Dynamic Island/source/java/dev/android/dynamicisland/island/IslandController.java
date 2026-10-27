@@ -22,6 +22,7 @@ import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.island.window.IslandWindow;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.hooks.HideDuplicated;
+import dev.android.dynamicisland.xposed.hooks.ShadeMediaPlayer;
 import dev.android.dynamicisland.xposed.Diagnostics;
 import dev.android.dynamicisland.xposed.XLog;
 import java.util.ArrayList;
@@ -43,6 +44,12 @@ import java.util.Map;
  * main-thread-safe state.
  */
 public final class IslandController implements IslandHost, IslandWindow.Listener {
+    private static IntentFilter previewFilter() {
+        IntentFilter filter = new IntentFilter(ModuleSettings.ACTION_PILL_PREVIEW);
+        filter.addAction(Diagnostics.ACTION_STATUS_PING);
+        return filter;
+    }
+
     /** Never re-run a deferred refresh sooner than one frame. */
     private static final long MIN_DEFERRED_REFRESH_MS = 16L;
 
@@ -52,6 +59,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     /** All callbacks and UI work run here. */
     private final Handler main = new Handler(Looper.getMainLooper());
     private final AudioLevels audio = new AudioLevels();
+    private final dev.android.dynamicisland.island.feedback.RecorderInput recordingInput;
     private final Haptics haptics;
 
     private final IslandSources sources;
@@ -63,12 +71,18 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     private boolean refreshPosted;
     private boolean started;
+    /** May be read by data-source callbacks that request refresh off-main. */
+    private volatile boolean disabled;
     private final Runnable refreshRunnable = this::refreshNow;
     /** Key to "kind package" of the items of the last refresh, for the event log. */
     private Map<String, String> lastItems = new LinkedHashMap<>();
 
     private IslandController(Context ctx, ClassLoader classLoader) {
         this.ctx = ctx;
+        recordingInput = new dev.android.dynamicisland.island.feedback.RecorderInput(ctx, () -> {
+            IslandView current = placementView();
+            if (current != null) current.onRecordingAudioFrame();
+        });
         sources = new IslandSources(ctx, classLoader, main, this::requestRefresh);
         haptics = new Haptics(ctx);
         placement = new IslandPlacement(ctx, main, classLoader, this, this, audio);
@@ -93,6 +107,15 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         return instance;
     }
 
+    /** Native runtime disables this process's island before restarting SystemUI. */
+    public void onDisabled() {
+        disabled = true;
+        main.removeCallbacks(refreshRunnable);
+        refreshPosted = false;
+        sources.media.cancelPending();
+        HideDuplicated.cancelPending();
+    }
+
     // ---- public API used by the hooks ----------------------------------------------------------
 
     public IslandItem itemForKey(String notificationKey) {
@@ -101,6 +124,23 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     public IslandItem mediaItemForSession(MediaSession.Token token) {
         return sources.media.itemForSession(token);
+    }
+
+    public boolean isRecordingSession(MediaSession.Token token) {
+        return sources.media.isRecordingSession(token);
+    }
+
+    private final AutoOpenCards autoOpenCards = new AutoOpenCards();
+    /** Prepared for review only: deliberately has no preference key or settings control. */
+    private static final boolean ENABLE_SOURCE_PEEKS = false;
+    private final SourcePeekRequests sourcePeekRequests = ENABLE_SOURCE_PEEKS ? new SourcePeekRequests() : null;
+    private List<StatusBarNotification> lastNotifications = java.util.Collections.emptyList();
+
+    public boolean ownsHeadsUp(String key) { return headsUp.owns(key); }
+
+    public boolean isShownAsCard(IslandItem item) {
+        IslandView view = placement.view();
+        return view != null && view.isPaintingCard(item);
     }
 
     public void start() {
@@ -113,8 +153,12 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         sources.start(this::requestRefresh);
         // the position settings take effect without a restart (and the sample item comes and goes with them)
         ModuleSettings.setOnSwitchesChanged(() -> main.post(() -> {
+            sources.syncOptionalSources();
+            onNotificationsSnapshot(lastNotifications);
             requestRefresh();
             HideDuplicated.rebuild();
+            ShadeMediaPlayer.refreshVisiblePlayers();
+            dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
         }));
         ModuleSettings.setOnPlacementChanged(() -> main.post(() -> {
             placement.updateGeometry();
@@ -139,10 +183,14 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
                     if (!ModuleSettings.PACKAGE.equals(sender) && !"io.mesalabs.unica.dynamicisland".equals(sender)) {
                         return; // only the module's own settings app may move the island
                     }
+                    if (Diagnostics.ACTION_STATUS_PING.equals(intent.getAction())) {
+                        Diagnostics.acknowledgeStatus(context, intent.getLongExtra("nonce", 0));
+                        return;
+                    }
                     ModuleSettings.applyPlacementPreview(intent);
                     requestRefresh();
                 }
-            }, new IntentFilter(ModuleSettings.ACTION_PILL_PREVIEW), Context.RECEIVER_EXPORTED);
+            }, previewFilter(), Context.RECEIVER_EXPORTED);
         } catch (Throwable t) {
             XLog.e("position preview receiver failed", t);
         }
@@ -158,6 +206,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     /** Schedules one list rebuild on the main thread; many requests in a row cost a single refresh. Any thread. */
     public void requestRefresh() {
+        if (disabled) return;
         if (Looper.myLooper() != main.getLooper()) {
             main.post(this::requestRefresh);
         } else if (!refreshPosted) {
@@ -200,13 +249,15 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     /** Fed by the notification list hook: progress notifications become cards. */
     public void onNotificationsSnapshot(List<StatusBarNotification> all) {
+        lastNotifications = new ArrayList<>(all);
         List<StatusBarNotification> allowed = new ArrayList<>(all.size());
         for (StatusBarNotification sbn : all) {
-            if (sbn == null || ModuleSettings.appAllowed(sbn.getPackageName())) {
+            if (sbn != null && ModuleSettings.appAllowed(sbn.getPackageName())) {
                 allowed.add(sbn);
             }
         }
-        sources.recorder.update(allowed);
+        headsUp.setSnapshot(allowed);
+        sources.recorder.update(all); // recording lifecycle is not an ordinary-notification app-filter rule
         sources.promoted.update(allowed);
         sources.progress.update(allowed);
         sources.rules.update(allowed);
@@ -257,6 +308,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     }
 
     public void setDozing(boolean value) {
+        if (value) recordingInput.setTarget(null);
         placement.setDozing(value);
     }
 
@@ -268,7 +320,9 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     public void setShadeExpansion(float fraction) {
         IslandView view = placement.view();
         if (view != null) {
+            boolean pulled = view.shadePulled();
             view.setShadeFraction(fraction);
+            if (pulled != view.shadePulled()) dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
         }
     }
 
@@ -285,9 +339,18 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         return window != null && window.setSurfaceFade(alpha, scale, px, py);
     }
 
+    private int shadeCardCoverage;
+
     @Override
     public void onIslandFrame() {
         placement.onFrame();
+        IslandView view = placement.view();
+        recordingInput.setTarget(view == null ? null : view.recordingInputTarget());
+        int coverage = view == null ? 0 : view.shadeCardCoverageToken();
+        if (coverage != shadeCardCoverage) {
+            shadeCardCoverage = coverage;
+            dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
+        }
     }
 
     @Override
@@ -313,10 +376,10 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         if (window == null) {
             return false;
         }
-        boolean ko = "ko".equals(ctx.getResources().getConfiguration().getLocales().get(0).getLanguage());
         CharSequence name = item.title == null ? "" : item.title;
         long originalExpiry = item.expiresAtUptime;
-        boolean shown = window.showReply(ko ? name + "에게 답장" : "Reply to " + name, ko ? "전송" : "Send", new IslandWindow.ReplyListener() {
+        boolean shown = window.showReply(IslandText.get(ctx, "island_reply_to", name),
+                IslandText.get(ctx, "island_send"), new IslandWindow.ReplyListener() {
             @Override
             public void onSend(CharSequence text) {
                 launcher.sendReply(action, text);
@@ -360,6 +423,8 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     @Override
     public void onExpandedChanged(boolean expanded) {
         haptics.tick();
+        dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
+        if (!expanded) requestRefresh();
         IslandWindow window = placement.window();
         if (window != null) {
             window.setWatchOutsideTouch(expanded && !placement.view().isPeekOpen());
@@ -413,6 +478,12 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         return audio;
     }
 
+    private IslandView placementView() { return placement.view(); }
+
+    @Override public dev.android.dynamicisland.island.feedback.RecorderInput recordingAudio() {
+        return recordingInput;
+    }
+
     // ---- IslandWindow.Listener -----------------------------------------------------------------
 
     @Override
@@ -453,6 +524,8 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     private void refreshNow() {
         try {
             refreshPosted = false;
+            if (disabled) return;
+            ShadeMediaPlayer.refreshRecordingRows();
             placement.ensureWindow(false);
             IslandView view = placement.view();
             if (view == null) {
@@ -461,7 +534,17 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             IslandSources.Gathered gathered = sources.gather();
             long now = SystemClock.uptimeMillis();
             ItemLedger.Arrangement shape = ledger.arrange(gathered.items, gathered.hiddenByForeground, now);
+            view.setGlowSession(gathered.glowSession);
             view.setItems(shape.shown, shape.hint, shape.bubbled);
+            if (sourcePeekRequests != null) {
+                IslandItem requested = sourcePeekRequests.next(shape.shown, ModuleSettings.autoOpenCards(), now);
+                if (requested != null && !view.isExpanded() && view.canPeek()) {
+                    long duration = sourcePeekRequests.duration(requested, now);
+                    if (duration > 0 && view.peek(requested, duration)) sourcePeekRequests.opened(requested);
+                }
+            }
+            IslandItem nextCard = autoOpenCards.next(shape.shown, ModuleSettings.autoOpenCards(), now);
+            if (nextCard != null && !view.isExpanded() && view.canPeek() && view.peek(nextCard, ModuleSettings.autoOpenMs())) autoOpenCards.opened(nextCard);
             logItemChanges(shape);
             Diagnostics.fact("islands", shape.shown.size() + " shown, " + shape.bubbled.size() + " minimized");
             Diagnostics.publish(ctx);

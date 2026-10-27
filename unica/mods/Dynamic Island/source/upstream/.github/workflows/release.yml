@@ -40,6 +40,9 @@ jobs:
           echo "VERSION=$version" >> "$GITHUB_ENV"
           echo "TAG=v$version" >> "$GITHUB_ENV"
 
+      - name: Validate translations
+        run: python3 scripts/translations.py check
+
       - name: Unit tests
         run: ./gradlew --no-daemon testReleaseUnitTest
 

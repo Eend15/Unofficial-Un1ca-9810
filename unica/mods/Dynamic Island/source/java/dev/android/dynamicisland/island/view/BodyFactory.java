@@ -33,7 +33,23 @@ final class BodyFactory {
         if (it.bigNumber) {
             return new TimerBody(view, it, width);
         }
-        if ((it.progressStyle || it.kind == IslandItem.Kind.PEEK) && it.remoteView == null) {
+        if (view.hasRecordingWaveform(it)) {
+            if (dev.android.dynamicisland.island.view.card.RecordingBody.supports(it)) {
+                return new dev.android.dynamicisland.island.view.card.RecordingBody(view, it, width);
+            }
+            return new TimerBody(view, it, width);
+        }
+        if (it.actions.isEmpty() && it.remoteView == null) {
+            if (it.eventLayout == IslandItem.EventLayout.BATTERY && it.batteryPercent >= 0) {
+                return new dev.android.dynamicisland.island.view.card.BatteryBody(view, it, width);
+            }
+            if (it.eventLayout == IslandItem.EventLayout.DEVICE || it.eventLayout == IslandItem.EventLayout.STATUS) {
+                return new dev.android.dynamicisland.island.view.card.EventBody(view, it, width);
+            }
+        }
+        // a message popup has its own card (avatar, text); the other live cards, ProgressStyle ones included, all share
+        // the live card layout: app name and time on top, the icon at the right, the bar under the text
+        if (it.kind == IslandItem.Kind.PEEK && it.remoteView == null) {
             return new ProgressBody(view, it, width);
         }
         if (!inShade && it.remoteView != null && remote.available()) {

@@ -1,7 +1,8 @@
 package dev.android.dynamicisland.island.source;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -23,7 +24,6 @@ import dev.android.dynamicisland.island.graphics.Glyphs;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,20 +107,6 @@ public class PeekSourceTest {
     }
 
     @Test
-    public void callsAlarmsOngoingAndMediaStayWithTheStockBanner() throws Exception {
-        Notification.Builder base = new Notification.Builder(app, "c").setSmallIcon(android.R.drawable.stat_notify_chat).setContentTitle("x").setContentText("y");
-        assertTrue(PeekSource.eligible(sbn("p", 1, base)));
-        assertFalse(PeekSource.eligible(sbn("p", 2, new Notification.Builder(app, "c").setSmallIcon(android.R.drawable.stat_notify_chat)
-                .setContentTitle("x").setCategory(Notification.CATEGORY_CALL))));
-        assertFalse(PeekSource.eligible(sbn("p", 3, new Notification.Builder(app, "c").setSmallIcon(android.R.drawable.stat_notify_chat)
-                .setContentTitle("x").setCategory(Notification.CATEGORY_ALARM))));
-        assertFalse(PeekSource.eligible(sbn("p", 4, new Notification.Builder(app, "c").setSmallIcon(android.R.drawable.stat_notify_chat)
-                .setContentTitle("x").setOngoing(true))));
-        assertFalse(PeekSource.eligible(sbn("p", 5, new Notification.Builder(app, "c").setSmallIcon(android.R.drawable.stat_notify_chat)
-                .setContentTitle("x").setFullScreenIntent(PendingIntent.getActivity(app, 0, new Intent("fs"), PendingIntent.FLAG_IMMUTABLE), true))));
-    }
-
-    @Test
     public void thePeekExpiresOnItsOwn() throws Exception {
         PeekSource s = source();
         IslandItem it = s.build(sbn("com.kakao.talk", 1, message(false)));
@@ -173,34 +159,6 @@ public class PeekSourceTest {
         render("otp_card_copied", out.get(0));
     }
 
-    @Test
-    public void anInternationalSmsInAConversationIsACodeToo() throws Exception {
-        // how Samsung Messages posts a text: a conversation whose newest message carries the code
-        Notification.MessagingStyle style = new Notification.MessagingStyle(new Person.Builder().setName("me").build());
-        Person sender = new Person.Builder().setName("+1 555-0100").build();
-        style.addMessage("[국제발신]\nDiscord 확인 코드: 448413", 1000L, sender);
-        Notification.Builder b = new Notification.Builder(app, "sms").setSmallIcon(android.R.drawable.stat_notify_chat)
-                .setStyle(style).setCategory(Notification.CATEGORY_MESSAGE);
-        StatusBarNotification sbn = sbn("com.samsung.android.messaging", 7, b);
-        assertTrue(PeekSource.eligible(sbn));
-        IslandItem it = source().buildOtp(sbn);
-        assertNotNull(it);
-        assertEquals("448 413", it.trailingText.toString());
-        // without a code there is no code card, and the message card is a separate step
-        assertEquals(null, source().buildOtp(sbn("com.samsung.android.messaging", 8, sms("엄마", "저녁 먹자"))));
-        assertNotNull(source().buildMessage(sbn("com.samsung.android.messaging", 8, sms("엄마", "저녁 먹자"))));
-    }
-
-    @Test
-    public void anOrdinaryTextStaysAnOrdinaryMessageCard() throws Exception {
-        PeekSource s = source();
-        IslandItem it = s.build(sbn("com.samsung.android.messaging", 2, sms("엄마", "저녁 먹으러 7시까지 와")));
-        assertEquals("엄마", it.title.toString());
-        assertEquals("저녁 먹으러 7시까지 와", it.subtitle.toString());
-        IslandItem card = s.build(sbn("com.samsung.android.messaging", 3, sms("신한카드", "[Web발신] 신한카드(1234) 승인 10,000원 일시불")));
-        assertEquals("신한카드", card.title.toString());
-    }
-
     private void render(String name, IslandItem item) throws Exception {
         IslandView view = new IslandView(app, null);
         float w = 360f * app.getResources().getDisplayMetrics().density;
@@ -211,8 +169,6 @@ public class PeekSourceTest {
         view.drawShadeCard(c, item, w);
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, name + ".png"))) {
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
+        RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
 }

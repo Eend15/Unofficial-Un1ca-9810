@@ -26,6 +26,46 @@ final class DigitClock {
         this.view = view;
     }
 
+    /**
+     * Width of the widest digit. Every digit of a clock gets a cell this wide, so a digit never lands on its
+     * neighbour whatever font, weight, size or "tnum" support the paint has.
+     */
+    private static float digitCell(Paint paint) {
+        float widest = 0.0f;
+        for (char d = '0'; d <= '9'; d++) {
+            widest = Math.max(widest, paint.measureText(String.valueOf(d)));
+        }
+        return widest;
+    }
+
+    private static float cellOf(Paint paint, char ch, float digitCell) {
+        return (ch >= '0' && ch <= '9') ? digitCell : paint.measureText(String.valueOf(ch));
+    }
+
+    /** Whether {@code text} is a clock string that {@link #draw} lays out cell by cell. */
+    static boolean isClock(String text) {
+        return text != null && TIME_TEXT.matcher(text).matches();
+    }
+
+    /**
+     * Width {@link #draw} needs for {@code text}. Pill and card sizing must use this (not
+     * {@code Paint.measureText}) for clocks, so the measured and the drawn width always agree.
+     */
+    static float width(Paint paint, String text) {
+        if (text == null) {
+            return 0.0f;
+        }
+        if (!isClock(text)) {
+            return paint.measureText(text);
+        }
+        float digit = digitCell(paint);
+        float w = 0.0f;
+        for (int i = 0; i < text.length(); i++) {
+            w += cellOf(paint, text.charAt(i), digit);
+        }
+        return w;
+    }
+
     /** True while some digit is still on its way, so the view must keep drawing. */
     boolean rolling() {
         return IslandView.now() < rollingUntil;
@@ -36,7 +76,7 @@ final class DigitClock {
         if (text == null) {
             return;
         }
-        if (!TIME_TEXT.matcher(text).matches()) {
+        if (!isClock(text)) {
             c.drawText(text, left, baseline, paint);
             return;
         }
@@ -51,23 +91,29 @@ final class DigitClock {
         float travel = (fm.descent - fm.ascent) * 0.8f;
         float dir = countDown ? -1.0f : 1.0f;
         int baseAlpha = paint.getAlpha();
+        float digit = digitCell(paint);
+        float x = left;
         for (int i = 0; i < text.length(); i++) {
-            float x = paint.measureText(text, 0, i) + left;
+            char ch = text.charAt(i);
+            float cell = cellOf(paint, ch, digit);
+            // glyphs are centred in their cell, so narrow ones ("1", ":") do not crowd the next digit
+            float gx = x + ((cell - paint.measureText(text, i, i + 1)) / 2.0f);
+            x += cell;
             float p = (t - roll.start[i]) / (float) IslandView.ROLL_MS;
-            if (p >= 1.0f || roll.from[i] == text.charAt(i)) {
-                c.drawText(text, i, i + 1, x, baseline, paint);
+            if (p >= 1.0f || roll.from[i] == ch) {
+                c.drawText(text, i, i + 1, gx, baseline, paint);
                 continue;
             }
-            float charWidth = paint.measureText(text, i, i + 1);
             int save = c.save();
-            c.clipRect(x - (0.2f * charWidth), fm.ascent + baseline, x + (1.2f * charWidth), fm.descent + baseline);
+            c.clipRect(x - (1.2f * cell), fm.ascent + baseline, x + (0.2f * cell), fm.descent + baseline);
             // the old digit leaves in the direction of travel while the new one overshoots into place
             float out = easeInOut(Math.min(1.0f, 1.25f * p));
+            float oldX = (x - cell) + ((cell - paint.measureText(String.valueOf(roll.from[i]))) / 2.0f);
             paint.setAlpha(Math.round(baseAlpha * (1.0f - out)));
-            c.drawText(String.valueOf(roll.from[i]), x, baseline - ((dir * out) * travel), paint);
+            c.drawText(String.valueOf(roll.from[i]), oldX, baseline - ((dir * out) * travel), paint);
             float in = easeOutBack(p);
             paint.setAlpha(Math.round(baseAlpha * clamp01(1.8f * p)));
-            c.drawText(text, i, i + 1, x, ((1.0f - in) * dir * travel) + baseline, paint);
+            c.drawText(text, i, i + 1, gx, ((1.0f - in) * dir * travel) + baseline, paint);
             paint.setAlpha(baseAlpha);
             c.restoreToCount(save);
         }

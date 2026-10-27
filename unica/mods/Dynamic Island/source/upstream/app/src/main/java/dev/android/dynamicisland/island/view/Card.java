@@ -10,6 +10,11 @@ import dev.android.dynamicisland.island.view.card.CardBody;
  * animate its centre, size and horizontal swipe offset. Main thread only.
  */
 public final class Card {
+    final ContentBlur contentBlur = new ContentBlur();
+    float leaveContentBlur;
+    float leaveContentAlpha = 1;
+    ContentHandoff handoff;
+    float handoffScale = 1;
     long blurOnAt;
     CardBody body;
     long contentStart;

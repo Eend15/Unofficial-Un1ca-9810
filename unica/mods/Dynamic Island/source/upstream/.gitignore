@@ -8,3 +8,7 @@ release-keys/
 *.apk
 *.idsig
 .DS_Store
+
+# Python translation-tool caches
+__pycache__/
+*.py[cod]

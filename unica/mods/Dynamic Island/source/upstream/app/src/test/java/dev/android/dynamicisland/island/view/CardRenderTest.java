@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.view;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
@@ -12,8 +14,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import dev.android.dynamicisland.island.model.IslandItem;
 import java.io.File;
-import java.io.FileOutputStream;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
@@ -22,8 +24,9 @@ import org.robolectric.annotation.GraphicsMode;
 
 /**
  * Renders every live card variant headlessly: guards the layout/draw code against exceptions and
- * leaves PNGs in build/render for eyeballing.
+ * exports PNGs to build/render for visual review with -Prender.
  */
+@Category(RenderCapture.class)
 @RunWith(RobolectricTestRunner.class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35)
@@ -72,9 +75,7 @@ public class CardRenderTest {
         view.drawShadeCard(canvas, item, w);
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, name + ".png"))) {
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
+        RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
 
     @Test
@@ -165,7 +166,7 @@ public class CardRenderTest {
     }
 
     @Test
-    public void stopwatchRollsHundredths() throws Exception {
+    public void stopwatchAndHourChronometersCanBeDrawn() throws Exception {
         Context ctx = RuntimeEnvironment.getApplication();
         IslandItem it = base(ctx, "stopwatch");
         it.kind = IslandItem.Kind.TIMER;
@@ -194,7 +195,7 @@ public class CardRenderTest {
     }
 
     @Test
-    public void nonSquareArtworkIsNotStretched() throws Exception {
+    public void wideAndTallMediaArtworkCanBeDrawn() throws Exception {
         Context ctx = RuntimeEnvironment.getApplication();
         IslandItem it = base(ctx, "media");
         it.isMedia = true;

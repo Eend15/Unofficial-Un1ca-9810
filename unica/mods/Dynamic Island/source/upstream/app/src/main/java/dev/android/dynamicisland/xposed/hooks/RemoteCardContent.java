@@ -1,6 +1,5 @@
 package dev.android.dynamicisland.xposed.hooks;
 
-import android.content.res.Configuration;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -59,10 +58,9 @@ final class RemoteCardContent {
         }
     }
 
-    /** The card is dark in every theme; in the light theme the app's dark text would vanish on it. */
+    /** The card is dark in every theme: text of the app that would not stand out on it is lifted. */
     private void lightenForCard() {
-        boolean night = (host.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-        if (!night && view != null) {
+        if (view != null) {
             DarkRemote.lighten(view);
         }
     }

@@ -14,8 +14,9 @@ public final class TimeFormat {
 
     /** Elapsed / remaining time of a chronometer item, 0:00 style (hundredths for stopwatches). */
     public static String chronometer(IslandItem item) {
-        long now = System.currentTimeMillis();
-        long ms = item.chronoCountDown ? item.chronoBase - now : now - item.chronoBase;
+        long now = item.chronoUsesElapsedRealtime ? android.os.SystemClock.elapsedRealtime() : System.currentTimeMillis();
+        long base = item.chronoUsesElapsedRealtime ? item.chronoElapsedBase : item.chronoBase;
+        long ms = item.chronoCountDown ? base - now : now - base;
         return item.chronoMillis ? withHundredths(ms) : clock(Math.max(0L, ms));
     }
 

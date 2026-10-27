@@ -38,11 +38,19 @@ final class MediaMeasure {
             return;
         }
         View view = (View) p.thisObject;
-        IslandItem item = binding.item(view);
-        if (item != null) {
-            int height = binding.cardHeight(item, View.MeasureSpec.getSize((Integer) p.args[0]));
+        Integer height = playerHeight(view, binding, View.MeasureSpec.getSize((Integer) p.args[0]));
+        if (height != null) {
             p.args[1] = View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY);
         }
+    }
+
+    /** Null keeps the stock height; zero removes a recording's media player, not its controls card. */
+    static Integer playerHeight(View view, MediaPlayerBinding binding, int width) {
+        if (binding.recording(view)) {
+            return 0;
+        }
+        IslandItem item = binding.item(view);
+        return item == null ? null : binding.cardHeight(item, width);
     }
 
     private static boolean isInside(View view, View ancestor) {
@@ -76,6 +84,10 @@ final class MediaMeasure {
                     continue;
                 }
                 MediaPlayerBinding binding = entry.getValue();
+                if (binding.recording(player)) {
+                    forced.apply(0);
+                    return;
+                }
                 IslandItem item = binding.item(player);
                 binding.syncBackground(player, item != null);
                 if (item != null) {

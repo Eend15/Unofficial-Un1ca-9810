@@ -50,7 +50,15 @@ final class MediaFxCache {
 
     /** True while the effect of {@code item} (a media item) still moves, e.g. a running art flip. */
     boolean animating(IslandItem item) {
+        // The frame loop asks BEFORE onDraw. Sync here so a settled paused item's new palette
+        // starts its colour fade before deciding whether another animation frame is needed.
+        long now = IslandView.now();
         MediaFx fx = byKey.get(item.key);
-        return fx != null && fx.animating(IslandView.now());
+        if (fx == null) {
+            fx = new MediaFx(view);
+            byKey.put(item.key, fx);
+        }
+        fx.sync(item, now);
+        return fx.animating(now);
     }
 }

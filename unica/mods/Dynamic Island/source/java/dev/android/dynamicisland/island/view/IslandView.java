@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.drawable.Drawable;
@@ -19,11 +20,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import dev.android.dynamicisland.island.graphics.Easing;
+import dev.android.dynamicisland.island.graphics.GlyphIcon;
+import dev.android.dynamicisland.island.graphics.FramePacer;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.card.Btn;
 import dev.android.dynamicisland.island.view.card.MediaBody;
 import dev.android.dynamicisland.island.view.card.SliderBody;
-import dev.android.dynamicisland.island.view.card.RemoteBody;
 import dev.android.dynamicisland.island.view.media.MediaFx;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.XLog;
@@ -80,8 +82,15 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     static final float MIN_VISIBLE_SIZE = 0.5f;
 
     private static final float SHADE_COLLAPSE_AT = 0.04f;
-    /** The island shrinks by this fraction while the shade is fully pulled. */
-    private static final float SHADE_SHRINK = 0.25f;
+    /** The shade is down this far (0..1) and the island is sent away: it shrinks into a dot and fades. */
+    private static final float SHADE_GONE_AT = 0.02f;
+    /** The island comes back when the shade has closed down to this (a little lower, so it does not flicker). */
+    private static final float SHADE_BACK_AT = 0.01f;
+    /** Shrinking into the dot is quick and does not overshoot; growing back is slower, with a small bounce. */
+    static final float SHADE_GO_RESPONSE = 0.24f;
+    static final float SHADE_GO_DAMPING = 1.0f;
+    static final float SHADE_BACK_RESPONSE = 0.46f;
+    static final float SHADE_BACK_DAMPING = 0.72f;
     private static final float DEFAULT_FRAME_DT = 0.008333334f;
 
     /** Choreographer#getFrameTimeNanos: hidden API, open to System UI (a platform app). */
@@ -114,6 +123,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     // layout values the content classes read; copies of the final ones in Metrics
     float bubbleR;
     final float holeGap;
+    float holeTextPadding;
     final float innerGap;
     float leadSize;
     float minPillW;
@@ -127,6 +137,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     private final IslandHost host;
     private final Choreographer choreographer = Choreographer.getInstance();
+    /** The shade gate value last handed to the host, so an unchanged one is not sent again. */
+    private float appliedGate = 1.0f;
     private final Metrics metrics;
     private final Springs springs = new Springs();
     private final Scene scene = new Scene(springs);
@@ -134,6 +146,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     private final Shapes shapes;
     private final MediaFxCache mediaFx;
     private final Waveform waveform;
+    private final RecordingWaveform recordingWaveform;
     private final DigitClock clock;
     private final ButtonPress buttons = new ButtonPress();
     private final IconPainter icons;
@@ -147,7 +160,22 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     private final Footprint footprint;
     private final ShadeCards shadeCards;
     private final RectF pillRect = new RectF();
+    private final RectF samplingPill = new RectF();
+    private final RectF samplingBubble = new RectF();
+    private final int[] samplingLocation = new int[2];
+    private Runnable pillSamplingStateChanged;
 
+    public void setPillSamplingStateChanged(Runnable listener) {
+        pillSamplingStateChanged = listener;
+    }
+
+    private void notifyPillSamplingVisibility() {
+        if (pillSamplingStateChanged != null) pillSamplingStateChanged.run();
+    }
+
+    private final FramePacer framePacer = new FramePacer();
+    private boolean renderingPaused;
+    private long touchActiveUntil;
     private boolean frameScheduled;
     private static final int MAX_FAILED_FRAMES = 3;
     private int failedFrames;
@@ -175,8 +203,9 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         shapes = new Shapes(metrics, scene);
         mediaFx = new MediaFxCache(this);
         waveform = new Waveform(metrics);
+        recordingWaveform = new RecordingWaveform(this.host.recordingAudio());
         clock = new DigitClock(this);
-        icons = new IconPainter(metrics, paints, waveform, clock, mediaFx, tmpRect, barClip);
+        icons = new IconPainter(metrics, paints, waveform, recordingWaveform, clock, mediaFx, tmpRect, barClip);
         remote = new RemoteCards(this, shapes, scene);
         bodies = new BodyFactory(this, remote);
         stackPainter = new StackPainter(metrics, paints, scene, shapes);
@@ -209,10 +238,31 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     void scheduleFrame() {
-        if (!frameScheduled) {
+        if (!frameScheduled && !renderingPaused) {
             frameScheduled = true;
-            choreographer.postFrameCallback(this);
+            long delay = framePacer.delayMillis(ModuleSettings.lowPerformance(), interactiveMotion(), System.nanoTime());
+            choreographer.postFrameCallbackDelayed(this, delay);
         }
+    }
+
+    /** Keep direct manipulation and structural transitions responsive; ambient motion uses the smaller budget. */
+    boolean interactiveMotion() {
+        long t = now();
+        if (t < touchActiveUntil || springs.animating() || buttons.animating() || seekBody != null || sliderBody != null
+                || scene.mainOut != null || scene.bubbleOut != null
+                || scene.contentHandoff != null && !scene.contentHandoff.finished(t)) return true;
+        for (Card c : scene.cards) {
+            if (c.leaving || t < c.startAt || !c.cy.isAtRest() || !c.w.isAtRest() || !c.h.isAtRest() || !c.dx.isAtRest()) return true;
+        }
+        return false;
+    }
+
+    /** Wake an input-driven frame even if a slower ambient callback was already queued. */
+    private void touchFrame() {
+        touchActiveUntil = now() + 250;
+        choreographer.removeFrameCallback(this);
+        frameScheduled = false;
+        scheduleFrame();
     }
 
     // ---- seams for the tests in this package -----------------------------------------------------------------------
@@ -237,11 +287,51 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     void computeMain(RectF out) {
-        shapes.main(out);
+        shapes.paintedMain(out);
     }
 
     void computeCard(Card card, RectF out) {
         shapes.card(card, out);
+    }
+
+    /** Raw compositor luma below this window; null means unsupported/unavailable, never guessed. */
+    public void setPillBackgroundLuma(Float luma) {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            post(() -> setPillBackgroundLuma(luma));
+            return;
+        }
+        float before = scene.pillOutlineOpacity();
+        scene.pillOutline.sample(luma);
+        if (before != scene.pillOutlineOpacity()) {
+            invalidate();
+            scheduleFrame();
+        }
+    }
+
+    /** A thin bottom-edge band avoids sampling the physical camera hole in the pill's centre. */
+    public boolean pillBackgroundSamplingRegion(Rect out) {
+        out.setEmpty();
+        if (!isAttachedToWindow() || !isShown() || getWindowVisibility() != VISIBLE
+                || scene.mode != Mode.COMPACT || scene.shadePulled() || scene.visibleAlpha() <= MIN_VISIBLE_ALPHA) {
+            return false;
+        }
+        shapes.paintedMain(samplingPill);
+        if (samplingPill.width() < 2f || samplingPill.height() < 2f) return false;
+        float left = samplingPill.left;
+        float right = samplingPill.right;
+        if (springs.split.value() > 0.003f) {
+            shapes.bubble(samplingPill, samplingBubble);
+            left = Math.min(left, samplingBubble.left);
+            right = Math.max(right, samplingBubble.right);
+        }
+        getLocationOnScreen(samplingLocation);
+        float band = Math.max(1f, Math.min(metrics.dp(3f), samplingPill.height() * 0.12f));
+        out.set((int) Math.floor(left + samplingLocation[0]),
+                (int) Math.floor(samplingPill.bottom - band + samplingLocation[1]),
+                (int) Math.ceil(right + samplingLocation[0]),
+                (int) Math.ceil(samplingPill.bottom + samplingLocation[1]));
+        return out.intersect(samplingLocation[0], samplingLocation[1],
+                samplingLocation[0] + getWidth(), samplingLocation[1] + getHeight()) && !out.isEmpty();
     }
 
     // ---- configuration -------------------------------------------------------------------------------------------
@@ -265,6 +355,13 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         if (metrics.applySize(heightPercent, minWidthDp, maxWidthDp)) {
             afterMetricsChanged();
         }
+    }
+
+    public void setHoleTextPadding(int extraDp) {
+        float padding = dp(Math.max(0, Math.min(ModuleSettings.HOLE_TEXT_PADDING_MAX_DP, extraDp)));
+        if (Math.abs(holeTextPadding - padding) < 0.01f) return;
+        holeTextPadding = padding;
+        afterMetricsChanged();
     }
 
     public void setGeometry(int screenWidth, float centerX, float centerY, float holeDiameter, boolean isTablet) {
@@ -323,6 +420,14 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         setItems(sorted, HINT_NONE);
     }
 
+    /** Session metadata is independent of whether the music pill is currently visible. */
+    public void setGlowSession(IslandItem item) {
+        if (scene.explicitGlowSession && scene.glowSession == item) return;
+        scene.explicitGlowSession = true;
+        scene.glowSession = item;
+        scheduleFrame();
+    }
+
     public void setItems(List<IslandItem> sorted, int hint, List<IslandItem> minimizedItems) {
         scene.minimized.clear();
         if (minimizedItems != null) {
@@ -368,22 +473,44 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         scheduleFrame();
     }
 
-    /** How far the notification shade is pulled down (0..1); the island fades and shrinks with it. */
+    /**
+     * How far the notification shade is pulled down (0..1). The first bit of the pull sends the island away and the
+     * shade being nearly shut brings it back; it shrinks into a dot (and grows out of it) by time, not by distance.
+     */
     public void setShadeFraction(float fraction) {
         float clamped = clamp01(fraction);
         if (Math.abs(clamped - scene.shade) < Scene.SHADE_PULLED_EPS) {
             return;
         }
-        boolean wasPulled = scene.shadePulled();
         scene.shade = clamped;
         if (clamped > SHADE_COLLAPSE_AT && scene.mode == Mode.EXPANDED) {
             collapse();
         }
-        scene.surfaceFade = host.onShadeFade(scene.shadeAlpha(), 1.0f - (clamped * SHADE_SHRINK), metrics.cx, metrics.cy);
-        if (!scene.surfaceFade || (wasPulled && !scene.shadePulled())) {
-            scheduleFrame();
+        boolean gone = scene.shadeGone ? clamped > SHADE_BACK_AT : clamped > SHADE_GONE_AT;
+        if (gone != scene.shadeGone) {
+            scene.shadeGone = gone;
+            if (gone) {
+                springs.shadeGate.animateTo(0.0f, SHADE_GO_RESPONSE, SHADE_GO_DAMPING);
+            } else {
+                springs.shadeGate.animateTo(1.0f, SHADE_BACK_RESPONSE, SHADE_BACK_DAMPING);
+            }
         }
+        applyShadeFade();
+        scheduleFrame();
         notifyHost();
+    }
+
+    /**
+     * Hands the host the island's opacity for the shade gate: the whole window surface is faded. The island's shape
+     * shrinking into the dot is drawn by the pill painter.
+     */
+    private void applyShadeFade() {
+        float g = springs.shadeGate.value();
+        if (g == appliedGate && g >= 0.999f) {
+            return;
+        }
+        appliedGate = g;
+        scene.surfaceFade = host.onShadeFade(scene.shadeAlpha(), 1.0f, metrics.cx, metrics.cy);
     }
 
     public boolean shadePulled() {
@@ -406,11 +533,47 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     /** Pops the island open on {@code item} for {@code ms}, like a banner. */
     public boolean peek(IslandItem item, long ms) {
-        if (metrics.screenW == 0 || scene.suppressed || item == null) {
+        if (!canPeek() || item == null) {
             return false;
         }
         director.peek(item, ms);
         return true;
+    }
+
+    /** Incoming cards may replace a manual card, but never a reply or a pulled-down shade. */
+    public boolean canPeek() {
+        return metrics.screenW > 0 && !scene.suppressed && !scene.held && !scene.shadePulled();
+    }
+
+    public boolean isShowingCard(IslandItem item) {
+        if (item == null || !isExpanded() || scene.shadePulled()) return false;
+        for (Card card : scene.cards) {
+            if (card.item != null && (card.item.key.equals(item.key)
+                    || item.sourceKey != null && item.sourceKey.equals(card.item.sourceKey))) return true;
+        }
+        return false;
+    }
+
+    private boolean cardOccupiesOverlay(Card card) {
+        return scene.visibleAlpha() > MIN_VISIBLE_ALPHA && (isExpanded()
+                || card.leaving && StackPainter.contentAlpha(card, now(), 1) > MIN_VISIBLE_ALPHA);
+    }
+
+    /** Keep the shade copy out until the overlay's departing text has actually faded. */
+    public boolean isPaintingCard(IslandItem item) {
+        if (item == null) return false;
+        for (Card card : scene.cards) {
+            if (cardOccupiesOverlay(card) && card.item != null && (card.item.key.equals(item.key)
+                    || item.sourceKey != null && item.sourceKey.equals(card.item.sourceKey))) return true;
+        }
+        return false;
+    }
+
+    /** Changes only when the set of painted overlay cards changes, so rows need no per-frame rebinding. */
+    public int shadeCardCoverageToken() {
+        int token = 0;
+        for (Card card : scene.cards) if (cardOccupiesOverlay(card) && card.item != null) token += card.item.key.hashCode();
+        return token;
     }
 
     public boolean isExpanded() {
@@ -463,11 +626,51 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     public boolean needsAudio() {
-        if (scene.mode != Mode.COMPACT || scene.mainIn == null || scene.visibleAlpha() < 0.2f) {
+        if (ModuleSettings.lowPerformance() || renderingPaused || !isShown() || getWindowVisibility() != VISIBLE) return false;
+        if (scene.mode != Mode.COMPACT || scene.visibleAlpha() < 0.2f) {
             return false;
         }
-        IslandItem it = scene.mainIn.content.item;
-        return it.trailing == IslandItem.Trailing.WAVEFORM && it.playing;
+        IslandItem music = scene.musicForGlow();
+        return (music != null && music.playing && ModuleSettings.ambientGlow() && ModuleSettings.glowMotion() > 0)
+                || needsAudio(scene.mainIn) || (springs.split.value() > .003f && needsAudio(scene.bubbleIn));
+    }
+
+    public boolean hasRecordingWaveform(IslandItem item) {
+        return item != null && item.voiceRecording && ModuleSettings.concurrentRecordingInput();
+    }
+
+    public String recordingInputTarget() {
+        if (!ModuleSettings.concurrentRecordingInput() || renderingPaused || !isAttachedToWindow()
+                || !isShown() || getWindowVisibility() != VISIBLE || scene.visibleAlpha() < .2f
+                || scene.suppressed || scene.frozenByShade()) return null;
+        if (scene.mode == Mode.EXPANDED) {
+            for (Card card : scene.cards) {
+                if (!card.leaving && capturesRecording(card.item)) return card.item.key;
+            }
+        } else if (scene.mode == Mode.COMPACT) {
+            if (scene.mainIn != null && capturesRecording(scene.mainIn.content.item)) return scene.mainIn.content.item.key;
+            if (scene.bubbleIn != null && springs.split.value() > .05f && capturesRecording(scene.bubbleIn.content.item)) return scene.bubbleIn.content.item.key;
+        }
+        return null;
+    }
+
+    private boolean capturesRecording(IslandItem item) {
+        return item.voiceRecording && !item.voiceRecordingPaused
+                && item.userId == android.os.Process.myUid() / 100_000;
+    }
+
+    public void onRecordingAudioFrame() {
+        if (isAttachedToWindow() && !renderingPaused) scheduleFrame();
+    }
+
+    public void drawRecordingWaveform(Canvas canvas, IslandItem item, float left, float midY, float width, float height, float alpha) {
+        recordingWaveform.draw(canvas, item, left, midY, width, height, alpha);
+    }
+
+    private boolean needsAudio(Layer layer) {
+        if (layer == null) return false;
+        IslandItem item = layer.content.item;
+        return item.playing && item.trailing == IslandItem.Trailing.WAVEFORM && ModuleSettings.visualizer();
     }
 
     public void getCoverageBounds(RectF out) {
@@ -487,6 +690,12 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     @Override
     public void doFrame(long frameTimeNanos) {
+        frameScheduled = false;
+        if (renderingPaused) return;
+        if (!framePacer.allow(ModuleSettings.lowPerformance(), interactiveMotion(), frameTimeNanos)) {
+            scheduleFrame();
+            return;
+        }
         try {
             step(frameTimeNanos);
             failedFrames = 0;
@@ -504,12 +713,15 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         frameScheduled = false;
         if (scene.frozenByShade()) {
             lastFrameNanos = 0L;
+            ticker.cancel();
+            notifyHost();
             return;
         }
         float dt = lastFrameNanos == 0 ? DEFAULT_FRAME_DT : (frameTimeNanos - lastFrameNanos) / 1.0E9f;
         lastFrameNanos = frameTimeNanos;
         long t = now();
         boolean active = springs.step(dt) | buttons.animating();
+        applyShadeFade();
         if (scene.mode == Mode.HIDDEN && metrics.holeD > 0.0f && springs.visibility.target() > 0.0f
                 && springs.width.value() <= metrics.restWidth() + metrics.dp(5.0f)) {
             springs.visibility.animateTo(0.0f, 0.12f, 1.0f);
@@ -532,6 +744,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         active |= hasContinuousMotion(dt);
         stackPainter.placeBlurs();
         remote.sync();
+        if (isFullyHidden()) ticker.cancel(); else scheduleTick();
         invalidate();
         notifyHost();
         if (active && !isFullyHidden() && !scene.frozenByShade()) {
@@ -553,6 +766,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         Layer main = scene.mainIn;
         Layer bubble = scene.bubbleIn;
         boolean need = false;
+        need |= pillPainter.stepGlow(dt, host.audio());
         IslandItem waveItem = null;
         if (main != null && scene.mode == Mode.COMPACT) {
             IslandItem it = main.content.item;
@@ -560,24 +774,37 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             need = it.pulsingDot | (it.trailing == IslandItem.Trailing.PROGRESS_RING && it.progress < 0.0f);
         }
         if (main != null) {
-            need |= runningStopwatch(main.content.item) || (main.content.item.isMedia && mediaFx.animating(main.content.item));
+            need |= runningStopwatch(main.content.item) || (main.content.item.isMedia && mediaFx.animating(main.content.item))
+                    || iconPlaying(main.content.item);
         }
         need |= clock.rolling();
         if (bubble != null) {
             IslandItem it = bubble.content.item;
-            need |= it.pulsingDot || runningStopwatch(it) || (it.isMedia && mediaFx.animating(it));
+            need |= it.pulsingDot || runningStopwatch(it) || (it.isMedia && mediaFx.animating(it)) || iconPlaying(it);
         }
         if (sliderSettleKey != null) {
             need |= now() - sliderSettleStart < SliderBody.SETTLE_MS;
         }
         for (Card c : scene.cards) {
-            need |= c.item.pulsingDot || c.item.progressIndeterminate || runningStopwatch(c.item)
-                    || (scene.mode == Mode.EXPANDED && c.item.isMedia);
+            need |= c.item.pulsingDot || c.item.progressIndeterminate || runningStopwatch(c.item) || iconPlaying(c.item)
+                    || (scene.mode == Mode.EXPANDED && c.item.isMedia && !ModuleSettings.lowPerformance());
         }
         if (waveItem != null) {
             need |= waveform.step(dt, waveItem, host.audio());
         }
+        // Microphone reads arrive at 25 Hz, independently of the display. Keep the
+        // visible history moving between reads instead of painting only on input.
+        String recordingKey = recordingInputTarget();
+        if (recordingKey != null && host.recordingAudio() != null) {
+            need |= host.recordingAudio().envelope.isAnimating(recordingKey, SystemClock.elapsedRealtime());
+        }
         return need;
+    }
+
+    /** An animated pictogram (battery, ringer, camera ...) is still playing, so frames must keep coming. */
+    private static boolean iconPlaying(IslandItem item) {
+        return (item.icon instanceof GlyphIcon && ((GlyphIcon) item.icon).animating())
+                || (item.mediaOutputIcon instanceof GlyphIcon && ((GlyphIcon) item.mediaOutputIcon).animating());
     }
 
     private static boolean runningStopwatch(IslandItem item) {
@@ -612,6 +839,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        renderingPaused = !isShown() || getWindowVisibility() != VISIBLE;
+        framePacer.reset();
         scheduleTick();
         scheduleFrame();
     }
@@ -623,6 +852,38 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         frameScheduled = false;
         lastFrameNanos = 0L;
         ticker.cancel();
+        framePacer.reset();
+        renderingPaused = true;
+        notifyHost();
+    }
+
+    @Override protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        updateRenderingVisibility();
+        notifyPillSamplingVisibility();
+    }
+
+    @Override protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        updateRenderingVisibility();
+        notifyPillSamplingVisibility();
+    }
+
+    private void updateRenderingVisibility() {
+        // Visibility callbacks can arrive from the View constructor before our fields have been initialized.
+        if (ticker == null || !isAttachedToWindow()) return;
+        renderingPaused = !isShown() || getWindowVisibility() != VISIBLE;
+        lastFrameNanos = 0L;
+        framePacer.reset();
+        if (renderingPaused) {
+            choreographer.removeFrameCallback(this);
+            frameScheduled = false;
+            ticker.cancel();
+        } else {
+            scheduleTick();
+            scheduleFrame();
+        }
+        notifyHost();
     }
 
     // ---- drawing -------------------------------------------------------------------------------------------------
@@ -656,8 +917,6 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         }
         shapes.main(pillRect);
         int save = canvas.save();
-        float shadeScale = scene.surfaceFade ? 1.0f : 1.0f - (scene.shade * SHADE_SHRINK);
-        canvas.scale(shadeScale, shadeScale, metrics.cx, metrics.cy);
         if (alpha < 0.995f) {
             canvas.saveLayerAlpha(0.0f, 0.0f, metrics.screenW, getHeight(), Math.round(255.0f * alpha));
         }
@@ -676,16 +935,10 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             return;
         }
         shadeCards.forget();
-        // text in the open cards was laid out with the old font: lay it out again
-        for (Card c : scene.cards) {
-            if (c.body instanceof RemoteBody) {
-                continue; // an app's own view: it measures its text itself
-            }
-            try {
-                c.body = bodies.create(c.item, c.body.w, false);
-            } catch (Throwable t) {
-                XLog.once("IslandView.relayoutFonts", t);
-            }
+        try {
+            director.refreshFontLayouts();
+        } catch (Throwable t) {
+            XLog.once("IslandView.relayoutFonts", t);
         }
     }
 
@@ -778,7 +1031,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         if (item == null || !item.isMedia) {
             return false;
         }
-        return item.playing || mediaFx.animating(item);
+        return !ModuleSettings.lowPerformance() && (item.playing || mediaFx.animating(item));
     }
 
     boolean buttonAnimating() {
@@ -794,6 +1047,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         try {
+            touchFrame();
             return touch.handle(e);
         } catch (Throwable t) {
             XLog.once("IslandView.onTouchEvent", t);

@@ -1,7 +1,5 @@
 package dev.android.dynamicisland.xposed.hooks;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -41,16 +39,6 @@ public class AospChipsTest {
     }
 
     @Test
-    public void liveNotificationChipsAreTakenOut() {
-        AospChips.reset(empty);
-        Bundle bundle = new Bundle();
-
-        AospChips.takeOut(bundle, true, true);
-
-        assertTrue(((java.util.List<?>) bundle.notifs).isEmpty());
-    }
-
-    @Test
     public void callChipStaysWhenTheIslandHasNoCallCard() {
         AospChips.reset(empty);
         Bundle bundle = new Bundle();
@@ -62,28 +50,4 @@ public class AospChipsTest {
         assertSame(call, bundle.call);
     }
 
-    @Test
-    public void rankingAgainWithTheEmptiedBundleKeepsTheIslandModels() {
-        AospChips.reset(empty);
-        Bundle bundle = new Bundle();
-        Active cast = new Active();
-        bundle.castToOtherDevice = cast;
-        AospChips.takeOut(bundle, true, true);
-
-        assertFalse(AospChips.takeOut(bundle, true, true));
-        assertSame(cast, feed.castToOtherDevice);
-    }
-
-    @Test
-    public void stoppedChipIsDroppedFromTheIsland() {
-        AospChips.reset(empty);
-        Bundle bundle = new Bundle();
-        bundle.shareToApp = new Active();
-        AospChips.takeOut(bundle, true, true);
-
-        Bundle later = new Bundle();
-        assertTrue(AospChips.takeOut(later, true, true));
-        assertNotSame(bundle.shareToApp, feed.shareToApp);
-        assertSame(null, feed.shareToApp);
-    }
 }

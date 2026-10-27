@@ -28,8 +28,10 @@ final class Footprint {
     /** Union of the pill, the bubble and every card that overlaps the pill's row. */
     void coverage(RectF out) {
         shapes.main(out);
+        shapes.shadePill(out, pill);
+        out.union(pill);
         if (scene.springs.split.value() > 0.2f) {
-            shapes.bubble(out, other);
+            shapes.bubble(pill, other);
             out.union(other);
         }
         float rowTop = m.cy - (m.pillH / 2.0f);
@@ -70,7 +72,7 @@ final class Footprint {
             out.set(0, 0, m.screenW, Math.max(view.getHeight(), m.screenW * 3));
             return;
         }
-        shapes.main(pill);
+        shapes.paintedMain(pill);
         if (scene.mode == Mode.COMPACT || pill.width() > m.dp(40.0f)) {
             add(out, pill, pad);
         }

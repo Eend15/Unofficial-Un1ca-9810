@@ -344,6 +344,15 @@ public final class HideDuplicated {
         return (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0;
     }
 
+    /**
+     * A group summary that is marked as a live notification (Samsung's ongoing-activity style). System UI folds the
+     * live cards of one app (the Google sports matches) into a stack under such a summary; without it they come
+     * out of the shade as separate cards. The summary itself is not cancelled, it only leaves the shade list.
+     */
+    static boolean isLiveSummary(Notification n) {
+        return isSummary(n) && n.extras != null && n.extras.containsKey(EXTRA_ONGOING_STYLE);
+    }
+
     // ---- hiding --------------------------------------------------------------------------------
 
     /** True when the list entry is an original that must stay out of the shade right now. */
@@ -351,6 +360,9 @@ public final class HideDuplicated {
         StatusBarNotification sbn = sbn(entry);
         if (sbn == null || LIVEBRIDGE_PKG.equals(sbn.getPackageName())) {
             return false;
+        }
+        if (isLiveSummary(sbn.getNotification())) {
+            return true;
         }
         String key = sbn.getKey();
         long now = SystemClock.uptimeMillis();

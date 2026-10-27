@@ -75,7 +75,9 @@ public final class LiveBody extends CardBody {
     public LiveBody(IslandView owner, IslandItem item, float w) {
         super(owner, item, w);
         pad = owner.dp(18.0f);
-        iconSize = owner.dp(22.0f);
+        boolean event = item.kind == IslandItem.Kind.EVENT;
+        boolean hasIcon = item.icon != null || item.cardIcon != null;
+        iconSize = event && !hasIcon ? 0 : owner.dp(event && !ModuleSettings.compactEventIcons() ? 40 : 22);
         logoSize = owner.dp(52.0f);
         progressTop = -1.0f;
         actionsTop = -1.0f;
@@ -83,7 +85,7 @@ public final class LiveBody extends CardBody {
         if (teams && item.trailing == IslandItem.Trailing.TEXT && item.trailingText != null) {
             score = item.trailingText.toString();
         }
-        textW = Math.max(1, Math.round((w - (pad * 2.0f)) - (teams ? 0.0f : iconSize + owner.dp(12.0f))));
+        textW = Math.max(1, Math.round((w - (pad * 2.0f)) - (teams || iconSize == 0 ? 0.0f : iconSize + owner.dp(12.0f))));
         int textWidth = Math.round(textW);
         float y = pad;
         if (teams) {
@@ -123,7 +125,8 @@ public final class LiveBody extends CardBody {
         if (item.trailing == IslandItem.Trailing.TEXT && item.trailingText != null && secondary == null && score == null) {
             secondary = item.trailingText;
         }
-        this.description = item.description == null ? null : IslandView.layout(item.description, owner.bodyPaint, textWidth, 3);
+        this.description = item.description == null ? null : IslandView.layout(item.description, owner.bodyPaint, textWidth,
+                Math.max(1, Math.min(8, item.descriptionMaxLines)));
         subtitle = (description != null || subChrono || secondary == null) ? null
                 : IslandView.layout(secondary, owner.bodyPaint, Math.max(1, textWidth - Math.round(secIndent)), 2);
         subY = y + ((title != null || titleChrono) ? owner.dp(3.0f) : 0.0f);
@@ -195,9 +198,9 @@ public final class LiveBody extends CardBody {
             } else if (customColor != 0) {
                 b.bg = customColor | Colors.BLACK;
             } else if (i == item.primaryActionIndex) {
-                b.bg = Colors.blend(item.accent, Colors.BLACK, IslandView.PAUSED_SPEED);
+                b.bg = Colors.blend(item.fillAccent(), Colors.BLACK, IslandView.PAUSED_SPEED);
             } else {
-                b.bg = Colors.BUTTON_ACTION_FILL;
+                b.bg = item.customAccent != 0 ? Colors.withAlpha(item.fillAccent(), android.graphics.Color.alpha(Colors.BUTTON_ACTION_FILL) / 255f) : Colors.BUTTON_ACTION_FILL;
             }
             buttons.add(b);
         }
@@ -309,11 +312,11 @@ public final class LiveBody extends CardBody {
             float phase = (IslandView.now() % SWEEP_PERIOD_MS) / (float) SWEEP_PERIOD_MS;
             float eased = IslandView.easeInOut(phase);
             float start = left - sweep + ((width + sweep) * eased);
-            owner.fillPaint.setColor(Colors.withAlpha(item.accent, alpha));
+            owner.fillPaint.setColor(Colors.withAlpha(item.fillAccent(), alpha));
             c.drawRect(Math.max(left, start), barTop, Math.min(left + width, start + sweep), barTop + barHeight, owner.fillPaint);
         } else {
             fillEnd = left + Math.max(barHeight, width * IslandView.clamp01(item.progress));
-            int fillColor = segmented ? (item.progressTrackColor != 0 ? (item.progressTrackColor | Colors.BLACK) : Colors.SEGMENT_UNREACHED) : item.accent;
+            int fillColor = segmented ? (item.progressTrackColor != 0 ? (item.progressTrackColor | Colors.BLACK) : Colors.SEGMENT_UNREACHED) : item.fillAccent();
             owner.fillPaint.setColor(Colors.withAlpha(fillColor, alpha));
             c.drawRect(left, barTop, fillEnd, barTop + barHeight, owner.fillPaint);
         }

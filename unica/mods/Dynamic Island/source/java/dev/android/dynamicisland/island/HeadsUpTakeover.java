@@ -48,6 +48,7 @@ final class HeadsUpTakeover {
     private final Set<String> otpChecked = new HashSet<>();
     /** Postings the "all notifications" pass already looked at. */
     private final Set<String> allChecked = new HashSet<>();
+    private List<StatusBarNotification> snapshot = java.util.Collections.emptyList();
     private int rejectLogs;
     private int otpLogs;
     private String lastOtpCode;
@@ -57,6 +58,25 @@ final class HeadsUpTakeover {
         this.sources = sources;
         this.placement = placement;
         this.refreshNow = refreshNow;
+    }
+
+    void setSnapshot(List<StatusBarNotification> notifications) {
+        snapshot = new java.util.ArrayList<>(notifications);
+    }
+
+    boolean owns(String key) {
+        IslandItem item = sources.peeks.showing();
+        if (item == null || !item.key.equals("peek:" + key) || !placement.view().isShowingCard(item)) return false;
+        if (!ModuleSettings.appAllowed(item.packageName)) return false;
+        if (item.otpCode != null ? !ModuleSettings.otpCard() : !(ModuleSettings.headsUpIsland() || ModuleSettings.allNotifications())) return false;
+        for (StatusBarNotification notification : snapshot) {
+            if (notification.getKey().equals(key) && notification.getPostTime() != item.postTime) return false;
+        }
+        return true;
+    }
+
+    private boolean foregroundBlocked(StatusBarNotification sbn) {
+        return !ModuleSettings.foregroundNotifications() && sbn.getPackageName().equals(sources.foregroundPackage());
     }
 
     /** @return true when the island took the banner (the stock one must stay away) */
@@ -74,7 +94,8 @@ final class HeadsUpTakeover {
                 return true; // already on the island: the banner is asked about again on updates
             }
             if (view.isSuppressedNow() || !PeekSource.eligible(sbn)
-                    || sbn.getPackageName().equals(sources.foregroundPackage())) {
+                    || (!ModuleSettings.experimentalRecovery()
+                    && (foregroundBlocked(sbn) || !PeekSource.preferred(sbn, snapshot)))) {
                 reject("banner of " + sbn.getPackageName() + ": " + (view.isSuppressedNow() ? "island hidden" : !PeekSource.eligible(sbn) ? "not an ordinary notification" : "its app is open"));
                 return false;
             }
@@ -90,17 +111,12 @@ final class HeadsUpTakeover {
                 log(shown ? "shown with its heads-up" : "not shown: the island could not open");
                 return shown;
             }
-            if (!(ModuleSettings.headsUpIsland() || ModuleSettings.allNotifications()) || view.isExpanded() && !view.isPeekOpen()) {
+            if (!(ModuleSettings.headsUpIsland() || ModuleSettings.allNotifications())) {
                 reject("banner of " + sbn.getPackageName() + ": " + (view.isExpanded() ? "a card is open" : "the notification settings are off"));
                 return false;
             }
             IslandItem message = sources.peeks.buildMessage(sbn);
             boolean taken = message != null && show(sbn, message);
-            if (taken) {
-                // the compact banner of Android 17 may come up through a path that is not asked: take its entry away
-                final String key = sbn.getKey();
-                view.postDelayed(() -> HeadsUpHooks.dismissStock(key), STOCK_DISMISS_DELAY_MS);
-            }
             note("banner of " + sbn.getPackageName() + (taken ? " taken by the island" : " left to the stock banner: no card could be built or opened"));
             return taken;
         } catch (Throwable t) {
@@ -128,7 +144,8 @@ final class HeadsUpTakeover {
                 continue;
             }
             if (alreadyHadCard(sbn) || !PeekSource.eligible(sbn) || !ModuleSettings.appAllowed(sbn.getPackageName())
-                    || sbn.getPackageName().equals(sources.foregroundPackage())) {
+                    || (!ModuleSettings.experimentalRecovery()
+                    && (foregroundBlocked(sbn) || !PeekSource.preferred(sbn, snapshot)))) {
                 continue;
             }
             if (newest == null || sbn.getPostTime() >= newest.getPostTime()) {
@@ -139,8 +156,8 @@ final class HeadsUpTakeover {
             return;
         }
         IslandView view = placement.view();
-        if (view.isSuppressedNow() || (view.isExpanded() && !view.isPeekOpen())) {
-            reject("all notifications: the island is hidden or open");
+        if (ModuleSettings.experimentalRecovery() ? view.isSuppressedNow() : !view.canPeek()) {
+            reject("all notifications: the island is unavailable");
             return;
         }
         IslandItem item = sources.peeks.build(newest);
@@ -186,7 +203,7 @@ final class HeadsUpTakeover {
             if (age > OTP_FRESH_MS || age < -OTP_CLOCK_SKEW_MS || alreadyHadCard(sbn)) {
                 continue;
             }
-            if (!otpChecked.add(sbn.getKey() + "@" + sbn.getPostTime()) || !PeekSource.eligible(sbn)) {
+            if (!otpChecked.add(sbn.getKey() + "@" + sbn.getPostTime()) || !PeekSource.eligible(sbn) || !PeekSource.preferred(sbn, snapshot)) {
                 continue;
             }
             OtpDetector.Match match = OtpDetector.detect(PeekSource.otpText(sbn.getNotification()));
@@ -194,7 +211,7 @@ final class HeadsUpTakeover {
             if (match == null || isRepeat(match.code)) {
                 continue;
             }
-            if (sbn.getPackageName().equals(sources.foregroundPackage())) {
+            if (foregroundBlocked(sbn)) {
                 log("not shown: the messages app is open");
             } else if (placement.view().isSuppressedNow()) {
                 log("not shown: island hidden (lock screen, full screen or landscape)");
@@ -214,8 +231,7 @@ final class HeadsUpTakeover {
 
     /** This very posting is the card on the island right now. */
     private boolean isOnIslandNow(StatusBarNotification sbn) {
-        IslandItem showing = sources.peeks.showing();
-        return alreadyHadCard(sbn) && showing != null && showing.key.equals("peek:" + sbn.getKey());
+        return alreadyHadCard(sbn) && !foregroundBlocked(sbn) && owns(sbn.getKey());
     }
 
     private boolean isRepeat(String code) {
@@ -224,6 +240,7 @@ final class HeadsUpTakeover {
 
     /** @return whether the island really shows the card; only then is it remembered (and a code copied). */
     private boolean show(StatusBarNotification sbn, IslandItem item) {
+        if (!placement.view().canPeek()) return false;
         long millis = item.peekMillis > 0 ? item.peekMillis : DEFAULT_PEEK_MS;
         sources.peeks.show(item, millis);
         refreshNow.run();
@@ -236,6 +253,8 @@ final class HeadsUpTakeover {
             peeked.clear();
         }
         peeked.put(sbn.getKey(), sbn.getPostTime());
+        final String key = sbn.getKey();
+        placement.view().postDelayed(() -> HeadsUpHooks.dismissStock(key), STOCK_DISMISS_DELAY_MS);
         if (item.otpCode != null) {
             lastOtpCode = item.otpCode;
             lastOtpAt = SystemClock.uptimeMillis();

@@ -1,23 +1,20 @@
 package dev.android.dynamicisland.island.source;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 import android.app.Application;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.SystemClock;
 import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import java.io.File;
-import java.io.FileOutputStream;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import dev.android.dynamicisland.testutil.RenderCapture;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
@@ -28,28 +25,14 @@ import org.robolectric.annotation.GraphicsMode;
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35)
 public class MediaOutputTest {
+    static {
+        // icons play as animations; draw their finished frame so renders do not depend on the clock
+        dev.android.dynamicisland.island.graphics.GlyphIcon.setPlaybackFrozen(true);
+    }
+
     private final Application app = RuntimeEnvironment.getApplication();
 
-    @Test
-    public void outputIsCachedUntilTheDevicesChange() {
-        int[] probes = {0};
-        OutputSource s = new OutputSource(app, new Handler(Looper.getMainLooper()), () -> { }, () -> {
-            probes[0]++;
-            return new OutputSource.Output("Galaxy Buds3 Pro", GlyphIcon.Kind.HEADPHONES, 82);
-        });
-        assertEquals("Galaxy Buds3 Pro", s.current().name);
-        s.current();
-        s.current();
-        assertEquals(1, probes[0]);
-    }
-
-    @Test
-    public void builtInSpeakerHasNoOutputLine() {
-        OutputSource s = new OutputSource(app, new Handler(Looper.getMainLooper()), () -> { }, () -> null);
-        assertNull(s.current());
-    }
-
-    @Test
+    @Category(RenderCapture.class) @Test
     public void renderMusicCardWithOutputDevice() throws Exception {
         IslandItem it = new IslandItem("media");
         it.isMedia = true;
@@ -80,9 +63,7 @@ public class MediaOutputTest {
         view.drawShadeCard(c, it, w);
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream fo = new FileOutputStream(new File(dir, "media_output.png"))) {
-            out.compress(Bitmap.CompressFormat.PNG, 100, fo);
-        }
+        RenderCapture.write(out, new File(dir, "media_output.png"));
         assertNotNull(out);
     }
 }

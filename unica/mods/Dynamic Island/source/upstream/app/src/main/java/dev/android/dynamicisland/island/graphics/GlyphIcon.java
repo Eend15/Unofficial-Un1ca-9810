@@ -10,17 +10,28 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.SystemClock;
+import dev.android.dynamicisland.settings.ModuleSettings;
 
 /**
- * Small hand-drawn pictograms for the transient event islands (battery, ringer, headphones).
- * They are single-colour so the island can tint them like any other glyph, and they are drawn from
- * code because a System UI process has no access to this module's resources.
+ * Small pictograms for the transient event islands (battery, ringer, headphones). They are
+ * single-colour so the island can tint them like any other glyph. They play as Lottie animations
+ * ({@link LottieData}, embedded in code because a System UI process has no access to this module's
+ * resources); the canvas drawings below stay as the fallback if an animation cannot be parsed.
  */
 public final class GlyphIcon extends Drawable {
     /** Which pictogram to draw. {@code POWER_SAVE} is drawn as a battery with a plus cut out. */
     public enum Kind { BATTERY, BATTERY_CHARGING, BELL, BELL_OFF, VIBRATE, HEADPHONES, CAMERA, MIC, LOCATION, MOON, PLANE, TORCH, HOTSPOT, ROTATE_LOCK, POWER_SAVE, DOWNLOAD, SPEAKER }
 
     private static final int INTRINSIC_SIZE_PX = 96;
+    /** An icon drawn again after this long without a draw plays from the start, like a fresh island. */
+    private static final long REPLAY_GAP_MS = 1500L;
+
+    private static final java.util.Map<Kind, LottiePlayer> PLAYERS = new java.util.EnumMap<>(Kind.class);
+    private static final java.util.Set<Kind> UNPLAYABLE = java.util.EnumSet.noneOf(Kind.class);
+    /** Per kind: when the current play started and when it was last drawn (uptime millis). */
+    private static final java.util.Map<Kind, long[]> PLAYBACK = new java.util.EnumMap<>(Kind.class);
+    private static boolean frozen;
 
     private final Kind kind;
     /** Battery fill, 0..1; 1 for every other pictogram. */
@@ -41,8 +52,74 @@ public final class GlyphIcon extends Drawable {
         return new GlyphIcon(charging ? Kind.BATTERY_CHARGING : Kind.BATTERY, level);
     }
 
+    /** The power-saving battery, filled to the real charge. */
+    public static GlyphIcon powerSave(float level) {
+        return new GlyphIcon(Kind.POWER_SAVE, level);
+    }
+
     public static GlyphIcon of(Kind kind) {
         return new GlyphIcon(kind, 1f);
+    }
+
+    /** Tests draw the finished animation instead of whatever frame the clock happens to be at. */
+    public static void setPlaybackFrozen(boolean freeze) {
+        frozen = freeze;
+    }
+
+    /** True while the animation still moves, so the island keeps its frame loop running. */
+    public boolean animating() {
+        if (ModuleSettings.lowPerformance()) return false;
+        LottiePlayer p = player(kind);
+        if (p == null || frozen) {
+            return false;
+        }
+        long[] state = PLAYBACK.get(kind);
+        return state == null || SystemClock.uptimeMillis() - state[0] < p.durationMillis();
+    }
+
+    private static String animationName(Kind kind) {
+        switch (kind) {
+            case BATTERY_CHARGING:
+                return "battery_charging";
+            case BELL_OFF:
+                return "bell_off";
+            case POWER_SAVE:
+                return "power_save";
+            case ROTATE_LOCK:
+                return "rotate_lock";
+            default:
+                return kind.name().toLowerCase(java.util.Locale.ROOT);
+        }
+    }
+
+    private static LottiePlayer player(Kind kind) {
+        LottiePlayer p = PLAYERS.get(kind);
+        if (p == null && !UNPLAYABLE.contains(kind)) {
+            String json = LottieData.get(animationName(kind));
+            p = json == null ? null : LottiePlayer.parse(json);
+            if (p == null) {
+                UNPLAYABLE.add(kind);
+            } else {
+                PLAYERS.put(kind, p);
+            }
+        }
+        return p;
+    }
+
+    private float elapsedMillis(LottiePlayer p) {
+        if (frozen || ModuleSettings.lowPerformance()) {
+            return p.durationMillis();
+        }
+        long now = SystemClock.uptimeMillis();
+        long[] state = PLAYBACK.get(kind);
+        if (state == null) {
+            state = new long[] {now, now};
+            PLAYBACK.put(kind, state);
+        } else if (now - state[1] > REPLAY_GAP_MS) {
+            state[0] = now;
+        }
+        state[1] = now;
+        return now - state[0];
     }
 
     @Override
@@ -94,6 +171,14 @@ public final class GlyphIcon extends Drawable {
         float cx = bounds.centerX();
         float cy = bounds.centerY();
         int effectiveAlpha = Math.round((color >>> 24) * (alpha / 255f));
+        LottiePlayer player = player(kind);
+        if (player != null) {
+            player.setLevel(kind == Kind.BATTERY || kind == Kind.BATTERY_CHARGING || kind == Kind.POWER_SAVE ? level : -1.0f);
+            float side = Math.min(bounds.width(), bounds.height());
+            bounds.set(cx - (side / 2), cy - (side / 2), cx + (side / 2), cy + (side / 2));
+            player.draw(c, bounds, elapsedMillis(player), (color & 0x00FFFFFF) | (effectiveAlpha << 24));
+            return;
+        }
         paint.setXfermode(null);
         paint.setColor((color & 0x00FFFFFF) | (effectiveAlpha << 24));
         switch (kind) {

@@ -10,6 +10,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import dev.android.dynamicisland.island.feedback.Haptics;
+import dev.android.dynamicisland.island.graphics.FramePacer;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.settings.ModuleSettings;
@@ -31,6 +32,7 @@ final class LiveCardView extends FrameLayout {
     private final RemoteCardContent remote;
     private final Runnable redraw = this::redrawIfVisible;
     private final float slop;
+    private final FramePacer framePacer = new FramePacer();
     private IslandItem current;
     private int desiredHeight;
 
@@ -146,6 +148,7 @@ final class LiveCardView extends FrameLayout {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        framePacer.allow(false, false, System.nanoTime());
         try {
             IslandItem latest = ShadeLiveCards.item(key);
             if (latest != null && latest.remoteView != null) {
@@ -202,7 +205,7 @@ final class LiveCardView extends FrameLayout {
                 || item.kind == IslandItem.Kind.RECORDING
                 || (item.hasChronometer() && item.chronoPosition != 0);
         if (everyFrame) {
-            postOnAnimation(redraw);
+            postOnAnimationDelayed(redraw, framePacer.delayMillis(ModuleSettings.lowPerformance(), tracking || renderer.shadeButtonAnimating(), System.nanoTime()));
         } else if (everySecond) {
             postDelayed(redraw, SECOND_MS - (SystemClock.uptimeMillis() % SECOND_MS));
         }

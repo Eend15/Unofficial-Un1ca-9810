@@ -11,13 +11,17 @@ final class Scene {
     static final float SHADE_PULLED_EPS = 0.001f;
 
     final Springs springs;
+    final PillOutlinePolicy pillOutline = new PillOutlinePolicy();
     Mode mode = Mode.HIDDEN;
+    ContentHandoff contentHandoff;
     /** Shown items, most important first. */
     final List<IslandItem> items = new ArrayList<>();
     /** Minimized items that still show up (behind the live ones) when the stack is opened. */
     final List<IslandItem> minimized = new ArrayList<>();
     IslandItem primary;
     IslandItem secondary;
+    IslandItem glowSession;
+    boolean explicitGlowSession;
     Layer mainIn;
     Layer mainOut;
     Layer bubbleIn;
@@ -41,10 +45,36 @@ final class Scene {
         this.springs = springs;
     }
 
-    /** Smoothstep fade-out of the island while the notification shade is pulled down. */
+    /** The controller supplies the real session; standalone previews can use their visible media item. */
+    IslandItem musicForGlow() {
+        if (explicitGlowSession) return glowSession;
+        IslandItem paused = null;
+        for (IslandItem item : items) {
+            if (!item.isMedia) continue;
+            if (item.playing) return item;
+            if (paused == null) paused = item;
+        }
+        return paused;
+    }
+
+    int pillBodyColor(Layer layer) {
+        if (layer == null || mode != Mode.COMPACT) return 0xFF000000;
+        IslandItem item = layer.content.item;
+        return !item.hasTeams() || item.pillColor == 0 ? 0xFF000000 : item.pillColor;
+    }
+
+    float pillOutlineOpacity() {
+        boolean bubble = springs.split.value() > 0.003f;
+        return pillOutline.visible(ModuleSettings.pillOutlineMode(), pillBodyColor(mainIn), pillBodyColor(bubbleIn), bubble) ? 1f : 0f;
+    }
+
+    /** The shade is down far enough that the island has been sent away (it comes back only when the shade is nearly shut). */
+    boolean shadeGone;
+
+    /** Opacity of the island for the notification shade: it stays solid while it shrinks into a dot and fades only once it is the dot. */
     float shadeAlpha() {
-        float x = IslandView.clamp01((shade - 0.05f) / 0.3f);
-        return 1.0f - ((x * x) * (3.0f - (2.0f * x)));
+        float x = IslandView.clamp01(springs.shadeGate.value() * 10.0f);
+        return x * x * (3.0f - (2.0f * x));
     }
 
     float visibleAlpha() {
@@ -57,7 +87,8 @@ final class Scene {
 
     /** While the host fades the whole surface for the pulled shade there is nothing to animate. */
     boolean frozenByShade() {
-        return surfaceFade && shadePulled() && springs.suppress.isAtRest() && springs.visibility.isAtRest();
+        return surfaceFade && shadePulled() && springs.suppress.isAtRest() && springs.visibility.isAtRest()
+                && springs.shadeGate.isAtRest();
     }
 
     Card findCard(String key) {

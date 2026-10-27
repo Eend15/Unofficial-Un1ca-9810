@@ -69,31 +69,4 @@ public class ItemLedgerTest {
         assertFalse(ledger.hasMinimized());
     }
 
-    @Test
-    public void cyclingRotatesRingUntilNewItemAppears() {
-        ItemLedger ledger = new ItemLedger();
-        IslandItem a = item("a", IslandItem.Kind.LIVE, 3);
-        IslandItem b = item("b", IslandItem.Kind.LIVE, 2);
-        IslandItem c = item("c", IslandItem.Kind.LIVE, 1);
-        ledger.arrange(list(a, b, c), NONE, 1000);
-        assertTrue(ledger.cycle(1));
-        assertEquals(java.util.Arrays.asList("b", "c", "a"), keys(ledger.arrange(list(a, b, c), NONE, 1100).shown));
-        IslandItem d = item("d", IslandItem.Kind.LIVE, 9);
-        assertEquals("d", ledger.arrange(list(a, b, c, d), NONE, 1200).shown.get(0).key);
-    }
-
-    @Test
-    public void itemReturningFromForegroundIsDeferredThenFliesIn() {
-        ItemLedger ledger = new ItemLedger();
-        IslandItem x = item("x", IslandItem.Kind.LIVE, 1);
-        IslandItem y = item("y", IslandItem.Kind.LIVE, 2);
-        Set<String> hidden = new HashSet<>(Collections.singleton("x"));
-        ledger.arrange(list(y), hidden, 1000);
-        ItemLedger.Arrangement a = ledger.arrange(list(x, y), NONE, 2000);
-        assertEquals(Collections.singletonList("y"), keys(a.shown));
-        assertEquals(2260, a.nextDeferredAt);
-        a = ledger.arrange(list(x, y), NONE, 2300);
-        assertEquals("x", a.shown.get(0).key);
-        assertTrue(a.flyIn);
-    }
 }

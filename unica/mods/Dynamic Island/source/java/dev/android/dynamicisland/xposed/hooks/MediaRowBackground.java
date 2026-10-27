@@ -128,7 +128,7 @@ final class MediaRowBackground {
         });
     }
 
-    private static View findRow(View player) {
+    static View findRow(View player) {
         for (ViewParent parent = player.getParent(); parent != null; parent = parent.getParent()) {
             if (parent instanceof View && parent.getClass().getName().endsWith("ExpandableNotificationRow")) {
                 return (View) parent;

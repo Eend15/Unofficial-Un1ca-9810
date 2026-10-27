@@ -1,21 +1,22 @@
 package dev.android.dynamicisland.island.source;
 
+import dev.android.dynamicisland.testutil.RenderCapture;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Application;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.media.AudioManager;
 import android.os.BatteryManager;
 import android.os.Looper;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandHost;
 import dev.android.dynamicisland.island.view.IslandView;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,11 @@ import org.robolectric.shadows.ShadowSystemClock;
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = 35)
 public class EventSourceTest {
+    static {
+        // icons play as animations; draw their finished frame so renders do not depend on the clock
+        dev.android.dynamicisland.island.graphics.GlyphIcon.setPlaybackFrozen(true);
+    }
+
     private final IslandHost host = IslandHost.NONE;
 
     private static Intent battery(int level, int plugged) {
@@ -58,9 +64,7 @@ public class EventSourceTest {
         view.drawShadeCard(c, item, w);
         File dir = new File("build/render");
         dir.mkdirs();
-        try (FileOutputStream out = new FileOutputStream(new File(dir, name + ".png"))) {
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-        }
+        RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
 
     @Test
@@ -79,7 +83,7 @@ public class EventSourceTest {
         assertEquals(IslandItem.Kind.EVENT, it.kind);
         assertEquals("54%", it.trailingText.toString());
         assertEquals(0.54f, it.progress, 0.001f);
-        assertNotNull(it.icon);
+        assertNull(it.icon); // Battery pictograms are hidden by default.
         assertTrue(changes[0] > 0);
         render("event_charging", it);
 
@@ -113,21 +117,6 @@ public class EventSourceTest {
         ShadowSystemClock.advanceBy(Duration.ofSeconds(7));
         s.collect(out);
         assertTrue(out.isEmpty());
-    }
-
-    @Test
-    public void ringerModes() throws Exception {
-        EventSource s = source(new int[1]);
-        int[] modes = {AudioManager.RINGER_MODE_SILENT, AudioManager.RINGER_MODE_VIBRATE, AudioManager.RINGER_MODE_NORMAL};
-        String[] names = {"event_silent", "event_vibrate", "event_ring"};
-        for (int i = 0; i < modes.length; i++) {
-            s.onRinger(new Intent(AudioManager.RINGER_MODE_CHANGED_ACTION).putExtra(AudioManager.EXTRA_RINGER_MODE, modes[i]));
-            List<IslandItem> out = new ArrayList<>();
-            s.collect(out);
-            assertEquals(1, out.size());
-            render(names[i], out.get(0));
-            ShadowSystemClock.advanceBy(Duration.ofSeconds(3));
-        }
     }
 
     @Test
@@ -171,17 +160,4 @@ public class EventSourceTest {
         }
     }
 
-    @Test
-    public void torchBaselineIsNotAnEvent() {
-        EventSource s = source(new int[1]);
-        s.onTorch("0", false);   // registration reports the current state per camera
-        s.onTorch("1", false);
-        List<IslandItem> out = new ArrayList<>();
-        s.collect(out);
-        assertTrue(out.isEmpty());
-        s.onTorch("0", true);
-        s.collect(out);
-        assertEquals(1, out.size());
-        assertEquals("Flashlight on", out.get(0).title.toString());
-    }
 }

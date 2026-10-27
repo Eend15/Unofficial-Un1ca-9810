@@ -99,6 +99,7 @@ final class RulesScreen {
 
     String ruleName(String id) {
         switch (id) {
+            case "assistant": return str(R.string.rule_name_assistant);
             case "food": return str(R.string.rule_name_food);
             case "parcel": return str(R.string.rule_name_parcel);
             case "navigation": return str(R.string.rule_name_navigation);
@@ -118,6 +119,20 @@ final class RulesScreen {
 
     void listPage() {
         activity.subPage(str(R.string.rules_title));
+        LinearLayout master = ui.card(activity.page());
+        android.widget.Switch enabled = activity.toggle(master, R.string.setting_smart_rules, R.string.setting_smart_rules_desc, ModuleSettings.KEY_SMART_RULES, true);
+        LinearLayout cards = ui.card(activity.page());
+        Set<String> off = disabled();
+        for (RuleDictionary.SmartRule rule : everything().smartRules) {
+            ui.switchRow(cards, ruleName(rule.id), "", !off.contains(rule.id), on -> setEnabled(rule.id, on));
+        }
+        OneUi.setDependentsEnabled(enabled.isChecked(), cards);
+        OneUi.listen(enabled, on -> OneUi.setDependentsEnabled(on, cards));
+        ui.details(activity.page(), str(R.string.ui_details), str(R.string.rules_about));
+    }
+
+    void advancedPage() {
+        activity.subPage(str(R.string.ui_rules_advanced));
         LinearLayout master = ui.card(activity.page());
         activity.toggle(master, R.string.setting_smart_rules, R.string.setting_smart_rules_desc, ModuleSettings.KEY_SMART_RULES, true);
         ui.note(activity.page(), str(R.string.rules_about));

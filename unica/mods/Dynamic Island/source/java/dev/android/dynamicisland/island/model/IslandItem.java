@@ -4,6 +4,7 @@ import android.app.PendingIntent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.widget.RemoteViews;
+import dev.android.dynamicisland.island.graphics.ArtworkPalette;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -58,10 +59,19 @@ public final class IslandItem {
     public CharSequence title;
     /** Secondary line. */
     public CharSequence subtitle;
+    /** Optional leading identity beside the compact icon; the trailing value keeps its own space. */
+    public CharSequence compactLabel;
+    /** Explicit module-owned presentation; third-party notification layouts keep DEFAULT. */
+    public enum EventLayout { DEFAULT, BATTERY, DEVICE, STATUS }
+    public EventLayout eventLayout = EventLayout.DEFAULT;
+    public int batteryPercent = -1;
+    public boolean batteryCharging;
     /** Third line of a card (ongoing-activity detail text). */
     public CharSequence detail;
     /** Accessibility/long description; replaces the secondary line when present (OngoingActivityData.mDescription). */
     public CharSequence description;
+    /** Bounded layout hint for module-owned multi-line cards; ordinary notifications keep three lines. */
+    public int descriptionMaxLines = 3;
     /** Text shown at the trailing edge of the compact pill / card, see {@link Trailing#TEXT}. */
     public CharSequence trailingText;
     /** Name of the owning app, shown in the card header. */
@@ -97,8 +107,14 @@ public final class IslandItem {
     public int accent = -1;
     /** Background colour of the compact pill; 0 = default black. Set by the ongoing-activity and event sources. */
     public int pillColor;
+    /** Optional user accent for fills only; media, artwork and destructive controls retain their semantics. */
+    public int customAccent;
+    public int fillAccent() { return customAccent != 0 ? customAccent : accent; }
     /** Compact pill shows a pulsing dot instead of the icon (screen cast). */
     public boolean pulsingDot;
+    /** Positive Samsung voice-recorder identity, distinct from screen recording. */
+    public boolean voiceRecording;
+    public boolean voiceRecordingPaused;
     /** Android 16 ProgressStyle notification (title/text/progress/segments straight from the notification). */
     public boolean progressStyle;
     /** Custom RemoteViews content of an ongoing activity, hosted in the remote layer of the window. */
@@ -123,6 +139,9 @@ public final class IslandItem {
     public float progress = -1.0f;
     /** Chronometer base time in ms (start, or end when counting down); 0 = no chronometer. */
     public long chronoBase;
+    /** Recorder-only clock domain: immune to wall-clock changes; other sources keep their old path. */
+    public boolean chronoUsesElapsedRealtime;
+    public long chronoElapsedBase;
     /** The chronometer counts down to {@link #chronoBase}. */
     public boolean chronoCountDown;
     /** Stopwatch: show hundredths of a second. */
@@ -169,6 +188,8 @@ public final class IslandItem {
     public boolean playing;
     /** Album art. */
     public Bitmap art;
+    /** Immutable artwork gradient; null means renderers should fall back to {@link #accent}. */
+    public ArtworkPalette mediaPalette;
     /** Launcher icon of the playing app. */
     public Drawable appIcon;
     /** Monochrome version of {@link #appIcon} for the compact pill, may be null. */
@@ -225,6 +246,8 @@ public final class IslandItem {
 
     /** A button on a card: either a pending intent or a runnable. */
     public static final class Action {
+        /** Samsung recorder control: 0 unknown, 1 pause, 2 resume, 3 save/stop. */
+        public int recordingControl;
         /** Shown in its active state (e.g. mic muted). */
         public boolean active;
         /** Drawn in the destructive colour (hang up, decline). */
@@ -285,7 +308,7 @@ public final class IslandItem {
 
     /** True when the compact pill would look the same for both items, so it need not animate a swap. */
     public boolean sameCompactLook(IslandItem o) {
-        return o != null && Objects.equals(key, o.key) && trailing == o.trailing && (accent == o.accent || (isMedia && o.isMedia)) && iconIsImage == o.iconIsImage && pulsingDot == o.pulsingDot && pillColor == o.pillColor && hasTeams() == o.hasTeams();
+        return o != null && Objects.equals(key, o.key) && trailing == o.trailing && (accent == o.accent || (isMedia && o.isMedia)) && iconIsImage == o.iconIsImage && pulsingDot == o.pulsingDot && pillColor == o.pillColor && customAccent == o.customAccent && hasTeams() == o.hasTeams() && voiceRecording == o.voiceRecording && voiceRecordingPaused == o.voiceRecordingPaused;
     }
 
     @Override

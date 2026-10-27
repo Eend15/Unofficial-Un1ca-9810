@@ -61,6 +61,16 @@ final class OaReader {
         return all;
     }
 
+    /** Includes activities kept only in the Now Bar, for state checks independent of pill visibility. */
+    List<Object> allActivities() {
+        List<Object> all = activities();
+        Object map = Refl.getStatic(helper, "onlyShownNowbarItemMap");
+        if (map instanceof Map) {
+            all.addAll(((Map<?, ?>) map).values());
+        }
+        return all;
+    }
+
     /** The data object of the notification with this key, or null. */
     Object findByNotificationKey(String notificationKey) {
         for (Object data : activities()) {

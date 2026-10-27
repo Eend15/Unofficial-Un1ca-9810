@@ -8,6 +8,7 @@ import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.graphics.Glyphs;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +43,13 @@ public abstract class CardBody {
 
     /** Draws the body with its top-left corner at ({@code x}, {@code y}); {@code elapsed} is ms since it appeared. */
     public abstract void draw(Canvas canvas, float x, float y, float alpha, long elapsed);
+
+    /** One shape policy for the card fill, blur surface and connecting bridge. */
+    public final float cornerRadius(float maximum, float height) {
+        if (!ModuleSettings.customCardRoundness()) return Math.min(height / 2f, maximum);
+        // Limit tall cards so the rounding cannot cut into their first and last rows.
+        return Math.min(height / 2f, owner.dp(ModuleSettings.cardCornerRadiusDp()));
+    }
 
     /**
      * Draws what fills the whole card behind the content (e.g. the music glow) into {@code frame}, the card's
@@ -107,7 +115,9 @@ public abstract class CardBody {
         }
         owner.fillPaint.setColor(Colors.withAlpha(b.bg, alpha));
         c.drawOval(owner.tmpRect, owner.fillPaint);
-        float contentSize = owner.tmpRect.height() * (b.bg == Colors.TRANSPARENT_MARK ? 0.6f : 0.44f);
+        // Bare media custom actions use the same half-button icon size as previous/next. Their
+        // touch bounds stay unchanged; the old 60% scale made favorites look oversized (#2).
+        float contentSize = owner.tmpRect.height() * (b.bg == Colors.TRANSPARENT_MARK ? 0.5f : 0.44f);
         if (b.glyph != 0) {
             // a white fill gets a black glyph, anything else a white one
             owner.fillPaint.setColor(Colors.withAlpha(b.bg == Colors.WHITE ? Colors.BLACK : Colors.WHITE, alpha));
@@ -148,7 +158,8 @@ public abstract class CardBody {
             Btn btn = new Btn();
             btn.r.set((i * (buttonWidth + gap)) + sidePad, top, (i * (buttonWidth + gap)) + sidePad + buttonWidth, top + rowHeight);
             btn.label = action.title != null ? action.title.toString() : null;
-            btn.bg = action.destructive ? Colors.DESTRUCTIVE_RED : Colors.TRACK;
+            btn.bg = action.destructive ? Colors.DESTRUCTIVE_RED : item.customAccent != 0
+                    ? Colors.withAlpha(item.fillAccent(), android.graphics.Color.alpha(Colors.TRACK) / 255f) : Colors.TRACK;
             btn.action = action;
             buttons.add(btn);
         }

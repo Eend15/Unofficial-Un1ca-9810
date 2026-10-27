@@ -3,6 +3,8 @@ package dev.android.dynamicisland.xposed.hooks;
 import dev.android.dynamicisland.island.IslandController;
 import dev.android.dynamicisland.island.source.PromotedSource;
 import dev.android.dynamicisland.xposed.Refl;
+import dev.android.dynamicisland.settings.ModuleSettings;
+import dev.android.dynamicisland.xposed.Diagnostics;
 import dev.android.dynamicisland.xposed.SafeHook;
 import de.robv.android.xposed.XC_MethodHook;
 import java.lang.reflect.Constructor;
@@ -53,12 +55,28 @@ final class AospChips {
         }
         PromotedSource.setEnabled(true); // the live notification chips go too, the island has cards for them
         XC_MethodHook hook = SafeHook.before("chip bundle", param -> cover(param, calls));
+        int compatibility = 0;
+        for (String name : new String[]{"access$pickMostImportantChip", "access$createOutputModel", "createOutputModel"}) {
+            compatibility += Refl.hookAllHierarchy(cl, VIEW_MODEL, name, SafeHook.before("experimental chip bundle", p -> {
+                if (ModuleSettings.experimentalRecovery()) cover(p, calls);
+            }));
+        }
+        Diagnostics.fact("compatibility chip hooks", String.valueOf(compatibility));
         Refl.hookAll(cl, VIEW_MODEL, "rankChips", hook);
         Refl.hookAll(cl, VIEW_MODEL, "pickMostImportantChip", hook);
     }
 
     private static void cover(XC_MethodHook.MethodHookParam param, SystemUiHooks.CallCoverage calls) {
         Object bundle = param.args.length > 0 ? param.args[0] : null;
+        if (ModuleSettings.experimentalRecovery()) {
+            for (Object arg : param.args) {
+                if (arg != null && (Refl.field(arg.getClass(), "screenRecord") != null
+                        || Refl.field(arg.getClass(), "shareToApp") != null || Refl.field(arg.getClass(), "castToOtherDevice") != null)) {
+                    bundle = arg;
+                    break;
+                }
+            }
+        }
         if (bundle != null && takeOut(bundle, calls.covered(), true)) {
             IslandController island = IslandController.get();
             if (island != null) {
@@ -88,6 +106,12 @@ final class AospChips {
         if (notifsCovered && notifs instanceof java.util.List && !((java.util.List<?>) notifs).isEmpty()) {
             Refl.set(bundle, "notifs", java.util.Collections.emptyList());
         }
+        StringBuilder feed = new StringBuilder();
+        for (String slot : SLOTS) {
+            Object value = Refl.get(FEED, slot);
+            if (value != null) feed.append(slot).append('=').append(value.getClass().getSimpleName()).append(' ');
+        }
+        Diagnostics.fact("chip feed", feed.length() == 0 ? "empty" : feed.toString().trim());
         return changed;
     }
 
