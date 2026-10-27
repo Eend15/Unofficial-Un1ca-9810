@@ -9,7 +9,19 @@ from release_bridge import load_release_bridge
 
 def verify(work: Path, target: str) -> None:
     if target not in ("starlte","star2lte","crownlte"): raise RuntimeError("Unsupported target")
+    # Also covers cached/staged packaging: profile drift must fail before ZIP creation.
+    sys.path.insert(0, str(ROOT / "unica/patches/exynos9810_device_stack/exynos9810_finalization/performance"))
+    from performance_policy import verify as verify_performance
+    verify_performance(work, target)
+    sys.path.insert(0, str(ROOT / "unica/patches/exynos9810_device_stack/exynos9810_finalization/optional_apps"))
+    from samsung_cloud_policy import verify as verify_optional_cloud
+    verify_optional_cloud(work, target)
+    from optional_preload_policy import verify as verify_optional_preloads
+    verify_optional_preloads(work, target)
     system=work/"system/system"
+    sys.path.insert(0, str(ROOT / "unica/patches/exynos9810_device_stack/exynos9810_finalization/native_camera/aperture"))
+    from verify_aperture import verify as verify_camera_aperture
+    verify_camera_aperture(system/"priv-app/SamsungCamera/SamsungCamera.apk")
     with zipfile.ZipFile(system/"framework/services.jar") as z:
         if z.read("classes3.dex") != load_release_bridge():
             raise RuntimeError("Staged face bridge differs from verified source release")
