@@ -3190,13 +3190,14 @@ _EXYNOS9810_APPLY_BOOT_PROPS()
     _EXYNOS9810_SET_PROP_SYSTEM "persist.adb.tls_server.enable" "1"
     _EXYNOS9810_SET_PROP_SYSTEM "persist.sys.unica.nativeblur" "true"
 
-    # Match the proven Exynos8895/9810 compositor baseline. Keeping only three
-    # acquired buffers and allowing SurfaceFlinger backpressure avoids the
-    # extra queue latency that makes the One UI 8 quick panel feel heavy.
+    # Preserve existing buffer limits. Do not add the historical
+    # debug.sf.disable_backpressure flag: the installed Android 16
+    # SurfaceFlinger binary contains no matching property name and the
+    # S9+ frame trace does not demonstrate a backpressure root cause.
     _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" \
         "ro.surface_flinger.max_frame_buffer_acquired_buffers" "3"
-    _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" \
-        "debug.sf.disable_backpressure" "1"
+    _EXYNOS9810_DELETE_PROP_FILE "$WORK_DIR/vendor/build.prop" \
+        "debug.sf.disable_backpressure"
     _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" \
         "debug.sf.latch_unsignaled" "0"
 

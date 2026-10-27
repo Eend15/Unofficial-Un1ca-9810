@@ -1323,50 +1323,7 @@ _EXYNOS9810_FINAL_ENSURE_TARGET_IDENTITY()
 
 _EXYNOS9810_FINAL_RAM_TWEAKS()
 {
-    local FILE
-    local PROP
-
-    LOG "- Applying balanced Exynos9810 RAM profile"
-
-    # Keep the requested legacy framework profile in one property file so the
-    # Android property loader cannot see conflicting copies. The old boot-time
-    # ram_tweaks service remains disabled: it changed VM, I/O and GPU sysfs
-    # state after boot and caused reclaim storms on the 6 GB Exynos9810 build.
-    #
-    # The profile deliberately trims only cached/empty app slots. PSI LMKD,
-    # Samsung DHA whitelisting and the stock zram policy stay intact so alarms,
-    # wearables, push notifications, camera and Samsung framework services do
-    # not get killed just to make the memory meter look lower.
-    for FILE in \
-        "$WORK_DIR/vendor/build.prop" \
-        "$WORK_DIR/system/system/build.prop" \
-        "$WORK_DIR/system/product/etc/build.prop" \
-        "$WORK_DIR/system/system/product/etc/build.prop"; do
-        for PROP in \
-            ro.sys.fw.bg_apps_limit \
-            ro.sys.fw.bg_cached_ratio \
-            ro.config.dha_cached_max \
-            ro.config.dha_cached_min \
-            ro.config.dha_empty_max \
-            ro.config.dha_empty_min \
-            ro.config.dha_lmk_scale \
-            ro.config.dha_pwhitelist_enable \
-            persist.sys.fw.trim_enable_memory \
-            ro.sys.fw.use_trim_settings; do
-            _EXYNOS9810_FINAL_DELETE_PROP "$FILE" "$PROP"
-        done
-    done
-
-    FILE="$WORK_DIR/system/system/build.prop"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.sys.fw.bg_apps_limit" "20"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.sys.fw.bg_cached_ratio" "0.50"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_cached_max" "24"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_cached_min" "8"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_empty_max" "32"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_empty_min" "8"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_lmk_scale" "0.545"
-    _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.config.dha_pwhitelist_enable" "1"
-
+    LOG "- Applying shared Exynos9810 ART and target-specific cached-process policy"
     rm -f "$WORK_DIR/system/system/etc/init/ram_tweaks.rc" \
         "$WORK_DIR/system/system/bin/ram_tweaks.sh" \
         "$WORK_DIR/system/system_ext/etc/init/ram_tweaks.rc" \
@@ -1375,6 +1332,8 @@ _EXYNOS9810_FINAL_RAM_TWEAKS()
         "$WORK_DIR/system/vendor/bin/ram_tweaks.sh" \
         "$WORK_DIR/vendor/etc/init/ram_tweaks.rc" \
         "$WORK_DIR/vendor/bin/ram_tweaks.sh"
+    python3 "$MODPATH/performance/performance_policy.py" \
+        --work-dir "$WORK_DIR" --target "$TARGET_CODENAME" --apply || return 1
 }
 
 _EXYNOS9810_FINAL_ENSURE_DISPLAY_PROPS()
@@ -1388,8 +1347,11 @@ _EXYNOS9810_FINAL_ENSURE_DISPLAY_PROPS()
         "persist.sys.unica.nativeblur" "true"
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
         "ro.surface_flinger.max_frame_buffer_acquired_buffers" "3"
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
-        "debug.sf.disable_backpressure" "1"
+    # The legacy disable_backpressure property is absent from the shipped
+    # SurfaceFlinger binary. Do not claim that Buffer Stuffing is dropped
+    # frames or substitute an unmeasured compositor workaround.
+    _EXYNOS9810_FINAL_DELETE_PROP "$WORK_DIR/vendor/build.prop" \
+        "debug.sf.disable_backpressure"
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" \
         "debug.sf.latch_unsignaled" "0"
 }
@@ -6117,94 +6079,9 @@ _EXYNOS9810_FINAL_VERIFY_WEATHER_PAYLOAD()
 
 _EXYNOS9810_FINAL_VERIFY_RAM_PROFILE()
 {
-    local FILE
-    local PROFILE="$WORK_DIR/system/system/build.prop"
-    local EXPECTED
-    local PROP
-    local COUNT
-
-    LOG "- Verifying balanced Exynos9810 RAM profile"
-
-    [ -f "$PROFILE" ] || {
-        LOGE "System build.prop is missing while verifying the RAM profile"
-        return 1
-    }
-
-    for EXPECTED in \
-        "ro.sys.fw.bg_apps_limit=20" \
-        "ro.sys.fw.bg_cached_ratio=0.50" \
-        "ro.config.dha_cached_max=24" \
-        "ro.config.dha_cached_min=8" \
-        "ro.config.dha_empty_max=32" \
-        "ro.config.dha_empty_min=8" \
-        "ro.config.dha_lmk_scale=0.545" \
-        "ro.config.dha_pwhitelist_enable=1"; do
-        PROP="${EXPECTED%%=*}"
-        COUNT="$(grep -F -c "${PROP}=" "$PROFILE" || true)"
-        if [ "$COUNT" -ne 1 ] || ! grep -F -q "$EXPECTED" "$PROFILE"; then
-            LOGE "Requested RAM property is missing or duplicated: $EXPECTED"
-            return 1
-        fi
-    done
-
-    for FILE in \
-        "$WORK_DIR/vendor/build.prop" \
-        "$WORK_DIR/system/system/build.prop" \
-        "$WORK_DIR/system/product/etc/build.prop" \
-        "$WORK_DIR/system/system/product/etc/build.prop"; do
-        [ -f "$FILE" ] || continue
-        if grep -q -E '^(persist\.sys\.fw\.trim_enable_memory=|ro\.sys\.fw\.use_trim_settings=)' "$FILE"; then
-            LOGE "Removed trim override remains in $FILE"
-            return 1
-        fi
-    done
-
-    # Donor vendor files contain unrelated legacy ro.config.dha_* settings.
-    # Check only the exact profile properties so those valid donor settings do
-    # not look like duplicate copies of the requested profile.
-    for FILE in \
-        "$WORK_DIR/vendor/build.prop" \
-        "$WORK_DIR/system/product/etc/build.prop" \
-        "$WORK_DIR/system/system/product/etc/build.prop"; do
-        [ -f "$FILE" ] || continue
-        for PROP in \
-            ro.sys.fw.bg_apps_limit \
-            ro.sys.fw.bg_cached_ratio \
-            ro.config.dha_cached_max \
-            ro.config.dha_cached_min \
-            ro.config.dha_empty_max \
-            ro.config.dha_empty_min \
-            ro.config.dha_lmk_scale \
-            ro.config.dha_pwhitelist_enable; do
-            if grep -F -q "${PROP}=" "$FILE"; then
-                LOGE "RAM profile property is duplicated outside system/system/build.prop: ${PROP} in $FILE"
-                return 1
-            fi
-        done
-    done
-
-    [ ! -e "$WORK_DIR/system/system/etc/init/ram_tweaks.rc" ] || {
-        LOGE "Custom ram_tweaks init service remains in the final workdir"
-        return 1
-    }
-    [ ! -e "$WORK_DIR/system/system/bin/ram_tweaks.sh" ] || {
-        LOGE "Custom ram_tweaks helper remains in the final workdir"
-        return 1
-    }
-    for FILE in \
-        "$WORK_DIR/system/system_ext/etc/init/ram_tweaks.rc" \
-        "$WORK_DIR/system/system_ext/bin/ram_tweaks.sh" \
-        "$WORK_DIR/system/vendor/etc/init/ram_tweaks.rc" \
-        "$WORK_DIR/system/vendor/bin/ram_tweaks.sh" \
-        "$WORK_DIR/vendor/etc/init/ram_tweaks.rc" \
-        "$WORK_DIR/vendor/bin/ram_tweaks.sh"; do
-        [ ! -e "$FILE" ] || {
-            LOGE "Custom ram_tweaks file remains in the final workdir: $FILE"
-            return 1
-        }
-    done
-
-    return 0
+    LOG "- Verifying target-specific RAM and shared ART policy"
+    python3 "$MODPATH/performance/performance_policy.py" \
+        --work-dir "$WORK_DIR" --target "$TARGET_CODENAME" || return 1
 }
 
 _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH()
@@ -6843,8 +6720,8 @@ PY
         LOGE "Exynos9810 SurfaceFlinger buffer limit is not applied"
         return 1
     }
-    grep -q '^debug.sf.disable_backpressure=1$' "$WORK_DIR/vendor/build.prop" || {
-        LOGE "Exynos9810 SurfaceFlinger backpressure tuning is not applied"
+    if grep -q '^debug.sf.disable_backpressure=' "$WORK_DIR/vendor/build.prop"; then
+        LOGE "Unverified legacy SurfaceFlinger backpressure override remains"
         return 1
     }
     grep -q '^debug.sf.latch_unsignaled=0$' "$WORK_DIR/vendor/build.prop" || {
@@ -6935,7 +6812,7 @@ _EXYNOS9810_FINAL_VERIFY_ENFORCING_BOOT_STATE()
     [ -f "$CIL" ] || {
         LOGE "Final Exynos9810 vendor SELinux policy is missing"
         return 1
-    }
+    fi
 
     for RULE in \
         '(allow vendor_init radio_prop (file (read open getattr)))' \
@@ -7038,7 +6915,7 @@ _EXYNOS9810_FINAL_SET_HOME_LAYOUT
 _EXYNOS9810_FINAL_STAGE_LAUNCHER_DEFAULTS
 _EXYNOS9810_FINAL_ENABLE_NOW_BRIEF_WIDGET
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
-_EXYNOS9810_FINAL_RAM_TWEAKS
+_EXYNOS9810_FINAL_RAM_TWEAKS || return 1
 _EXYNOS9810_FINAL_ENSURE_DISPLAY_PROPS
 _EXYNOS9810_FINAL_PATCH_EXTERNAL_DISPLAY || return 1
 _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK
@@ -7073,7 +6950,7 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY
 _EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME
 _EXYNOS9810_FINAL_PATCH_CAMERA_PORTRAIT_RESUME
 _EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY
-_EXYNOS9810_FINAL_PATCH_CAMERA_QR_POPUP_CRASH
+_EXYNOS9810_FINAL_PATCH_CAMERA_QR_POPUP_CRASH || return 1
 _EXYNOS9810_FINAL_PATCH_CAMERA_SEAMLESS_ZOOM_GUARD
 _EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT
 _EXYNOS9810_FINAL_FIX_IMS_RADIO_TRANSPORT || return 1
