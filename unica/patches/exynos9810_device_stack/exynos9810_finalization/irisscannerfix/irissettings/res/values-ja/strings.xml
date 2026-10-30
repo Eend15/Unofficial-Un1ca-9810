@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">虹彩認証</string>
+    <string name="my_irises">虹彩データを削除</string>
+    <string name="register_irises">虹彩を登録</string>
+    <string name="iris_unlock">虹彩ロック解除</string>
+    <string name="iris_unlock_summary">虹彩認証で端末のロックを解除します。</string>
+    <string name="use_iris_first_lock">画面ON時に虹彩ロック解除</string>
+    <string name="use_iris_first_lock_summary">画面がONになると、スワイプせずに虹彩認証で端末のロックを解除します。</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">ロック画面を維持</string>
+    <string name="iris_stay_on_lockscreen_summary">虹彩認証でロックを解除する際に、スワイプするまでロック画面を維持します。</string>
+    <string name="tips_for_iris">虹彩認証のヒント</string>
+    <string name="iris_delete_popup_title">虹彩データを削除しますか？</string>
+    <string name="iris_delete_popup_message_with_related_func">虹彩認証を使用する機能がOFFになります。</string>
+    <string name="iris_register_summary">虹彩が登録されています。</string>
+    <string name="iris_add_summary">虹彩を登録してください。</string>
+    <string name="common_remove">削除</string>
+    <string name="iris_failed_to_register">虹彩の登録に失敗</string>
+    <string name="iris_eye_safety_msg">虹彩を認識できませんでした。</string>
+    <string name="iris_proximity_restriction_popop_message">端末を顔から離して持ち、再度実行してください。</string>
+    <string name="iris_sensor_not_working_popup_title">虹彩認証不可</string>
+    <string name="iris_sensor_not_working_msg">虹彩センサーが反応していません。後ほどお試しください。</string>
+    <string name="iris_hw_problem_msg">この問題が引き続き発生する場合、端末を再起動してください。</string>
+    <string name="lockpattern_retry_button_text">再試行</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Irisuri</string>
+    <string name="my_irises">Eliminare date privind irisul</string>
+    <string name="register_irises">Înregistrare irisuri</string>
+    <string name="iris_unlock">Deblocare cu iris</string>
+    <string name="iris_unlock_summary">Deblocați telefonul prin intermediul irisurilor.</string>
+    <string name="use_iris_first_lock">Recun. iris la pornirea ecranului</string>
+    <string name="use_iris_first_lock_summary">Deblocați telefonul cu ajutorul irisurilor imediat ce pornește ecranul, fără a-l glisa mai întâi.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Rămâneți pe ecranul de blocare</string>
+    <string name="iris_stay_on_lockscreen_summary">Atunci când deblocați utilizând recunoașterea prin iris, rămâneți pe ecranul de blocare până când glisați.</string>
+    <string name="tips_for_iris">Sfaturi pt. ut. recun. prin iris</string>
+    <string name="iris_delete_popup_title">Eliminați datele despre iris?</string>
+    <string name="iris_delete_popup_message_with_related_func">Caracteristicile care utilizează irisurile vor fi oprite.</string>
+    <string name="iris_register_summary">Irisurile dvs. au fost înregistrate.</string>
+    <string name="iris_add_summary">Înregistrați irisurile dvs.</string>
+    <string name="common_remove">Eliminare</string>
+    <string name="iris_failed_to_register">Nu s-au putut înregistra irisurile</string>
+    <string name="iris_eye_safety_msg">Irisurile dvs. nu au fost recunoscute.</string>
+    <string name="iris_proximity_restriction_popop_message">Țineți telefonul mai departe de față și încercați din nou.</string>
+    <string name="iris_sensor_not_working_popup_title">Recunoașterea prin iris nu funcționează</string>
+    <string name="iris_sensor_not_working_msg">Senzorul pentru iris nu răspunde. Încercați din nou mai târziu.</string>
+    <string name="iris_hw_problem_msg">Dacă eroarea persistă, reporniți telefonul.</string>
+    <string name="lockpattern_retry_button_text">Reîncerc.</string>
+</resources>

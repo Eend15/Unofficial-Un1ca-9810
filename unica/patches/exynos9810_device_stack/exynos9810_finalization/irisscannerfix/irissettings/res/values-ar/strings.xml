@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">بصمة العينين</string>
+    <string name="my_irises">إزالة بيانات بصمة العين</string>
+    <string name="register_irises">تسجيل بصمة العينين</string>
+    <string name="iris_unlock">إلغاء القفل بواسطة بصمة العين</string>
+    <string name="iris_unlock_summary">ألغِ قفل هاتفك باستخدام بصمة عينيك.</string>
+    <string name="use_iris_first_lock">التعرف على بصمة العين لتشغيل الشاشة</string>
+    <string name="use_iris_first_lock_summary">ألغِ قفل هاتفك بواسطة بصمة عينيك عند تشغيل الشاشة من دون سحبها أولاً.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">البقاء على شاشة القفل</string>
+    <string name="iris_stay_on_lockscreen_summary">عندما تقوم بإلغاء القفل بواسطة ميزة التعرف على بصمة العين، ابقَ على شاشة القفل حتى تقوم بالسحب.</string>
+    <string name="tips_for_iris">تلميحات حول استخدام وظيفة التعرف على بصمة العين</string>
+    <string name="iris_delete_popup_title">هل تريد إزالة بيانات بصمة العين؟</string>
+    <string name="iris_delete_popup_message_with_related_func">سيتم إيقاف تشغيل الميزات التي تستخدم بصمة العينين.</string>
+    <string name="iris_register_summary">تم تسجيل بصمة عينيك.</string>
+    <string name="iris_add_summary">سجّل بصم العينين.</string>
+    <string name="common_remove">إزالة</string>
+    <string name="iris_failed_to_register">تعذر تسجيل بصمة العينين</string>
+    <string name="iris_eye_safety_msg">لم يتم التعرف على بصمة عينيك.</string>
+    <string name="iris_proximity_restriction_popop_message">أبعد هاتفك عن وجهك أكثر وحاول مرة أخرى.</string>
+    <string name="iris_sensor_not_working_popup_title">التعرف على بصمة العين لا يعمل</string>
+    <string name="iris_sensor_not_working_msg">مستشعر بصمة العين لا يستجيب. حاول مرة أخرى لاحقاً.</string>
+    <string name="iris_hw_problem_msg">إذا استمر هذا الخطأ، فأعد تشغيل هاتفك.</string>
+    <string name="lockpattern_retry_button_text">حاول ثانية</string>
+</resources>

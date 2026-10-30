@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iriset</string>
+    <string name="my_irises">Hiqi të dhënat e iriseve</string>
+    <string name="register_irises">Regjistro iriset</string>
+    <string name="iris_unlock">Zhbllokim me iris</string>
+    <string name="iris_unlock_summary">Zhbllokoje telefonin me anë të iriseve.</string>
+    <string name="use_iris_first_lock">Njohja iris në ekran të ndezur</string>
+    <string name="use_iris_first_lock_summary">Zhbllokoje telefonin me iriset sapo të ndizet ekrani, pa rrëshqitur më parë.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Rri në Ekranin e bllokimit</string>
+    <string name="iris_stay_on_lockscreen_summary">Kur të zhbllokosh përmes njohjes me irise, rri në Ekranin e bllokimit derisa të rrëshqasësh.</string>
+    <string name="tips_for_iris">Këshilla për njohjen me iris</string>
+    <string name="iris_delete_popup_title">T’i heq të dhënat e iriseve?</string>
+    <string name="iris_delete_popup_message_with_related_func">Funksionalitetet që përdorin irise do të fiken.</string>
+    <string name="iris_register_summary">Iriset e tua u regjistruan.</string>
+    <string name="iris_add_summary">Regjistro iriset.</string>
+    <string name="common_remove">Largo</string>
+    <string name="iris_failed_to_register">S’i regjistrova dot iriset</string>
+    <string name="iris_eye_safety_msg">Iriset e tua nuk u njohën.</string>
+    <string name="iris_proximity_restriction_popop_message">Mbaje telefonin më larg nga fytyra dhe provo sërish.</string>
+    <string name="iris_sensor_not_working_popup_title">Njohja me iris nuk po punon</string>
+    <string name="iris_sensor_not_working_msg">Sensori i irisit nuk po përgjigjet. Provo sërish më vonë.</string>
+    <string name="iris_hw_problem_msg">Nëse kjo përsëritet, rinise telefonin.</string>
+    <string name="lockpattern_retry_button_text">Provo përsëri</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Augnskanni</string>
+    <string name="my_irises">Fjarlægja lithimnugögn</string>
+    <string name="register_irises">Skráðu lithimnurnar</string>
+    <string name="iris_unlock">Opna með augnskanna</string>
+    <string name="iris_unlock_summary">Nota augnskanna til að taka símann úr lás.</string>
+    <string name="use_iris_first_lock">Augnskanni á lásskjá</string>
+    <string name="use_iris_first_lock_summary">Taka símann úr lás með augnskanna þegar kviknar á skjánum, án þess að strjúka fyrst.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Vera áfram á lásskjá</string>
+    <string name="iris_stay_on_lockscreen_summary">Vera áfram á lásskjá þangað til strokið er yfir skjáinn, eftir að tekið er úr lás með augnskanna.</string>
+    <string name="tips_for_iris">Notkun lithimnugreiningar</string>
+    <string name="iris_delete_popup_title">Viltu fjarlægja lithimnugögn?</string>
+    <string name="iris_delete_popup_message_with_related_func">Slökkt verður á eiginleikum sem nota lithimnur.</string>
+    <string name="iris_register_summary">Lithimnur hafa verið skráðar.</string>
+    <string name="iris_add_summary">Skráðu lithimnurnar þínar.</string>
+    <string name="common_remove">Fjarlægja</string>
+    <string name="iris_failed_to_register">Ekki tókst að skrá lithimnurnar</string>
+    <string name="iris_eye_safety_msg">Lithimnurnar þínar voru ekki greindar.</string>
+    <string name="iris_proximity_restriction_popop_message">Haltu símanum fjær andlitinu og reyndu aftur.</string>
+    <string name="iris_sensor_not_working_popup_title">Augnskanninn virkar ekki</string>
+    <string name="iris_sensor_not_working_msg">Lithimnuskynjarinn svarar ekki. Reyndu aftur síðar.</string>
+    <string name="iris_hw_problem_msg">Ef þetta kemur ítrekað fyrir skaltu endurræsa símann.</string>
+    <string name="lockpattern_retry_button_text">Reyna aftur</string>
+</resources>

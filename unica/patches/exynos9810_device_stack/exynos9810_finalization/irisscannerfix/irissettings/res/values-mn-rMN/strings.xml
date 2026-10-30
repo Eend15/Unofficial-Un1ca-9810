@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Солонгон бүрхэвч</string>
+    <string name="my_irises">Сол. бүрхэвчийн өгөгдлийг арилга</string>
+    <string name="register_irises">Солонгон бүр. бүртгүүлэх</string>
+    <string name="iris_unlock">Соло.н бүрхэвчээр түгжээ тайлах</string>
+    <string name="iris_unlock_summary">Утасныхаа түгжээг солонгон бүрхэвчээрээ тайл.</string>
+    <string name="use_iris_first_lock">Дэлгц ассн үе.н со.бүрхвч танлт</string>
+    <string name="use_iris_first_lock_summary">Дэлгэц асмагц шудралгүйгээр солонгон бүрхэвчээр утасныхаа түгжээг тайл.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Түгжих дэлгэц дээр байх</string>
+    <string name="iris_stay_on_lockscreen_summary">Солонгон бүрхэвч танилтаар түгжээ тайлахдаа, шудрах хүртлээ Түгжих дэлгэц дээр барь.</string>
+    <string name="tips_for_iris">Сол. бүрхэвч таниулах зөвлөмж</string>
+    <string name="iris_delete_popup_title">Солонгон бүрхэвчийн өгөгдлийг арилгах уу?</string>
+    <string name="iris_delete_popup_message_with_related_func">Солонгон бүрхэвч ашигладаг функцуудыг унтраана.</string>
+    <string name="iris_register_summary">Таны солонгон бүрхэвч бүртгэгдсэн.</string>
+    <string name="iris_add_summary">Солонгон бүрхэвчээ бүртгүүл.</string>
+    <string name="common_remove">Арилгах</string>
+    <string name="iris_failed_to_register">Солонгон бүрхэвч бүртгэх боломжгүй</string>
+    <string name="iris_eye_safety_msg">Таны солонгон бүрхэвч танигдаагүй.</string>
+    <string name="iris_proximity_restriction_popop_message">Утсаа нүүрнээсээ холдуулж бариад дахин оролд.</string>
+    <string name="iris_sensor_not_working_popup_title">Солонгон бүрхэвч таних боломжгүй</string>
+    <string name="iris_sensor_not_working_msg">Солонгон бүрхэвч мэдрэгч хариу үйлдэл үзүүлэхгүй байна. Дараа дахин оролд.</string>
+    <string name="iris_hw_problem_msg">Энэ дахин тохиолдоод байвал утсаа унтрааж асаана уу.</string>
+    <string name="lockpattern_retry_button_text">Ахин орлд</string>
+</resources>

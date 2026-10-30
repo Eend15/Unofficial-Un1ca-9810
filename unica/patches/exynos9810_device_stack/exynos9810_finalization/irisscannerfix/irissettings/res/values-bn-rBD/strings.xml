@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">চোখের মণি</string>
+    <string name="my_irises">চোখের মণির ডাটা অপসারণ করুন</string>
+    <string name="register_irises">চোখের মণি নিবন্ধন করুন</string>
+    <string name="iris_unlock">চোখের মণি দ্বারা আনলক</string>
+    <string name="iris_unlock_summary">আপনার চোখের মণি দিয়ে আপনার ফোন আনলক করুন৷</string>
+    <string name="use_iris_first_lock">স্ক্রিন চালু হলেই চোখের মণি শনাক্তকরণ</string>
+    <string name="use_iris_first_lock_summary">স্ক্রিন চালু হওয়ার পর প্রথমে সোয়াইপ করা ব্যতিরেকে আপনার চোখের মণির সাহায্যে ফোন আনলক করুন।</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">লক স্ক্রিনে থাকুন</string>
+    <string name="iris_stay_on_lockscreen_summary">আপনি চোখের মণি শনাক্তকরণের মাধ্যমে আনলক করার সময়, সোয়াইপ না করা পর্যন্ত লক স্ক্রিনে থাকুন৷</string>
+    <string name="tips_for_iris">চোখের মণি শনাক্তকরণ ব্যবহারের পরামর্শ</string>
+    <string name="iris_delete_popup_title">চোখের মণির ডাটা অপসারণ করবেন?</string>
+    <string name="iris_delete_popup_message_with_related_func">চোখের মণি ব্যবহারকারী ফিচারগুলো বন্ধ হবে৷</string>
+    <string name="iris_register_summary">আপনার চোখের মণি নিবন্ধিত হয়েছে৷</string>
+    <string name="iris_add_summary">আপনার চোখের মণি নিবন্ধন করুন৷</string>
+    <string name="common_remove">অপসারণ</string>
+    <string name="iris_failed_to_register">চোখের মণি নিবন্ধন করা যায়নি</string>
+    <string name="iris_eye_safety_msg">আপনার চোখের মণি শনাক্ত হয়নি৷</string>
+    <string name="iris_proximity_restriction_popop_message">আপনার ফোন আপনার মুখ থেকে আরো দূরে ধরুন এবং আবার চেষ্টা করুন৷</string>
+    <string name="iris_sensor_not_working_popup_title">চোখের মণি শনাক্তকরণ কাজ করছে না</string>
+    <string name="iris_sensor_not_working_msg">চোখের মণির সেন্সর সাড়া দিচ্ছে না। পরে আবার চেষ্টা করুন।</string>
+    <string name="iris_hw_problem_msg">এটি ঘটতে থাকলে, আপনার ফোন পুনরায় চালু করুন৷</string>
+    <string name="lockpattern_retry_button_text">পুন. চেষ্টা</string>
+</resources>

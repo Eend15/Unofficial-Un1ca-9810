@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Irisak</string>
+    <string name="my_irises">Kendu irisen datuak</string>
+    <string name="register_irises">Erregistratu irisak</string>
+    <string name="iris_unlock">Iris bidez desblokeatzea</string>
+    <string name="iris_unlock_summary">Desblokeatu telefonoa irisak erabilita.</string>
+    <string name="use_iris_first_lock">Pant. iris bidezko hautematea</string>
+    <string name="use_iris_first_lock_summary">Desblokeatu telefonoa irisekin pantaila aktibatu bezain laster, hatza irristatu behar izan gabe.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Gelditu Blokeo pantailan</string>
+    <string name="iris_stay_on_lockscreen_summary">Iris bidezko hautematearekin desblokeatuz gero, gelditu Blokeo pantailan irristatu arte.</string>
+    <string name="tips_for_iris">Irisen hautematearen aholkuak</string>
+    <string name="iris_delete_popup_title">Irisen datuak kendu?</string>
+    <string name="iris_delete_popup_message_with_related_func">Irisak darabiltzaten eginbideak desaktibatuko dira.</string>
+    <string name="iris_register_summary">Erregistratu dira irisak.</string>
+    <string name="iris_add_summary">Erregistratu irisak.</string>
+    <string name="common_remove">Kendu</string>
+    <string name="iris_failed_to_register">Ezin izan dira erregistratu irisak</string>
+    <string name="iris_eye_safety_msg">Ez dira hauteman irisak.</string>
+    <string name="iris_proximity_restriction_popop_message">Eutsi telefonoari aurpegitik urrutiago eta saiatu berriz.</string>
+    <string name="iris_sensor_not_working_popup_title">Irisen hautemateak ez du funtzionatzen</string>
+    <string name="iris_sensor_not_working_msg">Irisen sentsoreak ez du erantzuten. Saiatu berriz geroago.</string>
+    <string name="iris_hw_problem_msg">Arazoak badirau, berrabiarazi telefonoa.</string>
+    <string name="lockpattern_retry_button_text">Berriro saiatu</string>
+</resources>

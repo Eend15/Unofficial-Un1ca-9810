@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Dúhovky</string>
+    <string name="my_irises">Odstrániť údaje o dúhovkách</string>
+    <string name="register_irises">Registrovať dúhovky</string>
+    <string name="iris_unlock">Odomknutie dúhovkou</string>
+    <string name="iris_unlock_summary">Umožňuje odomykať telefón dúhovkami.</string>
+    <string name="use_iris_first_lock">Rozp. dúhoviek pri zapnutí obr.</string>
+    <string name="use_iris_first_lock_summary">Môžete odomknúť telefón pomocou dúhoviek hneď po zapnutí obrazovky bez predchádzajúceho potiahnutia.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Zostať na zamknutej obrazovke</string>
+    <string name="iris_stay_on_lockscreen_summary">Po odomknutí pomocou rozpoznávania dúhoviek zostane až do potiahnutia prstom zobrazená zamknutá obrazovka.</string>
+    <string name="tips_for_iris">Tipy na rozpoznávanie dúhoviek</string>
+    <string name="iris_delete_popup_title">Chcete odstrániť údaje o dúhovkách?</string>
+    <string name="iris_delete_popup_message_with_related_func">Funkcie, ktoré používajú dúhovky, sa vypnú.</string>
+    <string name="iris_register_summary">Vaše dúhovky sa zaregistrovali.</string>
+    <string name="iris_add_summary">Zaregistrujte svoje dúhovky.</string>
+    <string name="common_remove">Odstrániť</string>
+    <string name="iris_failed_to_register">Nepodarilo sa zaregistrovať dúhovky</string>
+    <string name="iris_eye_safety_msg">Vaše dúhovky sa nerozpoznali.</string>
+    <string name="iris_proximity_restriction_popop_message">Podržte telefón ďalej od svojej tváre a skúste to znova.</string>
+    <string name="iris_sensor_not_working_popup_title">Rozpoznávanie dúhoviek nefunguje</string>
+    <string name="iris_sensor_not_working_msg">Snímač dúhoviek nereaguje. Skúste to znova neskôr.</string>
+    <string name="iris_hw_problem_msg">Ak tento problém pretrváva, reštartujte telefón.</string>
+    <string name="lockpattern_retry_button_text">Opakovať</string>
+</resources>

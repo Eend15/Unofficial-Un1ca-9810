@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">홍채</string>
+    <string name="my_irises">홍채 데이터 삭제</string>
+    <string name="register_irises">홍채 등록</string>
+    <string name="iris_unlock">홍채 잠금해제</string>
+    <string name="iris_unlock_summary">휴대전화 잠금을 해제할 때 홍채를 사용해요.</string>
+    <string name="use_iris_first_lock">화면이 켜지면 홍채 인식 사용</string>
+    <string name="use_iris_first_lock_summary">화면이 켜지면 화면을 밀지 않고 홍채로 휴대전화 잠금을 바로 해제할 수 있어요.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">잠금화면 유지</string>
+    <string name="iris_stay_on_lockscreen_summary">홍채 인식으로 잠금을 해제할 때, 잠금이 해제되어도 화면을 밀기 전까지는 잠금화면을 유지합니다.</string>
+    <string name="tips_for_iris">홍채 인식 사용에 대한 도움말</string>
+    <string name="iris_delete_popup_title">홍채 데이터 삭제</string>
+    <string name="iris_delete_popup_message_with_related_func">홍채를 사용하는 기능이 모두 꺼집니다.</string>
+    <string name="iris_register_summary">등록된 홍채가 있어요.</string>
+    <string name="iris_add_summary">홍채를 등록하세요.</string>
+    <string name="common_remove">삭제</string>
+    <string name="iris_failed_to_register">홍채 등록 안 됨</string>
+    <string name="iris_eye_safety_msg">홍채가 인식되지 않았어요.</string>
+    <string name="iris_proximity_restriction_popop_message">휴대전화를 멀리 떨어뜨린 후 다시 해보세요.</string>
+    <string name="iris_sensor_not_working_popup_title">홍채 인식 안 됨</string>
+    <string name="iris_sensor_not_working_msg">홍채 센서가 응답하지 않습니다. 나중에 다시 해보세요.</string>
+    <string name="iris_hw_problem_msg">이 현상이 지속되면 휴대전화를 다시 시작하세요.</string>
+    <string name="lockpattern_retry_button_text">다시 시도</string>
+</resources>

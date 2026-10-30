@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iris</string>
+    <string name="my_irises">Hapus data iris</string>
+    <string name="register_irises">Daftarkan iris</string>
+    <string name="iris_unlock">Buka kunci iris</string>
+    <string name="iris_unlock_summary">Membuka kunci ponsel dengan iris Anda.</string>
+    <string name="use_iris_first_lock">Pengenalan iris layar aktif</string>
+    <string name="use_iris_first_lock_summary">Buka kunci ponsel dengan iris segera setelah layar hidup, tanpa mengusapnya terlebih dahulu.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Tetap di Layar kunci</string>
+    <string name="iris_stay_on_lockscreen_summary">Saat membuka kunci dengan pengenalan iris, tetaplah pada Layar kunci sampai Anda mengusap.</string>
+    <string name="tips_for_iris">Kiat penggunaan pengenalan iris</string>
+    <string name="iris_delete_popup_title">Hapus data iris?</string>
+    <string name="iris_delete_popup_message_with_related_func">Fitur yang menggunakan iris akan dinonaktifkan.</string>
+    <string name="iris_register_summary">Iris Anda sudah terdaftar.</string>
+    <string name="iris_add_summary">Daftarkan iris Anda.</string>
+    <string name="common_remove">Hapus</string>
+    <string name="iris_failed_to_register">Tidak dapat mendaftarkan iris</string>
+    <string name="iris_eye_safety_msg">Iris Anda tidak dikenali.</string>
+    <string name="iris_proximity_restriction_popop_message">Pegang ponsel lebih jauh dari wajah dan coba lagi.</string>
+    <string name="iris_sensor_not_working_popup_title">Pengenalan iris tidak berfungsi</string>
+    <string name="iris_sensor_not_working_msg">Sensor iris tidak merespons. Coba lagi nanti.</string>
+    <string name="iris_hw_problem_msg">Jika ini terus berlangsung, mulai ulang telepon Anda.</string>
+    <string name="lockpattern_retry_button_text">Coba ulang</string>
+</resources>

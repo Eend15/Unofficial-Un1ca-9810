@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Šarenice očiju</string>
+    <string name="my_irises">Ukloni podatke šarenice oka</string>
+    <string name="register_irises">Registr. šarenice očiju</string>
+    <string name="iris_unlock">Otključavanje šarenicom oka</string>
+    <string name="iris_unlock_summary">Otključajte telefon šarenicama očiju.</string>
+    <string name="use_iris_first_lock">Uklj. ekrana prepozn. šarenica</string>
+    <string name="use_iris_first_lock_summary">Otključajte telefon šarenicama očiju čim se ekran uključi, bez prethodnog prevlačenja prstom.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Ostani na Zaključanom ekranu</string>
+    <string name="iris_stay_on_lockscreen_summary">Pri otključavanju prepoznavanjem šarenica očiju, ostanite na Zaključanom ekranu dok ne prevučete.</string>
+    <string name="tips_for_iris">Savj. za korišt. prep. šaren.</string>
+    <string name="iris_delete_popup_title">Ukloniti podatke šarenice oka?</string>
+    <string name="iris_delete_popup_message_with_related_func">Funkcije koje koriste šarenice očiju će biti isključene.</string>
+    <string name="iris_register_summary">Vaše šarenice očiju su registrovane.</string>
+    <string name="iris_add_summary">Registrujte svoje šarenice očiju.</string>
+    <string name="common_remove">Ukloni</string>
+    <string name="iris_failed_to_register">Ne mogu se registrovati šarenice očiju</string>
+    <string name="iris_eye_safety_msg">Vaše šarenice očiju nisu prepoznate.</string>
+    <string name="iris_proximity_restriction_popop_message">Držite telefon na većoj udaljenosti od lica i pokušajte ponovno.</string>
+    <string name="iris_sensor_not_working_popup_title">Prepoznavanje šarenice oka ne funkcioniše</string>
+    <string name="iris_sensor_not_working_msg">Senzor za šarenicu oka ne reaguje. Pokušajte ponovno kasnije.</string>
+    <string name="iris_hw_problem_msg">Ako se ovo nastavi događati, ponovno pokrenite telefon.</string>
+    <string name="lockpattern_retry_button_text">Pokušaj ponovno</string>
+</resources>

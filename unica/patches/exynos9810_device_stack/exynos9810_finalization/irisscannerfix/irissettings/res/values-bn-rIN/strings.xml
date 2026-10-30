@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">আইরিশগুলি</string>
+    <string name="my_irises">আইরিশ তথ্য অপসারণ করুন</string>
+    <string name="register_irises">আইরিশগুলি নিবন্ধন করা</string>
+    <string name="iris_unlock">আইরিশ আনলক</string>
+    <string name="iris_unlock_summary">আপনার আইরিশগুলি ব্যবহার করে আপনার ফোন আনলক করুন।</string>
+    <string name="use_iris_first_lock">স্ক্রিন-চালু আইরিশ স্বীকৃতি</string>
+    <string name="use_iris_first_lock_summary">স্ক্রিনটি চালু হলেই, প্রথমে সোয়াইপ না করে আপনার আইরিশগুলির সাহায্যে আপনার ফোনটি আনলক করুন।</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">লক স্ক্রিনে থাকুন</string>
+    <string name="iris_stay_on_lockscreen_summary">আপনি আইরিশ স্বীকৃতির সাহায্যে আনলক করলে আপনি সোয়াইপ না করা অবধি লক স্ক্রিনে থাকুন।</string>
+    <string name="tips_for_iris">আইরিশ শনাক্তকরণ ব্যব. করার টিপস</string>
+    <string name="iris_delete_popup_title">আইরিশ তথ্য অপসারণ করবেন?</string>
+    <string name="iris_delete_popup_message_with_related_func">আইরিশ ব্যবহার করে এমন বৈশিষ্ট্যগুলি বন্ধ হবে।</string>
+    <string name="iris_register_summary">আপনার আইরিশগুলি নিবন্ধন করা হয়েছে।</string>
+    <string name="iris_add_summary">আপনার আইরিশগুলি নিবন্ধন করুন।</string>
+    <string name="common_remove">অপসারণ</string>
+    <string name="iris_failed_to_register">আইরিশগুলি নিবন্ধন করা যায়নি</string>
+    <string name="iris_eye_safety_msg">আপনার আইরিশগুলি শনাক্ত হয়নি।</string>
+    <string name="iris_proximity_restriction_popop_message">আপনার ফোনটি আপনার মুখের থেকে অনেকটা দূরে ধরুন ও আবার চেষ্টা করুন।</string>
+    <string name="iris_sensor_not_working_popup_title">আইরিশ স্বীকৃতি কাজ করছে না</string>
+    <string name="iris_sensor_not_working_msg">আইরিশ সেন্সর প্রতিক্রিয়া জানাচ্ছে না। পরে আবার চেষ্টা করুন।</string>
+    <string name="iris_hw_problem_msg">এটি ঘটতে থাকলে, আপনার ফোন পুনঃশুরু করুন।</string>
+    <string name="lockpattern_retry_button_text">রিট্রাই</string>
+</resources>

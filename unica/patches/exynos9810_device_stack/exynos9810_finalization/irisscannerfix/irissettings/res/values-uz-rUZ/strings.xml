@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Ko‘z pardalari</string>
+    <string name="my_irises">Ko‘z pardasi ma’l. o‘chirish</string>
+    <string name="register_irises">Ko‘z parda-ni ro‘yxat. ol</string>
+    <string name="iris_unlock">Ko‘z parda b-n blokdan chiqar</string>
+    <string name="iris_unlock_summary">Telefoningizni ko‘zingiz pardasi yordamida blokdan chiqaring.</string>
+    <string name="use_iris_first_lock">Ekranda ko‘z pardasini tanish</string>
+    <string name="use_iris_first_lock_summary">Surmasingizdan avval, ekran yoqilishi bilanoq ko‘z pardasi yordamida telefoningizni blokdan chiqaring.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Bloklash ekranida qolish</string>
+    <string name="iris_stay_on_lockscreen_summary">Ko‘z pardasini tanishda yordamida blokdan chiqarganingizda, surishdan oldin Bloklash ekranida turing.</string>
+    <string name="tips_for_iris">Ko‘z parda. ishat. maslahatlar</string>
+    <string name="iris_delete_popup_title">Ko‘z pardasi ma’l. olib tashlansinmi?</string>
+    <string name="iris_delete_popup_message_with_related_func">Ko‘z pardalaridan foydalanadigan funksiyalar o‘chiriladi.</string>
+    <string name="iris_register_summary">Ko‘z pardalari ro‘yxatga olindi.</string>
+    <string name="iris_add_summary">Ko‘z pardangizini ro‘yxatdan o‘tkazing.</string>
+    <string name="common_remove">Ol/tashla</string>
+    <string name="iris_failed_to_register">Ko‘z pardalarini ro‘yxatga olib bo‘lmadi</string>
+    <string name="iris_eye_safety_msg">Ko‘z pardalaringizni tanib bo‘lmadi.</string>
+    <string name="iris_proximity_restriction_popop_message">Telefoningizni yuzingizdan uzoqroq ushlang va qayta urinib ko‘ring.</string>
+    <string name="iris_sensor_not_working_popup_title">Ko‘z pardasini tanish ishlamayapti</string>
+    <string name="iris_sensor_not_working_msg">Ko‘z pardasi sensori javob bermayapti. Keyinroq qayta urinib ko‘ring.</string>
+    <string name="iris_hw_problem_msg">Ushbu holat davom etsa, telefonni qayta ishga tushiring.</string>
+    <string name="lockpattern_retry_button_text">Qay/urin.</string>
+</resources>

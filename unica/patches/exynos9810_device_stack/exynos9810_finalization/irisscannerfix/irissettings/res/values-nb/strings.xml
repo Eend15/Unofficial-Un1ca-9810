@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iriser</string>
+    <string name="my_irises">Fjern irisdata</string>
+    <string name="register_irises">Registrer iriser</string>
+    <string name="iris_unlock">Irisopplåsing</string>
+    <string name="iris_unlock_summary">Lås opp telefonen med irisene dine.</string>
+    <string name="use_iris_first_lock">Skjerm på-irisgjenkjenning</string>
+    <string name="use_iris_first_lock_summary">Lås opp telefonen med irisene dine så snart skjermen slås på, uten å stryke først.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Bli på låseskjermen</string>
+    <string name="iris_stay_on_lockscreen_summary">Når du låser opp med irisgjenkjenning, blir du på låseskjermen til du stryker.</string>
+    <string name="tips_for_iris">Tips om bruk av irisgjenkjenn.</string>
+    <string name="iris_delete_popup_title">Vil du fjerne irisdata?</string>
+    <string name="iris_delete_popup_message_with_related_func">Funksjoner som bruker iriser, blir slått av.</string>
+    <string name="iris_register_summary">Irisene er registrert.</string>
+    <string name="iris_add_summary">Registrer irisene.</string>
+    <string name="common_remove">Fjern</string>
+    <string name="iris_failed_to_register">Kunne ikke registrere iriser</string>
+    <string name="iris_eye_safety_msg">Irisene ble ikke gjenkjent.</string>
+    <string name="iris_proximity_restriction_popop_message">Hold telefonen lengre unna ansiktet, og prøv igjen.</string>
+    <string name="iris_sensor_not_working_popup_title">Irisgjenkjenning fungerer ikke</string>
+    <string name="iris_sensor_not_working_msg">Irissensoren svarer ikke. Prøv igjen senere.</string>
+    <string name="iris_hw_problem_msg">Hvis dette fortsetter å skje, starter du telefonen på nytt.</string>
+    <string name="lockpattern_retry_button_text">Prøv igjen</string>
+</resources>

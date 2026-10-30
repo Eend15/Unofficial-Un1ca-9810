@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iris</string>
+    <string name="my_irises">Irisdaten entfernen</string>
+    <string name="register_irises">Iris registrieren</string>
+    <string name="iris_unlock">Iriserkennung</string>
+    <string name="iris_unlock_summary">Ihr Telefon per Iris entsperren.</string>
+    <string name="use_iris_first_lock">Iriserkennung bei akt. Bilds.</string>
+    <string name="use_iris_first_lock_summary">Ihr Telefon, sobald der Bildschirm eingeschaltet wird, mit Ihrer Iris entsperren, ohne erst streichen zu müssen.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Auf Sperrbildschirm bleiben</string>
+    <string name="iris_stay_on_lockscreen_summary">Wenn Sie mit der Iriserkennung entsperren, bleiben Sie auf dem Sperrbildschirm, bis Sie streichen.</string>
+    <string name="tips_for_iris">Tipps für die Iriserkennung</string>
+    <string name="iris_delete_popup_title">Irisdaten entfernen?</string>
+    <string name="iris_delete_popup_message_with_related_func">Funktionen, die Iris verwenden, werden ausgeschaltet.</string>
+    <string name="iris_register_summary">Ihre Iris wurden registriert.</string>
+    <string name="iris_add_summary">Ihre Iris registrieren.</string>
+    <string name="common_remove">Entfernen</string>
+    <string name="iris_failed_to_register">Irisregistrierung nicht möglich</string>
+    <string name="iris_eye_safety_msg">Ihre Iris wurde nicht erkannt.</string>
+    <string name="iris_proximity_restriction_popop_message">Halten Sie Ihr Telefon weiter von Ihrem Gesicht entfernt und versuchen Sie es erneut.</string>
+    <string name="iris_sensor_not_working_popup_title">Iriserkennung funktioniert nicht</string>
+    <string name="iris_sensor_not_working_msg">Der Irissensor reagiert nicht. Versuchen Sie es später erneut.</string>
+    <string name="iris_hw_problem_msg">Wenn dieses Problem bestehen bleibt, starten Sie Ihr Telefon neu.</string>
+    <string name="lockpattern_retry_button_text">Wiederholen</string>
+</resources>

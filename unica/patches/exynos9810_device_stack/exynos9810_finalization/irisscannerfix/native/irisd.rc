@@ -1,0 +1,16 @@
+service irisd /system/bin/irisd
+    class late_start
+    user system
+    group system
+    # Android 16 ABI glue for the Android 8-era iris libraries (libgui Surface/ConsumerListener).
+    setenv LD_PRELOAD libiris_a10_shim.so
+
+# SecIrisService sets this while the IR camera runs. HyperHAL refuses its own boost
+# request, so hold a cpufreq floor here; the iris TEE gets more frames per scan.
+on property:sys.un1ca.iris_boost=1
+    write /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq 1924000
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 1794000
+
+on property:sys.un1ca.iris_boost=0
+    write /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq 650000
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 455000

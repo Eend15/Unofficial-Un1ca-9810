@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">മിഴിപടലങ്ങൾ</string>
+    <string name="my_irises">മിഴിപടല ഡാറ്റ നീക്കംചെയ്യുക</string>
+    <string name="register_irises">മിഴിപടലങ്ങൾ രജിസ്റ്റർ ചെയ്യുക</string>
+    <string name="iris_unlock">മിഴിപടല അൺലോക്ക്</string>
+    <string name="iris_unlock_summary">മിഴിപടലങ്ങൾ ഉപയോഗിച്ച് നിങ്ങളുടെ ഫോൺ അൺലോക്ക് ചെയ്യുക.</string>
+    <string name="use_iris_first_lock">സ്ക്രീൻ-മിഴിപടലം തിരിച്ചറിയൽ ഓൺ ചെയ്യുക</string>
+    <string name="use_iris_first_lock_summary">സ്കീൻ ഓൺ ചെയ്യപ്പെടുന്ന ഉടനെ ആദ്യം സ്വൈപ് ചെയ്യാതെ നിങ്ങളുടെ മിഴിപടലങ്ങൾ ഉപയോഗിച്ച് ഫോൺ അൺലോക്ക് ചെയ്യുക.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">ലോക്ക് സ്ക്രീനിൽ തുടരുക</string>
+    <string name="iris_stay_on_lockscreen_summary">മിഴിപടല തിരിച്ചറിയൻ നിങ്ങൾ അൺലോക്ക് ചെയ്യുമ്പോൾ, നിങ്ങൾ സ്വൈപ് ചെയ്യുന്നത് വരെ ലോക്ക് സ്ക്രീനിൽ തുടരുക.</string>
+    <string name="tips_for_iris">മിഴിപടല തിരിച്ചറിയൽ ഉപയോഗിക്കുന്നതിനുള്ള വിവരശകലങ്ങൾ</string>
+    <string name="iris_delete_popup_title">മിഴിപടല ഡാറ്റ നീക്കംചെയ്യണോ?</string>
+    <string name="iris_delete_popup_message_with_related_func">മിഴിപടലങ്ങൾ ഉപയോഗിക്കുന്ന സവിശേഷതകൾ ഓഫാകും.</string>
+    <string name="iris_register_summary">നിങ്ങളുടെ മിഴിപടലങ്ങൾ രജിസ്റ്റര്‍ ചെയ്യപ്പെട്ടു.</string>
+    <string name="iris_add_summary">നിങ്ങളുടെ മിഴിപടലങ്ങൾ രജിസ്റ്റർ ചെയ്യുക.</string>
+    <string name="common_remove">നീ.ചെയ്യുക</string>
+    <string name="iris_failed_to_register">മിഴിപടലങ്ങൾ രജിസ്റ്റർ ചെയ്യാനായില്ല</string>
+    <string name="iris_eye_safety_msg">നിങ്ങളുടെ മിഴിപടലങ്ങളെ തിരിച്ചറിഞ്ഞില്ല.</string>
+    <string name="iris_proximity_restriction_popop_message">നിങ്ങളുടെ മുഖത്തുനിന്നും കൂടുതൽ അകലത്തിൽ ഫോൺ പിടിച്ച് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="iris_sensor_not_working_popup_title">മിഴിപടല തിരിച്ചറിയൽ പ്രവർത്തിക്കുന്നില്ല</string>
+    <string name="iris_sensor_not_working_msg">മിഴിപടല സെന്‍സര്‍ പ്രതികരിക്കുന്നില്ല. പിന്നീട് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="iris_hw_problem_msg">ഇത് സംഭവിച്ചുകൊണ്ടിരിക്കുന്നുവെങ്കിൽ, നിങ്ങളുടെ ഫോൺ പുനരാരംഭിക്കുക.</string>
+    <string name="lockpattern_retry_button_text">വീണ്ടും ശ്രമിക്കുക</string>
+</resources>

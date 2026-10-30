@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">కనుపాపలు</string>
+    <string name="my_irises">కనుపాప డేటాని తీసివేయి</string>
+    <string name="register_irises">కనుపాపలను నమోదు చేయి</string>
+    <string name="iris_unlock">కనుపాప అన్‌లాక్</string>
+    <string name="iris_unlock_summary">మీ కనుపాపలతో మీ ఫోన్‌ని అన్‌లాక్ చేయండి.</string>
+    <string name="use_iris_first_lock">కనుపాప గుర్తింపు స్క్రీన్ ఆన్ చేయి</string>
+    <string name="use_iris_first_lock_summary">మీ కనుపాపలతో మీ ఫోన్‌ని అన్‌లాక్ చేయడం ద్వారా మొదట స్వైప్ చేయకుండానే వెంటనే స్క్రీన్ ఆన్ అవుతుంది.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">లాక్ స్క్రీన్‌లో ఉంటుంది</string>
+    <string name="iris_stay_on_lockscreen_summary">మీరు కనుపాప గుర్తింపుతో అన్‌లాక్ చేసినప్పుడు, మీరు స్వైప్ చేసే వరకు లాక్ స్క్రీన్ అలాగే ఉంటుంది.</string>
+    <string name="tips_for_iris">కనుపాప గుర్తింపును ఉపయోగించడం కోసం చిట్కాలు</string>
+    <string name="iris_delete_popup_title">కనుపాప డేటాను తీసివేయాలా?</string>
+    <string name="iris_delete_popup_message_with_related_func">కనుపాపలను ఉపయోగించే ఫీచర్‌లు ఆఫ్ చేయబడతాయి.</string>
+    <string name="iris_register_summary">మీ కనుపాపలు నమోదు చేయబడ్డాయి.</string>
+    <string name="iris_add_summary">మీ కనుపాపలను నమోదు చేయండి.</string>
+    <string name="common_remove">తీసివేయి</string>
+    <string name="iris_failed_to_register">కనుపాపలను నమోదు చేయలేరు</string>
+    <string name="iris_eye_safety_msg">మీ కనుపాపలు గుర్తించబడలేదు.</string>
+    <string name="iris_proximity_restriction_popop_message">మీ ముఖం నుండి దూరంగా మీ ఫోన్‌ని పట్టుకోండి మరియు తర్వాత మళ్లీ ప్రయత్నించండి.</string>
+    <string name="iris_sensor_not_working_popup_title">కనుపాప గుర్తింపు పని చేయడం లేదు</string>
+    <string name="iris_sensor_not_working_msg">కనుపాప సెన్సార్ ప్రతిస్పందించడం లేదు. తర్వాత మళ్లీ ప్రయత్నించండి.</string>
+    <string name="iris_hw_problem_msg">ఇలా జరుగుతూ ఉంటే, మీ ఫోన్‌ని పునఃప్రారంభించండి.</string>
+    <string name="lockpattern_retry_button_text">మళ్ళీ ప్రయత్నించు</string>
+</resources>

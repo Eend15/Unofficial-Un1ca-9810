@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">ប្រស្រីភ្នែក</string>
+    <string name="my_irises">លុប​ទិន្នន័យ​ប្រស្រីភ្នែក</string>
+    <string name="register_irises">ចុះបញ្ជី​ប្រស្រីភ្នែក</string>
+    <string name="iris_unlock">ប្រស្រីភ្នែក​ដោះសោ</string>
+    <string name="iris_unlock_summary">ដោះសោ​ទូរសព្ទ​របស់​អ្នក​ដោយ​ប្រើ​ប្រស្រីភ្នែក​របស់​អ្នក។</string>
+    <string name="use_iris_first_lock">ការស្គាល់​ប្រស្រីភ្នែក​ពេល​បើក​អេក្រង់</string>
+    <string name="use_iris_first_lock_summary">ដោះសោ​ទូរសព្ទ​របស់​អ្នក​ដោយ​ប្រើ​ប្រស្រីភ្នែក​របស់​អ្នក​ភ្លាមៗ​នៅពេល​អេក្រង់​បើក ដោយ​មិន​អូស​ជាមុន។</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">ស្ថិតលើ​អេក្រង់​ជាប់សោ</string>
+    <string name="iris_stay_on_lockscreen_summary">នៅពេល​អ្នក​ដោះសោ​ជាមួយ​ការស្គាល់​ប្រស្រីភ្នែក សូម​ស្ថិត​លើ​អេក្រង់​ជាប់សោ​រហូត​ដល់​ពេល​អ្នក​អូស។</string>
+    <string name="tips_for_iris">បណ្ណែ​សម្រាប់​ការប្រើ​ការទទួលស្គាល់​ប្រស្រីភ្នែក</string>
+    <string name="iris_delete_popup_title">លុប​ទិន្នន័យ​ប្រស្រីភ្នែក?</string>
+    <string name="iris_delete_popup_message_with_related_func">មុខងារ​ដែល​ប្រើ​ប្រស្រីភ្នែក​នឹង​ត្រូវ​បាន​បិទ។</string>
+    <string name="iris_register_summary">ប្រស្រីភ្នែក​របស់​អ្នក​ត្រូវ​បាន​ចុះបញ្ជី។</string>
+    <string name="iris_add_summary">ចុះបញ្ជី​ប្រស្រីភ្នែក​របស់​អ្នក។</string>
+    <string name="common_remove">លុប</string>
+    <string name="iris_failed_to_register">មិន​អាច​ចុះបញ្ជី​ប្រស្រីភ្នែក</string>
+    <string name="iris_eye_safety_msg">មិន​ស្គាល់​ប្រស្រីភ្នែក​របស់​អ្នក។</string>
+    <string name="iris_proximity_restriction_popop_message">កាន់​ទូរសព្ទ​របស់​អ្នក​ឆ្ងាយ​បន្តិច​ពី​ផ្ទៃមុខ​របស់​អ្នក ហើយ​សាកល្បង​ម្ដងទៀត។</string>
+    <string name="iris_sensor_not_working_popup_title">ការទទួលស្គាល់​ប្រស្រីភ្នែក​មិន​ដំណើរការ</string>
+    <string name="iris_sensor_not_working_msg">សិនសឺ​ប្រស្រីភ្នែក​មិន​ឆ្លើយតប។ សាកល្បង​ម្ដងទៀត​ពេលក្រោយ។</string>
+    <string name="iris_hw_problem_msg">បើ​វា​នៅតែ​កើតឡើង សូម​ចាប់ផ្ដើម​ទូរសព្ទ​របស់​អ្នក​ឡើងវិញ។</string>
+    <string name="lockpattern_retry_button_text">សាក​ល្បង​ម្តង​ទៀត</string>
+</resources>

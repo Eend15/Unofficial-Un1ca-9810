@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iris</string>
+    <string name="my_irises">"Supprimer les données d'iris"</string>
+    <string name="register_irises">Enregistrement des iris</string>
+    <string name="iris_unlock">Déverrouillage par iris</string>
+    <string name="iris_unlock_summary">Déverrouillez votre téléphone avec vos iris.</string>
+    <string name="use_iris_first_lock">"Reco. iris à allumage de l'écran"</string>
+    <string name="use_iris_first_lock_summary">"Déverrouillez votre téléphone avec vos iris dès que l'écran s'allume, sans glissement préalable."</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Rester sur écran de verrouillage</string>
+    <string name="iris_stay_on_lockscreen_summary">"Lorsque vous effectuez un déverrouillage avec la reconnaissance par iris, restez sur l'écran de verrouillage jusqu'à ce que vous glissiez un doigt."</string>
+    <string name="tips_for_iris">Astuces pr utilis. reconn. iris</string>
+    <string name="iris_delete_popup_title">"Supprimer les données d'iris ?"</string>
+    <string name="iris_delete_popup_message_with_related_func">Les fonctions qui utilisent les iris seront désactivées.</string>
+    <string name="iris_register_summary">Vos iris ont été enregistrés.</string>
+    <string name="iris_add_summary">Enregistrez vos iris.</string>
+    <string name="common_remove">Supprimer</string>
+    <string name="iris_failed_to_register">"Impossible d'enregistrer les iris"</string>
+    <string name="iris_eye_safety_msg">"Vos iris n'ont pas été reconnus."</string>
+    <string name="iris_proximity_restriction_popop_message">Éloignez votre téléphone de votre visage et réessayez.</string>
+    <string name="iris_sensor_not_working_popup_title">Dysfonction. de la reconnaissance par iris</string>
+    <string name="iris_sensor_not_working_msg">"Le capteur d'iris ne répond pas. Réessayez ultérieurement."</string>
+    <string name="iris_hw_problem_msg">Si cela se reproduit, redémarrez votre téléphone.</string>
+    <string name="lockpattern_retry_button_text">Réessayer</string>
+</resources>

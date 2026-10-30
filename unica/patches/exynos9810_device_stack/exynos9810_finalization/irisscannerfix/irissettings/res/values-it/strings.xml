@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iridi</string>
+    <string name="my_irises">"Rimuovi i dati sull'iride"</string>
+    <string name="register_irises">Registra iridi</string>
+    <string name="iris_unlock">Sblocco con iride</string>
+    <string name="iris_unlock_summary">Sbloccate il telefono con le iridi.</string>
+    <string name="use_iris_first_lock">Riconoscimento iride su schermo</string>
+    <string name="use_iris_first_lock_summary">Sbloccate il telefono con le iridi non appena lo schermo si accende senza dover trascinare lo schermo.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Resta su schermata di blocco</string>
+    <string name="iris_stay_on_lockscreen_summary">Quando è attivo lo sblocco con il riconoscimento delle iridi, rimane sulla schermata di blocco finché non trascinate.</string>
+    <string name="tips_for_iris">Suggerimenti per riconosc. iridi</string>
+    <string name="iris_delete_popup_title">"Rimuovere i dati sull'iride?"</string>
+    <string name="iris_delete_popup_message_with_related_func">Le funzioni che utilizzano le iridi verranno disattivate.</string>
+    <string name="iris_register_summary">Le iridi sono state registrate.</string>
+    <string name="iris_add_summary">Registrate le iridi.</string>
+    <string name="common_remove">Rimuovi</string>
+    <string name="iris_failed_to_register">Impossibile registrare le iridi</string>
+    <string name="iris_eye_safety_msg">Le iridi non sono state riconosciute.</string>
+    <string name="iris_proximity_restriction_popop_message">Tenete il telefono più lontano dal viso e riprovate.</string>
+    <string name="iris_sensor_not_working_popup_title">"Riconoscimento dell'iride non funzionante"</string>
+    <string name="iris_sensor_not_working_msg">Il sensore delle iridi non risponde. Riprovate più tardi.</string>
+    <string name="iris_hw_problem_msg">Se il problema persiste, riavviate il telefono.</string>
+    <string name="lockpattern_retry_button_text">Riprova</string>
+</resources>

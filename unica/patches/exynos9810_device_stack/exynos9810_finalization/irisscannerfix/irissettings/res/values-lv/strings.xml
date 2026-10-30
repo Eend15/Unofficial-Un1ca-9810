@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Varavīksnenes</string>
+    <string name="my_irises">Noņemt varavīksnenes datus</string>
+    <string name="register_irises">Varavīksneņu reģistrēšana</string>
+    <string name="iris_unlock">Atbloķēšana ar varavīksneni</string>
+    <string name="iris_unlock_summary">Atbloķējiet savu tālruni ar savām varavīksnenēm.</string>
+    <string name="use_iris_first_lock">Varavīksnenes atpazīšana ekrānā</string>
+    <string name="use_iris_first_lock_summary">Atbloķējiet tālruni ar varavīksnenēm, tiklīdz ekrāns tiek ieslēgts, neveicot pavilkšanu.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Palikt bloķēšanas ekrānā</string>
+    <string name="iris_stay_on_lockscreen_summary">Kad atbloķējat, izmantojot varavīksnenes atpazīšanu, palieciet bloķēšanas ekrānā, līdz pavelkat.</string>
+    <string name="tips_for_iris">Varavīksnenes atpazīš. ieteik.</string>
+    <string name="iris_delete_popup_title">Vai noņemt varavīksnes datus?</string>
+    <string name="iris_delete_popup_message_with_related_func">Funkcijas, kas izmanto varavīksnenes, tiks izslēgtas.</string>
+    <string name="iris_register_summary">Jūsu varavīksnenes ir reģistrētas.</string>
+    <string name="iris_add_summary">Reģistrējiet savas varavīksnenes.</string>
+    <string name="common_remove">Noņemt</string>
+    <string name="iris_failed_to_register">Nevarēja reģistrēt varavīksnenes</string>
+    <string name="iris_eye_safety_msg">Jūsu varavīksnenes netika atpazītas.</string>
+    <string name="iris_proximity_restriction_popop_message">Turiet tālruni tālāk no sejas un mēģiniet vēlreiz.</string>
+    <string name="iris_sensor_not_working_popup_title">Varavīksnenes atpazīšana nedarbojas</string>
+    <string name="iris_sensor_not_working_msg">Varavīksnenes sensors nereaģē. Mēģiniet vēlreiz vēlāk.</string>
+    <string name="iris_hw_problem_msg">Ja tā notiek atkārtoti, restartējiet tālruni.</string>
+    <string name="lockpattern_retry_button_text">Atkārtot</string>
+</resources>

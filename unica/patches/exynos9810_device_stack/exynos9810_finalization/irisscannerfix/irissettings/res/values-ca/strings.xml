@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iris</string>
+    <string name="my_irises">"Eliminar les dades d'iris"</string>
+    <string name="register_irises">"Registrar l'iris"</string>
+    <string name="iris_unlock">"Desbloqueig d'iris"</string>
+    <string name="iris_unlock_summary">"Desbloquegi el telèfon amb l'iris."</string>
+    <string name="use_iris_first_lock">"Reconeix d'iris amb pant activada"</string>
+    <string name="use_iris_first_lock_summary">"Desbloquegi el telèfon amb l'iris tan aviat com la pantalla s'activi, sense lliscar abans."</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Seguir a la Pantalla de bloqueig</string>
+    <string name="iris_stay_on_lockscreen_summary">"Quan desbloquegis amb el reconeixement d'iris, mantén-te a la Pantalla de bloqueig fins que la desplacis."</string>
+    <string name="tips_for_iris">Consells utilit reconeixem iris</string>
+    <string name="iris_delete_popup_title">"Vol eliminar les dades d'iris?"</string>
+    <string name="iris_delete_popup_message_with_related_func">"Es desactivaran les funcions que utilitzen l'iris."</string>
+    <string name="iris_register_summary">"S'ha registrat l'iris."</string>
+    <string name="iris_add_summary">"Registri l'iris."</string>
+    <string name="common_remove">Eliminar</string>
+    <string name="iris_failed_to_register">"No s'ha pogut registrar l'iris"</string>
+    <string name="iris_eye_safety_msg">"No s'ha reconegut l'iris."</string>
+    <string name="iris_proximity_restriction_popop_message">Mantingui el telèfon més lluny de la cara i torni-ho a intentar.</string>
+    <string name="iris_sensor_not_working_popup_title">"El reconeixement d'iris no funciona"</string>
+    <string name="iris_sensor_not_working_msg">"El sensor d'iris no respon. Torni-ho a intentar més tard."</string>
+    <string name="iris_hw_problem_msg">Si segueix passant, reiniciï el telèfon.</string>
+    <string name="lockpattern_retry_button_text">Reintent</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Инабияҳо</string>
+    <string name="my_irises">Нест кардани иттилооти инабияҳо</string>
+    <string name="register_irises">Қайд кардани инабияҳо</string>
+    <string name="iris_unlock">Озодкунӣ бо инабия</string>
+    <string name="iris_unlock_summary">Телефонро бо инабияҳои худ озод кунед.</string>
+    <string name="use_iris_first_lock">Шнхтгрии инабияҳо бо экр фрзн</string>
+    <string name="use_iris_first_lock_summary">Телефонро дарҳол баъди фурӯзон шудани экран бидуни пешакӣ молидан бо инабияҳо озод кунед.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Дар экрани Бандкунӣ мондан</string>
+    <string name="iris_stay_on_lockscreen_summary">Вақте ки дастгоҳро бо шинохтагирии инабияҳо озод мекунед, то экранро молидан дар экрани Бандкунӣ мемонед.</string>
+    <string name="tips_for_iris">Маслиҳатҳои ташхиси пардаи чашм</string>
+    <string name="iris_delete_popup_title">Иттилооти инабияҳоро нест кунем?</string>
+    <string name="iris_delete_popup_message_with_related_func">Хусусиятҳое, ки инабияҳоро истифода мебаранд, хомӯш карда мешаванд.</string>
+    <string name="iris_register_summary">Инабияҳои шумо қайд карда шуданд.</string>
+    <string name="iris_add_summary">Инабияҳои худро қайд кунед.</string>
+    <string name="common_remove">Нест к-н</string>
+    <string name="iris_failed_to_register">Қайд кардани инабияҳо барор наёфт</string>
+    <string name="iris_eye_safety_msg">Инабияҳои шумо шинохта нашуданд.</string>
+    <string name="iris_proximity_restriction_popop_message">Телефонро аз рӯятон дуртар нигоҳ дошта, кӯшишро такрор кунед.</string>
+    <string name="iris_sensor_not_working_popup_title">Шинохтагирии инабияҳо кор намекунад</string>
+    <string name="iris_sensor_not_working_msg">Сенсори инабия посух намедиҳад. Кӯшишро дертар такрор кунед.</string>
+    <string name="iris_hw_problem_msg">Агар ин такрор шудан гирад, телефонро аз нав ба кор дароред.</string>
+    <string name="lockpattern_retry_button_text">Кӯшиши дубора</string>
+</resources>

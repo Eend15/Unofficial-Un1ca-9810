@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Irissen</string>
+    <string name="my_irises">Irisgegevens wissen</string>
+    <string name="register_irises">Irissen registreren</string>
+    <string name="iris_unlock">Iris ontgrendelen</string>
+    <string name="iris_unlock_summary">Ontgrendel uw telefoon met uw irissen.</string>
+    <string name="use_iris_first_lock">Scherm aan met irisherkenning</string>
+    <string name="use_iris_first_lock_summary">Ontgrendel uw telefoon met uw irissen zodra het scherm wordt ingeschakeld, zonder eerst te vegen.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Op vergrendelscherm blijven</string>
+    <string name="iris_stay_on_lockscreen_summary">Wanneer u ontgrendelt met irisherkenning, blijft u op het Vergrendelscherm totdat u veegt.</string>
+    <string name="tips_for_iris">Tips gebruik irisherkenning</string>
+    <string name="iris_delete_popup_title">Irisgegevens verwijderen?</string>
+    <string name="iris_delete_popup_message_with_related_func">Functies die irissen gebruiken worden uitgeschakeld.</string>
+    <string name="iris_register_summary">Uw irissen zijn geregistreerd.</string>
+    <string name="iris_add_summary">Registreer uw irissen.</string>
+    <string name="common_remove">Verwijder</string>
+    <string name="iris_failed_to_register">Kan irissen niet registreren</string>
+    <string name="iris_eye_safety_msg">Uw irissen zijn niet herkend.</string>
+    <string name="iris_proximity_restriction_popop_message">Houd uw telefoon verder van uw gezicht en probeer het opnieuw.</string>
+    <string name="iris_sensor_not_working_popup_title">Irisherkenning werkt niet</string>
+    <string name="iris_sensor_not_working_msg">De irissensor reageert niet. Probeer het later opnieuw.</string>
+    <string name="iris_hw_problem_msg">Als dit blijft gebeuren, start u uw telefoon opnieuw.</string>
+    <string name="lockpattern_retry_button_text">Opnieuw</string>
+    <string name="manage_irises">Irissen beheren</string>
+    <string name="iris_verification">Irisverificatie</string>
+</resources>

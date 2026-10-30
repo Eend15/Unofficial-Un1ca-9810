@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iirikset</string>
+    <string name="my_irises">Poista iiristiedot</string>
+    <string name="register_irises">Rekisteröi iirikset</string>
+    <string name="iris_unlock">Lukituksen poisto iiriksellä</string>
+    <string name="iris_unlock_summary">Poista puhelimen lukitus iiriksillä.</string>
+    <string name="use_iris_first_lock">Iiriksen tunn. näytön käynnist.</string>
+    <string name="use_iris_first_lock_summary">Poista puhelimen lukitus iiriksillä heti näytön käynnistyessä pyyhkäisemättä näyttöä ensin.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Pysy lukitusnäytössä</string>
+    <string name="iris_stay_on_lockscreen_summary">Kun poistat lukituksen iiriksen tunnistuksella, pysy lukitusnäytössä, kunnes pyyhkäiset.</string>
+    <string name="tips_for_iris">Vihjeitä iiriksen tunn. käyttöön</string>
+    <string name="iris_delete_popup_title">Poistetaanko iiristiedot?</string>
+    <string name="iris_delete_popup_message_with_related_func">Iiriksiä käyttävät toiminnot poistetaan käytöstä.</string>
+    <string name="iris_register_summary">Iiriksesi on rekisteröity.</string>
+    <string name="iris_add_summary">Rekisteröi iiriksesi.</string>
+    <string name="common_remove">Poista</string>
+    <string name="iris_failed_to_register">Iiristen rekisteröinti epäonnistui</string>
+    <string name="iris_eye_safety_msg">Iiriksiäsi ei tunnistettu.</string>
+    <string name="iris_proximity_restriction_popop_message">Pidä puhelinta kauempana kasvoistasi ja yritä uudelleen.</string>
+    <string name="iris_sensor_not_working_popup_title">Iiriksen tunnistus ei toimi</string>
+    <string name="iris_sensor_not_working_msg">Iiristunnistin ei vastaa. Yritä myöhemmin uudelleen.</string>
+    <string name="iris_hw_problem_msg">Jos ongelma jatkuu, käynnistä puhelin uudelleen.</string>
+    <string name="lockpattern_retry_button_text">Yr. uud.</string>
+</resources>

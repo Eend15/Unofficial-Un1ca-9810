@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Dužice</string>
+    <string name="my_irises">Ukloni podatke o dužici</string>
+    <string name="register_irises">Registruj dužice</string>
+    <string name="iris_unlock">Otključavanje dužicom</string>
+    <string name="iris_unlock_summary">Otključajte telefon pomoću dužica.</string>
+    <string name="use_iris_first_lock">Prep. dužice na uključenom ekranu</string>
+    <string name="use_iris_first_lock_summary">Otključavanje telefona pomoću dužica čim se ekran uključi, bez prethodnog prevlačenja prstom.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Ostani na zaključanom ekranu</string>
+    <string name="iris_stay_on_lockscreen_summary">Kada otključate pomoću prepoznavanja dužica, ostaje na zaključanom ekranu dok ne prevučete.</string>
+    <string name="tips_for_iris">Saveti za upotrebu prep. dužice</string>
+    <string name="iris_delete_popup_title">Ukloniti podatke o dužici?</string>
+    <string name="iris_delete_popup_message_with_related_func">Funkcije koje koriste dužice će biti isključene.</string>
+    <string name="iris_register_summary">Dužice su registrovane.</string>
+    <string name="iris_add_summary">Registrujte dužice.</string>
+    <string name="common_remove">Ukloni</string>
+    <string name="iris_failed_to_register">Dužice nisu registrovane</string>
+    <string name="iris_eye_safety_msg">Dužice nisu prepoznate.</string>
+    <string name="iris_proximity_restriction_popop_message">Držite telefon dalje od lica i pokušajte ponovo.</string>
+    <string name="iris_sensor_not_working_popup_title">Funkcija Prepoznavanje dužice ne radi</string>
+    <string name="iris_sensor_not_working_msg">Senzor za dužicu ne reaguje. Pokušaj ponovo kasnije.</string>
+    <string name="iris_hw_problem_msg">Ukoliko se ovo stalno ponavlja, restartujte telefon.</string>
+    <string name="lockpattern_retry_button_text">Pokušaj ponovo</string>
+</resources>

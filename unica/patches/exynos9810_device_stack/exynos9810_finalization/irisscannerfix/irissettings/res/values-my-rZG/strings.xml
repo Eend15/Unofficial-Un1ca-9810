@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">မ်က္ဝန္းမ်ား</string>
+    <string name="my_irises">မ်က္ဝန္း ေဒတာကုိ ဖယ္ရွားပါ</string>
+    <string name="register_irises">မ်က္ဝန္းမ်ား မွတ္ပုံတင္ပါ</string>
+    <string name="iris_unlock">မ်က္ဝန္းျဖင့္ ေသာ့ဖြင့္မႈ</string>
+    <string name="iris_unlock_summary">သင့္မ်က္ဝန္းမ်ားသံုးၿပီး သင့္ဖုန္းကုိ ေသာ့ဖြင့္ပါ။</string>
+    <string name="use_iris_first_lock">မ်က္ဝန္းမွတ္သားနည္း သံုးသည့္အခါ ဖန္သားျပင္ပြင့္ျခင္း</string>
+    <string name="use_iris_first_lock_summary">ဖုန္းကို ဖန္သားျပင္ဖြင့္သည္ႏွင့္ခ်က္ခ်င္း ဦစြာ ပြတ္မဆြဲဘဲ မ်က္ဝန္းျဖင့္ ေသာ့ဖြင့္ပါ။</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">ေသာ့ပိတ္ ဖန္သားျပင္တြင္ ေနပါ</string>
+    <string name="iris_stay_on_lockscreen_summary">မ်က္ဝန္း အသိအမွတ္ျပဳျခင္းျဖင့္ ေသာ့ဖြင့္သည့္အခါ သင္ပြတ္မဆြဲရေသးခင္အထိ ေသာ့ပိတ္ ဖန္သားျပင္ကို ဖြင့္ထားပါ။</string>
+    <string name="tips_for_iris">မ်က္ဝန္းမွတ္သားျခင္း အသုံးျပဳမႈအတြက္ လမ္းၫႊန္ခ်က္မ်ား</string>
+    <string name="iris_delete_popup_title">မ်က္ဝန္း ေဒတာကုိ ဖယ္ရွားမလား?</string>
+    <string name="iris_delete_popup_message_with_related_func">မ်က္ဝန္းမ်ားကို အသုံးျပဳေသာ အဂၤါရပ္မ်ားကို ပိတ္လုိက္ပါမည္။</string>
+    <string name="iris_register_summary">မ်က္ဝန္းမ်ားကို မွတ္ပုံတင္ၿပီးပါၿပီ။</string>
+    <string name="iris_add_summary">သင့္မ်က္ဝန္းမ်ားကုိ မွတ္ပံုတင္ပါ။</string>
+    <string name="common_remove">ဖယ္ထုတ္ပါ</string>
+    <string name="iris_failed_to_register">မ်က္ဝန္းမ်ားကို မွတ္ပုံတင္၍မရႏိုင္ပါ</string>
+    <string name="iris_eye_safety_msg">သင့္မ်က္ဝန္းမ်ားကုိ မွတ္သားထားျခင္း မရွိပါ။</string>
+    <string name="iris_proximity_restriction_popop_message">သင့္ဖုန္းကုိ မ်က္ႏွာႏွင့္ အနည္းငယ္ ေဝးသည့္ေနရာတြင္ ကုိင္ထားၿပီးေနာက္ ထပ္မံႀကိဳးစားပါ။</string>
+    <string name="iris_sensor_not_working_popup_title">မ်က္ဝန္း မွတ္သားးျခင္း အလုပ္မလုပ္ပါ</string>
+    <string name="iris_sensor_not_working_msg">မ်က္ဝန္းအာ႐ုံခံ တုံ႔ျပန္မႈမရွိပါ။ ေနာက္မွ ထပ္မံႀကိဳးစားပါ။</string>
+    <string name="iris_hw_problem_msg">ဤသုိ႔ ဆက္ျဖစ္ေနပါက သင့္ဖုန္းကုိ ပိတ္ၿပီးျပန္ဖြင့္ပါ။</string>
+    <string name="lockpattern_retry_button_text">ျပန္ၾကိဳးစားပါ</string>
+</resources>

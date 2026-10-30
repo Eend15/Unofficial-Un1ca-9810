@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Írisz</string>
+    <string name="my_irises">Íriszadatok törlése</string>
+    <string name="register_irises">Íriszek regisztrálása</string>
+    <string name="iris_unlock">Feloldás írisszel</string>
+    <string name="iris_unlock_summary">A telefon feloldása az íriszeivel.</string>
+    <string name="use_iris_first_lock">Íriszfeli. a képernyő bekapcs.kor</string>
+    <string name="use_iris_first_lock_summary">A képernyő bekapcsolása után azonnal feloldhatja a telefont az íriszével, nem kell előtte elhúzni a képernyőt.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Zárolt képernyőn maradás</string>
+    <string name="iris_stay_on_lockscreen_summary">Az íriszfelismeréssel végzett feloldáskor a zárolt képernyőn marad, amíg el nem húzza az ujját.</string>
+    <string name="tips_for_iris">Tanácsok az íriszfelismeréshez</string>
+    <string name="iris_delete_popup_title">Törli az íriszadatokat?</string>
+    <string name="iris_delete_popup_message_with_related_func">Az íriszeket használó funkciók kikapcsolnak.</string>
+    <string name="iris_register_summary">Regisztrálta íriszét.</string>
+    <string name="iris_add_summary">Regisztrálja íriszét.</string>
+    <string name="common_remove">Eltávolít</string>
+    <string name="iris_failed_to_register">Nem regisztrálhatók az íriszek</string>
+    <string name="iris_eye_safety_msg">Nem sikerült felismerni az íriszeit.</string>
+    <string name="iris_proximity_restriction_popop_message">Tartsa a telefont távolabb az arcától, és próbálja újra.</string>
+    <string name="iris_sensor_not_working_popup_title">Nem működik az íriszfelismerés</string>
+    <string name="iris_sensor_not_working_msg">Az íriszérzékelő nem válaszol. Próbálja meg később.</string>
+    <string name="iris_hw_problem_msg">Ha ez nem szűnik meg, indítsa újra a telefont.</string>
+    <string name="lockpattern_retry_button_text">Újra</string>
+</resources>

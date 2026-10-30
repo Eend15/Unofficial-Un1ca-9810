@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Duhovky</string>
+    <string name="my_irises">Odebrat data duhovky</string>
+    <string name="register_irises">Registrace duhovek</string>
+    <string name="iris_unlock">Odemknutí duhovkou</string>
+    <string name="iris_unlock_summary">Můžete odemknout telefon pomocí duhovek.</string>
+    <string name="use_iris_first_lock">Rozpozn. duhovky při zap. obr.</string>
+    <string name="use_iris_first_lock_summary">Můžete odemknout telefon pomocí duhovek, jakmile se obrazovka zapne, bez předchozího potažení.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Zůstat na Zamykací obrazovce</string>
+    <string name="iris_stay_on_lockscreen_summary">Po odemknutí pomocí rozpoznání duhovky zůstane zobrazena Zamykací obrazovka až do potažení.</string>
+    <string name="tips_for_iris">Tipy pro rozpoznávání duhovky</string>
+    <string name="iris_delete_popup_title">Odebrat data duhovky?</string>
+    <string name="iris_delete_popup_message_with_related_func">Funkce, které používají duhovky, budou vypnuty.</string>
+    <string name="iris_register_summary">Duhovky byly zaregistrovány.</string>
+    <string name="iris_add_summary">Zaregistrujte své duhovky.</string>
+    <string name="common_remove">Odebrat</string>
+    <string name="iris_failed_to_register">Duhovky nelze zaregistrovat</string>
+    <string name="iris_eye_safety_msg">Vaše duhovky nebyly rozpoznány.</string>
+    <string name="iris_proximity_restriction_popop_message">Držte telefon dále od obličeje a opakujte akci.</string>
+    <string name="iris_sensor_not_working_popup_title">Rozpoznávání duhovky nefunguje</string>
+    <string name="iris_sensor_not_working_msg">Snímač duhovky nereaguje. Opakujte akci později.</string>
+    <string name="iris_hw_problem_msg">Pokud se to bude opakovat, restartujte telefon.</string>
+    <string name="lockpattern_retry_button_text">Opakovat</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Inteacháin</string>
+    <string name="my_irises">Bain sonraí inteacháin</string>
+    <string name="register_irises">Cláraigh inteacháin</string>
+    <string name="iris_unlock">Díghlasáil inteacháin</string>
+    <string name="iris_unlock_summary">"Díghlasáil d'fhón le d'inteacháin."</string>
+    <string name="use_iris_first_lock">Aith. inteacháin &amp; an scáileán air</string>
+    <string name="use_iris_first_lock_summary">"Díghlasáil d'fhón le d'inteacháin chomh luath agus a chastar air an scáileán, gan svaidhpeáil ar dtús."</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Fan ar an Scáileán glasála</string>
+    <string name="iris_stay_on_lockscreen_summary">Nuair a dhíghlasálann tú le haithint inteacháin, fan ar an Scáileán glasála go dtí go ndéanfaidh tú svaidhpeáil.</string>
+    <string name="tips_for_iris">Leideanna: Aithint int. a úsáid</string>
+    <string name="iris_delete_popup_title">Bain sonraí inteacháin?</string>
+    <string name="iris_delete_popup_message_with_related_func">Casfar as gnéithe a úsáideann inteacháin.</string>
+    <string name="iris_register_summary">"Tá d'inteacháin cláraithe."</string>
+    <string name="iris_add_summary">"Cláraigh d'inteacháin."</string>
+    <string name="common_remove">Bain</string>
+    <string name="iris_failed_to_register">Níorbh fhéidir inteacháin a chlárú</string>
+    <string name="iris_eye_safety_msg">"Níor aithníodh d'inteacháin."</string>
+    <string name="iris_proximity_restriction_popop_message">"Coinnigh d'fhón níos faide amach ó d’aghaidh agus triail arís."</string>
+    <string name="iris_sensor_not_working_popup_title">Níl aithint inteacháin ag obair</string>
+    <string name="iris_sensor_not_working_msg">Níl an braiteoir inteachán ag freagairt. Triail arís ar ball.</string>
+    <string name="iris_hw_problem_msg">"Má leanann sé seo ar aghaidh, atosaigh d'fhón."</string>
+    <string name="lockpattern_retry_button_text">Atriail</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Íris</string>
+    <string name="my_irises">Remover dados da íris</string>
+    <string name="register_irises">Registrar as íris</string>
+    <string name="iris_unlock">Desbloquear com a íris</string>
+    <string name="iris_unlock_summary">Desbloqueie seu telefone usando as íris.</string>
+    <string name="use_iris_first_lock">Reconhecimento de íris ao ligar</string>
+    <string name="use_iris_first_lock_summary">Desbloqueie seu telefone com suas íris assim que a tela ligar, sem deslizar primeiro.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Permanecer na Tela de bloqueio</string>
+    <string name="iris_stay_on_lockscreen_summary">Quando desbloqueia com o reconhecimento de íris, você permanece na Tela de bloqueio até deslizar.</string>
+    <string name="tips_for_iris">Dicas p/ usar reconhec. de íris</string>
+    <string name="iris_delete_popup_title">Remover os dados da íris?</string>
+    <string name="iris_delete_popup_message_with_related_func">As funções que usam íris serão desativadas.</string>
+    <string name="iris_register_summary">Suas íris foram cadastradas.</string>
+    <string name="iris_add_summary">Cadastre suas íris.</string>
+    <string name="common_remove">Remover</string>
+    <string name="iris_failed_to_register">Não foi possível cadastrar as íris</string>
+    <string name="iris_eye_safety_msg">Suas íris não foram reconhecidas.</string>
+    <string name="iris_proximity_restriction_popop_message">Mantenha o telefone mais afastado do rosto e tente novamente.</string>
+    <string name="iris_sensor_not_working_popup_title">O reconhecimento de íris não funciona</string>
+    <string name="iris_sensor_not_working_msg">O sensor de íris não está respondendo. Tente novamente mais tarde.</string>
+    <string name="iris_hw_problem_msg">Se isso continuar ocorrendo, reinicie seu telefone.</string>
+    <string name="lockpattern_retry_button_text">Repetir</string>
+</resources>

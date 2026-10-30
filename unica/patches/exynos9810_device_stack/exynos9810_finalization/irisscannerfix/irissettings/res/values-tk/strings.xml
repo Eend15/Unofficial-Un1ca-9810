@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Gözler</string>
+    <string name="my_irises">Göz maglumatyny aýyr</string>
+    <string name="register_irises">Gözleri bellige al</string>
+    <string name="iris_unlock">Göz bilen açyş</string>
+    <string name="iris_unlock_summary">Telefonyň gulpuny gözleriňiz bilen açyň.</string>
+    <string name="use_iris_first_lock">Ekran açyk göz tanaýyşy</string>
+    <string name="use_iris_first_lock_summary">Ekran açylan badyna, ilki bilen syrman, telefonyň gulpuny gözleriňiz bilen açyň.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Gulply ekranda gal</string>
+    <string name="iris_stay_on_lockscreen_summary">Göz tanaýyşy bilen gulpy açanyňyzda, syrýançaňyz Gulply ekranda galyň.</string>
+    <string name="tips_for_iris">Göz tanamak ulanyş maslahatlary</string>
+    <string name="iris_delete_popup_title">Göz maglumatyny aýyrmalymy?</string>
+    <string name="iris_delete_popup_message_with_related_func">Gözleri ulanýan funksiýalar ýapylar.</string>
+    <string name="iris_register_summary">Gözleriňiz bellige alyndy.</string>
+    <string name="iris_add_summary">Gözleriňizi bellige alyň.</string>
+    <string name="common_remove">Aýyr</string>
+    <string name="iris_failed_to_register">Gözleri bellige alyp bolmady</string>
+    <string name="iris_eye_safety_msg">Gözleriňiz tanalmady.</string>
+    <string name="iris_proximity_restriction_popop_message">Telefony ýüzüňizden uzakda saklap synanyşyň.</string>
+    <string name="iris_sensor_not_working_popup_title">Göz tanamak işlemeýär</string>
+    <string name="iris_sensor_not_working_msg">Göz sensory jogap bermeýär. Soňra täzeden synanyşyň.</string>
+    <string name="iris_hw_problem_msg">Ol gaýtalanyp dursa, telefonyňyzy açyp ýapyň.</string>
+    <string name="lockpattern_retry_button_text">Täzeden synanyş</string>
+</resources>

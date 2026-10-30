@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">虹膜</string>
+    <string name="my_irises">移除虹膜資料</string>
+    <string name="register_irises">註冊虹膜</string>
+    <string name="iris_unlock">虹膜解鎖</string>
+    <string name="iris_unlock_summary">使用虹膜解鎖手機。</string>
+    <string name="use_iris_first_lock">螢幕開啟時執行虹膜辨識</string>
+    <string name="use_iris_first_lock_summary">螢幕開啟時以您的虹膜解除手機鎖定，而無需先滑動。</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">保持鎖定螢幕畫面</string>
+    <string name="iris_stay_on_lockscreen_summary">透過虹膜辨識解鎖時，保持鎖定螢幕畫面直到您滑動為止。</string>
+    <string name="tips_for_iris">虹膜辨識使用提示</string>
+    <string name="iris_delete_popup_title">移除虹膜資料？</string>
+    <string name="iris_delete_popup_message_with_related_func">將關閉使用虹膜的功能。</string>
+    <string name="iris_register_summary">已註冊您的虹膜。</string>
+    <string name="iris_add_summary">註冊您的虹膜。</string>
+    <string name="common_remove">移除</string>
+    <string name="iris_failed_to_register">無法註冊虹膜</string>
+    <string name="iris_eye_safety_msg">無法辨識您的虹膜。</string>
+    <string name="iris_proximity_restriction_popop_message">將手機遠離臉部並重試。</string>
+    <string name="iris_sensor_not_working_popup_title">無法執行虹膜辨識</string>
+    <string name="iris_sensor_not_working_msg">虹膜感應器沒有回應。請稍後再試。</string>
+    <string name="iris_hw_problem_msg">若此情況繼續發生，請重新啟動手機。</string>
+    <string name="lockpattern_retry_button_text">重試</string>
+</resources>

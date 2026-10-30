@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Tęczówki</string>
+    <string name="my_irises">Usuń dane tęczówek</string>
+    <string name="register_irises">Rejestruj tęczówki</string>
+    <string name="iris_unlock">Odblokuj za pomocą tęczówki</string>
+    <string name="iris_unlock_summary">Odblokuj telefon przy użyciu tęczówek.</string>
+    <string name="use_iris_first_lock">Rozpozn. tęczówki przy wł. ekr.</string>
+    <string name="use_iris_first_lock_summary">Odblokuj telefon tęczówkami zaraz po włączeniu ekranu, bez wcześniejszego przeciągania.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Pozostań na ekranie blokady</string>
+    <string name="iris_stay_on_lockscreen_summary">Podczas odblokowywania za pomocą rozpoznawania tęczówki pozostań na ekranie blokady do czasu przeciągnięcia palcem.</string>
+    <string name="tips_for_iris">Rozpozn. tęczówek — wskazówki</string>
+    <string name="iris_delete_popup_title">Usunąć dane tęczówek?</string>
+    <string name="iris_delete_popup_message_with_related_func">Funkcje korzystające z tęczówek zostaną wyłączone.</string>
+    <string name="iris_register_summary">Twoje tęczówki zostały zarejestrowane.</string>
+    <string name="iris_add_summary">Zarejestruj swoje tęczówki.</string>
+    <string name="common_remove">Usuń</string>
+    <string name="iris_failed_to_register">Nie można zarejestrować tęczówek</string>
+    <string name="iris_eye_safety_msg">Nie rozpoznano tęczówek.</string>
+    <string name="iris_proximity_restriction_popop_message">Trzymaj telefon dalej od twarzy i spróbuj ponownie.</string>
+    <string name="iris_sensor_not_working_popup_title">Rozpoznawanie tęczówek nie działa</string>
+    <string name="iris_sensor_not_working_msg">Czujnik tęczówek nie reaguje. Spróbuj ponownie później.</string>
+    <string name="iris_hw_problem_msg">Jeśli problem nie ustępuje, uruchom telefon ponownie.</string>
+    <string name="lockpattern_retry_button_text">Ponów</string>
+</resources>

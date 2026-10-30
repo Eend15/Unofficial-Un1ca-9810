@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">इरिसेस</string>
+    <string name="my_irises">इरिस डेटा काढून टाका</string>
+    <string name="register_irises">इरिसेसची नोंदणी करा</string>
+    <string name="iris_unlock">इरिस अनलॉक</string>
+    <string name="iris_unlock_summary">आपल्या इरिसेस सह आपला फोन अनलॉक करा.</string>
+    <string name="use_iris_first_lock">स्क्रीन-ऑन इरिस ओळख</string>
+    <string name="use_iris_first_lock_summary">प्रथम स्वाइप केल्या शिवाय, स्क्रीन चालू झाल्या वर लगेचच आपल्या इरिसेस सह आपला फोन अनलॉक करा.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">लॉक स्क्रीन वर रहा</string>
+    <string name="iris_stay_on_lockscreen_summary">आपण इरिस ओळख सह अनलॉक केल्या वर, आपण स्वाइप करे पर्यंत लॉक स्क्रीन वर रहा.</string>
+    <string name="tips_for_iris">इरिस ओळख वापरण्यासाठी टिपा</string>
+    <string name="iris_delete_popup_title">इरिस डेटा काढून टाकायचा?</string>
+    <string name="iris_delete_popup_message_with_related_func">जी वैशिष्ट्ये इरिसेस वापरतात ती बंद केली जातील.</string>
+    <string name="iris_register_summary">आपल्यअ इरिसेसची नोंदणी करण्यात आली आहे.</string>
+    <string name="iris_add_summary">आपल्या इरिसेसची नोंदणी करा.</string>
+    <string name="common_remove">काढून टाका</string>
+    <string name="iris_failed_to_register">इरिसेसची नोंदणी करू शकलो नाही</string>
+    <string name="iris_eye_safety_msg">आपले इरिसेस ओळखले होते.</string>
+    <string name="iris_proximity_restriction_popop_message">आपला फोन आपल्या चेहर्‍या पासून याहून दूर धरा आणि पुन्हा प्रयत्न करा.</string>
+    <string name="iris_sensor_not_working_popup_title">इरिस ओळख काम करत नाही</string>
+    <string name="iris_sensor_not_working_msg">इरिस सेन्सर प्रतिसाद देत नाही. नंतर पुन्हा प्रयत्न करा.</string>
+    <string name="iris_hw_problem_msg">जर असे होणे सुरू राहिले, तर आपल्या फोनचा पुनरारंभ करा.</string>
+    <string name="lockpattern_retry_button_text">पुनर्प्रयत्न</string>
+</resources>

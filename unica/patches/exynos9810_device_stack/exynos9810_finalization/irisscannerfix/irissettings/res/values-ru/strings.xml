@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Радужки</string>
+    <string name="my_irises">Удалить данные радужки</string>
+    <string name="register_irises">Регистрация радужек</string>
+    <string name="iris_unlock">Разблокировка с помощью радужки</string>
+    <string name="iris_unlock_summary">Разблокировка телефона с помощью радужек.</string>
+    <string name="use_iris_first_lock">Распознавание радужек при включении</string>
+    <string name="use_iris_first_lock_summary">Разблокируйте включенный экран телефона радужками, не проводя по нему пальцем.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Оставаться на экране блокировки</string>
+    <string name="iris_stay_on_lockscreen_summary">При разблокировании с помощью распознавания радужки экран блокировки остается активным до тех пор, пока вы не проведете по нему пальцем.</string>
+    <string name="tips_for_iris">Советы по распознаванию радужек</string>
+    <string name="iris_delete_popup_title">Удалить данные радужки?</string>
+    <string name="iris_delete_popup_message_with_related_func">Функции, которые используют радужки, будут отключены.</string>
+    <string name="iris_register_summary">Ваши радужки зарегистрированы.</string>
+    <string name="iris_add_summary">Зарегистрируйте радужки.</string>
+    <string name="common_remove">Удалить</string>
+    <string name="iris_failed_to_register">Не удалось зарегистрировать радужки</string>
+    <string name="iris_eye_safety_msg">Ваши радужки не распознаны.</string>
+    <string name="iris_proximity_restriction_popop_message">Отодвиньте телефон дальше от лица и повторите попытку.</string>
+    <string name="iris_sensor_not_working_popup_title">Распознавание радужек не работает</string>
+    <string name="iris_sensor_not_working_msg">Датчик радужной оболочки не отвечает. Повторите попытку позже.</string>
+    <string name="iris_hw_problem_msg">Если устранить проблему не удалось, перезагрузите телефон.</string>
+    <string name="lockpattern_retry_button_text">Повтор</string>
+</resources>

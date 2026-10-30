@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">කළු ඉංගිරියා</string>
+    <string name="my_irises">කළු ඉංගිරියා දත්ත ඉවත් කරන්න</string>
+    <string name="register_irises">කළු ඉංගිරියා ලියාපදිංචිය</string>
+    <string name="iris_unlock">කළු ඉංගිරියා අගුළු හැරීම</string>
+    <string name="iris_unlock_summary">ඔබේ කළු ඉංගිරියා සමග ඔබේ දුරකථනය අගුළු හරින්න.</string>
+    <string name="use_iris_first_lock">තිරය-ක්‍රියාත්මක කළු ඉ. හැඳුනුම</string>
+    <string name="use_iris_first_lock_summary">පළමුව ස්වයිප් නොකර, තිරය ක්‍රියාත්මක වන විගස ඔබේ කළු ඉංගිරියා සමග ඔබේ දුරකථනය අගුළු හරින්න.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">අගුළු තිරයෙහි සිටින්න</string>
+    <string name="iris_stay_on_lockscreen_summary">ඔබ කළු ඉංගිරියා හැඳුනුම සමග අගුළු හරින විට, ඔබ ස්වයිප් කරන තෙක් අගුළු තිරයේ රැඳී සිටින්න.</string>
+    <string name="tips_for_iris">කළු ඉංගිරියා හැඳුනුම භාවිත ඉඟි</string>
+    <string name="iris_delete_popup_title">කළු ඉංගිරියා දත්ත ඉවත් කරන්නද?</string>
+    <string name="iris_delete_popup_message_with_related_func">කළු ඉංගිරියා භාවිතා කරන විශේෂාංග ක්‍රියා විරහිත වනු ඇත.</string>
+    <string name="iris_register_summary">ඔබේ කළු ඉංගිරියා ලියාපදිංචි කෙරිණි.</string>
+    <string name="iris_add_summary">ඔබේ කළු ඉංගිරියාව ලියාපදිංචි කරන්න.</string>
+    <string name="common_remove">ඉවත් ක.</string>
+    <string name="iris_failed_to_register">කළු ඉංගිරියා ලියාපදිංචි කළ නොහැකි විය</string>
+    <string name="iris_eye_safety_msg">ඔබේ කළු ඉංගිරියා හඳුනා නොගැනිණි.</string>
+    <string name="iris_proximity_restriction_popop_message">ඔබේ දුරකථනය ඔබේ මුහුණේ සිට තවත් එහාට රඳවා නැවත උත්සාහ කරන්න.</string>
+    <string name="iris_sensor_not_working_popup_title">කළු ඉංගිරියා හඳුනා ගැනීම වැඩ නොකරයි</string>
+    <string name="iris_sensor_not_working_msg">කළු ඉංගිරියා සංවේදකය ප්‍රතිචාර නොදක්වයි. පසුව නැවත උත්සාහ කරන්න.</string>
+    <string name="iris_hw_problem_msg">මෙය දිගටම සිදු වේ නම්, ඔබේ දුරකථනය යළි අරඹන්න.</string>
+    <string name="lockpattern_retry_button_text">නැ. උත්. කර</string>
+</resources>

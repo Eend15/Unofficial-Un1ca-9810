@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">ม่านตา</string>
+    <string name="my_irises">ลบข้อมูลม่านตา</string>
+    <string name="register_irises">ลงทะเบียนม่านตา</string>
+    <string name="iris_unlock">ปลดล็อกด้วยม่านตา</string>
+    <string name="iris_unlock_summary">ปลดล็อกโทรศัพท์ของคุณด้วยม่านตา</string>
+    <string name="use_iris_first_lock">การจำแนกม่านตาแบบเปิดหน้าจอ</string>
+    <string name="use_iris_first_lock_summary">ปลดล็อกโทรศัพท์ด้วยม่านตาของคุณ ทันทีที่หน้าจอเปิด โดยไม่ต้องปัดก่อน</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">อยู่บนหน้าจอล็อก</string>
+    <string name="iris_stay_on_lockscreen_summary">เมื่อคุณปลดล็อกด้วยการจำแนกม่านตา ให้อยู่ในหน้าจอล็อกจนกว่าคุณจะปัด</string>
+    <string name="tips_for_iris">เคล็ดลับในการใช้การจดจำม่านตา</string>
+    <string name="iris_delete_popup_title">ลบข้อมูลม่านตาออกหรือไม่</string>
+    <string name="iris_delete_popup_message_with_related_func">คุณสมบัติที่ใช้ม่านตาจะถูกปิด</string>
+    <string name="iris_register_summary">ลงทะเบียนม่านตาของคุณแล้ว</string>
+    <string name="iris_add_summary">ลงทะเบียนม่านตาของคุณ</string>
+    <string name="common_remove">ลบออก</string>
+    <string name="iris_failed_to_register">ไม่สามารถลงทะเบียนม่านตา</string>
+    <string name="iris_eye_safety_msg">ม่านตาของคุณไม่ถูกจำแนก</string>
+    <string name="iris_proximity_restriction_popop_message">ถือโทรศัพท์ห่างออกไปจากใบหน้าของคุณ และลองอีกครั้ง</string>
+    <string name="iris_sensor_not_working_popup_title">การจำแนกม่านตาไม่ทำงาน</string>
+    <string name="iris_sensor_not_working_msg">เซ็นเซอร์ม่านตาไม่ตอบสนอง ลองใหม่ภายหลัง</string>
+    <string name="iris_hw_problem_msg">หากยังเกิดซ้ำ ให้เริ่มโทรศัพท์ของคุณใหม่</string>
+    <string name="lockpattern_retry_button_text">ลอง​ใหม่</string>
+</resources>

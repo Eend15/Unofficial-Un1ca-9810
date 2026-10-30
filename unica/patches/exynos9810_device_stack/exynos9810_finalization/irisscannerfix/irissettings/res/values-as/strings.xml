@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">আইৰিচসমূহ</string>
+    <string name="my_irises">আইৰিচ ডাটা আঁতৰাওক</string>
+    <string name="register_irises">আইৰিচ পঞ্জীয়ন কৰক</string>
+    <string name="iris_unlock">আইৰিচ আনলক</string>
+    <string name="iris_unlock_summary">আপোনাৰ আইৰিচৰ সৈতে আপোনাৰ ফোন আনলক কৰক।</string>
+    <string name="use_iris_first_lock">স্ক্ৰীণ-অন আইৰিচ চিনাক্তকৰণ</string>
+    <string name="use_iris_first_lock_summary">প্ৰথমে নঘহোঁৱাকৈ স্ক্ৰীণ অন হোৱাৰ লগে লগে আপোনাৰ আইৰিচৰ সৈতে আপোনাৰ ফোন আনলক কৰক।</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">লক স্ক্ৰীণত থাকক</string>
+    <string name="iris_stay_on_lockscreen_summary">আপুনি আইৰিচ চিনাক্তকৰণৰ সৈতে আনলক কৰাৰ সময়ত, আপুনি নঘহোৱা লৈকে লক স্ক্ৰীণত থাকক।</string>
+    <string name="tips_for_iris">আইৰিচ চিনাক্তকৰণৰ ব্যৱহাৰৰ বাবে আভাস</string>
+    <string name="iris_delete_popup_title">আইৰিচ ডাটা আঁতৰাবনে?</string>
+    <string name="iris_delete_popup_message_with_related_func">"আইৰিচ ব্যৱহাৰ কৰা সুবিধা অফ হ'ব।"</string>
+    <string name="iris_register_summary">আপোনাৰ আইৰিচ পঞ্জীয়ন হৈছে।</string>
+    <string name="iris_add_summary">আপোনাৰ আইৰিচ পঞ্জীয়ন কৰক।</string>
+    <string name="common_remove">আঁতৰাওক</string>
+    <string name="iris_failed_to_register">"আইৰিচ পঞ্জীয়ন কৰিব পৰা নগ'ল"</string>
+    <string name="iris_eye_safety_msg">আপোনাৰ আইৰিচ চিনাক্ত হোৱা নাছিল।</string>
+    <string name="iris_proximity_restriction_popop_message">আপোনাৰ ফোনটো আপোনাৰ মুখৰ পৰা অধিক দূৰত ধৰি থাকক আৰু পুনঃচেষ্টা কৰক।</string>
+    <string name="iris_sensor_not_working_popup_title">আইৰিচ চিনাক্তকৰণ কাম কৰা নাই</string>
+    <string name="iris_sensor_not_working_msg">আইৰিচ চেনচৰে সঁহাৰি জনোৱা নাই। পিছত পুনঃচেষ্টা কৰক।</string>
+    <string name="iris_hw_problem_msg">যদি এইটো ঘটি থাকে, তেন্তে আপোনাৰ ফোন পুনৰাৰম্ভ কৰক।</string>
+    <string name="lockpattern_retry_button_text">পুনঃচেষ্টা</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">આઇરિસિઝ</string>
+    <string name="my_irises">આઇરિસ ડેટા દૂર કરો</string>
+    <string name="register_irises">આઇરિસિઝ નોંધો</string>
+    <string name="iris_unlock">આઇરિસ અનલૉક</string>
+    <string name="iris_unlock_summary">તમારા આઇરિસિઝ સાથે તમારો ફોન અનલૉક કરો.</string>
+    <string name="use_iris_first_lock">સ્ક્રીન-ચાલુ આઇરિસ ઓળખાણ</string>
+    <string name="use_iris_first_lock_summary">જેમ જ સ્ક્રીન ચાલું થાય તેમ જ તમારા ફોનને, પહેલાં સ્વાઇપ કર્યા વિના, તમારા આઇરિસિઝ સાથે અનલૉક કરો.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">લૉક સ્ક્રીન પર રહો</string>
+    <string name="iris_stay_on_lockscreen_summary">તમે જ્યારે આઇરિસ ઓળખ વડે અનલૉક કરો, ત્યારે તમે સ્વાઇપ ન કરો ત્યાં સુધી લૉક સ્ક્રીન પર રહો.</string>
+    <string name="tips_for_iris">આઇરિસ ઓળખાણનો ઉપયોગ કરવા માટે ટિપ્સ</string>
+    <string name="iris_delete_popup_title">આઇરિસ ડેટા દૂર કરીએ?</string>
+    <string name="iris_delete_popup_message_with_related_func">સુવિધાઓ કે જે આઇરિસિઝનો ઉપયોગ કરે છે તે બંધ કરવામાં આવશે.</string>
+    <string name="iris_register_summary">તમારા આઇરિસિઝની નોંધણી કરવામાં આવી છે.</string>
+    <string name="iris_add_summary">તમારા આઇરિસિઝની નોંધણી કરો.</string>
+    <string name="common_remove">દૂર કરો</string>
+    <string name="iris_failed_to_register">આઇરિસિઝ નોંધી શકાયું નથી</string>
+    <string name="iris_eye_safety_msg">તમારી આઇરિસિઝ ઓળખી માન્ય કરવામાં આવી નહતી.</string>
+    <string name="iris_proximity_restriction_popop_message">તમારા ફોનને તમારા ચહેરાથી દૂર હોલ્ડ કરો અને ફરી પ્રયાસ કરો.</string>
+    <string name="iris_sensor_not_working_popup_title">આઇરિસ ઓળખ કાર્ય કરતી નથી</string>
+    <string name="iris_sensor_not_working_msg">આઇરિસ સેન્સર પ્રતિસાદ આપી રહ્યું નથી. પછીથી ફરી પ્રયાસ કરો.</string>
+    <string name="iris_hw_problem_msg">જો આ થવાનું ચાલુ રહે, તો તમારા ફોનને ફરીથી શરૂ કરો.</string>
+    <string name="lockpattern_retry_button_text">ફરીથી પ્રયત્ન કરો</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Irises</string>
+    <string name="my_irises">Remove iris data</string>
+    <string name="register_irises">Register irises</string>
+    <string name="iris_unlock">Iris unlock</string>
+    <string name="iris_unlock_summary">Unlock your phone with your irises.</string>
+    <string name="use_iris_first_lock">Screen-on iris recognition</string>
+    <string name="use_iris_first_lock_summary">Unlock your phone with your irises as soon as the screen turns on, without swiping first.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Stay on Lock screen</string>
+    <string name="iris_stay_on_lockscreen_summary">When you unlock with iris recognition, stay on the Lock screen until you swipe.</string>
+    <string name="tips_for_iris">Tips for using iris recognition</string>
+    <string name="iris_delete_popup_title">Remove iris data?</string>
+    <string name="iris_delete_popup_message_with_related_func">Features that use irises will be turned off.</string>
+    <string name="iris_register_summary">Your irises have been registered.</string>
+    <string name="iris_add_summary">Register your irises.</string>
+    <string name="common_remove">Remove</string>
+    <string name="iris_failed_to_register">"Couldn't register irises"</string>
+    <string name="iris_eye_safety_msg">"Your irises weren't recognized."</string>
+    <string name="iris_proximity_restriction_popop_message">Hold your phone farther away from your face and try again.</string>
+    <string name="iris_sensor_not_working_popup_title">Iris recognition not working</string>
+    <string name="iris_sensor_not_working_msg">The iris sensor is not responding. Try again later.</string>
+    <string name="iris_hw_problem_msg">If this keeps happening, restart your phone.</string>
+    <string name="lockpattern_retry_button_text">Retry</string>
+</resources>

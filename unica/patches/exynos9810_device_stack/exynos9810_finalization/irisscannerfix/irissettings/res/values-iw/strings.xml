@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">קשתיות</string>
+    <string name="my_irises">הסר נתוני קשתיות</string>
+    <string name="register_irises">רשום קשתיות</string>
+    <string name="iris_unlock">בטל נעילה בעזרת קשתיות</string>
+    <string name="iris_unlock_summary">בטל את נעילת הטלפון בעזרת נתוני קשתיות.</string>
+    <string name="use_iris_first_lock">זיהוי קשתיות בעת הפעלת המסך</string>
+    <string name="use_iris_first_lock_summary">בטל את נעילת הטלפון בעזרת הקשתיות מיד כשהמסך מופעל, מבלי להחליק תחילה.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">מסך נעילה נשאר מופעל</string>
+    <string name="iris_stay_on_lockscreen_summary">בעת ביטול נעילה בעזרת זיהוי קשתיות, הישאר במסך הנעילה עד להחלקה.</string>
+    <string name="tips_for_iris">עצות לשימוש בזיהוי קשתיות</string>
+    <string name="iris_delete_popup_title">האם להסיר נתוני קשתיות?</string>
+    <string name="iris_delete_popup_message_with_related_func">תכונות המשתמשות בזיהוי קשתיות יושבתו.</string>
+    <string name="iris_register_summary">נתוני הקשתיות שלך נרשמו.</string>
+    <string name="iris_add_summary">רשום את הקשתיות שלך.</string>
+    <string name="common_remove">הסר</string>
+    <string name="iris_failed_to_register">לא ניתן לרשום קשתיות</string>
+    <string name="iris_eye_safety_msg">הקשתיות שלך לא זוהו.</string>
+    <string name="iris_proximity_restriction_popop_message">הרחק את הטלפון מפניך ונסה שוב.</string>
+    <string name="iris_sensor_not_working_popup_title">זיהוי קשתיות אינו פועל</string>
+    <string name="iris_sensor_not_working_msg">חיישן הקשתיות אינו מגיב. נסה שוב מאוחר יותר.</string>
+    <string name="iris_hw_problem_msg">אם הבעיה נמשכת, הפעל מחדש את הטלפון שלך.</string>
+    <string name="lockpattern_retry_button_text">נסה שוב</string>
+</resources>

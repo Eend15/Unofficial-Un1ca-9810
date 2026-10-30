@@ -1,0 +1,15 @@
+version: 2.9.3
+apkFileName: IrisSettings.apk
+isFrameworkApk: false
+usesFramework:
+  ids:
+  - 1
+sdkInfo:
+  minSdkVersion: 34
+  targetSdkVersion: 34
+packageInfo:
+  forcedPackageId: 127
+versionInfo:
+  versionCode: 2
+  versionName: '2.0'
+doNotCompress: []

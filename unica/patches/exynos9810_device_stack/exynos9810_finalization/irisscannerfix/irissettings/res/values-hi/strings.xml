@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">आइरिसेस</string>
+    <string name="my_irises">आइरिस डाटा निकालें</string>
+    <string name="register_irises">आइरिसेस पंजीकृत करें</string>
+    <string name="iris_unlock">आइरिस अनलॉक</string>
+    <string name="iris_unlock_summary">अपनी आइरिसेस से अपना फोन अनलॉक करें।</string>
+    <string name="use_iris_first_lock">स्क्रीन-ऑन आइरिस पहचान</string>
+    <string name="use_iris_first_lock_summary">पहले स्वाइप किए बिना, स्क्रीन चालू होते ही अपनी आइरिसेस से अपना फोन अनलॉक करें।</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">लॉक स्क्रीन पर रहें</string>
+    <string name="iris_stay_on_lockscreen_summary">आपके द्वारा आइरिस पहचान के साथ अनलॉक करने पर, लॉक स्क्रीन पर तब तक रहें जब तक आप स्वाइप नहीं करते।</string>
+    <string name="tips_for_iris">आइरिस पहचान के उपयोग हेतु युक्ति</string>
+    <string name="iris_delete_popup_title">आइरिस डाटा निकालें?</string>
+    <string name="iris_delete_popup_message_with_related_func">आइरिसेस का उपयोग करने वाली सुविधाएँ बंद हो जाएँगी।</string>
+    <string name="iris_register_summary">आपकी आइरिसेस पंजीकृत हो गईं हैं।</string>
+    <string name="iris_add_summary">अपने आइरिस पंजीकृत करें।</string>
+    <string name="common_remove">निकालें</string>
+    <string name="iris_failed_to_register">आइरिसेस पंजीकृत नहीं किए जा सके</string>
+    <string name="iris_eye_safety_msg">आपके आइरिसेस पहचाने नहीं गए थे।</string>
+    <string name="iris_proximity_restriction_popop_message">अपने फोन को अपने चेहरे से थोड़ा दूर रखें और फिर से प्रयास करें।</string>
+    <string name="iris_sensor_not_working_popup_title">आइरिस पहचान कार्य नहीं कर रहा है</string>
+    <string name="iris_sensor_not_working_msg">आइरिस सेंसर जवाब नहीं दे रहा है। बाद में फिर से प्रयास करें।</string>
+    <string name="iris_hw_problem_msg">यदि ऐसा होता रहता है, तो अपना फोन पुनः चालू करें।</string>
+    <string name="lockpattern_retry_button_text">रीट्राई</string>
+</resources>

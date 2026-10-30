@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Šarenice</string>
+    <string name="my_irises">Ukloni podatke o šarenici</string>
+    <string name="register_irises">Registriraj šarenice</string>
+    <string name="iris_unlock">Otključavanje šarenicom</string>
+    <string name="iris_unlock_summary">Otključajte telefon s pomoću šarenica.</string>
+    <string name="use_iris_first_lock">Prep. šar. pril. uklj. zaslona</string>
+    <string name="use_iris_first_lock_summary">Otključajte telefon s pomoću šarenica čim se zaslon uključi, a da prvo ne prijeđete prstom.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Ostani na zas. za zaključavanje</string>
+    <string name="iris_stay_on_lockscreen_summary">Kada otključate s pomoću prepoznavanja šarenica, ostanite na zaslonu za zaključavanje dok ne prijeđete prstima po zaslonu.</string>
+    <string name="tips_for_iris">Upute za upotr. prep. šarenice</string>
+    <string name="iris_delete_popup_title">Ukloniti podatke o šarenicama?</string>
+    <string name="iris_delete_popup_message_with_related_func">Isključit će se značajke koje upotrebljavaju šarenice.</string>
+    <string name="iris_register_summary">Registrirane su vaše šarenice.</string>
+    <string name="iris_add_summary">Registrirajte šarenice.</string>
+    <string name="common_remove">Ukloni</string>
+    <string name="iris_failed_to_register">Nije moguće registrirati šarenice</string>
+    <string name="iris_eye_safety_msg">Vaše šarenice nisu prepoznate.</string>
+    <string name="iris_proximity_restriction_popop_message">Držite telefon dalje od lica i pokušajte ponovno.</string>
+    <string name="iris_sensor_not_working_popup_title">Prepoznavanje šarenice ne radi</string>
+    <string name="iris_sensor_not_working_msg">Senzor šarenica ne odgovara. Pokušajte ponovno kasnije.</string>
+    <string name="iris_hw_problem_msg">Ako se ovo nastavi događati, ponovno pokrenite telefon.</string>
+    <string name="lockpattern_retry_button_text">Ponovi</string>
+</resources>

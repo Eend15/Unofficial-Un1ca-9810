@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">آئریسز</string>
+    <string name="my_irises">آئریس ڈیٹا ہٹائیں</string>
+    <string name="register_irises">آئریسز رجسٹر کریں</string>
+    <string name="iris_unlock">آئریس انلاک</string>
+    <string name="iris_unlock_summary">اپنے آئریسز سے اپنا فون انلاک کریں۔</string>
+    <string name="use_iris_first_lock">اسکرین-آن سے آئریس کی پہچان</string>
+    <string name="use_iris_first_lock_summary">پہلے سوائپ کیے بغیر، اسکرین آن ہوتے ہی اپنے آئریسز سے اپنا فون انلاک کریں۔</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">لاک اسکرین پر رہیں</string>
+    <string name="iris_stay_on_lockscreen_summary">جب آپ آئریس کی شناخت کے ذریعہ انلاک کرتے ہیں، تو لاک اسکرین پر تب تک رہیں جب تک آپ سوائپ نہ کرلیں۔</string>
+    <string name="tips_for_iris">آئریس کی شناخت استعمال کرنے کے ٹپس</string>
+    <string name="iris_delete_popup_title">آئریس ڈیٹا ہٹائیں؟</string>
+    <string name="iris_delete_popup_message_with_related_func">آئریسز استعمال ہونے والی خصوصیات آف ہوجائے گی۔</string>
+    <string name="iris_register_summary">آپ کا آئریسز رجسٹر ہوگیا ہے۔</string>
+    <string name="iris_add_summary">اپنے آئریسز کو رجسٹر کریں۔</string>
+    <string name="common_remove">ہٹائیں</string>
+    <string name="iris_failed_to_register">آئریسز رجسٹر نہ کرسکا</string>
+    <string name="iris_eye_safety_msg">آپ کے آئریسس کی شناخت نہیں ہوئی۔</string>
+    <string name="iris_proximity_restriction_popop_message">اپنے فون کو اپنے چہرہ سے مزید دور رکھیں اور دوبارہ کوشش کریں۔</string>
+    <string name="iris_sensor_not_working_popup_title">آئریس کی شناخت کام نہیں کررہی ہے</string>
+    <string name="iris_sensor_not_working_msg">آئریسز سینسر جواب نہیں دے رہا ہے۔ بعد میں دوبارہ کوشش کریں۔</string>
+    <string name="iris_hw_problem_msg">اگر یہ ہوتا رہتا ہے، تو اپنا فون پھر سے اسٹارٹ کریں۔</string>
+    <string name="lockpattern_retry_button_text">دوبارہ کوشش</string>
+</resources>

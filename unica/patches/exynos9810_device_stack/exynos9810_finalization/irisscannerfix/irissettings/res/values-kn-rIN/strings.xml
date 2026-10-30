@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">ಐರಿಸ್‌ಗಳು</string>
+    <string name="my_irises">ಐರಿಸ್ ಡೇಟಾ ತೆಗೆದುಹಾಕಿ</string>
+    <string name="register_irises">ಐರಿಶ್‌ಗಳನ್ನು ನೋಂದಾಯಿಸಿ</string>
+    <string name="iris_unlock">ಐರಿಸ್ ಅನ್‍ಲಾಕ್</string>
+    <string name="iris_unlock_summary">ನಿಮ್ಮ ಐರಿಸ್‍ಗಳ ಮೂಲಕ ನಿಮ್ಮ ಫೋನ್ ಅನ್‍ಲಾಕ್ ಮಾಡಿ.</string>
+    <string name="use_iris_first_lock">ಸ್ಕ್ರೀನ್-ಆನ್ ಐರಿಸ್ ಗುರುತಿಸುವಿಕೆ</string>
+    <string name="use_iris_first_lock_summary">ಮೊದಲೇ ಸ್ವೈಪ್ ಮಾಡದೆಯೇ, ಸ್ಕ್ರೀನ್ ಆನ್ ಆಗುತ್ತಿದ್ದಂತೆ ನಿಮ್ಮ ಐರಿಶ್‌ಗಳನ್ನು ಬಳಸಿಕೊಂಡು ನಿಮ್ಮ ಫೋನ್ ಅನ್‌ಲಾಕ್ ಮಾಡಿ.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">ಲಾಕ್ ಸ್ಕ್ರೀನ್‌ನಲ್ಲಿ ಉಳಿಯಿರಿ</string>
+    <string name="iris_stay_on_lockscreen_summary">ನೀವು ಐರಿಸ್ ಗುರುತಿಸುವಿಕೆ ಮೂಲಕ ಅನ್‌ಲಾಕ್ ಮಾಡಿದಾಗ, ನೀವು ಸ್ವೈಪ್ ಮಾಡುವವರೆಗೆ ಲಾಕ್ ಸ್ಕ್ರೀನ್‌ನಲ್ಲಿಯೇ ಇರಿ.</string>
+    <string name="tips_for_iris">ಕಣ್ಣುರೆಪ್ಪೆಯ ಗುರುತಿಸುವಿಕೆಯನ್ನು ಬಳಸಲು ಸಲಹೆಗಳು</string>
+    <string name="iris_delete_popup_title">ಐರಿಸ್ ಡೇಟಾ ತೆಗೆದುಹಾಕುವುದೇ?</string>
+    <string name="iris_delete_popup_message_with_related_func">ಐರಿಸ್‍‍ಗಳನ್ನು ಬಳಸುವ ವೈಶಿಷ್ಟ್ಯಗಳು ಆಫ್ ಆಗುತ್ತವೆ.</string>
+    <string name="iris_register_summary">ನಿಮ್ಮ ಕಣ್ಣಿನ ಪಾಪೆಗಳನ್ನು ನೋಂದಾಯಿಸಲಾಗಿದೆ.</string>
+    <string name="iris_add_summary">ನಿಮ್ಮ ಕಣ್ಣಿನ ಪಾಪೆಗಳನ್ನು ನೋಂದಾಯಿಸಿ.</string>
+    <string name="common_remove">ತೆಗೆದುಹಾಕಿ</string>
+    <string name="iris_failed_to_register">ಐರಿಸ್‍ಗಳನ್ನು ನೋಂದಾಯಿಸಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ</string>
+    <string name="iris_eye_safety_msg">ನಿಮ್ಮ ಐರಿಸ್‍ಗಳನ್ನು ಗುರುತಿಸಲಾಗಲಿಲ್ಲ.</string>
+    <string name="iris_proximity_restriction_popop_message">ನಿಮ್ಮ ಮುಖದಿಂದ ಸ್ವಲ್ಪ ದೂರದಲ್ಲಿ ನಿಮ್ಮ ಫೋನ್ ಹಿಡಿದುಕೊಳ್ಳಿ ಮತ್ತು ಪುನಃ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="iris_sensor_not_working_popup_title">ಐರಿಸ್ ಗುರುತಿಸುವಿಕೆ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತಿಲ್ಲ</string>
+    <string name="iris_sensor_not_working_msg">ಐರಿಸ್‍ಗಳ ಸೆನ್ಸಾರ್ ಪ್ರತಿಕ್ರಿಯಿಸುತ್ತಿಲ್ಲ. ನಂತರ ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="iris_hw_problem_msg">ಅದು ಹೀಗೆ ಮುಂದುವರಿದರೆ, ನಿಮ್ಮ ಫೋನ್ ಮರುಪ್ರಾರಂಭಿಸಿ.</string>
+    <string name="lockpattern_retry_button_text">ಮರು ಪ್ರಯತ್ನ</string>
+</resources>

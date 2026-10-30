@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iris</string>
+    <string name="my_irises">Alih keluar data iris</string>
+    <string name="register_irises">Daftar iris</string>
+    <string name="iris_unlock">Buka kunci iris</string>
+    <string name="iris_unlock_summary">Buka kunci telefon anda dengan iris anda.</string>
+    <string name="use_iris_first_lock">Pengecaman iris skrin hidup</string>
+    <string name="use_iris_first_lock_summary">Buka kunci telefon anda dengan iris anda apabila skrin dihidupkan, tanpa perlu meleret terlebih dahulu.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Kekal pada Skrin kunci</string>
+    <string name="iris_stay_on_lockscreen_summary">Apabila anda membuka kunci dengan pengecaman iris, kekal dikunci pada Skrin kunci sehingga anda menyapu.</string>
+    <string name="tips_for_iris">Petua utk menggunakan pengecaman iris</string>
+    <string name="iris_delete_popup_title">Alih keluar data iris?</string>
+    <string name="iris_delete_popup_message_with_related_func">Ciri yang menggunakan iris akan dimatikan.</string>
+    <string name="iris_register_summary">Iris anda telah didaftarkan.</string>
+    <string name="iris_add_summary">Daftar iris anda.</string>
+    <string name="common_remove">Alh kluar</string>
+    <string name="iris_failed_to_register">Tidak dapat mendaftar iris</string>
+    <string name="iris_eye_safety_msg">Iris anda tidak dicam.</string>
+    <string name="iris_proximity_restriction_popop_message">Jauhkan lagi telefon anda dari muka anda dan cuba lagi.</string>
+    <string name="iris_sensor_not_working_popup_title">Pengecaman iris tidak berfungsi</string>
+    <string name="iris_sensor_not_working_msg">Penderia iris tidak memberikan respons. Cuba lagi kemudian.</string>
+    <string name="iris_hw_problem_msg">Jika ini kerap berlaku, mulakan semula telefon anda.</string>
+    <string name="lockpattern_retry_button_text">Cuba semula</string>
+</resources>

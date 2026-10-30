@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">چشم‌ها</string>
+    <string name="my_irises">حذف اطلاعات چشم</string>
+    <string name="register_irises">ثبت چشم‌ها</string>
+    <string name="iris_unlock">بازگشایی قفل چشم</string>
+    <string name="iris_unlock_summary">قفل تلفن خود را با چشم‌هایتان باز کنید.</string>
+    <string name="use_iris_first_lock">شناسایی چشم در صفحه</string>
+    <string name="use_iris_first_lock_summary">به محض روشن شدن صفحه، بدون کشیدن صفحه در ابتدا، قفل تلفن شما را با شناسایی چشم‌هایتان باز می‌کند.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">ماندن در صفحه قفل</string>
+    <string name="iris_stay_on_lockscreen_summary">وقتی با شناسایی چشم قفل را باز می‌کنید، در صفحه قفل می‌ماند تا وقتی انگشت را روی صفحه بکشید.</string>
+    <string name="tips_for_iris">نکات استفاده از تشخیص چشم</string>
+    <string name="iris_delete_popup_title">اطلاعات چشم حذف شود؟</string>
+    <string name="iris_delete_popup_message_with_related_func">ویژگی‌هایی که از چشم‌ها استفاده می‌کنند خاموش می‌شوند.</string>
+    <string name="iris_register_summary">چشم‌های شما ثبت شده‌اند.</string>
+    <string name="iris_add_summary">چشم‌های خود را ثبت کنید.</string>
+    <string name="common_remove">حذف</string>
+    <string name="iris_failed_to_register">ثبت چشم‌ها ناموفق بود</string>
+    <string name="iris_eye_safety_msg">چشم‌های شما شناسایی نشدند.</string>
+    <string name="iris_proximity_restriction_popop_message">تلفن را دورتر از صورتتان نگهدارید و دوباره امتحان کنید.</string>
+    <string name="iris_sensor_not_working_popup_title">تشخیص چشم کار نمی‌کند</string>
+    <string name="iris_sensor_not_working_msg">حسگر چشم پاسخ نمی‌دهد. بعداً دوباره امتحان کنید.</string>
+    <string name="iris_hw_problem_msg">اگر همچنان ادامه داشت، تلفن خود را راه‎اندازی مجدد کنید.</string>
+    <string name="lockpattern_retry_button_text">امتحان دوباره</string>
+</resources>

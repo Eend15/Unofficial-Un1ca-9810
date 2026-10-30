@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">İrisler</string>
+    <string name="my_irises">İris verilerini kaldır</string>
+    <string name="register_irises">İrisleri kaydet</string>
+    <string name="iris_unlock">İrisle kilit açma</string>
+    <string name="iris_unlock_summary">İrislerinizle telefonunuzun kilidini açın.</string>
+    <string name="use_iris_first_lock">Ekran açıkken iris tanıma</string>
+    <string name="use_iris_first_lock_summary">Ekran açıldığında kaydırmadan irislerinizle telefonunuzun kilidini açın.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Kilit ekranında kalır</string>
+    <string name="iris_stay_on_lockscreen_summary">İris tanımayla kilit açtığınızda kaydırana kadar Kilit ekranında kalır.</string>
+    <string name="tips_for_iris">İris tanımayı kullanma ipuçları</string>
+    <string name="iris_delete_popup_title">İris verileri kaldırılsın mı?</string>
+    <string name="iris_delete_popup_message_with_related_func">İrisleri kullanan özellikler kapatılacak.</string>
+    <string name="iris_register_summary">İrisleriniz kaydedildi.</string>
+    <string name="iris_add_summary">İrislerinizi kaydedin.</string>
+    <string name="common_remove">Kaldır</string>
+    <string name="iris_failed_to_register">İrisler kaydedilemedi</string>
+    <string name="iris_eye_safety_msg">İrisleriniz tanınmadı.</string>
+    <string name="iris_proximity_restriction_popop_message">Telefonunuzu yüzünüzden uzakta tutup tekrar deneyin.</string>
+    <string name="iris_sensor_not_working_popup_title">İris tanıma çalışmıyor</string>
+    <string name="iris_sensor_not_working_msg">İris sensörü yanıt vermiyor. Daha sonra tekrar deneyin.</string>
+    <string name="iris_hw_problem_msg">Bu durum devam ederse telefonunuzu yeniden başlatın.</string>
+    <string name="lockpattern_retry_button_text">Y.dene</string>
+</resources>

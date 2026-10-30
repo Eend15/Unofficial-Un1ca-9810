@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Вясёлкавыя абалонкі</string>
+    <string name="my_irises">Выдаліць даныя вясёлк. абалонак</string>
+    <string name="register_irises">Зарэг. вясёлкав. абалонкі</string>
+    <string name="iris_unlock">Разблакіроўка вясёлк. абалонк.</string>
+    <string name="iris_unlock_summary">Разблакіруйце тэлефон вясёлкавымі абалонкамі.</string>
+    <string name="use_iris_first_lock">Распазн вяс абал на ўкл экране</string>
+    <string name="use_iris_first_lock_summary">Разблакіруйце тэлефон з дапамогай вясёлкавых абалонак адразу пасля ўключэння экрана, без папярэдняга правядзення пальцам.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Заставацца на экране блакіроўкі</string>
+    <string name="iris_stay_on_lockscreen_summary">Калі вы разблакіроўваеце з дапамогай распазнавання вясёлкавых абалонак, заставайцеся на экране блакіроўкі, пакуль не праведзяце.</string>
+    <string name="tips_for_iris">Парады па вык. рас. вяс. абал.</string>
+    <string name="iris_delete_popup_title">Выдаліць даныя вясёлкавых абалонак?</string>
+    <string name="iris_delete_popup_message_with_related_func">Функцыі, якія выкарыстоўваюць вясёлкавыя абалонкі, будуць выключаны.</string>
+    <string name="iris_register_summary">Вясёлкавыя абалонкі зарэгістраваны.</string>
+    <string name="iris_add_summary">Зарэгіструйце свае вясёлкавыя абалонкі.</string>
+    <string name="common_remove">Выдаліць</string>
+    <string name="iris_failed_to_register">Немагчыма зарэгістраваць вясёлк. абалонкі</string>
+    <string name="iris_eye_safety_msg">Вашы вясёлкавыя абалонкі не былі распазнаны.</string>
+    <string name="iris_proximity_restriction_popop_message">Трымайце тэлефон далей ад твару і паўтарыце спробу.</string>
+    <string name="iris_sensor_not_working_popup_title">Распазнаванне вясёлк. абалонкі не працуе</string>
+    <string name="iris_sensor_not_working_msg">Датчык вясёлкавай абалонкі не адказвае. Паўтарыце спробу пазней.</string>
+    <string name="iris_hw_problem_msg">Калі гэта адбываецца зноў, перазапусціце тэлефон.</string>
+    <string name="lockpattern_retry_button_text">Паўтарыць</string>
+</resources>

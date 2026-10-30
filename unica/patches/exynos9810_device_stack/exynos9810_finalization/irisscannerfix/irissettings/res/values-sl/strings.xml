@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Šarenici</string>
+    <string name="my_irises">Odstranitev podatkov o šarenici</string>
+    <string name="register_irises">Registriraj šarenici</string>
+    <string name="iris_unlock">Odklepanje s šarenico</string>
+    <string name="iris_unlock_summary">Odklepanje telefona s šarenicama.</string>
+    <string name="use_iris_first_lock">Prepozn. šarenic ob vkl. zasl.</string>
+    <string name="use_iris_first_lock_summary">Odklepanje telefona s šarenicama takoj, ko se zaslon vklopi, brez predhodnega drsanja.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Ostani na zaklenjenem zaslonu</string>
+    <string name="iris_stay_on_lockscreen_summary">Pri odklepanju s prepoznavanjem šarenic bo naprava ostala na zaklenjenem zaslonu, dokler ne podrsate.</string>
+    <string name="tips_for_iris">Namigi za upor. prep. šarenice</string>
+    <string name="iris_delete_popup_title">Želite odstraniti podatke o šarenici?</string>
+    <string name="iris_delete_popup_message_with_related_func">Funkcije, ki uporabljajo šarenici, bodo izklopljene.</string>
+    <string name="iris_register_summary">Šarenici sta bili registrirani.</string>
+    <string name="iris_add_summary">Registrirajte svoji šarenici.</string>
+    <string name="common_remove">Odstrani</string>
+    <string name="iris_failed_to_register">Šarenic ni bilo mogoče registrirati</string>
+    <string name="iris_eye_safety_msg">Šarenici nista bili prepoznani.</string>
+    <string name="iris_proximity_restriction_popop_message">Telefon držite bolj stran od obraza in poskusite znova.</string>
+    <string name="iris_sensor_not_working_popup_title">Prepoznavanje šarenice ne deluje</string>
+    <string name="iris_sensor_not_working_msg">Tipalo za šarenico se ne odziva. Poskusite znova pozneje.</string>
+    <string name="iris_hw_problem_msg">Če se to ponavlja, znova zaženite telefon.</string>
+    <string name="lockpattern_retry_button_text">Pos.znova</string>
+</resources>

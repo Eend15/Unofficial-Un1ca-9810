@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Rainelės</string>
+    <string name="my_irises">Šalinti rainelės duomenis</string>
+    <string name="register_irises">Registruoti raineles</string>
+    <string name="iris_unlock">Atrakinimas rainele</string>
+    <string name="iris_unlock_summary">Atrakinkite telefoną savo rainelėmis.</string>
+    <string name="use_iris_first_lock">Rainelės atpažinimo langas</string>
+    <string name="use_iris_first_lock_summary">Kai tik ekranas įsijungia, atrakinkite telefoną rainelėmis, pirma neperbraukdami.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Likti užrakinimo ekrane</string>
+    <string name="iris_stay_on_lockscreen_summary">Kai atrakinama naudojant rainelių atpažinimą, likti užrakinimo ekrane, kol perbraukiama.</string>
+    <string name="tips_for_iris">Rainelės atpažinimo patarimai</string>
+    <string name="iris_delete_popup_title">Šalinti rainelių duomenis?</string>
+    <string name="iris_delete_popup_message_with_related_func">Raineles naudojančios funkcijos bus išjungtos.</string>
+    <string name="iris_register_summary">Jūsų rainelės užregistruotos.</string>
+    <string name="iris_add_summary">Užregistruokite savo raineles.</string>
+    <string name="common_remove">Šalinti</string>
+    <string name="iris_failed_to_register">Nepavyko užregistruoti rainelių</string>
+    <string name="iris_eye_safety_msg">Jūsų rainelės neatpažintos.</string>
+    <string name="iris_proximity_restriction_popop_message">Telefoną laikykite toliau nuo veido ir bandykite dar kartą.</string>
+    <string name="iris_sensor_not_working_popup_title">Rainelių atpažinimas neveikia</string>
+    <string name="iris_sensor_not_working_msg">Rainelės jutiklis neatsako. Bandykite vėliau.</string>
+    <string name="iris_hw_problem_msg">Jei tai kartojasi, paleiskite telefoną iš naujo.</string>
+    <string name="lockpattern_retry_button_text">Band. vėl</string>
+</resources>

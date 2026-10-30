@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Mống mắt</string>
+    <string name="my_irises">Xóa dữ liệu mống mắt</string>
+    <string name="register_irises">Đăng ký các mống mắt</string>
+    <string name="iris_unlock">Mở khóa bằng mống mắt</string>
+    <string name="iris_unlock_summary">Mở khóa điện thoại bằng mống mắt.</string>
+    <string name="use_iris_first_lock">Nhận dạng m.mắt khi m.hình bật</string>
+    <string name="use_iris_first_lock_summary">Mở khóa điện thoại bằng mống mắt của bạn ngay khi màn hình bật mà không cần vuốt trước.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Ở tại màn hình Khóa</string>
+    <string name="iris_stay_on_lockscreen_summary">Khi bạn mở khóa bằng nhận diện mống mắt, hãy ở tại màn hình Khóa cho đến khi bạn vuốt.</string>
+    <string name="tips_for_iris">Gợi ý sử dụng nhận dạng mống mắt</string>
+    <string name="iris_delete_popup_title">Xóa dữ liệu mống mắt?</string>
+    <string name="iris_delete_popup_message_with_related_func">Các tính năng sử dụng mống mắt sẽ bị tắt.</string>
+    <string name="iris_register_summary">Mống mắt của bạn đã được đăng ký.</string>
+    <string name="iris_add_summary">Đăng ký mống mắt của bạn.</string>
+    <string name="common_remove">Xóa</string>
+    <string name="iris_failed_to_register">Không thể đăng ký mống mắt</string>
+    <string name="iris_eye_safety_msg">Không nhận dạng được mống mắt của bạn.</string>
+    <string name="iris_proximity_restriction_popop_message">Giữ điện thoại cách xa mặt hơn và thử lại.</string>
+    <string name="iris_sensor_not_working_popup_title">Nhận dạng mống mắt không hoạt động</string>
+    <string name="iris_sensor_not_working_msg">Cảm biến mống mắt không phản hồi. Hãy thử lại sau.</string>
+    <string name="iris_hw_problem_msg">Nếu điều này tiếp tục xảy ra, hãy khởi động lại điện thoại của bạn.</string>
+    <string name="lockpattern_retry_button_text">Thử lại</string>
+</resources>

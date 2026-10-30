@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">ມ່ານຕາ</string>
+    <string name="my_irises">ເອົາຂໍ້ມູນມ່ານຕາອອກໄປ</string>
+    <string name="register_irises">ລົງທະບຽນມ່ານຕາ</string>
+    <string name="iris_unlock">ການປົດລັອກດ້ວຍມ່ານຕາ</string>
+    <string name="iris_unlock_summary">ປົດລັອກໂທລະສັບຂອງທ່ານດ້ວຍມ່ານຕາຂອງທ່ານ.</string>
+    <string name="use_iris_first_lock">ການຈົດຈຳມ່ານຕາເທິງໜ້າຈໍ</string>
+    <string name="use_iris_first_lock_summary">ປົດລັອກໂທລະສັບຂອງທ່ານດ້ວຍມ່ານຕາຂອງທ່ານທັນທີທີ່ໜ້າຈໍເປີດ, ໂດຍບໍ່ຕ້ອງມີການຮູດກ່ອນ.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">ຢູ່ໃນໜ້າຈໍລັອກໄວ້</string>
+    <string name="iris_stay_on_lockscreen_summary">ເມື່ອທ່ານປົດລັອກດ້ວຍການຈົດຈຳມ່ານຕາ, ໃຫ້ຢູ່ໃນໜ້າຈໍລັອກຈົນກວ່າທ່ານຈະຮູດ.</string>
+    <string name="tips_for_iris">ເຄັດລັບເພື່ອໃຊ້ການຈົດຈຳມ່ານຕາ</string>
+    <string name="iris_delete_popup_title">ເອົາຂໍ້ມູນມ່ານຕາອອກໄປບໍ?</string>
+    <string name="iris_delete_popup_message_with_related_func">ຄຸນສົມບັດທີ່ໃຊ້ມ່ານຕາ ຈະຖືກປິດ.</string>
+    <string name="iris_register_summary">ມ່ານຕາຂອງທ່ານໄດ້ຖືກລົງທະບຽນແລ້ວ.</string>
+    <string name="iris_add_summary">ລົງທະບຽນມ່ານຕາຂອງທ່ານ.</string>
+    <string name="common_remove">ເອົາອອກ</string>
+    <string name="iris_failed_to_register">ບໍ່ສາມາດລົງທະບຽນມ່ານຕາໄດ້</string>
+    <string name="iris_eye_safety_msg">ມ່ານຕາຂອງທ່ານບໍ່ຖືກຈົດຈຳ.</string>
+    <string name="iris_proximity_restriction_popop_message">ຖືໂທລະສັບຂອງທ່ານຫ່າງຈາກໃບໜ້າຂອງທ່ານ ແລະລອງໃໝ່ອີກ.</string>
+    <string name="iris_sensor_not_working_popup_title">ການຈົດຈຳມ່ານຕາໃຊ້ບໍ່ໄດ້</string>
+    <string name="iris_sensor_not_working_msg">ເຊັນເຊີມ່ານຕາບໍ່ຕອບສະໜອງ. ລອງໃໝ່ອີກພາຍຫຼັງ.</string>
+    <string name="iris_hw_problem_msg">ຖ້າສິ່ງນີ້ຍັງສືບຕໍ່ເກີດຂຶ້ນຢູ່, ປິດເປີດໂທລະສັບຂອງທ່ານຄືນໃໝ່.</string>
+    <string name="lockpattern_retry_button_text">ລອງໃໝ່ອີກ</string>
+</resources>

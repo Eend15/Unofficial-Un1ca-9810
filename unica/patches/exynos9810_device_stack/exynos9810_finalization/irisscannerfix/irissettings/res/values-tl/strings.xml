@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Mga iris</string>
+    <string name="my_irises">Alisin ang iris data</string>
+    <string name="register_irises">Irehistro ang mga iris</string>
+    <string name="iris_unlock">Pag-unlock ng iris</string>
+    <string name="iris_unlock_summary">I-unlock ang telepono mo gamit ang mga iris mo.</string>
+    <string name="use_iris_first_lock">Iris recognition sa pag-on ng screen</string>
+    <string name="use_iris_first_lock_summary">I-unlock ang telepono mo gamit ang mga iris mo sa sandaling mag-on ang screen, nang hindi muna nagsi-swipe.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Manatili sa Lock screen</string>
+    <string name="iris_stay_on_lockscreen_summary">Kapag nag-unlock ka gamit ang iris recognition, manatili sa Lock screen hanggang sa mag-swipe ka.</string>
+    <string name="tips_for_iris">Mga tip sa paggamit ng iris recognition</string>
+    <string name="iris_delete_popup_title">Alisin ang iris data?</string>
+    <string name="iris_delete_popup_message_with_related_func">Io-off ang mga feature na gumagamit ng mga iris.</string>
+    <string name="iris_register_summary">Nairehistro na ang mga iris mo.</string>
+    <string name="iris_add_summary">Irehistro ang mga iris mo.</string>
+    <string name="common_remove">Alisin</string>
+    <string name="iris_failed_to_register">Hindi mairehistro ang mga iris</string>
+    <string name="iris_eye_safety_msg">Hindi nakilala ang mga iris mo.</string>
+    <string name="iris_proximity_restriction_popop_message">Ilayo pa lalo ang telepono mula sa mukha mo at subukang muli.</string>
+    <string name="iris_sensor_not_working_popup_title">Hindi gumagana ang Iris recognition</string>
+    <string name="iris_sensor_not_working_msg">Hindi tumutugon ang sensor ng iris. Subukan muli mamaya.</string>
+    <string name="iris_hw_problem_msg">Kung patuloy itong nangyayari, i-restart ang telepono mo.</string>
+    <string name="lockpattern_retry_button_text">I-retry</string>
+</resources>

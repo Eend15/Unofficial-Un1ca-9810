@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">आइरिसहरू</string>
+    <string name="my_irises">आइरिसको डाटा हटाउनुहोस्</string>
+    <string name="register_irises">आइरिसहरूलाई दर्ता गर्नु</string>
+    <string name="iris_unlock">आइरिस अनलक</string>
+    <string name="iris_unlock_summary">आफ्ना आइरिसहरू मार्फत आफ्नो फोन अनलक गर्नुहोस्।</string>
+    <string name="use_iris_first_lock">स्क्रीन-अन हुँदा आइरिस पहिचान</string>
+    <string name="use_iris_first_lock_summary">स्क्रीन अन हुने बित्तिकै पहिले स्वाइप नगरिकन आइरिस मार्फत आफ्नो फोन अन गर्नुहोस्।</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">लक स्क्रीनमा रहनुहोस्</string>
+    <string name="iris_stay_on_lockscreen_summary">आइरिसको पहिचान प्रयोग गरी अनलक गर्दा तपाईले स्वाइप नगर्दासम्म लक स्क्रीनमै रहने बनाउनुहोस्।</string>
+    <string name="tips_for_iris">आइरिस पहिचानको प्रयोग बारे सुझाव</string>
+    <string name="iris_delete_popup_title">आइरिस डाटा हटाउने हो?</string>
+    <string name="iris_delete_popup_message_with_related_func">आइरिसहरूको प्रयोग गर्ने सुविधाहरूलाई अफ गरिनेछ।</string>
+    <string name="iris_register_summary">तपाईको आइरिसहरू दर्ता गरिएका छन्।</string>
+    <string name="iris_add_summary">आफ्ना आइरिसहरू दर्ता गर्नुहोस्।</string>
+    <string name="common_remove">हटाउनु</string>
+    <string name="iris_failed_to_register">आइरिसहरू दर्ता गर्न सकिएन</string>
+    <string name="iris_eye_safety_msg">तपाईका आइरिसहरूको पहिचान भएन।</string>
+    <string name="iris_proximity_restriction_popop_message">आफ्नो फोन आफ्नो अनुहारबाट अलि टाढा समात्नुहोस् र फेरि प्रयास गर्नुहोस्।</string>
+    <string name="iris_sensor_not_working_popup_title">आइरिस पहिचानले काम गरिरहेको छैन</string>
+    <string name="iris_sensor_not_working_msg">आइरिस सेन्सरले प्रातिक्रिया दिइरहेको छैन। पछि फेरि प्रयास गर्नुहोस्।</string>
+    <string name="iris_hw_problem_msg">यस्तो भइरखेमा आफ्नो फोनलाई पुनः सुरु गर्नुहोस्।</string>
+    <string name="lockpattern_retry_button_text">पुनः प्रयास गर्नुहोस्</string>
+</resources>

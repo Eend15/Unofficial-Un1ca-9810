@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Göz qüzehləri</string>
+    <string name="my_irises">göz qişası məlumatını sil</string>
+    <string name="register_irises">Diafraqmaları qeyd keçir</string>
+    <string name="iris_unlock">Diafraqmanın kiliddən açılması</string>
+    <string name="iris_unlock_summary">Telefonu diafraqmalarla kiliddən açın.</string>
+    <string name="use_iris_first_lock">Ekranda göz qüzehi tanınması</string>
+    <string name="use_iris_first_lock_summary">Ekran yanan kimi sürüşdürmədən telefonu gözün qüzehli qişası ilə kiliddən açın.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Kilid ekranında qal</string>
+    <string name="iris_stay_on_lockscreen_summary">Göz qüzehi ilə kiliddən açdıqda sürüşdürənədək Kilid ekranında qalın.</string>
+    <string name="tips_for_iris">Diafr tanın istif üçün məsl</string>
+    <string name="iris_delete_popup_title">Diafraqma məlumatı silinsin?</string>
+    <string name="iris_delete_popup_message_with_related_func">Diafraqmalardan istifadə edən funksiyalar sönəcək.</string>
+    <string name="iris_register_summary">Gözün qüzehli qişası qeydiyyatdan keçirildi.</string>
+    <string name="iris_add_summary">Gözün qüzehli qişasını qeydiyyatdan keçirin.</string>
+    <string name="common_remove">Sil</string>
+    <string name="iris_failed_to_register">Diafraqmaları qeydiyyatdan keçirmək olmadı</string>
+    <string name="iris_eye_safety_msg">Diaqramlarınız tanınmadı.</string>
+    <string name="iris_proximity_restriction_popop_message">Telefonu üzünüzdən uzaq tutun və yenidən cəhd edin.</string>
+    <string name="iris_sensor_not_working_popup_title">Göz qişası tanınması işləmir</string>
+    <string name="iris_sensor_not_working_msg">Diafraqma sensoru cavab vermir. Daha sonra yenidən cəhd edin.</string>
+    <string name="iris_hw_problem_msg">Bu, baş verməyə davam edirsə, telefonu söndürüb yandırın.</string>
+    <string name="lockpattern_retry_button_text">Yenidən cəhd et</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Resource-only package: Samsung's Android 10 iris strings in every language for the
+     Settings iris page (IrisSettingsFragment) and the Screen lock entry (IrisLockMenu).
+     One UI 8 Settings only kept the English iris strings. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.samsung.android.irissettings" android:sharedUserId="android.uid.system">
+    <application android:label="@string/bio_iris_scanner_title" android:allowBackup="false"
+        android:hasCode="false" />
+</manifest>

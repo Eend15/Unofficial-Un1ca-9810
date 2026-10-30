@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">თვალის ირისები</string>
+    <string name="my_irises">თვალის ირისის მონაცემთა წაშლა</string>
+    <string name="register_irises">თვალების რეგისტრაცია</string>
+    <string name="iris_unlock">თვალის ირისით განბლოკვა</string>
+    <string name="iris_unlock_summary">თვალის ირისებით განბლოკეთ ტელეფონი.</string>
+    <string name="use_iris_first_lock">თვალის ირისის ამოცნობა ეკრანზე</string>
+    <string name="use_iris_first_lock_summary">ეკრანის ჩართვისთანავე განბლოკეთ ტელეფონი თვალის ირისებით, მანამდე თითის გადასმის გარეშე.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">დაბლოკილ ეკრანზე დარჩენა</string>
+    <string name="iris_stay_on_lockscreen_summary">როდესაც განბლოკავთ თვალის ირისის ამოცნობით, ეკრანი დაბლოკილი დარჩეს თითის გადასმამდე.</string>
+    <string name="tips_for_iris">თვალის ამოცნობის ინსტრუქცია</string>
+    <string name="iris_delete_popup_title">წაიშალოს თვალის ირისის მონაცემები?</string>
+    <string name="iris_delete_popup_message_with_related_func">თვალის ირისების გამომყენებელი ფუნქციები გამოირთვება.</string>
+    <string name="iris_register_summary">თქვენი თვალის ირისები დარეგისტრირდა.</string>
+    <string name="iris_add_summary">დაარეგისტრირეთ თქვენი თვალის ირისები.</string>
+    <string name="common_remove">წაშლა</string>
+    <string name="iris_failed_to_register">თვალის ირისები ვერ დარეგისტრირდა</string>
+    <string name="iris_eye_safety_msg">თვალის ირისების ამოცნობა ვერ მოხერხდა.</string>
+    <string name="iris_proximity_restriction_popop_message">დაიკავეთ ტელეფონი სახიდან უფრო შორს და ისევ სცადეთ.</string>
+    <string name="iris_sensor_not_working_popup_title">თვალის ირისის ამოცნობა არ მუშაობს</string>
+    <string name="iris_sensor_not_working_msg">თვალის ირისის სენსორი არ რეაგირებს. მოგვიანებით სცადეთ.</string>
+    <string name="iris_hw_problem_msg">თუ პრობლემა არ მოგვარდება, გადატვირთეთ ტელეფონი.</string>
+    <string name="lockpattern_retry_button_text">ხელახალი ცდა</string>
+</resources>

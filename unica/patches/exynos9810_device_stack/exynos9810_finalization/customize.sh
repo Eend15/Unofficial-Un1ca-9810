@@ -1763,6 +1763,93 @@ _EXYNOS9810_FINAL_PATCH_FROZEN_SOCKET_DESTROY()
     python3 "$MODPATH/network/patch_frozen_socket_destroy.py" "$DIR" || return 1
 }
 
+_EXYNOS9810_FINAL_ADD_IRIS_SCANNER()
+{
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+    # Galaxy S9/S9+/Note9 iris scanner on One UI 8: the stock Android 10 iris stack
+    # (irisd, HAL, TEE client, SecIrisService) made to run on Android 16, plus the
+    # Settings page and lock screen unlock. See irisscannerfix/README.md.
+    local FIX="$MODPATH/irisscannerfix"
+    local TARGET_FW
+    TARGET_FW="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+    local STOCK="$FW_DIR/$TARGET_FW/system/system"
+    local SYS="$WORK_DIR/system/system"
+    local REL DIR F
+
+    for F in ffffffff000000000000000000000047.tlbin ffffffffd0000000000000000000001a.tlbin; do
+        [ -s "$WORK_DIR/vendor/app/mcRegistry/$F" ] || {
+            LOGE "Iris TEE trustlet missing from the device vendor: $F"
+            return 1
+        }
+    done
+
+    LOG "- Adding the Galaxy S9/Note9 iris scanner"
+    # Stock Android 10 files that run unchanged.
+    for REL in lib64/hw/iris.default.so lib64/libIrisTlc.so lib64/libIrisLibrary_preview.so \
+            lib64/libIrisSensorListener.so framework/semcamera.jar \
+            etc/permissions/irisservice.xml etc/permissions/semcamera.xml \
+            etc/permissions/privapp-permissions-com.samsung.android.server.iris.xml \
+            priv-app/SecIrisService/SecIrisService.apk; do
+        [ -s "$STOCK/$REL" ] || {
+            LOGE "Stock iris file missing from $TARGET_FW: $REL"
+            return 1
+        }
+        mkdir -p "$SYS/$(dirname "$REL")"
+        cp -f "$STOCK/$REL" "$SYS/$REL" || return 1
+    done
+    # Byte patches pinned to the stock binaries (identical on all three targets).
+    python3 "$FIX/native/apply_byte_patch.py" "$FIX/native/irisd.patch.json" \
+        "$STOCK/bin/irisd" "$SYS/bin/irisd" || return 1
+    python3 "$FIX/native/apply_byte_patch.py" "$FIX/native/libIrisService.patch.json" \
+        "$STOCK/lib64/libIrisService.so" "$SYS/lib64/libIrisService.so" || return 1
+    cp -f "$FIX/native/libiris_a10_shim.so" "$SYS/lib64/libiris_a10_shim.so" || return 1
+    mkdir -p "$SYS/etc/init"
+    cp -f "$FIX/native/irisd.rc" "$SYS/etc/init/irisd.rc" || return 1
+    python3 "$FIX/sepolicy/patch_sepolicy.py" "$SYS/system_ext/etc/selinux" || return 1
+
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/irisd" 0 2000 755 "u:object_r:irisd_exec:s0"
+    for REL in lib64/hw/iris.default.so lib64/libIrisTlc.so lib64/libIrisLibrary_preview.so \
+            lib64/libIrisSensorListener.so lib64/libIrisService.so lib64/libiris_a10_shim.so; do
+        _EXYNOS9810_FINAL_SET_METADATA "system" "system/$REL" 0 0 644 "u:object_r:system_lib_file:s0"
+    done
+    for REL in framework/semcamera.jar etc/init/irisd.rc etc/permissions/irisservice.xml \
+            etc/permissions/semcamera.xml \
+            etc/permissions/privapp-permissions-com.samsung.android.server.iris.xml \
+            priv-app/SecIrisService/SecIrisService.apk priv-app/IrisSettings/IrisSettings.apk; do
+        _EXYNOS9810_FINAL_SET_METADATA "system" "system/$REL" 0 0 644 "u:object_r:system_file:s0"
+    done
+    for REL in priv-app/SecIrisService priv-app/IrisSettings; do
+        _EXYNOS9810_FINAL_SET_METADATA "system" "system/$REL" 0 0 755 "u:object_r:system_file:s0"
+    done
+
+    # SecIrisService: Android 10 resources are kept raw (no aapt2 rebuild); only the
+    # patched DEX is rebuilt. Debug info stays, the patcher anchors on it.
+    REL="system/priv-app/SecIrisService/SecIrisService.apk"
+    DIR="$APKTOOL_DIR/$REL"
+    rm -rf "$DIR"
+    "$TOOLS_DIR/bin/apktool" d -r -j 1 -o "$DIR" "$SYS/priv-app/SecIrisService/SecIrisService.apk" || return 1
+    python3 "$FIX/secirisservice/patch_sec_iris_service.py" "$DIR" "$FIX/secirisservice/smali" || return 1
+
+    # Samsung's iris strings in every language (resource-only package), built and
+    # signed by the normal APK rebuild.
+    DIR="$APKTOOL_DIR/system/priv-app/IrisSettings/IrisSettings.apk"
+    rm -rf "$DIR"
+    mkdir -p "$DIR/original/META-INF" "$SYS/priv-app/IrisSettings"
+    cp -r "$FIX/irissettings/." "$DIR/" || return 1
+
+    # Settings: "Irises" entry in Screen lock and biometrics, One UI 8 iris page.
+    REL="system/priv-app/SecSettings/SecSettings.apk"
+    DIR="$APKTOOL_DIR/$REL"
+    [ -d "$DIR" ] || DECODE_APK "system" "$REL" || return 1
+    python3 "$FIX/settings/patch_secsettings_iris.py" "$DIR" "$FIX/settings/smali" || return 1
+
+    # SystemUI: lock screen iris unlock, no privacy dot for the iris service.
+    REL="system_ext/priv-app/SystemUI/SystemUI.apk"
+    DIR="$APKTOOL_DIR/$REL"
+    [ -d "$DIR" ] || DECODE_APK "system" "$REL" || return 1
+    python3 "$FIX/systemui/patch_systemui_iris.py" "$DIR" "$FIX/systemui/smali" || return 1
+}
+
 _EXYNOS9810_FINAL_PATCH_BRIEF_HEADSUP_DEFAULT()
 {
     [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
@@ -7017,6 +7104,7 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_ACQUIRE_FENCES || return 1
 _EXYNOS9810_FINAL_PATCH_POWER_MENU_ACCESSIBILITY || return 1
 _EXYNOS9810_FINAL_PATCH_BRIEF_HEADSUP_DEFAULT || return 1
 _EXYNOS9810_FINAL_PATCH_FROZEN_SOCKET_DESTROY || return 1
+_EXYNOS9810_FINAL_ADD_IRIS_SCANNER || return 1
 _EXYNOS9810_FINAL_ENABLE_CAMERA_UHD_60FPS
 _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Tynczōwki</string>
+    <string name="my_irises">Wyciep dane tynczōwek</string>
+    <string name="register_irises">Registruj tynczōwki</string>
+    <string name="iris_unlock">Ôdbloknij bez tynczōwka</string>
+    <string name="iris_unlock_summary">Ôdblokuj telefōn bez tynczōwki.</string>
+    <string name="use_iris_first_lock">Rozpōzn.tynczōwki kej zał.ekrōn</string>
+    <string name="use_iris_first_lock_summary">Ôdblokuj telefōn tynczōwkami zarŏz, kej załōnczysz ekran bez przōdziyjszego przejechaniŏ.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Ôstōń na ekranie blokady</string>
+    <string name="iris_stay_on_lockscreen_summary">Bezczŏs ôdblokniyńciŏ bez rozpoznŏwanie tynczōwki, ôstōń na ekranie blokady do czasu przeciōngniyńciŏ palcym.</string>
+    <string name="tips_for_iris">Poznŏw. tynczōwek — dorady</string>
+    <string name="iris_delete_popup_title">Wyciepać dane tynczōwek?</string>
+    <string name="iris_delete_popup_message_with_related_func">Fōnkcyje, kere używajōm tynczōwek bydōm wyłōnczōne.</string>
+    <string name="iris_register_summary">Twoje tynczōwki zaregistrowano.</string>
+    <string name="iris_add_summary">Zaregistruj swoje tynczōwki.</string>
+    <string name="common_remove">Wyciep</string>
+    <string name="iris_failed_to_register">Niy idzie zaregistrować tynczōwek</string>
+    <string name="iris_eye_safety_msg">Niy poznano tynczōwek.</string>
+    <string name="iris_proximity_restriction_popop_message">Trzim mobilniŏk dalij ôd ôbliczo i wybadej drugi rŏz.</string>
+    <string name="iris_sensor_not_working_popup_title">Poznŏwanie tynczōwek niy fōnguje</string>
+    <string name="iris_sensor_not_working_msg">Synsor tynczōwek niy ryaguje. Wybadej drugi rŏz potym.</string>
+    <string name="iris_hw_problem_msg">Kej problym niy mijŏ, resztartuj telefōn.</string>
+    <string name="lockpattern_retry_button_text">Ponōw</string>
+</resources>

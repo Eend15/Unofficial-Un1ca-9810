@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Көз қабықтары</string>
+    <string name="my_irises">Көз қабығының деректерін жою</string>
+    <string name="register_irises">Көздің қабықтарын тіркеу</string>
+    <string name="iris_unlock">Көз қабығымен құлыпты ашу</string>
+    <string name="iris_unlock_summary">Телефоныңыздың құлпын көзіңіздің қабықтарымен ашыңыз.</string>
+    <string name="use_iris_first_lock">Қосулы экранда көз қабығын тану</string>
+    <string name="use_iris_first_lock_summary">Экран қосыла салысымен алдымен жүргізіп өтпей-ақ көзіңіздің қабықтарымен телефонның құлпын ашыңыз.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Құлыптау экранында қалу</string>
+    <string name="iris_stay_on_lockscreen_summary">Көз қабығын тану арқылы құлыптан ашқан кезде, жүргізіп өткенше Құлыптау экранында қалыңыз.</string>
+    <string name="tips_for_iris">Көз тануды пайдалану кеңестері</string>
+    <string name="iris_delete_popup_title">Көз қабығының деректерін жою керек пе?</string>
+    <string name="iris_delete_popup_message_with_related_func">Көздің қабықтарын пайдаланатын мүмкіндіктер өшіріледі.</string>
+    <string name="iris_register_summary">Көзіңіздің қабықтары тіркелді.</string>
+    <string name="iris_add_summary">Көзіңіздің қабықтарын тіркеңіз.</string>
+    <string name="common_remove">Жою</string>
+    <string name="iris_failed_to_register">Көздің қабықтарын тіркеу мүмкін болмады</string>
+    <string name="iris_eye_safety_msg">Көзіңіздің қабықтары танылмаған.</string>
+    <string name="iris_proximity_restriction_popop_message">Телефонды бетіңізден алысырақ ұстап тұрып, әрекетті қайталаңыз.</string>
+    <string name="iris_sensor_not_working_popup_title">Көздің қабығын тану істемей тұр</string>
+    <string name="iris_sensor_not_working_msg">Көздің мөлдір қабығы датчигі жауап бермеуде. Әрекетті кейінірек қайталаңыз.</string>
+    <string name="iris_hw_problem_msg">Егер бұл үнемі қайталанса, онда телефоныңызды өшіріп, қайта қосыңыз.</string>
+    <string name="lockpattern_retry_button_text">Қайталау</string>
+</resources>

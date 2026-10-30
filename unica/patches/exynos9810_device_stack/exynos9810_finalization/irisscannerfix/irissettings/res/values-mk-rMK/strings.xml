@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Зеници</string>
+    <string name="my_irises">Отстран. ги податоц.за зеницата</string>
+    <string name="register_irises">Регистрирај зеници</string>
+    <string name="iris_unlock">Отклучување со зеници</string>
+    <string name="iris_unlock_summary">Отклучете го телефонот со зениците.</string>
+    <string name="use_iris_first_lock">Препознавање зеници на екран</string>
+    <string name="use_iris_first_lock_summary">Отклучете го телефонот со зеници веднаш штом ќе се вклучи екранот, без прво да поминувате.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Остан.на Екранот за заклучување</string>
+    <string name="iris_stay_on_lockscreen_summary">Кога ќе отклучите со препознавање зеници, останете на Екранот за заклучување сѐ додека не поминете.</string>
+    <string name="tips_for_iris">Совети за препознавање зеници</string>
+    <string name="iris_delete_popup_title">Да се отстранат податоците за зеници?</string>
+    <string name="iris_delete_popup_message_with_related_func">Функциите што користат зеници ќе се исклучат.</string>
+    <string name="iris_register_summary">Вашите зеници се регистрирани.</string>
+    <string name="iris_add_summary">Регистрирајте ги Вашите зеници.</string>
+    <string name="common_remove">Отстрани</string>
+    <string name="iris_failed_to_register">Не можеше да се регистрираат зеници</string>
+    <string name="iris_eye_safety_msg">Вашите зеници не се препознаени.</string>
+    <string name="iris_proximity_restriction_popop_message">Држете го телефонот подалеку од лицето и обидете се повторно.</string>
+    <string name="iris_sensor_not_working_popup_title">Препознавањето на зениците не функционира</string>
+    <string name="iris_sensor_not_working_msg">Сензорот за зеница не реагира. Обидете се повторно подоцна.</string>
+    <string name="iris_hw_problem_msg">Ако ова продолжи да се случува, рестартирајте го телефонот.</string>
+    <string name="lockpattern_retry_button_text">Повторно</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Райдужки</string>
+    <string name="my_irises">Видалити дані райдужки</string>
+    <string name="register_irises">Реєстрація райдужок</string>
+    <string name="iris_unlock">Розблокування райдужками</string>
+    <string name="iris_unlock_summary">Розблокування телефону за допомогою райдужок.</string>
+    <string name="use_iris_first_lock">Розпізн. райдужок після ввімк. екрана</string>
+    <string name="use_iris_first_lock_summary">Розблокування телефону за допомогою райдужок одразу після ввімкнення екрана, без попереднього проведення.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Залишати екран блокування</string>
+    <string name="iris_stay_on_lockscreen_summary">Після розблокування за допомогою розпізнавання райдужки буде відкрито екран блокування. Для переходу на інший екран вам потрібно буде провести пальцем.</string>
+    <string name="tips_for_iris">Поради з розпізнавання райдужок</string>
+    <string name="iris_delete_popup_title">Видалити дані райдужки?</string>
+    <string name="iris_delete_popup_message_with_related_func">Функції, що використовують райдужки, буде відключено.</string>
+    <string name="iris_register_summary">Ваші райдужки зареєстровано.</string>
+    <string name="iris_add_summary">Реєстрація райдужок.</string>
+    <string name="common_remove">Видалити</string>
+    <string name="iris_failed_to_register">Не вдалося зареєструвати райдужки</string>
+    <string name="iris_eye_safety_msg">Райдужки не розпізнано.</string>
+    <string name="iris_proximity_restriction_popop_message">Тримайте телефон подалі від обличчя та спробуйте ще раз.</string>
+    <string name="iris_sensor_not_working_popup_title">Розпізнавання райдужки не працює</string>
+    <string name="iris_sensor_not_working_msg">Датчик райдужок не відповідає. Спробуйте ще раз пізніше.</string>
+    <string name="iris_hw_problem_msg">Якщо проблема не зникне, перезапустіть телефон.</string>
+    <string name="lockpattern_retry_button_text">Повторити</string>
+</resources>

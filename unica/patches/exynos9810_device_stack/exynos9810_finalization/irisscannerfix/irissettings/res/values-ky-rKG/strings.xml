@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Каректер</string>
+    <string name="my_irises">Карек маалыматын өчүрүү</string>
+    <string name="register_irises">Көз челдерин каттоо</string>
+    <string name="iris_unlock">Карек кулпу ачуусу</string>
+    <string name="iris_unlock_summary">Телефонуңуздун кулпусун карегиңиз менен ачыңыз.</string>
+    <string name="use_iris_first_lock">Экран карек аныктоо режиминде</string>
+    <string name="use_iris_first_lock_summary">Телефонуңузду каректериңиз менен экран күйгөн учурда биринчи сүрбөстөн, кулпусун ачыңыз.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Кулпу экранында калыңыз</string>
+    <string name="iris_stay_on_lockscreen_summary">Сиз карек аныктоосу менен кулпуну ачканда, жылдырганга чейин Кулпу экранда күтүңүз.</string>
+    <string name="tips_for_iris">Карек таануусун колд. жардамдар</string>
+    <string name="iris_delete_popup_title">Карек маалыматын өчүрүүбү?</string>
+    <string name="iris_delete_popup_message_with_related_func">Карек колдонулган өзгөчөлүктөр өчүрүлөт.</string>
+    <string name="iris_register_summary">Карегиниз катталды.</string>
+    <string name="iris_add_summary">Карегиңизди каттаңыз.</string>
+    <string name="common_remove">Өчүр</string>
+    <string name="iris_failed_to_register">Каректерди каттоо ишке ашкан жок</string>
+    <string name="iris_eye_safety_msg">Каректериңиз таанылган жок.</string>
+    <string name="iris_proximity_restriction_popop_message">Телефонуңузду бетиңизден алысыраак аралыкта кармап, дагы аракеттениңиз.</string>
+    <string name="iris_sensor_not_working_popup_title">Карек аныктоо иштебейт</string>
+    <string name="iris_sensor_not_working_msg">Көздүн кареги сенсору жооп кайтарбай жатат. Кийинирээк дагы аракеттениңиз.</string>
+    <string name="iris_hw_problem_msg">Эгерде бул кайталана бере турган болсо, телефонуңузду кайра иштетиңиз.</string>
+    <string name="lockpattern_retry_button_text">Дагы аракет</string>
+</resources>

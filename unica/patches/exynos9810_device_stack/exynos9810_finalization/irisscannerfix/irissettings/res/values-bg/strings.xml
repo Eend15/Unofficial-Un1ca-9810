@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Ириси</string>
+    <string name="my_irises">Премахване на данни за ирис</string>
+    <string name="register_irises">Регистриране на ириси</string>
+    <string name="iris_unlock">Отключване с ирис</string>
+    <string name="iris_unlock_summary">Отключете телефона с ириси.</string>
+    <string name="use_iris_first_lock">Разпознав. ирис при вкл. екран</string>
+    <string name="use_iris_first_lock_summary">Отключете телефона с ирисите си, когато екранът се включи, без първо да плъзгате.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Оставане на заключен екран</string>
+    <string name="iris_stay_on_lockscreen_summary">Когато отключите с разпознаване на ирис, останете на заключения екран, докато плъзнете.</string>
+    <string name="tips_for_iris">Съв. използ. разпозн. на ирис</string>
+    <string name="iris_delete_popup_title">Премахване на данните за ириси?</string>
+    <string name="iris_delete_popup_message_with_related_func">Функциите, използващи ириси, ще бъдат изключени.</string>
+    <string name="iris_register_summary">Ирисите ви са регистрирани.</string>
+    <string name="iris_add_summary">Регистрирайте своите ириси.</string>
+    <string name="common_remove">Премаxв.</string>
+    <string name="iris_failed_to_register">Не може да се регистрират ириси</string>
+    <string name="iris_eye_safety_msg">Ирисите ви не са разпознати.</string>
+    <string name="iris_proximity_restriction_popop_message">Задръжте телефона по-далеч от лицето си и опитайте отново.</string>
+    <string name="iris_sensor_not_working_popup_title">Разпознаването на ириси не работи</string>
+    <string name="iris_sensor_not_working_msg">Сензорът за ириси не отговаря. Опитайте отново по-късно.</string>
+    <string name="iris_hw_problem_msg">Ако това продължава да се случва, рестартирайте телефона.</string>
+    <string name="lockpattern_retry_button_text">Отново</string>
+</resources>

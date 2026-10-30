@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Ծիածանաթաղանթներ</string>
+    <string name="my_irises">Հեռացնել ծիածանաթաղանթի տվյլներ</string>
+    <string name="register_irises">Գրանցել ծիածանաթաղանթներ</string>
+    <string name="iris_unlock">Ծիածանաթաղանթով արգելաբացում</string>
+    <string name="iris_unlock_summary">Հեռախոսն արգելաբացեք ծիածանաթաղանթներով:</string>
+    <string name="use_iris_first_lock">Էկրան. ծիածանաթաղանթի ճանաչում</string>
+    <string name="use_iris_first_lock_summary">Հենց որ էկրանը միանա, հեռախոսն արգելաբացեք Ձեր ծիածանաթաղանթներով՝ առանց նախ մատը սահեցնելու:</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Մնալ Կողպված էկրանում</string>
+    <string name="iris_stay_on_lockscreen_summary">Ծիածանաթաղանթի ճանաչմամբ արգելաբացելու ժամանակ մնացեք Կողպված էկրանում՝ մինչև մատով սահեցնելը:</string>
+    <string name="tips_for_iris">Ծիած. ճանաչում օգտ. խորհուրդներ</string>
+    <string name="iris_delete_popup_title">Հեռացնե՞լ ծիածանաթաղանթի տվյալները:</string>
+    <string name="iris_delete_popup_message_with_related_func">Ծիածանաթաղանթներ օգտագործող գործառույթները կանջատվեն:</string>
+    <string name="iris_register_summary">Ձեր ծիածանաթաղանթները գրանցվել են:</string>
+    <string name="iris_add_summary">Գրանցեք Ձեր ծիածանաթաղանթները:</string>
+    <string name="common_remove">Հեռացնել</string>
+    <string name="iris_failed_to_register">Չհաջողվեց գրանցել ծիածանաթաղանթները</string>
+    <string name="iris_eye_safety_msg">Ձեր ծիածանաթաղանթները չճանաչվեցին:</string>
+    <string name="iris_proximity_restriction_popop_message">Հեռախոսը պահեք դեմքից ավելի հեռու և նորից փորձեք:</string>
+    <string name="iris_sensor_not_working_popup_title">Ծիածանաթաղանթի ճանաչումը չի աշխատում</string>
+    <string name="iris_sensor_not_working_msg">Ծիածանաթաղանթի տվիչը չի պատասխանում: Ավելի ուշ կրկին փորձեք:</string>
+    <string name="iris_hw_problem_msg">Եթե սա շարունակի տեղի ունենալ, վերագործարկեք հեռախոսը:</string>
+    <string name="lockpattern_retry_button_text">Կրկն փրձլ</string>
+</resources>

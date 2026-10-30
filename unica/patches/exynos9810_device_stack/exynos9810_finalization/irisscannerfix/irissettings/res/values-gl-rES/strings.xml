@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iris</string>
+    <string name="my_irises">Eliminar os datos do iris</string>
+    <string name="register_irises">Rexistrar os iris</string>
+    <string name="iris_unlock">Desbloqueo mediante iris</string>
+    <string name="iris_unlock_summary">Desbloquea o teléfono cos teus iris.</string>
+    <string name="use_iris_first_lock">Recoñecemen. iris activar pantalla</string>
+    <string name="use_iris_first_lock_summary">Desbloquea o teléfono cos iris en canto se acenda a pantalla, sen necesidade de pasar os dedos previamente.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Permanecer na Pantalla de bloqueo</string>
+    <string name="iris_stay_on_lockscreen_summary">Cando desbloqueas co recoñecemento de iris, permaneces na Pantalla de bloqueo ata que pasas o dedo.</string>
+    <string name="tips_for_iris">Consellos para o recoñec. de iris</string>
+    <string name="iris_delete_popup_title">Queres eliminar os datos dos iris?</string>
+    <string name="iris_delete_popup_message_with_related_func">As funcións que utilizan os iris desactivaranse.</string>
+    <string name="iris_register_summary">Rexistráronse os teus iris.</string>
+    <string name="iris_add_summary">Rexistra os teus iris.</string>
+    <string name="common_remove">Eliminar</string>
+    <string name="iris_failed_to_register">Non se puideron rexistrar os iris</string>
+    <string name="iris_eye_safety_msg">Non se recoñeceron os teus iris.</string>
+    <string name="iris_proximity_restriction_popop_message">Suxeita o teléfono máis lonxe da cara e téntao outra vez.</string>
+    <string name="iris_sensor_not_working_popup_title">O recoñecemento do iris non funciona</string>
+    <string name="iris_sensor_not_working_msg">O sensor de iris non responde. Téntao máis tarde.</string>
+    <string name="iris_hw_problem_msg">Se continúa sucedendo, reinicia o teléfono.</string>
+    <string name="lockpattern_retry_button_text">Reintent.</string>
+</resources>

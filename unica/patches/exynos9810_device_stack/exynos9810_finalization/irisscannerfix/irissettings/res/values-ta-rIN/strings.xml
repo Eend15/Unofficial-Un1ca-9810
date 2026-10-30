@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">கருவிழிகள்</string>
+    <string name="my_irises">கருவிழித் தரவை அகற்றுக</string>
+    <string name="register_irises">கருவிழிகளைப் பதிவு.செய்யவும்</string>
+    <string name="iris_unlock">கருவிழியைப் பூட்டுநீக்கம்</string>
+    <string name="iris_unlock_summary">உங்கள் கருவிழிகளைக் கொண்டு உங்கள் ஃபோனை பூட்டுநீக்கவும்.</string>
+    <string name="use_iris_first_lock">ஸ்க்ரீன்-ஆன் கருவிழி அங்கீகரிப்பு</string>
+    <string name="use_iris_first_lock_summary">முதலில் ஸ்வைப் செய்யாமலேயே திரை இயங்கியவுடன் உங்கள் கருவிழிகள் மூலம் ஃபோனைப் பூட்டுநீக்கலாம்.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">பூட்டு திரையிலேயே இருக்கவும்</string>
+    <string name="iris_stay_on_lockscreen_summary">நீங்கள் கருவிழி கண்டறிதல் மூலம் பூட்டுநீக்கும் போது, ஸ்வைப் செய்யும் வரை பூட்டுதிரையிலேயே இருக்கவும்.</string>
+    <string name="tips_for_iris">கருவிழி கண்டறிதல் பயன்படுத்துவதற்கான குறிப்புகள்</string>
+    <string name="iris_delete_popup_title">கருவிழித் தரவை அகற்றவா?</string>
+    <string name="iris_delete_popup_message_with_related_func">கருவிழிகளைப் பயன்படுத்தும் அம்சங்கள் ஆஃப் செய்யப்படும்.</string>
+    <string name="iris_register_summary">உங்கள் கருவிழிகள் பதிவுசெய்யப்பட்டன.</string>
+    <string name="iris_add_summary">உங்கள் கருவிழிகளைப் பதிவுசெய்யவும்.</string>
+    <string name="common_remove">அகற்றுக</string>
+    <string name="iris_failed_to_register">கருவிழிகளைப் பதிவு செய்ய இயலவில்லை</string>
+    <string name="iris_eye_safety_msg">உங்கள் கருவிழிகள் கண்டறியப்படவில்லை.</string>
+    <string name="iris_proximity_restriction_popop_message">உங்கள் முகத்திலிருந்து ஃபோனை தொலைவில் பிடித்து மீண்டும் முயலவும்.</string>
+    <string name="iris_sensor_not_working_popup_title">கருவிழி கண்டறிதல் வேலை செய்யவில்லை</string>
+    <string name="iris_sensor_not_working_msg">கருவிழி உணர்கருவி பதிலளிக்கவில்லை. பின்னர் மீண்டும் முயலவும்.</string>
+    <string name="iris_hw_problem_msg">இது தொடர்ந்து ஏற்பட்டால் உங்கள் ஃபோனை மீண்டும் துவக்கவும்.</string>
+    <string name="lockpattern_retry_button_text">மீண். முயலுக</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">ଇରିସଗୁଡିକ</string>
+    <string name="my_irises">ଇରିସ୍ ଡାଟା ଅପସାରଣ</string>
+    <string name="register_irises">ଇରିସଗୁଡିକ ପଞ୍ଜିକରଣ</string>
+    <string name="iris_unlock">ଇରିସ୍ ଅନଲକ୍</string>
+    <string name="iris_unlock_summary">ଆପଣଙ୍କ ଇରିସଗୁଡିକ‌ ସହ ଫୋନ୍ ଅନଲକ୍ କରନ୍ତୁ।</string>
+    <string name="use_iris_first_lock">ସ୍କ୍ରିନ୍-ଅନ୍ ଇରିସ୍ ଚିହ୍ନଟକରଣ</string>
+    <string name="use_iris_first_lock_summary">ପ୍ରଥମେ ସ୍ଵାଇପ୍ ନକରି, ସ୍କ୍ରିନ୍ ଟର୍ନ୍ ଅନ୍ ମାତ୍ରକେ ଯଥା ସମ୍ଭବ ଆପଣଙ୍କ ଇରିସଗୁଡିକ ସହ ଆପଣଙ୍କ ଫୋନ୍ ଅନଲକ୍ କରନ୍ତୁ।</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">ଲକ୍ ସ୍କ୍ରିନରେ ରୁହନ୍ତୁ</string>
+    <string name="iris_stay_on_lockscreen_summary">ଆପଣ ଇରିସ୍ ଚିହ୍ନଟକରଣ ସହ ଅନଲକ୍ କରିବା ସମୟରେ, ଆପଣ ସ୍ଵାଇପ୍ ନକରିବା ପର୍ଯ୍ୟନ୍ତ ଲକ୍ ସ୍କ୍ରିନରେ ରୁହନ୍ତୁ।</string>
+    <string name="tips_for_iris">ଇରିସ୍ ଚିହ୍ନ. ବ୍ୟବ. କରି. ଟିପ୍ପଣୀ</string>
+    <string name="iris_delete_popup_title">ଇରିସ୍ ଡାଟା ଅପସାରଣ କରିବେ?</string>
+    <string name="iris_delete_popup_message_with_related_func">ଇରିସ୍‌ ବ୍ୟବହାର କରୁଥିବା ବୈଶିଷ୍ଟ୍ୟଗୁଡିକ ଟର୍ନ୍‌ ଅଫ୍ ହେବ।</string>
+    <string name="iris_register_summary">ଆପଣଙ୍କ ଇରିସଗୁଡିକ ପଞ୍ଜିକରଣ ହୋଇଛି।</string>
+    <string name="iris_add_summary">ଆପଣଙ୍କ ଇରିସଗୁଡିକ ପଞ୍ଜିକରଣ କରନ୍ତୁ।</string>
+    <string name="common_remove">ଅପସାରଣ</string>
+    <string name="iris_failed_to_register">ଇରିସଗୁଡିକ ପଞ୍ଜିକରଣ କରାଯାଇ ପାରିଲା ନାହିଁ</string>
+    <string name="iris_eye_safety_msg">ଆପଣଙ୍କ ଇରିସଗୁଡିକ ଚିହ୍ନିଟ ହୋଇନଥିଲା।</string>
+    <string name="iris_proximity_restriction_popop_message">ଆପଣଙ୍କ ଫୋନକୁ ଆପଣଙ୍କ ମୁହଁ ପାଖରୁ ଦୂରରେ ଧରି ପୁନଃଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="iris_sensor_not_working_popup_title">ଇରିସ୍ ଚିହ୍ନଟକରଣ କାର୍ଯ୍ୟ କରୁନାହିଁ</string>
+    <string name="iris_sensor_not_working_msg">ଇରିସ୍ ସେନସର୍ ପ୍ରତିକ୍ରିୟା କରୁନାହିଁ। ପରେ ପୁନଃଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="iris_hw_problem_msg">ଯଦି ଏହା ହୁଏ, ଆପଣଙ୍କ ଫୋନ୍ ପୁନଃଆରମ୍ଭ କରନ୍ତୁ।</string>
+    <string name="lockpattern_retry_button_text">ପୁନଃଚେଷ୍ଟା</string>
+</resources>

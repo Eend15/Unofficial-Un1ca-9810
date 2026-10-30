@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">虹膜</string>
+    <string name="my_irises">移除虹膜数据</string>
+    <string name="register_irises">注册虹膜</string>
+    <string name="iris_unlock">虹膜解锁</string>
+    <string name="iris_unlock_summary">用虹膜解锁您的手机</string>
+    <string name="use_iris_first_lock">打开屏幕时进行虹膜识别</string>
+    <string name="use_iris_first_lock_summary">不需要先滑动屏幕，在屏幕打开后立即通过虹膜解锁手机。</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">留在锁定屏幕</string>
+    <string name="iris_stay_on_lockscreen_summary">当使用虹膜识别解锁时，留在锁定屏幕中，直到您滑动屏幕。</string>
+    <string name="tips_for_iris">虹膜识别的使用提示</string>
+    <string name="iris_delete_popup_title">是否移除虹膜数据？</string>
+    <string name="iris_delete_popup_message_with_related_func">使用虹膜的各项功能将被关闭。</string>
+    <string name="iris_register_summary">您已注册虹膜</string>
+    <string name="iris_add_summary">注册您的虹膜</string>
+    <string name="common_remove">移除</string>
+    <string name="iris_failed_to_register">无法注册虹膜</string>
+    <string name="iris_eye_safety_msg">虹膜识别不成功。</string>
+    <string name="iris_proximity_restriction_popop_message">请将手机离面部远一些，然后重试。</string>
+    <string name="iris_sensor_not_working_popup_title">虹膜识别不工作</string>
+    <string name="iris_sensor_not_working_msg">虹膜传感器未响应。请稍后重试。</string>
+    <string name="iris_hw_problem_msg">如果仍然如此，请重启您的手机。</string>
+    <string name="lockpattern_retry_button_text">重试</string>
+</resources>

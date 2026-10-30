@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Iris</string>
+    <string name="my_irises">Eliminar datos de iris</string>
+    <string name="register_irises">Registrar los iris</string>
+    <string name="iris_unlock">Desbloqueo por iris</string>
+    <string name="iris_unlock_summary">Desbloquear el teléfono con los iris.</string>
+    <string name="use_iris_first_lock">Detección iris pantalla activa</string>
+    <string name="use_iris_first_lock_summary">Desbloquear el teléfono con los iris apenas se enciende la pantalla, sin tener que deslizar la pantalla primero.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Permanecer en pantalla bloqueo</string>
+    <string name="iris_stay_on_lockscreen_summary">Cuando realice el desbloqueo con el reconocimiento de iris, permanecerá en la pantalla de bloqueo hasta que deslice el dedo.</string>
+    <string name="tips_for_iris">Consejos reconocimiento iris</string>
+    <string name="iris_delete_popup_title">¿Eliminar datos de iris?</string>
+    <string name="iris_delete_popup_message_with_related_func">Se desactivarán las funciones que usan los iris.</string>
+    <string name="iris_register_summary">Se registraron sus iris.</string>
+    <string name="iris_add_summary">Registre sus iris.</string>
+    <string name="common_remove">Eliminar</string>
+    <string name="iris_failed_to_register">No fue posible registrar los iris</string>
+    <string name="iris_eye_safety_msg">No se reconocieron sus iris.</string>
+    <string name="iris_proximity_restriction_popop_message">Sostenga el teléfono más lejos de su rostro e inténtelo de nuevo.</string>
+    <string name="iris_sensor_not_working_popup_title">No funciona el reconocimiento de iris</string>
+    <string name="iris_sensor_not_working_msg">El sensor de iris no responde. Inténtelo de nuevo más tarde.</string>
+    <string name="iris_hw_problem_msg">Si esto sigue ocurriendo, reinicie el teléfono.</string>
+    <string name="lockpattern_retry_button_text">Reintentar</string>
+</resources>

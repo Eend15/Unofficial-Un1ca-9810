@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bio_iris_scanner_title">Ίριδες</string>
+    <string name="my_irises">Κατάργηση δεδομένων ίριδας</string>
+    <string name="register_irises">Εγγραφή ιρίδων</string>
+    <string name="iris_unlock">Ξεκλείδωμα μέσω ίριδας</string>
+    <string name="iris_unlock_summary">Ξεκλειδώστε το τηλέφωνο με τις ίριδές σας.</string>
+    <string name="use_iris_first_lock">Αναγνώρ. ίριδας με ενεργή οθόνη</string>
+    <string name="use_iris_first_lock_summary">Ξεκλειδώστε το τηλέφωνο με τις ίριδές σας μόλις ενεργοποιηθεί η οθόνη, χωρίς να κάνετε πρώτα σάρωση.</string>
+    <string name="sec_biometrics_common_option_title_stay_on_lock_screen">Παραμονή στην οθόνη κλειδώματος</string>
+    <string name="iris_stay_on_lockscreen_summary">Όταν ξεκλειδώνετε τη συσκευή με την αναγνώριση ιρίδων, θα παραμένετε στην οθόνη κλειδώματος μέχρι να κάνετε τη χειρονομία σάρωσης.</string>
+    <string name="tips_for_iris">Συμβ.για τη χρ. της αναγ. ίριδ.</string>
+    <string name="iris_delete_popup_title">Θέλετε να καταργήσετε τα δεδομένα ιρίδων;</string>
+    <string name="iris_delete_popup_message_with_related_func">Οι λειτουργίες που χρησιμοποιούν ίριδες θα απενεργοποιηθούν.</string>
+    <string name="iris_register_summary">Οι ίριδές σας έχουν καταχωρηθεί.</string>
+    <string name="iris_add_summary">Καταχωρήστε τις ίριδές σας.</string>
+    <string name="common_remove">Κατάργηση</string>
+    <string name="iris_failed_to_register">Δεν ήταν δυνατή η καταχώρηση ιρίδων</string>
+    <string name="iris_eye_safety_msg">Οι ίριδές σας δεν αναγνωρίστηκαν.</string>
+    <string name="iris_proximity_restriction_popop_message">Κρατήστε το τηλέφωνο πιο μακριά από το πρόσωπό σας και δοκιμάστε ξανά.</string>
+    <string name="iris_sensor_not_working_popup_title">Η αναγνώριση ίριδας δεν λειτουργεί</string>
+    <string name="iris_sensor_not_working_msg">Ο αισθητήρας ίριδας δεν ανταποκρίνεται. Δοκιμάστε ξανά αργότερα.</string>
+    <string name="iris_hw_problem_msg">Αν συνεχίσει να συμβαίνει αυτό, επανεκκινήστε το τηλέφωνό σας.</string>
+    <string name="lockpattern_retry_button_text">Επανάληψη</string>
+</resources>
