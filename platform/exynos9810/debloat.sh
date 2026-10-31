@@ -35,3 +35,16 @@ system/priv-app/OdaService
 system/priv-app/GpuWatchApp
 system/app/SketchBook
 "
+
+# --- Components for hardware the Exynos 9810 does not have ---
+# com.samsung.sec.android.teegris.tui_service -- Trusted UI for Samsung's TEEgris TEE.
+#     The 9810 runs Trustonic (/dev/mobicore, /dev/t-base-tui); with no TEEgris
+#     socket the always-running service retried its connection every second.
+# com.samsung.pregpudriver.ex2200, com.samsung.gamedriver.ex2200 -- updatable GPU
+#     drivers for the Exynos 2200 (Xclipse); ro.gfx.driver.0 names the Mali G72 one.
+SYSTEM_DEBLOAT+="
+system/app/TEEgrisTuiService
+system/etc/sysconfig/preinstalled-packages-com.samsung.sec.android.teegris.tui_service.xml
+system/priv-app/DevGPUDriver-EX2200
+system/priv-app/GameDriver-EX2200
+"
