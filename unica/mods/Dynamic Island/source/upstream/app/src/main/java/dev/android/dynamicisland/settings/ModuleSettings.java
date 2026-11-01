@@ -39,10 +39,13 @@ public final class ModuleSettings {
     public static final String KEY_HAPTICS = "haptics";
     /** Rendering overrides only; individual preferences are retained. */
     public static final String KEY_LOW_PERFORMANCE = "low_performance_mode";
+    public static final String KEY_MATERIAL_STYLE = "material_style";
+    public static final int MATERIAL_FROSTED = 0, MATERIAL_CLASSIC = 1;
     /** Keep active content visible when a portrait app hides the status bar. */
     public static final String KEY_SHOW_IN_FULLSCREEN = "show_in_fullscreen";
     /** Plays the animations of version 0.1.3 and before instead of the smoothed ones. */
     public static final String KEY_LEGACY_ANIMATION = "legacy_animation";
+    public static final String KEY_I_MODE = "i_mode";
     /** Where the island sits: {@link #ANCHOR_AUTO} (on the camera hole), the middle, the left or the right of the status bar. */
     public static final String KEY_PILL_ANCHOR = "pill_anchor";
     /** Outline policy: automatic contrast detection, always visible, or never drawn. */
@@ -126,6 +129,7 @@ public final class ModuleSettings {
     public static final String KEY_EVENT_TOGGLES = "event_toggles";
     /** The flashlight card shown on the island while the torch is on. */
     public static final String KEY_TORCH_PILL = "torch_pill";
+    public static final String KEY_TORCH_STYLE = "torch_style";
     public static final String KEY_PRIVACY = "privacy_indicator";
     public static final String KEY_PRIVACY_LOCATION = "privacy_location";
     public static final String KEY_OTP_CARD = "otp_card";
@@ -163,8 +167,10 @@ public final class ModuleSettings {
     private static volatile boolean eventBluetooth = true;
     private static volatile boolean haptics = true;
     private static volatile boolean lowPerformance;
+    private static volatile int materialStyle = MATERIAL_CLASSIC;
     private static volatile boolean showInFullscreen;
     private static volatile boolean legacyAnimation;
+    private static volatile boolean iMode;
     private static volatile boolean headsUpIsland = true;
     private static volatile boolean allNotifications;
     private static volatile boolean foregroundNotifications;
@@ -212,6 +218,7 @@ public final class ModuleSettings {
     private static volatile Runnable onSwitchesChanged;
     private static volatile boolean eventToggles = true;
     private static volatile boolean torchPill = true;
+    private static volatile int torchStyle;
     private static volatile boolean privacyIndicator = true;
     private static volatile boolean privacyLocation = false;
     private static volatile boolean otpCard = true;
@@ -478,7 +485,9 @@ public final class ModuleSettings {
             eventBluetooth = source.getBoolean(KEY_EVENT_BLUETOOTH, true);
             haptics = source.getBoolean(KEY_HAPTICS, true);
             lowPerformance = source.getBoolean(KEY_LOW_PERFORMANCE, false);
+            materialStyle = readMaterialStyle(source);
             legacyAnimation = source.getBoolean(KEY_LEGACY_ANIMATION, false);
+            iMode = source.getBoolean(KEY_I_MODE, false);
             pillOutlineMode = readPillOutlineMode(source);
             headsUpIsland = source.getBoolean(KEY_HEADS_UP_ISLAND, true);
             progressNotifications = source.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
@@ -535,6 +544,7 @@ public final class ModuleSettings {
             readGlow(source);
             eventToggles = source.getBoolean(KEY_EVENT_TOGGLES, true);
             torchPill = source.getBoolean(KEY_TORCH_PILL, true);
+            torchStyle = source.getInt(KEY_TORCH_STYLE, 0) == 1 ? 1 : 0;
             privacyIndicator = source.getBoolean(KEY_PRIVACY, true);
             privacyLocation = source.getBoolean(KEY_PRIVACY_LOCATION, false);
             otpCard = source.getBoolean(KEY_OTP_CARD, true);
@@ -565,8 +575,11 @@ public final class ModuleSettings {
     public static void configurePreview(SharedPreferences settings) {
         previewProcess = true;
         legacyAnimation = settings.getBoolean(KEY_LEGACY_ANIMATION, false);
+        iMode = settings.getBoolean(KEY_I_MODE, false);
         pillOutlineMode = readPillOutlineMode(settings);
         lowPerformance = settings.getBoolean(KEY_LOW_PERFORMANCE, false);
+        materialStyle = readMaterialStyle(settings);
+        torchStyle = settings.getInt(KEY_TORCH_STYLE, 0) == 1 ? 1 : 0;
         showInFullscreen = settings.getBoolean(KEY_SHOW_IN_FULLSCREEN, false);
         eventCharging = settings.getBoolean(KEY_EVENT_CHARGING, true);
         readOptionalDeviceSettings(settings);
@@ -598,6 +611,10 @@ public final class ModuleSettings {
     }
 
     public static boolean lowPerformance() { ensureStarted(); return lowPerformance; }
+    public static int readMaterialStyle(SharedPreferences source) {
+        return source.getInt(KEY_MATERIAL_STYLE, MATERIAL_CLASSIC) == MATERIAL_FROSTED ? MATERIAL_FROSTED : MATERIAL_CLASSIC;
+    }
+    public static boolean frostedMaterial() { ensureStarted(); return materialStyle == MATERIAL_FROSTED; }
     public static boolean showInFullscreen() { ensureStarted(); return showInFullscreen; }
     public static boolean chargingInfo() { ensureStarted(); return eventCharging && chargingInfo; }
     public static boolean stockChargingAnimation() { ensureStarted(); return stockChargingAnimation; }
@@ -632,10 +649,10 @@ public final class ModuleSettings {
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
+        return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + "/torchStyle=" + torchStyle + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
                 + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/stockCharging=" + stockChargingAnimation + "/recordingInput=" + concurrentRecordingInput
-                + "/roundness=" + customCardRoundness + "/" + cardCornerRadiusDp + "/outline=" + pillOutlineMode + "/" + appFilter.onlyListed() + appFilter.size();
+                + "/iMotion=" + iMode + "/material=" + materialStyle + "/roundness=" + customCardRoundness + "/" + cardCornerRadiusDp + "/outline=" + pillOutlineMode + "/" + appFilter.onlyListed() + appFilter.size();
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
@@ -647,6 +664,8 @@ public final class ModuleSettings {
                 + " pill=" + pillAnchor + "/" + pillXDp + "/" + pillYDp + " size=" + pillHPct + "/" + pillMinWDp + "/" + pillMaxWDp + "/" + keepPillWidth + " hole=" + holeMode + "/" + holeDDp + "/" + holeXDp + "/" + holeYDp + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision
                 + " pillOutline=" + pillOutlineMode + " showInFullscreen=" + showInFullscreen + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
         Diagnostics.fact("pill outline mode", Integer.toString(pillOutlineMode));
+        Diagnostics.fact("island presentation", iMode ? "iMotion" : "stack");
+        Diagnostics.fact("card material selected", materialStyle == MATERIAL_CLASSIC ? "classic" : "frosted");
         Diagnostics.fact("optional device cards", "charging=" + chargingInfo + " statistics=" + chargingStats + " headset=" + eventHeadset + " stockCharging=" + stockChargingAnimation);
         Diagnostics.fact("settings file", prefs.getFile() + " readable=" + prefs.getFile().canRead() + " keys=" + prefs.getAll().size());
         Diagnostics.fact("settings source", viaProvider ? "provider (" + source.getAll().size() + " keys)" : "preference file (" + source.getAll().size() + " keys)");
@@ -789,6 +808,7 @@ public final class ModuleSettings {
         ensureStarted();
         return torchPill;
     }
+    public static boolean torchBeamStyle() { ensureStarted(); return torchStyle == 1; }
 
     /** Camera / microphone in use island. */
     public static boolean privacyIndicator() {
@@ -803,9 +823,11 @@ public final class ModuleSettings {
     }
 
     /** The animations of 0.1.3 and before instead of the smoothed ones (default off). */
+    public static boolean iMode() { ensureStarted(); return iMode; }
+
     public static boolean legacyAnimation() {
         ensureStarted();
-        return legacyAnimation;
+        return legacyAnimation && !iMode;
     }
 
     /** Tick when the island expands / collapses and click on button presses. */

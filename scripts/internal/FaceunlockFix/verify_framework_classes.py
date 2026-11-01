@@ -110,6 +110,23 @@ def _verified_backup(path: Path, expected: str) -> frozenset[str]:
     return jar_classes(path)
 
 
+def source_variant_required(required: frozenset[str], source: Path) -> frozenset[str]:
+    # R8 synthetic names differ in this audited S901B donor. They were never
+    # defined in its original DEX; do not mistake them for rebuild class loss.
+    # Only this exact source fingerprint may use this exact two-class delta.
+    if not source.is_file() or sha256(source.read_bytes()).hexdigest() != "60b9389c974954f08c92114658679e15baa1a39ccd0d512dcff208f5b57b0272":
+        return required
+    delta = frozenset((
+        "Lcom/android/server/accessibility/magnification/WindowMagnificationGestureHandler$$ExternalSyntheticLambda0;",
+        "Lcom/android/server/pm/PackageInstallerService$$ExternalSyntheticLambda4;",
+    ))
+    original = jar_classes(source)
+    if delta & original or not CRITICAL.issubset(original):
+        raise RuntimeError("Audited donor class delta does not match source DEX")
+    # Preserve every other reference class, including all critical SDK classes.
+    return required - delta
+
+
 def require_preserved_framework_classes(candidate: Path) -> None:
     if not candidate.is_file():
         raise RuntimeError("services.jar missing: " + str(candidate))
@@ -128,6 +145,7 @@ def require_preserved_framework_classes(candidate: Path) -> None:
     required = frozenset(record["required_classes"])
     if not CRITICAL.issubset(required):
         raise RuntimeError("Trusted reference lacks essential SDK classes")
+    required = source_variant_required(required, ROOT / "out/fw/SM-S901B_EUX/system/system/framework/services.jar")
     actual = jar_classes(candidate)
     missing = sorted(required - actual)
     if missing:

@@ -144,9 +144,38 @@ public class IslandLifecycleTest {
         after.subtitle = "Messages · Copied";
         List<IslandItem> updated = new ArrayList<>();
         updated.add(after);
+        IslandItem music = item(ctx, "media:other", IslandItem.Kind.LIVE);
+        IslandItem sports = item(ctx, "oa:sports", IslandItem.Kind.LIVE);
+        updated.add(music);
+        updated.add(sports);
         view.setItems(updated, 0, new ArrayList<>());
 
         org.junit.Assert.assertEquals("Messages · Copied", view.cards().get(0).body.item.subtitle.toString());
+        org.junit.Assert.assertEquals("a refreshed popup never expands unrelated ongoing cards", 1,
+                view.cards().stream().filter(card -> !card.leaving).count());
+        // Replacing the popup changes its target, not the general stack.
+        org.junit.Assert.assertTrue(view.peek(sports, 12000));
+        view.setItems(updated);
+        org.junit.Assert.assertEquals("the replacement popup stays focused", "oa:sports",
+                view.cards().stream().filter(card -> !card.leaving).findFirst().get().item.key);
+        org.junit.Assert.assertEquals(1, view.cards().stream().filter(card -> !card.leaving).count());
+        view.setSuppressed(true);
+        assertFalse("locking closes the popup", view.isExpanded());
+        view.setItems(updated);
+        view.setSuppressed(false);
+        view.reveal();
+        view.setItems(updated);
+        assertFalse("unlocking and refreshing must not reopen the activity stack", view.isExpanded());
+        org.junit.Assert.assertTrue(view.peek(sports, 12000));
+        view.setItems(List.of(music));
+        assertFalse("withdrawing the popup closes it instead of opening other activities", view.isExpanded());
+        Director director = org.robolectric.util.ReflectionHelpers.getField(view, "director");
+        director.expandFromPill();
+        org.junit.Assert.assertTrue("a manual expansion still opens the ordinary stack", view.isExpanded());
+        org.junit.Assert.assertEquals(List.of("media:other"), view.cards().stream()
+                .filter(card -> !card.leaving).map(card -> card.item.key).toList());
+        view.collapse();
+        android.view.Choreographer.getInstance().removeFrameCallback(view);
     }
 
     @Test

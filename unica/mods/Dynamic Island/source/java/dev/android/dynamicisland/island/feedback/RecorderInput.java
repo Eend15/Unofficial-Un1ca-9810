@@ -59,6 +59,8 @@ public final class RecorderInput {
         });
     }
 
+    // This opt-in reader runs only in SystemUI; host permission/AppOps and startup failures remain enforced.
+    @android.annotation.SuppressLint("MissingPermission")
     private void start(String key, int token) {
         if (token != generation) return;
         try {

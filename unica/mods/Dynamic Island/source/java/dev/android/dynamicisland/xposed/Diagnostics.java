@@ -48,6 +48,15 @@ public final class Diagnostics {
         catch (RuntimeException ignored) { return false; }
     }
 
+    /** A later status request also proves a connection; an older acknowledgement does not. */
+    public static boolean statusAcknowledgedSince(Context ctx, long nonce) {
+        if (nonce <= 0) return false;
+        try {
+            long acknowledged = Long.parseLong(Settings.Global.getString(ctx.getContentResolver(), STATUS_SETTING));
+            return acknowledged >= nonce && acknowledged <= SystemClock.elapsedRealtimeNanos();
+        } catch (RuntimeException ignored) { return false; }
+    }
+
     private static final int MAX_ERRORS = 8;
     private static final int MAX_EVENTS = 60;
     private static final int MAX_CHARS = 12000;

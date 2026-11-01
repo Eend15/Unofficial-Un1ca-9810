@@ -163,6 +163,15 @@ final class PillPainter {
         }
     }
 
+    void drawCompactGlow(Canvas canvas,RectF bounds,float alpha) {
+        if(!ModuleSettings.ambientGlow() || glowAlpha<.002f) return;
+        int save=canvas.save();
+        glowCutout.reset();float r=bounds.height()/2;
+        glowCutout.addRoundRect(bounds,r,r,Path.Direction.CW);canvas.clipOutPath(glowCutout);
+        glow.draw(canvas,bounds,glowMotion,alpha*glowAlpha,ModuleSettings.glowStrength());
+        canvas.restoreToCount(save);
+    }
+
     boolean stepGlow(float dt, AudioLevels audio) {
         long now = IslandView.now();
         if (!ModuleSettings.ambientGlow()) {

@@ -460,6 +460,8 @@ public final class EventSource {
         }
     }
 
+    // Runs with the SystemUI host permissions; unavailable Bluetooth access is caught below.
+    @android.annotation.SuppressLint("MissingPermission")
     private static boolean isAudio(BluetoothDevice device) {
         try {
             BluetoothClass cls = device.getBluetoothClass();
@@ -474,6 +476,8 @@ public final class EventSource {
         return level instanceof Integer ? ((Integer) level).intValue() : -1;
     }
 
+    // Runs with the SystemUI host permissions; denied device names fall back to generic text.
+    @android.annotation.SuppressLint("MissingPermission")
     IslandItem bluetoothItem(BluetoothDevice device, int battery) {
         String name = null;
         try {

@@ -40,6 +40,9 @@ final class OneUi {
 
     private final Context ctx;
     private final float density;
+    private Runnable searchAction;
+
+    void setSearchAction(Runnable action) { searchAction=action; }
 
     OneUi(Context ctx) {
         this.ctx = ctx;
@@ -109,6 +112,13 @@ final class OneUi {
         name.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         name.setPadding(dp(8), 0, 0, 0);
         bar.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
+        if(searchAction!=null&&!title.toString().equals(ctx.getString(R.string.search_title))) {
+            android.widget.ImageView search=new android.widget.ImageView(ctx);
+            search.setImageResource(android.R.drawable.ic_menu_search);search.setImageTintList(ColorStateList.valueOf(textColor));
+            search.setPadding(dp(12),dp(12),dp(12),dp(12));search.setBackground(ripple());search.setFocusable(true);
+            search.setContentDescription(ctx.getString(R.string.search_title));search.setOnClickListener(v->searchAction.run());
+            bar.addView(search,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        }
         page.addView(bar, new LinearLayout.LayoutParams(-1, -2));
     }
 
@@ -178,6 +188,17 @@ final class OneUi {
         return c;
     }
 
+    void searchEntry(LinearLayout page,Runnable open) {
+        LinearLayout bar=card(page);bar.setOrientation(LinearLayout.HORIZONTAL);bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setMinimumHeight(dp(56));bar.setPadding(dp(20),0,dp(20),0);
+        android.widget.ImageView icon=new android.widget.ImageView(ctx);
+        icon.setImageResource(android.R.drawable.ic_menu_search);icon.setImageTintList(ColorStateList.valueOf(muted));
+        bar.addView(icon,new LinearLayout.LayoutParams(dp(24),dp(24)));
+        TextView label=text(ctx.getString(R.string.search_title),17,muted);label.setPadding(dp(12),0,0,0);bar.addView(label);
+        bar.setForeground(ripple());bar.setFocusable(true);bar.setContentDescription(ctx.getString(R.string.search_title));
+        bar.setOnClickListener(v->open.run());
+    }
+
     void note(LinearLayout page, CharSequence content) {
         TextView t = text(content, 13, muted);
         t.setLineSpacing(dp(2), 1f);
@@ -201,6 +222,7 @@ final class OneUi {
     private LinearLayout box(LinearLayout group, CharSequence title, CharSequence summary, int summaryColor, Runnable action, boolean chevron) {
         separator(group);
         LinearLayout box = new LinearLayout(ctx);
+        box.setTag(title.toString());
         box.setGravity(Gravity.CENTER_VERTICAL);
         box.setPadding(dp(22), dp(14), dp(16), dp(14));
         box.setMinimumHeight(dp(64));

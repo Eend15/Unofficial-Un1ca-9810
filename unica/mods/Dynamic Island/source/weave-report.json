@@ -49,5 +49,12 @@
     "com.android.systemui.statusbar.phone.ongoingcall.OngoingCallController#<init>(Lcom/android/systemui/statusbar/phone/ongoingcall/OngoingCallControllerExt;Lkotlinx/coroutines/CoroutineScope;Landroid/content/Context;Lcom/android/systemui/statusbar/phone/ongoingcall/data/repository/OngoingCallRepository;Lcom/android/systemui/statusbar/notification/domain/interactor/ActiveNotificationsInteractor;Ljava/util/concurrent/Executor;Landroid/app/IActivityManager;Lcom/android/systemui/dump/DumpManager;Lcom/android/systemui/statusbar/window/StatusBarWindowControllerStore;Lcom/android/systemui/statusbar/gesture/SwipeStatusBarAwayGestureHandler;Lcom/android/systemui/statusbar/data/repository/StatusBarModeRepositoryStore;Lcom/android/systemui/log/LogBuffer;Lcom/android/systemui/statusbar/phone/ongoingcall/KeyguardCallChipController;Lcom/android/systemui/util/time/SystemClock;Lcom/android/systemui/statusbar/policy/ConfigurationController;Lcom/android/systemui/statusbar/phone/IndicatorScaleGardener;)V",
     "com.android.systemui.shade.ShadeExpansionStateManager#<init>(Lcom/android/systemui/dump/DumpManager;)V",
     "com.android.systemui.statusbar.window.StatusBarWindowStateController#<init>(ILcom/android/systemui/statusbar/CommandQueue;)V"
-  ]
+  ],
+  "v0.1.14_native_extensions": {
+    "com.android.keyguard.KeyguardUpdateMonitor": [
+      "handleStartedGoingToSleep(I)V",
+      "handleStartedWakingUp(I)V",
+      "handleFinishedGoingToSleep(I)V"
+    ]
+  }
 }

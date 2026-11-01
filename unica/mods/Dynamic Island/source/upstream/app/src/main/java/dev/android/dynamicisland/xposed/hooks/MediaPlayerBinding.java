@@ -3,6 +3,9 @@ package dev.android.dynamicisland.xposed.hooks;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.RectF;
+import dev.android.dynamicisland.island.material.MaterialFrame;
+import dev.android.dynamicisland.island.window.ShadeMaterialBackdrop;
 import android.media.session.MediaController;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +35,8 @@ final class MediaPlayerBinding {
     private final IslandView renderer;
     private final float slop;
     private final MediaRowBackground background = new MediaRowBackground();
+    private final ShadeMaterialAppearance materialAppearance=new ShadeMaterialAppearance();
+    private final RectF materialLocal=new RectF(),materialScreen=new RectF();
     private Runnable refresh;
     private final FramePacer framePacer = new FramePacer();
 
@@ -50,6 +55,13 @@ final class MediaPlayerBinding {
         this.panel = new WeakReference<>(panel);
         Context ctx = player.getContext();
         renderer = new IslandView(ctx, null);
+        materialAppearance.follow(player, () -> item(player) != null);
+        player.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override public void onViewAttachedToWindow(View view) { }
+            @Override public void onViewDetachedFromWindow(View view) {
+                ShadeMaterialBackdrop.release(view);materialAppearance.clear();renderer.clearShadeMaterial();
+            }
+        });
         slop = ViewConfiguration.get(ctx).getScaledTouchSlop();
     }
 
@@ -60,6 +72,7 @@ final class MediaPlayerBinding {
 
     /** Makes the hosting row's background match whether our player is active; see {@link MediaRowBackground#sync}. */
     void syncBackground(View player, boolean active) {
+        if(!active){ShadeMaterialBackdrop.release(player);materialAppearance.clear();renderer.clearShadeMaterial();}
         background.sync(player, active);
     }
 
@@ -115,9 +128,13 @@ final class MediaPlayerBinding {
         offsetY = Math.max(0.0f, (player.getHeight() - scale * cardHeight) / 2.0f);
         int save = canvas.save();
         try {
+            MaterialFrame frame=ShadeMaterialBackdrop.frame(player);
+            materialLocal.set(player.getWidth()*(1-scale)/2,offsetY,
+                    player.getWidth()*(1+scale)/2,offsetY+scale*cardHeight);
+            ShadeMaterialBackdrop.screenBounds(player,materialLocal,materialScreen);
             canvas.translate(player.getWidth() * (1.0f - scale) / 2.0f, offsetY);
             canvas.scale(scale, scale);
-            renderer.drawShadeCard(canvas, item, player.getWidth());
+            materialAppearance.sync(player,renderer.drawShadeCard(canvas,item,player.getWidth(),frame,materialScreen));
         } finally {
             canvas.restoreToCount(save);
         }
@@ -138,7 +155,7 @@ final class MediaPlayerBinding {
             };
         }
         player.removeCallbacks(refresh);
-        if (renderer.shadeButtonAnimating() || renderer.shadeMediaAnimating(item)) {
+        if (renderer.shadeButtonAnimating() || renderer.shadeMediaAnimating(item) || renderer.shadeMaterialAnimating()) {
             long delay = framePacer.delayMillis(ModuleSettings.lowPerformance(), renderer.shadeButtonAnimating() || seeking, System.nanoTime());
             player.postOnAnimationDelayed(refresh, delay);
         } else {
@@ -231,6 +248,8 @@ final class MediaPlayerBinding {
     }
 
     /** A tap on the card body: opens the media app through the island and collapses the shade. */
+    // The hidden statusbar service is available in the SystemUI host, outside the public SDK list.
+    @android.annotation.SuppressLint("WrongConstant")
     private void openApp(View player, IslandItem item) {
         KeyguardManager keyguard = player.getContext().getSystemService(KeyguardManager.class);
         if (keyguard != null && keyguard.isKeyguardLocked()) {

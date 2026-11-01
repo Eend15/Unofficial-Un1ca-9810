@@ -62,6 +62,7 @@ final class SecondTicker {
 
     /** A chronometer in the pill changes width as its digits grow (9:59 to 10:00). */
     private void remeasureChronometer() {
+        if(scene.iMode!=null) { scene.iMode.remeasure(); return; }
         Layer main = scene.mainIn;
         if (scene.mode != Mode.COMPACT || main == null || !(main.content instanceof CompactContent)) {
             return;
@@ -77,6 +78,8 @@ final class SecondTicker {
         if (scene.mode == Mode.HIDDEN || view.isFullyHidden() || !view.isAttachedToWindow() || !view.isShown() || view.getWindowVisibility() != android.view.View.VISIBLE) {
             return false;
         }
+        if (scene.iMode!=null) for(IslandItem item:scene.iMode.visibleItems())
+            if(item.trailing==IslandItem.Trailing.CHRONOMETER) return true;
         if (scene.mainIn != null && scene.mainIn.content.item.trailing == IslandItem.Trailing.CHRONOMETER) {
             return true;
         }
@@ -93,6 +96,8 @@ final class SecondTicker {
     }
 
     private IslandItem firstChronometer() {
+        if (scene.iMode!=null) for(IslandItem item:scene.iMode.visibleItems())
+            if(item.trailing==IslandItem.Trailing.CHRONOMETER) return item;
         if (scene.mainIn != null && scene.mainIn.content.item.trailing == IslandItem.Trailing.CHRONOMETER) {
             return scene.mainIn.content.item;
         }

@@ -46,6 +46,8 @@ public final class IslandItem {
     public long postTime;
     /** Uptime (ms) after which a transient item (heads-up, event) disappears; set by the peek and event sources. */
     public long expiresAtUptime;
+    /** Automatic collapse waits until this uptime; manual dismissal is always allowed. */
+    public long keepExpandedUntilUptime;
     /** Minutes a card of this stage is not shown again after it left, for events that repeat; 0 = no limit. */
     public int cooldownMinutes;
     /** Wall-clock time (ms) after which a card made from a notification goes away although the notification stays; 0 = never. */
@@ -127,6 +129,8 @@ public final class IslandItem {
      * (0 = smooth) and what to tell when the user moves it (the new position, 0..1).
      */
     public float sliderValue = -1.0f;
+    /** Beam-style flashlight controls keep their explicit power state while the open card is off. */
+    public boolean torchControls, torchOn;
     public int sliderSteps;
     public java.util.function.Consumer<Float> sliderChange;
     /** Texts that follow the slider while it is dragged (the value is the step the finger is on, 0..1); null = fixed texts. */

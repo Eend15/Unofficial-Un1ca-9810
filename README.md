@@ -198,3 +198,7 @@ apktool, licensed under the Apache License 2.0
 erofs-utils, dual license (GPL-2.0, Apache-2.0)
 img2sdat, licensed under the MIT License
 platform_build (ext4_utils, f2fs_utils, signapk), licensed under the Apache License 2.0
+
+Build host note: install the Ubuntu `llvm` package as well as Clang. The face HAL ABI verifier needs `llvm-readelf` to inspect Android packed ELF relocations; the dependency preflight checks this before building.
+
+Install Ubuntu package `secilc` for the mandatory SELinux policy compilation check; dependency preflight checks it before building.

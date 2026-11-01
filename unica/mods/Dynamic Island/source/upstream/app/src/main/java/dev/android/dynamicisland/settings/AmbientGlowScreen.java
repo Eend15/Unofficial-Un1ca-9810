@@ -85,6 +85,7 @@ final class AmbientGlowScreen {
     }
     private void slider(LinearLayout settings,int title,int format,String key,int initial,java.util.function.IntConsumer changed) {
         LinearLayout sliderBox=new LinearLayout(activity);sliderBox.setOrientation(LinearLayout.VERTICAL);
+        sliderBox.setTag(activity.getString(title));
         sliderBox.setPadding(ui.dp(22),ui.dp(16),ui.dp(22),ui.dp(8));
         TextView value=ui.text(activity.getString(format,initial),17,ui.textColor);sliderBox.addView(value);
         SeekBar slider=new SeekBar(activity);slider.setMax(100);slider.setProgress(initial);

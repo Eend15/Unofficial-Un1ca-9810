@@ -527,9 +527,10 @@ EVAL()
     local CMD="$1"
 
     local OUT
-    OUT="$(eval "$CMD" 2>&1)"
-    # shellcheck disable=SC2181,SC2291
-    if [ $? -ne 0 ]; then
+    local STATUS=0
+    # Capture failures explicitly so errexit cannot suppress the diagnostic.
+    OUT="$(eval "$CMD" 2>&1)" || STATUS=$?
+    if [ "$STATUS" -ne 0 ]; then
         LOGE "Command returned a non-zero exit code\n"
         echo -e    '\033[0;31m'"$CMD"'\033[0m\n' >&2
         echo -n -e '\033[0;33m' >&2

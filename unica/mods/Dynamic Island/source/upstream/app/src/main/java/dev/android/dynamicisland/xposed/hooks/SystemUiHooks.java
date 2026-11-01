@@ -81,6 +81,7 @@ public final class SystemUiHooks {
         runGroup("cast", () -> hookCast(cl));
         runGroup("flashlight", () -> hookFlashlight(cl));
         runGroup("signals", () -> hookSignals(cl));
+        runGroup("wakefulness", () -> WakefulnessHooks.install(cl));
         runGroup("charging animation", () -> {
             try {
                 ChargingAnimation.install(cl);
@@ -204,6 +205,7 @@ public final class SystemUiHooks {
         island.setBarState(barState);
         island.setDozing(dozing);
         island.setStatusBarWindowState(windowState);
+        WakefulnessHooks.applyInitialState(island);
     }
 
     /** Records which System UI build the module runs in, for the report. */

@@ -45,13 +45,15 @@ final class CallCardBuilder {
     private final Context ctx;
     private final IconLoader icons;
     private final OaReader reader;
+    private final WhatsAppCallClock callClock;
     /** Run after the speaker was toggled, once the audio route has had time to settle. */
     private final Runnable afterSpeakerToggle;
 
-    CallCardBuilder(Context ctx, IconLoader icons, OaReader reader, Runnable afterSpeakerToggle) {
+    CallCardBuilder(Context ctx, IconLoader icons, OaReader reader, Runnable afterSpeakerToggle, WhatsAppCallClock callClock) {
         this.ctx = ctx;
         this.icons = icons;
         this.reader = reader;
+        this.callClock = callClock;
         this.afterSpeakerToggle = afterSpeakerToggle;
     }
 
@@ -118,7 +120,7 @@ final class CallCardBuilder {
             }
         }
         addButtons(it, nowBar, pkg);
-        startClock(it, info);
+        startClock(it, info, key);
         it.postTime = Long.MAX_VALUE;
         return it;
     }
@@ -146,8 +148,8 @@ final class CallCardBuilder {
         return shown != null && shown.getConstantState() != null ? shown.getConstantState().newDrawable().mutate() : null;
     }
 
-    private static void startClock(IslandItem it, Object info) {
-        Object start = Refl.get(info, "callStartTime");
+    private void startClock(IslandItem it, Object info, String key) {
+        Object start = WhatsAppCallClock.applies(it.packageName) ? callClock.start(key) : Refl.get(info, "callStartTime");
         if (start instanceof Long && (Long) start > 0) {
             it.trailing = IslandItem.Trailing.CHRONOMETER;
             it.chronoBase = (Long) start;
@@ -215,6 +217,8 @@ final class CallCardBuilder {
     }
 
     /** Ends the call through Telecom when allowed, otherwise fires the notification's hang-up action. */
+    // Runs inside SystemUI; Telecom enforces its host permissions and failure uses the action fallback.
+    @android.annotation.SuppressLint("MissingPermission")
     private void endCall(boolean telecom, PendingIntent hangUp) {
         if (telecom) {
             try {

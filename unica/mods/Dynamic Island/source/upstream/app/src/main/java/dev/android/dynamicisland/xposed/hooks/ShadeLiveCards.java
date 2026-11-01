@@ -28,7 +28,12 @@ public final class ShadeLiveCards {
 
     /** Reconcile already-bound rows when the overlay opens, closes or gives way to the shade. */
     public static void refreshVisibleCards() {
-        for (View row : new java.util.ArrayList<>(boundRows.keySet())) bind(row);
+        refreshVisibleCards(false);
+    }
+
+    /** Settings can change cached geometry even when the source item itself did not change. */
+    public static void refreshVisibleCards(boolean settingsChanged) {
+        for (View row : new java.util.ArrayList<>(boundRows.keySet())) bind(row, settingsChanged);
     }
 
     private ShadeLiveCards() {
@@ -175,6 +180,10 @@ public final class ShadeLiveCards {
 
     /** Installs a card into {@code row} when the island has a live item for its notification. */
     private static void bind(Object row) {
+        bind(row, false);
+    }
+
+    private static void bind(Object row, boolean settingsChanged) {
         if (!(row instanceof View)) {
             return;
         }
@@ -186,13 +195,19 @@ public final class ShadeLiveCards {
             return;
         }
         CardRowState previous = CardRowState.installedIn(layout);
-        if (previous == null) previous = CardRowState.exposedIn(layout);
+        // A nested refresh during stock RemoteViews.apply must not disturb the temporary originals.
+        // AsyncInflationTask reconciles the row after the reapply scope has finished.
+        if (previous == null && CardRowState.exposedIn(layout) != null) return;
+        IslandController controller = IslandController.get();
+        boolean show = item != null && (controller == null || !controller.isShownAsCard(item));
+        if (show && !settingsChanged && previous != null && previous.canReuse(key)) {
+            previous.refresh(item);
+            return;
+        }
         if (previous != null) {
             previous.restore();
         }
-        IslandController controller = IslandController.get();
-        // Restore first: an earlier binding may already contain our duplicate card.
-        if (item == null || controller != null && controller.isShownAsCard(item)) return;
+        if (!show) return;
         ViewGroup group = (ViewGroup) layout;
         for (int i = group.getChildCount() - 1; i >= 0; i--) {
             View child = group.getChildAt(i);

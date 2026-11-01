@@ -19,7 +19,7 @@ public final class CallDetector {
     private static final int I = Pattern.CASE_INSENSITIVE;
     private static final Pattern DURATION = Pattern.compile("(?<![\\d:+-])(?:\\d{1,2}:)?\\d{1,2}:\\d{2}(?!\\d)");
     private static final Pattern INCOMING = Pattern.compile(
-            "(^|\\s)(incoming|ringing|수신|걸려\\s*오는|전화\\s*왔|전화가\\s*왔|벨\\s*소리)(\\s|$)", I);
+            "(^|\\s)(?:incoming|ringing)\\b|(^|\\s)(수신|걸려\\s*오는|전화\\s*왔|전화가\\s*왔|벨\\s*소리)(\\s|$)", I);
     private static final Pattern DIALING = Pattern.compile(
             "^\\s*(calling|dialing|발신\\s*중|전화\\s*거는|연결\\s*중|통화\\s*연결\\s*중)\\b.*|(발신\\s*중|연결\\s*중)", I);
     private static final Pattern ANSWER_ACTION = Pattern.compile(
@@ -72,28 +72,8 @@ public final class CallDetector {
                 return null;
             }
         }
-        for (String a : actionTexts) {
-            if (ANSWER_ACTION.matcher(a).find()) {
-                return null; // ringing: the stock call UI has the answer buttons
-            }
-        }
-        for (String t : contentTexts) {
-            if (INCOMING.matcher(t).find() || DIALING.matcher(t).find()) {
-                return null;
-            }
-        }
-        long elapsed = -1;
-        if (chronometerStart <= 0) {
-            for (String t : contentTexts) {
-                Matcher m = DURATION.matcher(t);
-                while (m.find()) {
-                    long ms = parseClock(m.group());
-                    if (ms > elapsed) {
-                        elapsed = ms;
-                    }
-                }
-            }
-        }
+        if (isPending(contentTexts, actionTexts)) return null;
+        long elapsed = chronometerStart <= 0 ? elapsedMillis(contentTexts) : -1;
         boolean explicitTime = chronometerStart > 0 || elapsed >= 0;
         boolean discordVoice = false;
         if (discordPackage) {
@@ -137,6 +117,29 @@ public final class CallDetector {
     /** Whether an action button (by its title) answers or declines a ringing call. */
     public static boolean isAnswerAction(CharSequence title) {
         return title != null && ANSWER_ACTION.matcher(title).find();
+    }
+
+    /** Explicit waiting evidence wins over a notification's possibly premature clock. */
+    public static boolean isPending(List<String> texts, List<String> actions) {
+        for (String action : actions) if (ANSWER_ACTION.matcher(action).find()) return true;
+        for (String text : texts)
+            if (INCOMING.matcher(text).find() || DIALING.matcher(text).find()) return true;
+        return false;
+    }
+
+    public static boolean isEnded(List<String> texts) {
+        for (String text : texts) if (ENDED_TEXT.matcher(text).find()) return true;
+        return false;
+    }
+
+    /** Greatest explicit duration in status text, or -1. */
+    public static long elapsedMillis(List<String> texts) {
+        long elapsed = -1;
+        for (String text : texts) {
+            Matcher match = DURATION.matcher(text);
+            while (match.find()) elapsed = Math.max(elapsed, parseClock(match.group()));
+        }
+        return elapsed;
     }
 
     /** "12:34" or "1:02:03" as milliseconds, -1 when it is not a valid clock. */

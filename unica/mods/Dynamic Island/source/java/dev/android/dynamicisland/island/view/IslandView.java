@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.view;
 
+import dev.android.dynamicisland.island.material.FrostedSurface;
+import dev.android.dynamicisland.island.material.MaterialFrame;
 import android.content.Context;
 import android.graphics.Camera;
 import android.graphics.Canvas;
@@ -174,6 +176,11 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     private final FramePacer framePacer = new FramePacer();
+    private TorchBeamVisual torchBeamVisual;
+    public TorchBeamVisual torchBeamVisual() {
+        if (torchBeamVisual == null) torchBeamVisual = new TorchBeamVisual();
+        return torchBeamVisual;
+    }
     private boolean renderingPaused;
     private long touchActiveUntil;
     private boolean frameScheduled;
@@ -209,6 +216,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         remote = new RemoteCards(this, shapes, scene);
         bodies = new BodyFactory(this, remote);
         stackPainter = new StackPainter(metrics, paints, scene, shapes);
+        stackPainter.setMaterialFrameRequester(this::scheduleFrame);
         CardBridge bridge = new CardBridge(this, metrics, paints, scene, shapes, stackPainter);
         pillPainter = new PillPainter(metrics, paints, scene, shapes, stackPainter, bridge);
         director = new Director(this, this.host, metrics, scene, shapes, bodies, mediaFx);
@@ -248,11 +256,12 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     /** Keep direct manipulation and structural transitions responsive; ambient motion uses the smaller budget. */
     boolean interactiveMotion() {
         long t = now();
+        if (scene.iMode != null && scene.iMode.animating()) return true;
         if (t < touchActiveUntil || springs.animating() || buttons.animating() || seekBody != null || sliderBody != null
                 || scene.mainOut != null || scene.bubbleOut != null
                 || scene.contentHandoff != null && !scene.contentHandoff.finished(t)) return true;
         for (Card c : scene.cards) {
-            if (c.leaving || t < c.startAt || !c.cy.isAtRest() || !c.w.isAtRest() || !c.h.isAtRest() || !c.dx.isAtRest()) return true;
+            if (c.leaving || t < c.startAt || c.iMode && !c.cx.isAtRest() || !c.cy.isAtRest() || !c.w.isAtRest() || !c.h.isAtRest() || !c.dx.isAtRest()) return true;
         }
         return false;
     }
@@ -300,9 +309,10 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             post(() -> setPillBackgroundLuma(luma));
             return;
         }
-        float before = scene.pillOutlineOpacity();
+        float before = scene.pillOutlineTarget();
         scene.pillOutline.sample(luma);
-        if (before != scene.pillOutlineOpacity()) {
+        if(scene.iMode!=null) scene.iMode.syncOutlineTarget();
+        if (before != scene.pillOutlineTarget()) {
             invalidate();
             scheduleFrame();
         }
@@ -311,15 +321,18 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     /** A thin bottom-edge band avoids sampling the physical camera hole in the pill's centre. */
     public boolean pillBackgroundSamplingRegion(Rect out) {
         out.setEmpty();
+        boolean iMotion=scene.iMode!=null;
         if (!isAttachedToWindow() || !isShown() || getWindowVisibility() != VISIBLE
-                || scene.mode != Mode.COMPACT || scene.shadePulled() || scene.visibleAlpha() <= MIN_VISIBLE_ALPHA) {
+                || scene.shadePulled()
+                || (iMotion ? scene.sleeping || scene.suppressed
+                    : scene.mode != Mode.COMPACT || scene.visibleAlpha() <= MIN_VISIBLE_ALPHA)) {
             return false;
         }
-        shapes.paintedMain(samplingPill);
+        if(iMotion) scene.iMode.outlineSamplingBounds(samplingPill);else shapes.paintedMain(samplingPill);
         if (samplingPill.width() < 2f || samplingPill.height() < 2f) return false;
         float left = samplingPill.left;
         float right = samplingPill.right;
-        if (springs.split.value() > 0.003f) {
+        if (!iMotion && springs.split.value() > 0.003f) {
             shapes.bubble(samplingPill, samplingBubble);
             left = Math.min(left, samplingBubble.left);
             right = Math.max(right, samplingBubble.right);
@@ -339,6 +352,70 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     public void setBlurSink(BlurSink sink) {
         scene.blur = sink;
         sink.setPainter(stackPainter::paintInBlurSlot);
+    }
+
+    /** Already-filtered compositor pixels excluding this entire window; foreground is never part of it. */
+    public void setMaterialBackdrop(MaterialFrame frame) {
+        if (scene.materialFrame == frame) return;
+        scene.materialFrame = frame;
+        invalidate();
+        scheduleFrame();
+    }
+
+    /** Hard reset only when the host is actually hidden/detached, never on a missed readback. */
+    public void clearMaterialBackdrop() {
+        scene.materialFrame=null;
+        for(Card card:scene.cards)card.material.clear();
+    }
+
+    /** Capture the target stack extent up front, so opening does not chase a growing crop. */
+    public boolean materialBackdropRegion(Rect out) {
+        out.setEmpty();
+        if (!FrostedSurface.requested() || renderingPaused
+                || scene.visibleAlpha() <= MIN_VISIBLE_ALPHA || scene.frozenByShade()) return false;
+        if(scene.cards.isEmpty()) {
+            if(scene.mode!=Mode.COMPACT||scene.primary==null)return false;
+            // MaterialCapture clips this to the physical display. Prime the
+            // background before a tap; do not wait for an expanded card to exist.
+            out.set(0,0,metrics.screenW,Math.max(getResources().getDisplayMetrics().heightPixels,getHeight()));
+            return !out.isEmpty();
+        }
+        float bottom = 0;
+        for (Card card : scene.cards) {
+            bottom = Math.max(bottom, Math.max(card.cy.value() + card.h.value() / 2f,
+                    card.targetCy + card.body.h / 2f));
+        }
+        int[] location = new int[2];
+        getLocationOnScreen(location);
+        out.set(0, 0, metrics.screenW, (int)Math.ceil((bottom + location[1] + dp(64)) / 128f) * 128);
+        return !out.isEmpty();
+    }
+
+    public boolean materialBackdropPrewarming() { return scene.cards.isEmpty(); }
+    private Runnable materialCaptureRefresh;
+    public void setMaterialCaptureRefresh(Runnable refresh) { materialCaptureRefresh=refresh; }
+
+    public boolean iModeGestureEnabled() {
+        return scene.iMode!=null && !scene.held && !isSuppressedNow();
+    }
+
+    public boolean iModeTouchEnabled() {
+        return iModeGestureEnabled()
+                && (scene.iMode.hiddenByGesture() || scene.visibleAlpha()>.4f);
+    }
+
+    public boolean iModeOwnsTouch(float x,float y) {
+        if(!iModeTouchEnabled()) return false;
+        if(scene.iMode.hiddenByGesture()) return x>=metrics.cx-dp(46) && x<=metrics.cx+dp(46)
+                && y>=metrics.cy-metrics.pillH/2-dp(4) && y<=metrics.cy+metrics.pillH/2+dp(4);
+        if(scene.iMode.hit(x,y,dp(4))!=null) return true;
+        RectF bounds=new RectF();
+        for(Card card:scene.cards) if(card.iMode) {
+            shapes.card(card,bounds);
+            if(bounds.contains(x,y) && (card.leaving || Math.abs(card.w.value()-card.body.w)>dp(3)
+                    || Math.abs(card.h.value()-card.body.h)>dp(3))) return true;
+        }
+        return false;
     }
 
     public void setRemoteLayer(ViewGroup layer) {
@@ -455,15 +532,56 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
             collapse();
         }
         springs.suppress.animateTo(value ? 0.0f : 1.0f, value ? 0.18f : 0.32f, 1.0f);
+        if (!value) retargetVisibilityGate();
         scheduleFrame();
     }
 
     public boolean isSuppressedNow() {
-        return scene.suppressed;
+        return scene.suppressed || scene.sleeping;
+    }
+
+    /** Begin before keyguard/doze removes the window, sharing the existing liquid gate with the shade. */
+    public void setSleeping(boolean sleeping) {
+        if (scene.sleeping == sleeping) return;
+        if (sleeping) {
+            long now = android.os.SystemClock.uptimeMillis();
+            MotionEvent cancel = MotionEvent.obtain(now, now, MotionEvent.ACTION_CANCEL, 0, 0, 0);
+            try { touch.handle(cancel); } finally { cancel.recycle(); }
+        }
+        scene.sleeping = sleeping;
+        if (sleeping) {
+            if (scene.mode == Mode.EXPANDED) collapse();
+            ticker.cancel();
+        }
+        // A wake on the lock screen must not reopen the gate before keyguard permits the reveal.
+        if (sleeping || !scene.suppressed) retargetVisibilityGate();
+        scheduleFrame();
+        notifyHost();
+    }
+
+    /** The display is off: no unfinished spring or stale surface may be exposed on the next wake. */
+    public void finishSleeping() {
+        setSleeping(true);
+        springs.shadeGate.snapTo(0);
+        applyShadeFade();
+        director.finishSleeping();
+        stackPainter.placeBlurs();
+        remote.sync();
+        ticker.cancel();
+        scheduleFrame();
+        notifyHost();
+    }
+
+    private void retargetVisibilityGate() {
+        boolean gone = scene.shadeGone || scene.sleeping;
+        if (scene.sleeping) springs.shadeGate.animateTo(0, .24f, 1f);
+        else springs.shadeGate.animateTo(gone ? 0 : 1,
+                gone ? SHADE_GO_RESPONSE : SHADE_BACK_RESPONSE,
+                gone ? SHADE_GO_DAMPING : SHADE_BACK_DAMPING);
     }
 
     public void reveal() {
-        if (scene.suppressed) {
+        if (isSuppressedNow()) {
             return; // suppressed again while the reveal delay ran; leaving it stays the job of setSuppressed(false)
         }
         springs.suppress.snapTo(1.0f);
@@ -489,15 +607,16 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         boolean gone = scene.shadeGone ? clamped > SHADE_BACK_AT : clamped > SHADE_GONE_AT;
         if (gone != scene.shadeGone) {
             scene.shadeGone = gone;
-            if (gone) {
-                springs.shadeGate.animateTo(0.0f, SHADE_GO_RESPONSE, SHADE_GO_DAMPING);
-            } else {
-                springs.shadeGate.animateTo(1.0f, SHADE_BACK_RESPONSE, SHADE_BACK_DAMPING);
-            }
+            if (scene.sleeping || !scene.suppressed) retargetVisibilityGate();
         }
         applyShadeFade();
-        scheduleFrame();
-        notifyHost();
+        // After the compact pill has disappeared, subsequent panel-drag fractions
+        // need no frames or window updates. A return changes the spring target,
+        // so frozenByShade becomes false and the existing return animation wakes.
+        if (!scene.frozenByShade()) {
+            scheduleFrame();
+            notifyHost();
+        }
     }
 
     /**
@@ -542,7 +661,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
 
     /** Incoming cards may replace a manual card, but never a reply or a pulled-down shade. */
     public boolean canPeek() {
-        return metrics.screenW > 0 && !scene.suppressed && !scene.held && !scene.shadePulled();
+        return metrics.screenW > 0 && !isSuppressedNow() && !scene.held && !scene.shadePulled()
+                && !(scene.iMode!=null && scene.iMode.hiddenByGesture());
     }
 
     public boolean isShowingCard(IslandItem item) {
@@ -555,7 +675,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     private boolean cardOccupiesOverlay(Card card) {
-        return scene.visibleAlpha() > MIN_VISIBLE_ALPHA && (isExpanded()
+        return (!card.iMode || card.iModeOpacity.value() > MIN_VISIBLE_ALPHA)
+                && scene.visibleAlpha() > MIN_VISIBLE_ALPHA && (isExpanded()
                 || card.leaving && StackPainter.contentAlpha(card, now(), 1) > MIN_VISIBLE_ALPHA);
     }
 
@@ -626,13 +747,18 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     }
 
     public boolean needsAudio() {
-        if (ModuleSettings.lowPerformance() || renderingPaused || !isShown() || getWindowVisibility() != VISIBLE) return false;
-        if (scene.mode != Mode.COMPACT || scene.visibleAlpha() < 0.2f) {
+        if (scene.sleeping || ModuleSettings.lowPerformance() || renderingPaused || !isShown() || getWindowVisibility() != VISIBLE) return false;
+        if ((scene.mode != Mode.COMPACT && scene.iMode==null) || scene.visibleAlpha() < 0.2f) {
             return false;
         }
         IslandItem music = scene.musicForGlow();
-        return (music != null && music.playing && ModuleSettings.ambientGlow() && ModuleSettings.glowMotion() > 0)
-                || needsAudio(scene.mainIn) || (springs.split.value() > .003f && needsAudio(scene.bubbleIn));
+        if(music != null && music.playing && ModuleSettings.ambientGlow() && ModuleSettings.glowMotion() > 0) return true;
+        if(scene.iMode!=null) {
+            for(IslandItem item:scene.iMode.visibleItems())
+                if(item.playing && item.trailing==IslandItem.Trailing.WAVEFORM && ModuleSettings.visualizer()) return true;
+            return false;
+        }
+        return needsAudio(scene.mainIn) || (springs.split.value() > .003f && needsAudio(scene.bubbleIn));
     }
 
     public boolean hasRecordingWaveform(IslandItem item) {
@@ -642,12 +768,17 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     public String recordingInputTarget() {
         if (!ModuleSettings.concurrentRecordingInput() || renderingPaused || !isAttachedToWindow()
                 || !isShown() || getWindowVisibility() != VISIBLE || scene.visibleAlpha() < .2f
-                || scene.suppressed || scene.frozenByShade()) return null;
+                || isSuppressedNow() || scene.frozenByShade()) return null;
         if (scene.mode == Mode.EXPANDED) {
             for (Card card : scene.cards) {
                 if (!card.leaving && capturesRecording(card.item)) return card.item.key;
             }
-        } else if (scene.mode == Mode.COMPACT) {
+        }
+        if(scene.iMode!=null) {
+            for(IslandItem item:scene.iMode.visibleItems()) if(capturesRecording(item)) return item.key;
+            return null;
+        }
+        if (scene.mode == Mode.COMPACT) {
             if (scene.mainIn != null && capturesRecording(scene.mainIn.content.item)) return scene.mainIn.content.item.key;
             if (scene.bubbleIn != null && springs.split.value() > .05f && capturesRecording(scene.bubbleIn.content.item)) return scene.bubbleIn.content.item.key;
         }
@@ -713,6 +844,11 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         frameScheduled = false;
         if (scene.frozenByShade()) {
             lastFrameNanos = 0L;
+            if (scene.sleeping && isFullyHidden()) {
+                director.finishSleeping();
+                stackPainter.placeBlurs();
+                remote.sync();
+            }
             ticker.cancel();
             notifyHost();
             return;
@@ -742,6 +878,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         active |= scene.mainIn != null && !scene.mainIn.settled(t);
         active |= scene.bubbleIn != null && !scene.bubbleIn.settled(t);
         active |= hasContinuousMotion(dt);
+        if (scene.sleeping && isFullyHidden()) director.finishSleeping();
         stackPainter.placeBlurs();
         remote.sync();
         if (isFullyHidden()) ticker.cancel(); else scheduleTick();
@@ -766,12 +903,17 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         Layer main = scene.mainIn;
         Layer bubble = scene.bubbleIn;
         boolean need = false;
+        if(scene.iMode!=null) {
+            for(IslandItem item:scene.iMode.visibleItems())
+                need |= runningStopwatch(item) || iconPlaying(item);
+        }
         need |= pillPainter.stepGlow(dt, host.audio());
         IslandItem waveItem = null;
         if (main != null && scene.mode == Mode.COMPACT) {
             IslandItem it = main.content.item;
             waveItem = it.trailing == IslandItem.Trailing.WAVEFORM ? it : null;
-            need = it.pulsingDot | (it.trailing == IslandItem.Trailing.PROGRESS_RING && it.progress < 0.0f);
+            boolean compactMotion=it.pulsingDot | (it.trailing == IslandItem.Trailing.PROGRESS_RING && it.progress < 0.0f);
+            need=scene.iMode==null ? compactMotion : need | compactMotion;
         }
         if (main != null) {
             need |= runningStopwatch(main.content.item) || (main.content.item.isMedia && mediaFx.animating(main.content.item))
@@ -787,7 +929,13 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         }
         for (Card c : scene.cards) {
             need |= c.item.pulsingDot || c.item.progressIndeterminate || runningStopwatch(c.item) || iconPlaying(c.item)
-                    || (scene.mode == Mode.EXPANDED && c.item.isMedia && !ModuleSettings.lowPerformance());
+                    || c.body.animating(now())
+                    || c.material.animating(now()) || (scene.mode == Mode.EXPANDED && c.item.isMedia && !ModuleSettings.lowPerformance());
+        }
+        if(scene.iMode!=null) {
+            waveItem=null;
+            for(IslandItem item:scene.iMode.visibleItems())
+                if(item.trailing==IslandItem.Trailing.WAVEFORM) { waveItem=item; break; }
         }
         if (waveItem != null) {
             need |= waveform.step(dt, waveItem, host.audio());
@@ -848,6 +996,7 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        clearMaterialBackdrop();
         choreographer.removeFrameCallback(this);
         frameScheduled = false;
         lastFrameNanos = 0L;
@@ -886,6 +1035,10 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         notifyHost();
     }
 
+    void drawCompactGlow(Canvas canvas,RectF bounds,float alpha) {
+        pillPainter.drawCompactGlow(canvas,bounds,alpha);
+    }
+
     // ---- drawing -------------------------------------------------------------------------------------------------
 
     @Override
@@ -919,6 +1072,11 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         int save = canvas.save();
         if (alpha < 0.995f) {
             canvas.saveLayerAlpha(0.0f, 0.0f, metrics.screenW, getHeight(), Math.round(255.0f * alpha));
+        }
+        if(scene.iMode!=null) {
+            scene.iMode.draw(canvas,now());
+            canvas.restoreToCount(save);
+            return;
         }
         stackPainter.drawGoo(canvas);
         float scale = springs.press.value() * (springs.pulse.value() + 1.0f);
@@ -989,6 +1147,12 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
         shadeCards.draw(canvas, item, width);
     }
 
+    public boolean drawShadeCard(Canvas canvas, IslandItem item, float width, MaterialFrame backdrop, RectF screenBounds) {
+        return shadeCards.draw(canvas, item, width, backdrop, screenBounds);
+    }
+    public void clearShadeMaterial() { shadeCards.clearMaterial(); }
+    public boolean shadeMaterialAnimating() { return shadeCards.materialAnimating(); }
+
     public boolean shadeCardHasButton(IslandItem item, float width, float x, float y) {
         return shadeCards.hasButtonAt(item, width, x, y);
     }
@@ -1047,6 +1211,8 @@ public final class IslandView extends View implements Choreographer.FrameCallbac
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         try {
+            if (scene.sleeping) return false;
+            if(e.getActionMasked()==MotionEvent.ACTION_DOWN&&materialCaptureRefresh!=null)materialCaptureRefresh.run();
             touchFrame();
             return touch.handle(e);
         } catch (Throwable t) {

@@ -78,6 +78,8 @@ public class IslandUiReviewTest {
     }
     @Test public void reviewCandidatesAndKeepCompactValuesReadableOnNarrowScreens() throws Exception {
         GlyphIcon.setPlaybackFrozen(true);
+        context.getSharedPreferences("ui-review",0).edit()
+                .putInt(ModuleSettings.KEY_MATERIAL_STYLE,ModuleSettings.MATERIAL_CLASSIC).commit();
         ModuleSettings.configurePreview(context.getSharedPreferences("ui-review",0));
         if(RenderCapture.enabled()) {
         Bitmap candidates=Bitmap.createBitmap(1200,440,Bitmap.Config.ARGB_8888);

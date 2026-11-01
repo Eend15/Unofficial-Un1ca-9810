@@ -1,6 +1,11 @@
 package dev.android.dynamicisland.island.view;
 
 import android.graphics.Canvas;
+import android.graphics.RectF;
+import android.graphics.Path;
+import dev.android.dynamicisland.island.material.MaterialFrame;
+import dev.android.dynamicisland.island.material.FrostedSurface;
+import dev.android.dynamicisland.island.material.MaterialShape;
 import dev.android.dynamicisland.island.IslandController;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.card.Btn;
@@ -20,6 +25,8 @@ final class ShadeCards {
     private CardBody body;
     private IslandItem item;
     private float width;
+    private final FrostedSurface material = new FrostedSurface();
+    private final Path materialClip = new Path();
 
     ShadeCards(IslandView view, StackPainter painter) {
         this.view = view;
@@ -30,6 +37,8 @@ final class ShadeCards {
     void forget() {
         body = null;
     }
+    void clearMaterial() { material.clear(); }
+    boolean materialAnimating() { return material.animating(IslandView.now()) || body != null && body.animating(IslandView.now()); }
 
     private CardBody bodyFor(IslandItem wanted, float w) {
         view.followFont();
@@ -46,10 +55,22 @@ final class ShadeCards {
     }
 
     void draw(Canvas canvas, IslandItem wanted, float w) {
+        draw(canvas,wanted,w,null,null);
+    }
+
+    boolean draw(Canvas canvas, IslandItem wanted, float w, MaterialFrame backdrop, RectF screenBounds) {
         CardBody b = bodyFor(wanted, w);
         view.tmpRect.set(0.0f, 0.0f, b.w, b.h);
-        painter.drawBackground(b, canvas, view.tmpRect, 1.0f);
+        float corner=b.cornerRadius(view.dp(28),b.h);
+        dev.android.dynamicisland.island.view.media.MediaFx music=wanted.isMedia ? b.materialMusic() : null;
+        long now=IslandView.now();if(music!=null)music.advance(now);
+        boolean frosted=screenBounds!=null&&material.draw(canvas,backdrop,view.tmpRect,screenBounds,corner,1,music,now);
+        int save=canvas.save();
+        if(frosted){MaterialShape.path(materialClip,view.tmpRect,corner);canvas.clipPath(materialClip);}
+        if(!frosted||!wanted.isMedia)painter.drawBackground(b, canvas, view.tmpRect, 1.0f);
         painter.drawBody(b, canvas, 0.0f, 0.0f, 1.0f, SETTLED_ELAPSED_MS);
+        canvas.restoreToCount(save);
+        return frosted;
     }
 
     boolean hasButtonAt(IslandItem wanted, float w, float x, float y) {

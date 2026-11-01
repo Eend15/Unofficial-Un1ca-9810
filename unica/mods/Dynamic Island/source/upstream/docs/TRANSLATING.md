@@ -38,6 +38,7 @@ The check reports missing, empty, unknown and duplicate keys and incompatible fo
 - Use Android escapes: `\n` for a line break, `\'` for an apostrophe and `\"` for a literal double quote. XML characters use `&amp;` and `&lt;`. Quote the entire value to retain intentional leading/trailing spaces.
 - `island_setting_on`/`island_setting_off` take a setting name. `island_more_apps` is a suffix after app names. `stage_label_food_1` means the food-delivery preparation stage, not notification detection wording.
 - Keep titles concise and descriptions natural. Do not translate package names, colour codes, URLs, regex examples or user handles such as `@UnkilBonki`.
+- `search_terms_*` contains search vocabulary, not a visible label: use common local synonyms and alternate names. `search_stop_words` contains only generic filler words. The search index automatically includes each registered language and its translated setting names.
 - SystemUI text follows the device locale; Android's per-app language selection controls the settings app. Both use the same translations.
 
 ## How it is built

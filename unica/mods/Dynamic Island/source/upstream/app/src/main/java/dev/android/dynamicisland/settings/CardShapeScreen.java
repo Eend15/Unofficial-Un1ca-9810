@@ -33,6 +33,7 @@ final class CardShapeScreen {
         Preview preview = new Preview(initial);
         example.addView(preview, new LinearLayout.LayoutParams(-1, ui.dp(172)));
         LinearLayout sliderBox = ui.card(activity.page());
+        sliderBox.setTag(activity.getString(R.string.card_roundness));
         sliderBox.setPadding(ui.dp(22), ui.dp(16), ui.dp(22), ui.dp(12));
         TextView value = ui.text(activity.getString(R.string.card_corner_radius_format, initial), 17, ui.textColor);
         sliderBox.addView(value);

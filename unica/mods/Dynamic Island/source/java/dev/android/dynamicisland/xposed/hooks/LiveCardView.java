@@ -2,6 +2,12 @@ package dev.android.dynamicisland.xposed.hooks;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.RectF;
+import android.graphics.Path;
+import dev.android.dynamicisland.island.material.MaterialFrame;
+import dev.android.dynamicisland.island.material.FrostedSurface;
+import dev.android.dynamicisland.island.material.MaterialShape;
+import dev.android.dynamicisland.island.window.ShadeMaterialBackdrop;
 import android.os.SystemClock;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
@@ -35,6 +41,11 @@ final class LiveCardView extends FrameLayout {
     private final FramePacer framePacer = new FramePacer();
     private IslandItem current;
     private int desiredHeight;
+    private final ShadeMaterialAppearance materialAppearance=new ShadeMaterialAppearance();
+    private final FrostedSurface remoteMaterial=new FrostedSurface();
+    private final RectF materialLocal=new RectF(),materialScreen=new RectF();
+    private final Path remoteClip=new Path();
+    private boolean remoteFrosted;
 
     /** Touch gesture: the item and position at ACTION_DOWN, whether it left the slop, whether we own it. */
     private IslandItem downItem;
@@ -51,6 +62,7 @@ final class LiveCardView extends FrameLayout {
         setWillNotDraw(false);
         remote = new RemoteCardContent(this);
         renderer = new IslandView(ctx, null);
+        materialAppearance.follow(this, () -> !owner.isRestored());
         slop = ViewConfiguration.get(ctx).getScaledTouchSlop();
         setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         setOnClickListener(v -> onTapped());
@@ -70,6 +82,15 @@ final class LiveCardView extends FrameLayout {
 
     CardRowState owner() {
         return owner;
+    }
+
+    /** Reconcile content without detaching the host or restarting unchanged RemoteViews effects. */
+    void refresh(IslandItem item) {
+        if (current != item) {
+            current = item;
+            requestLayout();
+        }
+        invalidate();
     }
 
     /** Height the card wanted at its last measure; used before it has been laid out. */
@@ -150,8 +171,17 @@ final class LiveCardView extends FrameLayout {
     protected void onDraw(Canvas canvas) {
         framePacer.allow(false, false, System.nanoTime());
         try {
+            MaterialFrame frame=ShadeMaterialBackdrop.frame(this);
+            materialLocal.set(0,0,getWidth(),getHeight());
+            ShadeMaterialBackdrop.screenBounds(this,materialLocal,materialScreen);
             IslandItem latest = ShadeLiveCards.item(key);
+            remoteFrosted=false;
             if (latest != null && latest.remoteView != null) {
+                float radius=ModuleSettings.customCardRoundness() ? renderer.dp(ModuleSettings.cardCornerRadiusDp()) : getWidth()*100f/1072;
+                radius=Math.min(radius,getHeight()/2f);
+                remoteFrosted=remoteMaterial.draw(canvas,frame,materialLocal,materialScreen,radius,1,null,IslandView.now());
+                if(remoteFrosted)MaterialShape.path(remoteClip,materialLocal,radius);
+                materialAppearance.sync(this,remoteFrosted);
                 if (latest != current) {
                     current = latest;
                     post(this::requestLayout);
@@ -160,12 +190,23 @@ final class LiveCardView extends FrameLayout {
                 if (heightFor(Math.max(1, getWidth())) != getMeasuredHeight()) {
                     requestLayout();
                 }
-                renderer.drawShadeCard(canvas, current, getWidth());
+                materialAppearance.sync(this,renderer.drawShadeCard(canvas,current,getWidth(),frame,materialScreen));
             }
             setContentDescription(describe(current));
             scheduleRedraw();
         } catch (Throwable t) {
             owner.fail(t);
+        }
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        int save=canvas.save();
+        try {
+            if(remoteFrosted && remote.isShown())canvas.clipPath(remoteClip);
+            super.dispatchDraw(canvas);
+        } finally {
+            canvas.restoreToCount(save);
         }
     }
 
@@ -199,7 +240,8 @@ final class LiveCardView extends FrameLayout {
         IslandItem item = current;
         // sweeping bars, stopwatch hundredths and rolling digits need every frame; a clock anywhere on
         // the card (trailing, title or secondary line) needs one redraw per second
-        boolean everyFrame = item.progressIndeterminate || (item.chronoMillis && item.hasChronometer()) || renderer.shadeRolling();
+        boolean everyFrame = item.progressIndeterminate || (item.chronoMillis && item.hasChronometer()) || renderer.shadeRolling()
+                || renderer.shadeMaterialAnimating() || remoteMaterial.animating(IslandView.now());
         boolean everySecond = item.trailing == IslandItem.Trailing.CHRONOMETER
                 || item.kind == IslandItem.Kind.TIMER
                 || item.kind == IslandItem.Kind.RECORDING
@@ -221,6 +263,7 @@ final class LiveCardView extends FrameLayout {
     @Override
     protected void onDetachedFromWindow() {
         removeCallbacks(redraw);
+        ShadeMaterialBackdrop.release(this);materialAppearance.clear();remoteMaterial.clear();renderer.clearShadeMaterial();
         super.onDetachedFromWindow();
     }
 

@@ -1,5 +1,8 @@
 package dev.android.dynamicisland.island.view;
 
+import dev.android.dynamicisland.island.view.media.MediaFx;
+import dev.android.dynamicisland.island.material.FrostedSurface;
+import dev.android.dynamicisland.island.material.MaterialShape;
 import static dev.android.dynamicisland.island.graphics.Easing.easeOutBack;
 import static dev.android.dynamicisland.island.graphics.Easing.lerp;
 import static dev.android.dynamicisland.island.view.IslandView.clamp01;
@@ -36,6 +39,8 @@ final class StackPainter {
     /** Opening fraction from which a card turns from the pill's black into its own colour and glass. */
     private static final float CARD_MATERIAL_FROM = 0.35f;
     private static final float GLASS_FROM = 0.1f;
+    /** The captured material has no lagging native surface to hide during a fold. */
+    private static final float FROSTED_FULL_AT = 0.65f;
     /** Stop the native backdrop well before the compact pill takes over; its compositor can lag a frame. */
     private static final float FOLD_BLUR_FADE_FROM = 0.1f;
     private static final float FOLD_BLUR_FADE_TO = 0.55f;
@@ -63,6 +68,7 @@ final class StackPainter {
     private float rimSettle = -1.0f;
     private int rimBase;
     private boolean drawFailureLogged;
+    private Runnable materialFrameRequester;
 
     StackPainter(Metrics m, Paints paints, Scene scene, Shapes shapes) {
         this.m = m;
@@ -70,6 +76,8 @@ final class StackPainter {
         this.scene = scene;
         this.shapes = shapes;
     }
+
+    void setMaterialFrameRequester(Runnable request) { materialFrameRequester=request; }
 
     /** Fade of a card's content: in once the card is nearly open, out quickly when it leaves. */
     static float contentAlpha(Card c, long t, float opening) {
@@ -91,6 +99,9 @@ final class StackPainter {
 
     /** Internal material transition, independent of the card surface and its native backdrop. */
     static float contentBlurAmount(Card card, long time, float opening) {
+        if(card.iMode && card.handoff!=null)
+            return Math.max(card.iModePaging ? clamp01(Math.abs(card.dx.value())/Math.max(1,card.body.w))*.6f : 0,Math.max(IMode.motionBlur(card,card.body.density()*1000),
+                    (float)Math.min(1,1.2*Math.sqrt(Math.max(0,1-contentAlpha(card,time,opening))))));
         if (card.leaving) {
             float fade = 1 - contentAlpha(card, time, opening) / Math.max(.001f, card.leaveContentAlpha);
             return lerp(card.leaveContentBlur, 1, clamp01(fade));
@@ -124,6 +135,7 @@ final class StackPainter {
      * pill's) it showed as a flash of flat grey just before the black.
      */
     float blurFraction(Card c, float opening) {
+        if(c.iModePaging) return 1;
         if (c.leaving) {
             float fold = (foldProgress(c) - FOLD_BLUR_FADE_FROM) / (FOLD_BLUR_FADE_TO - FOLD_BLUR_FADE_FROM);
             return 1.0f - Easing.easeInOut(clamp01(fold));
@@ -133,6 +145,7 @@ final class StackPainter {
 
     /** The "opening" a card is drawn with: a leaving card goes back to the pill's black along its fold, not along its height. */
     float visualOpening(Card c, float opening) {
+        if(c.iModePaging) return opening;
         if (c.leaving && !ModuleSettings.legacyAnimation()) {
             return Math.min(opening, 1.0f - Easing.easeInOut(foldProgress(c)));
         }
@@ -181,7 +194,10 @@ final class StackPainter {
                 shapes.card(c, slot);
                 if (slot.width() >= 1.0f && slot.height() >= 1.0f) {
                     float opening = visualOpening(c, shapes.expansion(c));
-                    blur.place(c, slot, c.body.cornerRadius(m.cardRadius, slot.height()), alpha, blurFraction(c, opening));
+                    boolean frosted = FrostedSurface.requested();
+                    blur.place(c, slot, c.iMode ? IMode.corner(c,slot,m.pillH,m.cardRadius)
+                                    : c.body.cornerRadius(m.cardRadius, slot.height()), alpha * (c.iMode ? clamp01(c.iModeOpacity.value()) : 1),
+                            frosted ? 0 : blurFraction(c, opening));
                 }
             }
         }
@@ -190,6 +206,7 @@ final class StackPainter {
 
     /** The neck of goo between two cards that are folding back into the pill one after the other. */
     void drawGoo(Canvas canvas) {
+        if(scene.iMode!=null) return;
         Card previous = null;
         for (Card c : scene.cards) {
             if (!c.leaving) {
@@ -226,30 +243,61 @@ final class StackPainter {
 
     /** Draws one card whose rectangle {@code r} was already computed. */
     void drawCard(Canvas canvas, Card c, RectF r, long t, float opening) {
-        float corner = c.body.cornerRadius(m.cardRadius, r.height());
-        float rimSettled = clamp01((opening - 0.82f) / 0.18f);
+        int save=canvas.save();
+        if(c.iMode && c.iModeOpacity.value()<.995f)
+            canvas.saveLayerAlpha(r,Math.round(255*clamp01(c.iModeOpacity.value())));
+        try { drawCardSurface(canvas,c,r,t,opening); }
+        finally { canvas.restoreToCount(save); }
+    }
+
+    private void drawCardSurface(Canvas canvas, Card c, RectF r, long t, float opening) {
+        float corner = c.iMode ? IMode.corner(c,r,m.pillH,m.cardRadius) : c.body.cornerRadius(m.cardRadius, r.height());
+        float rimSettled = c.iMode ? Easing.easeInOut(clamp01(opening)) : clamp01((opening - 0.82f) / 0.18f);
         // while it pours out of (or back into) the pill the card is the pill's black, but it wears a clearly
         // visible outline from the first frame, so the changing shape can be followed on a black screen; the card
         // colour and glass fade in as it settles, and the outline turns into the card's light rim
         opening = visualOpening(c, opening);
-        paints.card.setColor(fillColor(opening, blurFraction(c, opening)));
-        canvas.drawRoundRect(r, corner, corner, paints.card);
-        int morphOutline = Colors.withAlpha(c.leaving ? Colors.PILL_OUTLINE : MORPH_OUTLINE, scene.pillOutlineOpacity());
+        boolean canFrost = canvas.isHardwareAccelerated() && FrostedSurface.requested();
+        MediaFx music = canFrost && c.item.isMedia ? c.body.materialMusic() : null;
+        if (music != null) music.advance(t);
+        float material = frostedAmount(opening);
+        float cornerPower=c.iMode ? IMode.materialPower(c,m.pillH) : 2.4f;
+        boolean frosted = c.material.draw(canvas, scene.materialFrame, r, r, corner, material, music, t,cornerPower);
+        // A capture can begin blending in this draw, after doFrame checked for
+        // motion. Explicitly schedule its following frames even on a static card.
+        if(frosted&&c.material.animating(t)&&materialFrameRequester!=null)materialFrameRequester.run();
+        if(canFrost&&!frosted&&materialFrameRequester!=null)materialFrameRequester.run();
+        if (!frosted) {
+            paints.card.setColor(fillColor(opening, blurFraction(c, opening)));
+            canvas.drawRoundRect(r, corner, corner, paints.card);
+        }
+        // iMotion carries its pill contrast rim in the overlay, outside native slot clipping.
+        // This gradient is only the card material's own rim, which develops as the card opens.
+        int morphOutline = c.iMode ? 0x00FFFFFF
+                : Colors.withAlpha(c.leaving ? Colors.PILL_OUTLINE : MORPH_OUTLINE, scene.pillOutlineOpacity());
         paints.cardStroke.setShader(ModuleSettings.legacyAnimation()
                 ? rimShader(r, rimSettled, 1.0f, MORPH_OUTLINE)
                 : rimShader(r, 1.0f, rimSettled, morphOutline));
         inner.set(r);
         inner.inset(m.outlineW / 2.0f, m.outlineW / 2.0f);
-        canvas.drawRoundRect(inner, corner, corner, paints.cardStroke);
+        if (!frosted) canvas.drawRoundRect(inner, corner, corner, paints.cardStroke);
+        if(c.iMode && scene.iMode!=null) {
+            int compactSave=canvas.save();
+            clip.reset();clip.addRoundRect(r,corner,corner,Path.Direction.CW);canvas.clipPath(clip);
+            scene.iMode.drawCompactCard(canvas,c,r,t);
+            canvas.restoreToCount(compactSave);
+        }
         float alpha = contentAlpha(c, t, opening);
-        if (alpha <= IslandView.MIN_VISIBLE_ALPHA || c.body instanceof RemoteBody) {
+        if (alpha <= IslandView.MIN_VISIBLE_ALPHA || c.body instanceof RemoteBody && !IMode.paintsRemoteInSurface(c,t)) {
             return;
         }
         int save = canvas.save();
         clip.reset();
-        clip.addRoundRect(r, corner, corner, Path.Direction.CW);
+        if (frosted) MaterialShape.path(clip, r, corner,cornerPower);
+        else clip.addRoundRect(r, corner, corner, Path.Direction.CW);
         canvas.clipPath(clip);
-        drawBackground(c.body, canvas, r, alpha);
+        float backgroundAlpha=c.iMode && c.item.isMedia ? Easing.easeOutCubic(opening) : alpha;
+        if (!frosted || !c.item.isMedia) drawBackground(c.body, canvas, r, backgroundAlpha);
         Canvas target = canvas;
         canvas = c.contentBlur.begin(target, r, contentBlurAmount(c, t, opening), m.dp(ContentBlur.RADIUS_DP));
         int contentSave = canvas.save();
@@ -264,7 +312,21 @@ final class StackPainter {
             // the content follows the card's current shape (squashed while it bounces, shrinking into the pill
             // when it leaves) instead of keeping its laid-out size and being cut off at the edges
             long elapsed = c.leaving || c.handoff != null ? LEAVING_CONTENT_ELAPSED_MS : t - c.contentStart;
-            if (c.leaving && !ModuleSettings.legacyAnimation()) {
+            if(c.iMode) {
+                // The surface morphs independently. Artwork, text and buttons keep their aspect
+                // ratio as a single foreground layout, including when a transition reverses.
+                float scale=Math.max(.001f,Math.min(r.width()/c.body.w,r.height()/c.body.h));
+                canvas.translate(r.centerX()-c.body.w*scale/2,r.centerY()-c.body.h*scale/2);
+                canvas.scale(scale,scale);
+                if(c.body instanceof RemoteBody) {
+                    // A sibling RemoteViews layer would otherwise paint its text above every moving surface.
+                    RemoteBody remote=(RemoteBody)c.body;
+                    canvas.translate(remote.pad,remote.pad);
+                    int remoteSave=canvas.saveLayerAlpha(0,0,remote.view.getMeasuredWidth(),remote.view.getMeasuredHeight(),Math.round(alpha*255));
+                    try { remote.view.draw(canvas); }
+                    finally { canvas.restoreToCount(remoteSave); }
+                } else drawBody(c.body,canvas,0,0,alpha,elapsed);
+            } else if (c.leaving && !ModuleSettings.legacyAnimation()) {
                 // a leaving card keeps its content at its true size, centred, and the shrinking card clips it
                 drawBody(c.body, canvas, r.left + ((r.width() - c.body.w) / 2.0f), r.top, alpha, elapsed);
             } else {
@@ -276,6 +338,10 @@ final class StackPainter {
             c.contentBlur.end(target, canvas);
             target.restoreToCount(save);
         }
+    }
+
+    static float frostedAmount(float opening) {
+        return Easing.easeInOut(clamp01(opening / FROSTED_FULL_AT));
     }
 
     /** The light rim gradient of a card; rebuilt only when the card moved or changed height noticeably. */

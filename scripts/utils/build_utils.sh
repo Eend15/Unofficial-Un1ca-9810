@@ -55,8 +55,8 @@ DEPENDENCIES=(
     "7z" "awk" "basename" "bc" "brotli" "cat" "clang" "cmake"
     "cp" "cpio" "curl" "cut" "cwebp" "dd" "dirname" "du" "ffmpeg"
     "file" "getfattr" "git" "grep" "head" "java" "ln"
-    "lz4" "make" "md5sum" "mkdir" "mount" "mv" "perl" "protoc"
-    "python3" "rm" "rsync" "sed" "sha1sum" "sort" "split" "stat"
+    "llvm-readelf" "lz4" "make" "md5sum" "mkdir" "mount" "mv" "perl" "protoc"
+    "python3" "rm" "rsync" "secilc" "sed" "sha1sum" "sort" "split" "stat"
     "sudo" "tail" "tar" "touch" "tr" "truncate" "umount" "unzip"
     "wc" "whoami" "xargs" "xxd" "zip" "zstd"
 )

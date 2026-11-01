@@ -38,11 +38,15 @@ public final class OaSource {
     private final CallCardBuilder calls;
 
     public OaSource(Context ctx, ClassLoader cl) {
+        this(ctx, cl, new WhatsAppCallClock());
+    }
+
+    public OaSource(Context ctx, ClassLoader cl, WhatsAppCallClock callClock) {
         reader = new OaReader(cl);
         IconLoader icons = new IconLoader(ctx);
         progress = new ProgressBinder(icons);
         cards = new OaCardBuilder(icons, new OaViews(ctx), progress);
-        calls = new CallCardBuilder(ctx, icons, reader, this::refreshSoon);
+        calls = new CallCardBuilder(ctx, icons, reader, this::refreshSoon, callClock);
     }
 
     /** Package of the app on screen, or null when unknown. */

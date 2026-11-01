@@ -158,6 +158,8 @@ public final class MediaBody extends CardBody {
     }
 
     /** The glow, stretched to the card's current shape so it always fills the card edge to edge. */
+    @Override public MediaFx materialMusic() { return owner.mediaFx(item); }
+
     @Override
     public void drawBackground(Canvas c, RectF frame, float alpha) {
         long now = IslandView.now();

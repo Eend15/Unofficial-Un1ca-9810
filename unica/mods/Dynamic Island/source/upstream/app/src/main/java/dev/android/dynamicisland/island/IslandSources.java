@@ -6,6 +6,7 @@ import android.os.SystemClock;
 import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.source.CallSource;
+import dev.android.dynamicisland.island.source.WhatsAppCallClock;
 import dev.android.dynamicisland.island.source.CastSource;
 import dev.android.dynamicisland.island.source.EventSource;
 import dev.android.dynamicisland.island.source.ChargingSource;
@@ -67,7 +68,8 @@ final class IslandSources {
         this.ctx = ctx;
         this.main = main;
         this.onChange = onChange;
-        oa = new OaSource(ctx, classLoader);
+        WhatsAppCallClock callClock = new WhatsAppCallClock();
+        oa = new OaSource(ctx, classLoader, callClock);
         foregroundApp = new ForegroundApp(ctx, oa::foregroundPackage);
         media = new MediaSource(ctx, main, onChange);
         media.setRecordingFilter(oa::isVoiceRecording);
@@ -88,7 +90,7 @@ final class IslandSources {
         rules.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         cast.onRecordersChanged = () -> main.post(HideDuplicated::rebuild);
         torch.onShownChanged = () -> main.post(HideDuplicated::rebuild);
-        calls = new CallSource(ctx, main, onChange);
+        calls = new CallSource(ctx, main, onChange, callClock);
         peeks = new PeekSource(ctx, main, onChange);
     }
 

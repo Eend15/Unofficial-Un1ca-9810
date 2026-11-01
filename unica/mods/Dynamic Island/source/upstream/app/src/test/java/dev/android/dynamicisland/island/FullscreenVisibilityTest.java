@@ -60,6 +60,8 @@ public class FullscreenVisibilityTest {
         placement.setDozing(true);
         assertTrue(view.isSuppressedNow());
         placement.setDozing(false);
+        assertTrue("AOD exit waits for the same safe reveal as unlock", view.isSuppressedNow());
+        org.robolectric.Shadows.shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(201));
         assertFalse(view.isSuppressedNow());
 
         RuntimeEnvironment.setQualifiers("w800dp-h360dp-land-mdpi");

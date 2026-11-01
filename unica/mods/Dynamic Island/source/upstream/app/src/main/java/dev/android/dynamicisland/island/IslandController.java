@@ -140,7 +140,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
             requestRefresh();
             HideDuplicated.rebuild();
             ShadeMediaPlayer.refreshVisiblePlayers();
-            dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
+            dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards(true);
         }));
         ModuleSettings.setOnPlacementChanged(() -> main.post(() -> {
             placement.updateGeometry();
@@ -292,6 +292,19 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         placement.setDozing(value);
     }
 
+    /** Early power transition, before keyguard/AOD can cover the exit animation. */
+    public void setSleeping(boolean sleeping) {
+        if (Looper.myLooper() != main.getLooper()) { main.post(() -> setSleeping(sleeping)); return; }
+        if (sleeping) recordingInput.setTarget(null);
+        placement.setSleeping(sleeping);
+    }
+
+    public void finishSleeping() {
+        if (Looper.myLooper() != main.getLooper()) { main.post(this::finishSleeping); return; }
+        recordingInput.setTarget(null);
+        placement.finishSleeping();
+    }
+
     /** @param state non-zero while the status bar is hidden (full-screen app) */
     public void setStatusBarWindowState(int state) {
         placement.setStatusBarWindowState(state);
@@ -300,9 +313,10 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     public void setShadeExpansion(float fraction) {
         IslandView view = placement.view();
         if (view != null) {
-            boolean pulled = view.shadePulled();
             view.setShadeFraction(fraction);
-            if (pulled != view.shadePulled()) dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
+            // Compact-pill disappearance changes no overlay card coverage. The
+            // onIslandFrame coverage token handles real card handoffs, without
+            // rebuilding every notification row on each quick-panel open/close.
         }
     }
 
@@ -388,13 +402,13 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     }
 
     @Override
-    public void onPeekClosed() {
+    public void onPeekClosed(String key) {
         IslandWindow window = placement.window();
         if (window != null && window.isReplying()) {
             window.hideReply(); // the card was closed under the reply field (a swipe): the field goes with it
         }
         IslandItem showing = sources.peeks.showing();
-        if (showing != null) {
+        if (showing != null && showing.key.equals(key)) {
             sources.peeks.dismiss(showing);
         }
         requestRefresh();
@@ -402,6 +416,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     @Override
     public void onExpandedChanged(boolean expanded) {
+        sources.torch.onControlsExpanded(expanded);
         haptics.tick();
         dev.android.dynamicisland.xposed.hooks.ShadeLiveCards.refreshVisibleCards();
         if (!expanded) requestRefresh();

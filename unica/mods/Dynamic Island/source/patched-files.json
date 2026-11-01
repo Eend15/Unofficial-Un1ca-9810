@@ -1,4 +1,5 @@
 [
+  "smali/com/android/keyguard/KeyguardUpdateMonitor.smali",
   "smali/com/android/systemui/SystemUIApplication.smali",
   "smali/io/mesalabs/unica/dynamicisland/Bootstrap.smali",
   "smali/io/mesalabs/unica/dynamicisland/ConstructorCalls.smali",

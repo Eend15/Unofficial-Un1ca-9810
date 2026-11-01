@@ -26,7 +26,7 @@ if 'SystemUiRestarter.restart(this)' not in sat:
  sat=sat.replace('SystemUiRestarter.restart()','SystemUiRestarter.restart(this)')
  sa.write_text(sat)
 manifest=(UP/'app/src/main/AndroidManifest.xml').read_text()
-manifest=manifest.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android">','<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.mesalabs.unica.dynamicisland" android:versionCode="3" android:versionName="0.1.13-unica-native1">\n<uses-sdk android:minSdkVersion="36" android:targetSdkVersion="36"/>')
+manifest=manifest.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android">','<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.mesalabs.unica.dynamicisland" android:versionCode="4" android:versionName="0.1.14-unica-native1">\n<uses-sdk android:minSdkVersion="36" android:targetSdkVersion="36"/>')
 manifest=re.sub(r'\s*<provider\s+android:name=".settings.SettingsProvider"[^>]+/>','',manifest)
 manifest=manifest.replace('<application','<application android:forceQueryable="true"',1)
 manifest=manifest.replace('android:name=".settings.SettingsActivity"','android:name="dev.android.dynamicisland.settings.SettingsActivity"')
@@ -49,6 +49,10 @@ for key,value in {
 strings.write_text(st)
 run(TOOLS/'aapt2','compile','--dir',native_res,'-o',B/'resources.zip')
 run(TOOLS/'aapt2','link','-o',B/'resources.apk','--manifest',B/'AndroidManifest.xml','-I',ANDROID,'--java',generated,'--custom-package','dev.android.dynamicisland','--auto-add-overlay',B/'resources.zip')
+# Match upstream generateMaterialShader: compile exact AGSL resource into DEX.
+shader=generated/'dev/android/dynamicisland/island/material/FrostedShaderSource.java'
+shader.parent.mkdir(parents=True,exist_ok=True)
+shader.write_text('package dev.android.dynamicisland.island.material;\nfinal class FrostedShaderSource {\n static final String CODE = '+json.dumps((UP/'app/src/main/resources/dev/android/dynamicisland/material/frosted.agsl').read_text())+';\n private FrostedShaderSource() {}\n}\n')
 sources=list((R/'java').rglob('*.java'))+list(generated.rglob('*.java'))
 classes=B/'classes';shutil.rmtree(classes,ignore_errors=True);classes.mkdir(exist_ok=True)
 (B/'sources.txt').write_text('\n'.join(json.dumps(str(p)) for p in sources))

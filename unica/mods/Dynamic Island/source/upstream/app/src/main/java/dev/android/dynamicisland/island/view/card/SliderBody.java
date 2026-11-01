@@ -17,7 +17,7 @@ import dev.android.dynamicisland.island.view.IslandView;
  * brightness. While the slider is dragged the view keeps this body in {@code owner.sliderBody} and the dragged
  * position in {@code owner.sliderFraction}, which is shown instead of the item's value.
  */
-public final class SliderBody extends CardBody {
+public class SliderBody extends CardBody {
     private static final float VALUE_INSET_DP = 18.0f;
     private static final float HEADER_BUTTON_DP = 34.0f;
     private static final float HEADER_GAP_DP = 12.0f;
@@ -78,6 +78,11 @@ public final class SliderBody extends CardBody {
     public float valueAfterDrag(float startValue, float dx) {
         return IslandView.clamp01(startValue + (dx / Math.max(1.0f, trackRight - trackLeft - trackH)));
     }
+
+    /** Optional tactile motion; ordinary sliders stay on their track. Coordinates are body pixels. */
+    public void onSliderStart() { }
+    public void onSliderMove(float dy) { }
+    public void onSliderEnd() { }
 
     /** The value the bar shows right now: the dragged one while dragging, else where it rests or glides to. */
     public float shownValue() {

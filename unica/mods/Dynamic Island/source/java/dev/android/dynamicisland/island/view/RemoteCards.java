@@ -35,6 +35,7 @@ final class RemoteCards {
     private final Map<View, ContentBlur> effects = new HashMap<>();
     private final Map<String, RemoteViews> sources = new HashMap<>();
     private ViewGroup layer;
+    private final java.util.List<View> paintOrder = new java.util.ArrayList<>();
     private Context dark;
 
     RemoteCards(IslandView view, Shapes shapes, Scene scene) {
@@ -108,7 +109,7 @@ final class RemoteCards {
         if (layer == null || inflated.isEmpty()) {
             return;
         }
-        visible.clear();
+        visible.clear();paintOrder.clear();
         long t = IslandView.now();
         float alpha = scene.visibleAlpha();
         for (Card c : scene.cards) {
@@ -117,13 +118,24 @@ final class RemoteCards {
             }
             RemoteBody body = (RemoteBody) c.body;
             shapes.card(c, slot);
-            float a = StackPainter.contentAlpha(c, t, shapes.expansion(c)) * alpha;
+            if(IMode.paintsRemoteInSurface(c,t)) {
+                // Draw the live hierarchy into the moving card's foreground blur until it settles.
+                // No bitmap capture/reinflation: native controls become interactive in their usual layer afterwards.
+                if(body.view.getWidth()!=body.view.getMeasuredWidth() || body.view.getHeight()!=body.view.getMeasuredHeight())
+                    body.view.layout(0,0,body.view.getMeasuredWidth(),body.view.getMeasuredHeight());
+                if(body.view.getVisibility()!=View.GONE) body.view.setVisibility(View.GONE);
+                clearEffect(body.view,false);
+                continue;
+            }
+            float a = StackPainter.contentAlpha(c, t, shapes.expansion(c)) * alpha * (c.iMode ? IslandView.clamp01(c.iModeOpacity.value()) : 1);
             if (a > 0.01f) {
-                boolean naturalSize = c.leaving && !ModuleSettings.legacyAnimation();
+                boolean naturalSize = c.leaving && !c.iMode && !ModuleSettings.legacyAnimation();
                 float scaleX = naturalSize ? 1 : Math.max(.001f, slot.width() / body.w);
                 float scaleY = naturalSize ? 1 : Math.max(.001f, slot.height() / body.h);
-                float left = naturalSize ? shapes.contentLeft(c) + body.pad : slot.left + body.pad * scaleX;
-                float top = slot.top + body.pad * scaleY;
+                if(c.iMode) scaleX=scaleY=Math.min(scaleX,scaleY);
+                float left = c.iMode ? slot.centerX()-body.w*scaleX/2+body.pad*scaleX
+                        : naturalSize ? shapes.contentLeft(c) + body.pad : slot.left + body.pad * scaleX;
+                float top = c.iMode ? slot.centerY()-body.h*scaleY/2+body.pad*scaleY : slot.top + body.pad * scaleY;
                 body.view.setPivotX(0);
                 body.view.setPivotY(0);
                 body.view.setScaleX(scaleX);
@@ -135,13 +147,20 @@ final class RemoteCards {
                         Math.max(0, (int)Math.floor(Math.min(body.view.getMeasuredHeight(), (slot.bottom - top) / scaleY))));
                 body.view.setClipBounds(contentClip);
                 body.view.setAlpha(a);
+                body.view.setEnabled(!c.iMode || !c.leaving && a>.98f);
                 effects.computeIfAbsent(body.view, ignored -> new ContentBlur()).apply(body.view,
                         StackPainter.contentBlurAmount(c, t, shapes.expansion(c)), view.dp(ContentBlur.RADIUS_DP));
                 if (body.view.getVisibility() != View.VISIBLE) {
                     body.view.setVisibility(View.VISIBLE);
                 }
                 visible.add(body.view);
+                if(c.iMode) paintOrder.add(0,body.view);
             }
+        }
+        if(!paintOrder.isEmpty()) {
+            int first=layer.getChildCount()-paintOrder.size();boolean inOrder=first>=0;
+            for(int i=0;inOrder && i<paintOrder.size();i++) inOrder=layer.getChildAt(first+i)==paintOrder.get(i);
+            if(!inOrder) for(View child:paintOrder) child.bringToFront();
         }
         Set<String> alive = new HashSet<>();
         for (IslandItem item : scene.items) {

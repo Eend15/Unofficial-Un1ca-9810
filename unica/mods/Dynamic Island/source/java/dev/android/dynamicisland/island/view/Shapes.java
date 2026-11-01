@@ -38,6 +38,7 @@ final class Shapes {
 
     /** The pill. Squash and stretch: it flattens while it widens fast and narrows while it grows in height. */
     void main(RectF out) {
+        if (scene.iMode != null) { scene.iMode.mainBounds(out); return; }
         float w = Math.max(0.0f, sp.width.value());
         float h = Math.max(0.0f, sp.height.value());
         float squash = PILL_SQUASH * clampUnit(sp.width.velocity() / m.dp(PILL_SQUASH_SPEED_DP));
@@ -57,6 +58,7 @@ final class Shapes {
     }
 
     void shadePill(RectF full, RectF out) {
+        if(scene.iMode!=null) { scene.iMode.shadeBounds(full,out);return; }
         float gate = Math.max(0.0f, Math.min(MAX_SHADE_GATE, sp.shadeGate.value()));
         float dot = full.height() * SHADE_DOT;
         float width = dot + (full.width() - dot) * gate;
@@ -77,6 +79,7 @@ final class Shapes {
 
     /** The bubble for an explicit split (the shade gate merges it back into the pill before the pill shrinks). */
     void bubble(RectF main, float s, RectF out) {
+        if (scene.iMode != null) { scene.iMode.bubbleBounds(out);scene.iMode.shadeBounds(out,out); return; }
         float pillRadius = main.height() / 2.0f;
         float radius = lerp(IslandView.PAUSED_GLOW * pillRadius, m.bubbleR, IslandView.clamp01(s));
         float restDistance = m.bubbleGap + pillRadius + m.bubbleR;
@@ -88,9 +91,9 @@ final class Shapes {
     /** A card (not necessarily its resting rectangle: swipe offsets and the stack drag are applied). */
     void card(Card c, RectF out) {
         float h = Math.max(0.0f, c.h.value());
-        float w = Math.max(0.0f, c.w.value() * (1.0f - (CARD_SQUASH * clampUnit(c.h.velocity() / m.dp(CARD_SQUASH_SPEED_DP)))));
-        float left = m.cx - (w / 2.0f);
-        if (w < m.screenW) {
+        float w = Math.max(0.0f, c.w.value() * (c.iMode ? 1 : (1.0f - (CARD_SQUASH * clampUnit(c.h.velocity() / m.dp(CARD_SQUASH_SPEED_DP))))));
+        float left = (c.iMode ? c.cx.value() : m.cx) - (w / 2.0f);
+        if (!c.iMode && w < m.screenW) {
             left = Math.max(Math.min(left, (m.screenW - m.cardMargin) - w), Math.min(m.cardMargin, left));
         }
         float top = c.cy.value() - (h / 2.0f);
@@ -100,7 +103,7 @@ final class Shapes {
             top += dragY * ((c.order * 0.16f) + 1.0f) - (dragY <= 0.0f ? stretch : 0.0f);
             h += stretch;
             left += swipeOffset(c);
-        }
+        } else if(c.iMode) left+=c.dx.value();
         out.set(left, top, left + w, top + h);
     }
 

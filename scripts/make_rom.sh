@@ -35,7 +35,7 @@ GET_WORK_DIR_HASH()
     local SOURCE_HASH
     local FACEUNLOCKFIX_HASH
 
-    SOURCE_HASH="$(find "$SRC_DIR/platform/$TARGET_PLATFORM" "$SRC_DIR/unica" "$SRC_DIR/target/$TARGET_CODENAME" -type f -print0 | \
+    SOURCE_HASH="$(find "$SRC_DIR/platform/$TARGET_PLATFORM" "$SRC_DIR/unica" "$SRC_DIR/target/$TARGET_CODENAME" -type f ! -path '*/__pycache__/*' ! -name '*.pyc' -print0 | \
         sort -z | xargs -0 sha1sum | sha1sum | cut -d " " -f 1)"
     # Experimental integration lives under scripts/, outside the normal source
     # hash. Rebuild when a bridge/staging source changes; ignore generated pyc.
@@ -178,8 +178,15 @@ if [ "$TARGET_PLATFORM" = "exynos9810" ] && \
     FACEUNLOCKFIX_BUILD_VARIANT=experimental
 fi
 PREVIOUS_FACEUNLOCKFIX_VARIANT=standard
-[ ! -f "$WORK_DIR/.faceunlockfix_build_variant" ] || \
+if [ -f "$WORK_DIR/.faceunlockfix_build_variant" ]; then
     PREVIOUS_FACEUNLOCKFIX_VARIANT="$(cat "$WORK_DIR/.faceunlockfix_build_variant")"
+elif $RESUME_AFTER_MODS && [ -f "$WORK_DIR/.build_in_progress" ] && \
+        [ ! -f "$WORK_DIR/.completed" ] && [ -f "$WORK_DIR/.modules_applied" ] && \
+        [ "$(cat "$WORK_DIR/.modules_applied")" = "$(GET_WORK_DIR_HASH)" ]; then
+    # A fresh interrupted build has no final variant marker yet. Only accept
+    # completed modules whose hash includes this variant's source and scripts.
+    PREVIOUS_FACEUNLOCKFIX_VARIANT="$FACEUNLOCKFIX_BUILD_VARIANT"
+fi
 if [ "$PREVIOUS_FACEUNLOCKFIX_VARIANT" != "$FACEUNLOCKFIX_BUILD_VARIANT" ]; then
     $RESUME_AFTER_MODS && {
         LOGE "Cannot resume FaceunlockFix after a different build variant"

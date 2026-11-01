@@ -27,6 +27,9 @@ final class BodyFactory {
         if (it.isMedia) {
             return new MediaBody(view, it, width);
         }
+        if (it.torchControls && dev.android.dynamicisland.settings.ModuleSettings.torchBeamStyle()) {
+            return new dev.android.dynamicisland.island.view.card.TorchBeamBody(view, it, width);
+        }
         if (it.sliderChange != null) {
             return new SliderBody(view, it, width);
         }

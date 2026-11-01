@@ -1,5 +1,6 @@
 package dev.android.dynamicisland.island.view.card;
 
+import dev.android.dynamicisland.island.view.media.MediaFx;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
@@ -46,7 +47,8 @@ public abstract class CardBody {
 
     /** One shape policy for the card fill, blur surface and connecting bridge. */
     public final float cornerRadius(float maximum, float height) {
-        if (!ModuleSettings.customCardRoundness()) return Math.min(height / 2f, maximum);
+        if (!ModuleSettings.customCardRoundness()) return Math.min(height / 2f,
+                ModuleSettings.frostedMaterial() && !ModuleSettings.lowPerformance() ? w * (100f / 1072f) : maximum);
         // Limit tall cards so the rounding cannot cut into their first and last rows.
         return Math.min(height / 2f, owner.dp(ModuleSettings.cardCornerRadiusDp()));
     }
@@ -58,6 +60,11 @@ public abstract class CardBody {
      */
     public void drawBackground(Canvas canvas, RectF frame, float alpha) {
     }
+
+    public final float density() { return owner.dp(1); }
+
+    public MediaFx materialMusic() { return null; }
+    public boolean animating(long now) { return false; }
 
     /** The button under ({@code lx}, {@code ly}) in body coordinates, or null. */
     public Btn hit(float lx, float ly) {

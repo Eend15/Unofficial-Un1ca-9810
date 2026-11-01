@@ -107,22 +107,29 @@ final class IconPainter {
         int l = Math.round(left);
         int t = Math.round(top);
         int sz = Math.round(size);
-        d.setAlpha(Math.round(255.0f * alpha));
-        if (!image) {
-            d.setBounds(centerInside(d, l, t, sz));
-            d.setTint(tint);
+        // VectorDrawable records its shared renderer into a hardware display list. Mutating its
+        // alpha for a second representation can also fade the first one (e.g. pill and bubble).
+        // Keep the drawable opaque and composite each occurrence's opacity on the canvas instead.
+        d.setAlpha(255);
+        int opacity = alpha < .999f ? c.saveLayerAlpha(l, t, l + sz, t + sz,
+                Math.round(255.0f * clamp01(alpha))) : c.save();
+        try {
+            if (!image) {
+                d.setBounds(centerInside(d, l, t, sz));
+                d.setTint(tint);
+                d.draw(c);
+                return;
+            }
+            int save = c.save();
+            scratch.set(l, t, l + sz, t + sz);
+            imageClip.rewind();
+            imageClip.addRoundRect(scratch, corner, corner, Path.Direction.CW);
+            c.clipPath(imageClip);
+            d.setBounds(centerCrop(d, l, t, sz));
+            d.setTintList(null);
             d.draw(c);
-            return;
-        }
-        int save = c.save();
-        scratch.set(l, t, l + sz, t + sz);
-        imageClip.rewind();
-        imageClip.addRoundRect(scratch, corner, corner, Path.Direction.CW);
-        c.clipPath(imageClip);
-        d.setBounds(centerCrop(d, l, t, sz));
-        d.setTintList(null);
-        d.draw(c);
-        c.restoreToCount(save);
+            c.restoreToCount(save);
+        } finally { c.restoreToCount(opacity); }
     }
 
     /** Fits a symbol inside its slot, preserving its intrinsic aspect ratio and centring both axes. */

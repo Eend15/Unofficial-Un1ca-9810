@@ -38,11 +38,11 @@ Dynamic Island, Samsung durum çubuğundaki Now Bar kapsülünü kartlara açıl
 
 Bu görseller uygulamanın gerçek çizim koduyla test ortamında oluşturulmuştur; cihaz fotoğrafı değildir. Uygulama simgeleri basit şekillerle temsil edilir.
 
-## 0.1.13 yenilikleri
+## 0.1.14 yenilikleri
 
-Bu kararlı sürüm, 0.1.13 geliştirme sürümlerini birleştirir: müziğe tepki veren ortak parlama, sade ayarlar, isteğe bağlı şarj ve kulaklık kartları, ekran kaydı süresi ve sistem yazı tipi düzeltmeleri ile canlı bildirime uzun basma çökmesi düzeltmesi. Dairesel pil göstergeleri ve küçük kapsül bilgileri iyileştirildi. Kart köşe yarıçapı varsayılan olarak 28dp, isteğe bağlı olarak 0–48dp olur. Samsung Ses Kaydedici için deneysel dalga varsayılan olarak kapalıdır; cihaz desteğine göre gelişmiş ayarlardan açılabilir.
+Bu kararlı sürüm isteğe bağlı **iMotion** sunar: tek genişletilmiş etkinlik, eş zamanlı bulanıklık ve hareket, yana kaydırarak geçiş, yukarı kaydırarak gizleme ve kamera deliği yakınından aşağı çekerek geri getirme. İlgili ifadelerle ayar arama, tek tek özellik önerileri, genişleyen ışıklı el feneri denetimleri, daha akıcı uyku/AOD geçişleri ve bildirim kartlarını yeniden kullanma iyileştirmeleri de dahildir. Mevcut animasyonlar ve Klasik malzeme varsayılan kalır; buzlu cam isteğe bağlı deneysel bir özelliktir. Altı dilin tamamı desteklenir.
 
-[Sürüm notları](docs/release-notes/0.1.13.md) · [36 güncel kart örneği](docs/cards-overview-0.1.13.png) (isteğe bağlı özellikler dahil örnek veriler).
+[Sürüm notları](docs/release-notes/0.1.14.md)
 
 ## Özellikler
 

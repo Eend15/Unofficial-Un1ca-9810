@@ -32,6 +32,7 @@ public final class CallSource {
     private final Context ctx;
     private final Handler main;
     private final Runnable onChange;
+    private final WhatsAppCallClock callClock;
     private final Map<String, IslandItem> items = new LinkedHashMap<>();
     private final Map<String, Long> starts = new HashMap<>();
     // a VoIP app may update its notification every second: icons, labels and avatars are worked out once
@@ -40,13 +41,19 @@ public final class CallSource {
     private final Map<String, Object[]> avatars = new HashMap<>(); // key -> {large Icon, readable Drawable, Boolean personal}
 
     public CallSource(Context ctx, Handler main, Runnable onChange) {
+        this(ctx, main, onChange, new WhatsAppCallClock());
+    }
+
+    public CallSource(Context ctx, Handler main, Runnable onChange, WhatsAppCallClock callClock) {
         this.ctx = ctx;
         this.main = main;
         this.onChange = onChange;
+        this.callClock = callClock;
     }
 
     /** Called on System UI's main thread every time the notification list was rebuilt. */
     public void update(List<StatusBarNotification> snapshot) {
+        boolean clockChanged = callClock.update(snapshot);
         Map<String, IslandItem> fresh = new LinkedHashMap<>();
         for (StatusBarNotification sbn : snapshot) {
             IslandItem it = build(sbn);
@@ -57,7 +64,7 @@ public final class CallSource {
         List<String> live = keysOf(fresh);
         starts.keySet().retainAll(live);
         avatars.keySet().retainAll(live);
-        boolean changed = fresh.size() != items.size();
+        boolean changed = clockChanged || fresh.size() != items.size();
         if (!changed) {
             for (Map.Entry<String, IslandItem> e : fresh.entrySet()) {
                 IslandItem old = items.get(e.getKey());
@@ -145,7 +152,9 @@ public final class CallSource {
         long now = System.currentTimeMillis();
         Long known = starts.get(sbn.getKey());
         long start;
-        if (verdict.explicitStartMillis > 0) {
+        if (WhatsAppCallClock.applies(pkg)) {
+            start = callClock.start(sbn.getKey());
+        } else if (verdict.explicitStartMillis > 0) {
             start = verdict.explicitStartMillis;
         } else if (known != null) {
             start = known;
@@ -155,7 +164,7 @@ public final class CallSource {
             start = sbn.getPostTime() > 0 ? sbn.getPostTime() : now;
         }
         start = Math.max(0, Math.min(start, now));
-        starts.put(sbn.getKey(), start);
+        if (start > 0) starts.put(sbn.getKey(), start); else starts.remove(sbn.getKey());
 
         Bundle extras = n.extras;
         CharSequence title = extras.getCharSequence(Notification.EXTRA_TITLE);
@@ -171,7 +180,7 @@ public final class CallSource {
         it.accent = CALL_GREEN;
         it.contentIntent = n.contentIntent;
         it.postTime = Long.MAX_VALUE;
-        it.trailing = IslandItem.Trailing.CHRONOMETER;
+        if (start > 0) it.trailing = IslandItem.Trailing.CHRONOMETER;
         it.chronoBase = start;
         it.chronoCountDown = false;
         Drawable appIcon = appIcon(pkg);

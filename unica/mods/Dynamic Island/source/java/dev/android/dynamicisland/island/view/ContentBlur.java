@@ -94,6 +94,12 @@ final class ContentBlur {
         }
     }
 
+    void clear() {
+        clearView();
+        if(node!=null) { node.discardDisplayList(); node.setRenderEffect(null); node=null; }
+        Arrays.fill(effects,null);nodeStep=-1;
+    }
+
     void clearView() {
         if (effectView != null) effectView.setRenderEffect(null);
         effectView = null;

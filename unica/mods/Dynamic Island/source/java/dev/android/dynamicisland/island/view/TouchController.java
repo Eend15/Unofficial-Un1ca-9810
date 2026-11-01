@@ -7,6 +7,7 @@ import android.os.SystemClock;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
+import android.view.VelocityTracker;
 import dev.android.dynamicisland.island.feedback.Haptics;
 import dev.android.dynamicisland.island.graphics.Motion;
 import dev.android.dynamicisland.island.view.card.Btn;
@@ -50,6 +51,7 @@ final class TouchController {
     /** Touch started on the empty hole while an item is minimized there. */
     private boolean downOnHole;
     private Card downCard;
+    private String downActivity;
     /** Value of the dragged slider when the finger touched down. */
     private float sliderStart;
     /** Last slider position passed on during the current drag. */
@@ -61,6 +63,7 @@ final class TouchController {
     private boolean forwardingShade;
     private Axis axis = Axis.UNDECIDED;
     private boolean stackDragging;
+    private VelocityTracker velocity;
 
     TouchController(IslandView view, IslandHost host, Metrics m, Scene scene, Shapes shapes, Director director, ButtonPress buttons) {
         this.view = view;
@@ -87,9 +90,15 @@ final class TouchController {
 
     boolean handle(MotionEvent e) {
         int action = e.getActionMasked();
+        if(action==MotionEvent.ACTION_DOWN) {
+            recycleVelocity();
+            if(scene.iMode!=null) velocity=VelocityTracker.obtain();
+        }
+        if(velocity!=null) velocity.addMovement(e);
         if (action != MotionEvent.ACTION_DOWN && ignoreGesture) {
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 ignoreGesture = false;
+                recycleVelocity();
             }
             return true;
         }
@@ -120,12 +129,15 @@ final class TouchController {
             default:
                 break;
         }
+        if(action==MotionEvent.ACTION_UP || action==MotionEvent.ACTION_CANCEL) recycleVelocity();
         return true;
     }
+    private void recycleVelocity() { if(velocity!=null) velocity.recycle();velocity=null; }
 
     // ---- down -------------------------------------------------------------------------------------------------------
 
     private void down(MotionEvent e) {
+        if(scene.iMode!=null) scene.iMode.finishCompactInteraction();
         ignoreGesture = false;
         axis = Axis.UNDECIDED;
         pointerId = e.getPointerId(0);
@@ -135,15 +147,20 @@ final class TouchController {
         downOnPill = false;
         downOnBubble = false;
         downCard = null;
+        downActivity = null;
         downOnHole = false;
         if (scene.mode == Mode.HIDDEN) {
-            downOnHole = host.hasMinimized();
+            downOnHole = host.hasMinimized() || scene.iMode!=null && scene.iMode.hiddenByGesture();
             return;
         }
         if (scene.visibleAlpha() < MIN_TOUCHABLE_ALPHA) {
             return;
         }
         float margin = m.dp(TOUCH_MARGIN_DP);
+        if(scene.iMode!=null) {
+            downActivity=scene.iMode.hit(downX,downY,margin);
+            if(downActivity!=null) { downOnPill=true; scene.iMode.press(downActivity); director.cancelAutoCollapse(); return; }
+        }
         if (scene.mode == Mode.EXPANDED) {
             downOnCards(margin);
         } else {
@@ -172,6 +189,7 @@ final class TouchController {
         director.cancelAutoCollapse();
         shapes.card(downCard, slot);
         float left = shapes.contentLeft(downCard);
+        if(downCard.iMode && !cardReady(downCard)) return;
         if (downCard.body instanceof MediaBody) {
             MediaBody media = (MediaBody) downCard.body;
             if (media.onSeekBar(downX - left, downY - slot.top)) {
@@ -189,6 +207,7 @@ final class TouchController {
                 view.sliderBody = slider;
                 view.sliderFraction = sliderStart;
                 lastSliderFraction = slider.snapped(sliderStart);
+                slider.onSliderStart();
                 view.getParent().requestDisallowInterceptTouchEvent(true);
                 view.invalidate();
             }
@@ -228,6 +247,7 @@ final class TouchController {
         }
         if (view.sliderBody != null && downCard != null) {
             view.sliderFraction = view.sliderBody.valueAfterDrag(sliderStart, x(e) - downX);
+            view.sliderBody.onSliderMove(y(e) - downY);
             tellSlider(view.sliderBody);
             view.scheduleFrame();
             view.invalidate();
@@ -241,8 +261,13 @@ final class TouchController {
         }
         float dx = x(e) - downX;
         float dy = y(e) - downY;
+        if(downOnHole && scene.iMode!=null && scene.iMode.hiddenByGesture()
+                && dy>m.dp(12) && dy>Math.abs(dx)*SWIPE_DOMINANCE) {
+            scene.iMode.restoreByGesture();ignoreGesture=true;return;
+        }
         if (!dragging && (Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop)) {
             dragging = true;
+            if(scene.iMode!=null) scene.iMode.releasePress();
             buttons.release();
             sp.press.animateTo(1.0f, Motion.PRESS_UP);
         }
@@ -250,7 +275,15 @@ final class TouchController {
             return;
         }
         boolean onIsland = downOnPill || downOnBubble;
-        if (scene.mode == Mode.EXPANDED && downCardAlive()) {
+        if(scene.iMode!=null && downActivity!=null) {
+            // Status-row paging owns horizontal drags; downward drags still open the system shade.
+            if(scene.iMode.hasCompactDrag()) scene.iMode.dragCompact(dx);
+            else if(dy < -m.dp(SWIPE_UP_CLOSE_DP) && -dy>Math.abs(dx)*SWIPE_DOMINANCE) {
+                scene.iMode.hideByGesture();ignoreGesture=true;return;
+            }
+            else if(dy>touchSlop && Math.abs(dy)>Math.abs(dx)) handOverToShade(e);
+            else if(Math.abs(dx)>touchSlop && Math.abs(dx)>Math.abs(dy)) scene.iMode.dragCompact(dx);
+        } else if (scene.mode == Mode.EXPANDED && downCardAlive()) {
             dragStack(dx, dy);
         } else if (scene.mode == Mode.COMPACT && onIsland && dy > touchSlop && Math.abs(dy) > Math.abs(dx)) {
             handOverToShade(e);
@@ -277,6 +310,7 @@ final class TouchController {
         }
         stackDragging = true;
         if (axis == Axis.HORIZONTAL) {
+            if(scene.iMode!=null) { scene.iMode.dragPage(dx);return; }
             float pull = rubber(dx, downCard.body.w * 0.55f);
             downCard.dx.snapTo(pull);
             for (Card other : scene.cards) {
@@ -288,7 +322,7 @@ final class TouchController {
             // a swipe up closes the cards right away, without waiting for the finger to lift
             releaseStack();
             ignoreGesture = true;
-            director.collapse();
+            if(scene.iMode!=null) scene.iMode.hideByGesture();else director.collapse();
             return;
         } else {
             sp.stackDy.snapTo(rubber(dy, m.dp(dy > 0.0f ? 90.0f : 60.0f)));
@@ -302,6 +336,7 @@ final class TouchController {
     // ---- up / cancel ------------------------------------------------------------------------------------------------
 
     private void up(MotionEvent e) {
+        if(scene.iMode!=null) scene.iMode.releasePress();
         if (forwardingShade) {
             forwardingShade = false;
             host.onShadeDragEvent(e);
@@ -325,6 +360,7 @@ final class TouchController {
         float dy = y(e) - downY;
         boolean horizontal = Math.abs(dx) > m.dp(SWIPE_MIN_DP) && Math.abs(dx) > Math.abs(dy) * SWIPE_DOMINANCE;
         if (downOnHole) {
+            if(scene.iMode!=null && scene.iMode.hiddenByGesture()) return;
             if ((horizontal && dx > 0.0f) || !dragging) {
                 host.onRestore();
             }
@@ -351,6 +387,7 @@ final class TouchController {
 
     private void finishSlider() {
         SliderBody body = view.sliderBody;
+        if (body != null) body.onSliderEnd();
         view.sliderBody = null;
         lastSliderFraction = -1.0f;
         if (body != null) {
@@ -383,6 +420,24 @@ final class TouchController {
     }
 
     private void dragReleased(boolean horizontal, float dx, float dy) {
+        if(scene.iMode!=null && scene.iMode.hasCompactDrag()) {
+            float speed=0;
+            if(velocity!=null) { velocity.computeCurrentVelocity(1000,m.dp(5000));speed=velocity.getXVelocity(pointerId); }
+            scene.iMode.finishCompactPage(speed);axis=Axis.UNDECIDED;return;
+        }
+        if(scene.iMode!=null && scene.iMode.hasPageDrag()) {
+            float speed=0;
+            if(velocity!=null) { velocity.computeCurrentVelocity(1000,m.dp(5000));speed=velocity.getXVelocity(pointerId); }
+            scene.iMode.finishPage(speed);
+            stackDragging=false;axis=Axis.UNDECIDED;
+            return;
+        }
+        if(scene.iMode!=null && horizontal && (downActivity!=null || downCardAlive())) {
+            releaseStack();
+            scene.iMode.next(dx<0 ? 1 : -1);
+            director.postAutoCollapse();
+            return;
+        }
         if (scene.mode == Mode.COMPACT && horizontal) {
             Haptics.perform(view, HAPTIC_CONFIRM);
             if (dx < 0.0f) {
@@ -403,11 +458,15 @@ final class TouchController {
     }
 
     private void cancel(MotionEvent e) {
+        if(scene.iMode!=null) scene.iMode.releasePress();
+        if(scene.iMode!=null) scene.iMode.cancelPage();
+        if(scene.iMode!=null) scene.iMode.cancelCompactPage();
         if (forwardingShade) {
             forwardingShade = false;
             host.onShadeDragEvent(e);
         }
         view.seekBody = null;
+        if (view.sliderBody != null) view.sliderBody.onSliderEnd();
         view.sliderBody = null;
         releaseStack();
         buttons.release();
@@ -423,6 +482,8 @@ final class TouchController {
     private void releaseStack() {
         axis = Axis.UNDECIDED;
         for (Card c : scene.cards) {
+            // iMode's pager owns both page offsets, including an interrupted gesture's return.
+            if (c.iModePaging) continue;
             if (c.dx.value() != 0.0f || c.dx.target() != 0.0f) {
                 c.dx.animateTo(0.0f, Motion.RUBBER_RELEASE);
             }
@@ -437,11 +498,20 @@ final class TouchController {
     }
 
     /** The pressed card is still there: its item may have been dismissed (call ended) while the finger was down. */
+    private boolean cardReady(Card c) {
+        return Math.abs(c.w.value()-c.body.w)<m.dp(3) && Math.abs(c.h.value()-c.body.h)<m.dp(3);
+    }
+
     private boolean downCardAlive() {
         return downCard != null && !downCard.leaving && scene.cards.contains(downCard);
     }
 
     private void tap(float x, float y) {
+        if(scene.iMode!=null && downActivity!=null) {
+            // Resolve by key again: the source may have ended while the finger was down.
+            scene.iMode.open(downActivity,true);
+            return;
+        }
         if (scene.mode == Mode.COMPACT) {
             director.expandFromPill();
             return;
@@ -450,6 +520,7 @@ final class TouchController {
             return;
         }
         Card c = downCard;
+        if(c.iMode && !cardReady(c)) return;
         shapes.card(c, slot);
         Btn b = c.body.hit(x - shapes.contentLeft(c), y - slot.top);
         if (b != null) {

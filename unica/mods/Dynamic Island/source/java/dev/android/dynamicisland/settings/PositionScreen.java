@@ -199,6 +199,7 @@ final class PositionScreen {
             group.addView(line, lp);
         }
         LinearLayout box = new LinearLayout(activity);
+        box.setTag(activity.getString(title));
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(ui.dp(22), ui.dp(16), ui.dp(22), ui.dp(10));
         LinearLayout top = new LinearLayout(activity);

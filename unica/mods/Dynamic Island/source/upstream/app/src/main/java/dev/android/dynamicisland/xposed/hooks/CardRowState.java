@@ -1,5 +1,6 @@
 package dev.android.dynamicisland.xposed.hooks;
 
+import android.content.res.Configuration;
 import android.view.View;
 import android.view.ViewGroup;
 import dev.android.dynamicisland.island.model.IslandItem;
@@ -27,6 +28,7 @@ final class CardRowState {
     final LiveCardView card;
 
     private final ViewGroup layout;
+    private final Configuration configuration;
     private final LiveCardView headsUpCard;
     private final View contracted;
     private final View expanded;
@@ -48,6 +50,7 @@ final class CardRowState {
         this.row = row;
         this.key = key;
         this.layout = layout;
+        configuration = new Configuration(row.getResources().getConfiguration());
         contracted = (View) Refl.get(layout, "mContractedChild");
         expanded = (View) Refl.get(layout, "mExpandedChild");
         headsUp = (View) Refl.get(layout, "mHeadsUpChild");
@@ -101,6 +104,30 @@ final class CardRowState {
 
     boolean isRestored() {
         return restored;
+    }
+
+    /** Reuse only while every slot is still ours; native reinflation may change the originals. */
+    boolean canReuse(String notificationKey) {
+        return !restored && !restoreQueued && key.equals(notificationKey)
+                && configuration.equals(row.getResources().getConfiguration())
+                && Refl.get(layout, "mContractedChild") == card
+                && Refl.get(layout, "mExpandedChild") == null
+                && Refl.get(layout, "mHeadsUpChild") == headsUpCard;
+    }
+
+    void refresh(IslandItem item) {
+        try {
+            // A native content update may have recalculated expandability while originals were exposed.
+            if (Refl.getBool(row, "mExpandable", false) || Refl.getBool(layout, "mExpandable", false)) {
+                updateExpandButtons.invoke(layout, false);
+                if (!Refl.set(row, "mExpandable", false)) throw new IllegalStateException("row mExpandable");
+                relayout("island live card update");
+            }
+            card.refresh(item);
+            if (headsUpCard != null) headsUpCard.refresh(item);
+        } catch (Throwable failure) {
+            fail(failure);
+        }
     }
 
     /** Swaps the card in for the stock children and lays the row out again. */

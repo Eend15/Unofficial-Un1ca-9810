@@ -58,6 +58,8 @@ public final class IslandWindow {
     private final SurfaceFader surfaceFader = new SurfaceFader();
     private final Rect pillSamplingRegion = new Rect();
     private PillBackgroundSampler pillSampler;
+    private MaterialCapture materialCapture;
+    private final Rect materialRegion = new Rect();
     private boolean pillSamplingRequested;
     /** Whether the root view has been added to the WindowManager. */
     private boolean added;
@@ -76,9 +78,10 @@ public final class IslandWindow {
         windowManager = context.getSystemService(WindowManager.class);
 
         view = new IslandView(context, host);
+        view.setMaterialCaptureRefresh(()->{if(materialCapture!=null)materialCapture.refresh();});
         BlurLayer blur = new BlurLayer(context);
         view.setBlurSink(blur);
-        FrameLayout remoteLayer = new FrameLayout(context);
+        FrameLayout remoteLayer = new ActivityRemoteLayer(context,view);
         remoteLayer.setClipChildren(false);
         view.setRemoteLayer(remoteLayer);
 
@@ -94,6 +97,8 @@ public final class IslandWindow {
         view.setPillSamplingStateChanged(this::updatePillBackgroundSampling);
     }
 
+    // TYPE_STATUS_BAR_SUB_PANEL is a hidden framework window type used only inside SystemUI.
+    @android.annotation.SuppressLint("WrongConstant")
     private static Context createWindowContext(Context systemUiContext) {
         Display display = systemUiContext.getSystemService(DisplayManager.class).getDisplay(Display.DEFAULT_DISPLAY);
         try {
@@ -152,6 +157,7 @@ public final class IslandWindow {
     }
 
     public synchronized void detach() {
+        if (materialCapture != null) { materialCapture.destroy(); materialCapture = null; }
         if (pillSampler != null) {
             pillSampler.destroy();
             pillSampler = null;
@@ -185,7 +191,19 @@ public final class IslandWindow {
                 pillSamplingRequested = false;
                 pillSampler.update(null, false);
             }
+            if (!shown && materialCapture != null) materialCapture.stop();
+            if (!shown) view.clearMaterialBackdrop();
         }
+    }
+
+    /** Also stop workers when the display stops producing frames before a final pre-draw can run. */
+    public void stopBackdropSampling() {
+        if (materialCapture != null) materialCapture.stop();
+        if (pillSampler != null && pillSamplingRequested) {
+            pillSamplingRequested = false;
+            pillSampler.update(null, false);
+        }
+        view.clearMaterialBackdrop();
     }
 
     // ---- window geometry and touch -------------------------------------------------------------
@@ -312,6 +330,14 @@ public final class IslandWindow {
     /** Re-applies the surface fade before each frame: the surface can be recreated and lose it. */
     public boolean onPreDraw() {
         updatePillBackgroundSampling();
+        try {
+            boolean material = root.isHardwareAccelerated() && view.materialBackdropRegion(materialRegion);
+            if (material && materialCapture == null) materialCapture = new MaterialCapture(view, view::setMaterialBackdrop);
+            if (materialCapture != null) materialCapture.update(materialRegion, material, view.materialBackdropPrewarming());
+        } catch (Throwable t) {
+            if (materialCapture != null) materialCapture.stop();
+            XLog.once("material capture placement", t);
+        }
         if (!surfaceFader.isNeutral()) {
             applySurfaceFade();
         }

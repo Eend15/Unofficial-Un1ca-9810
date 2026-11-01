@@ -27,6 +27,7 @@ def body(owner,sig,static=False,ctor=False):
  return '\n'.join(code)
 
 SPECS={'com.android.systemui.statusbar.events.SystemStatusAnimationSchedulerImpl': ['onStatusEvent'], 'com.android.systemui.statusbar.notification.row.ExpandableNotificationRow': ['isActionButtonLongClick', 'doLongClickCallback'], 'com.android.systemui.statusbar.notification.headsup.HeadsUpManagerImpl': ['addListener', 'updateNotificationInternal', 'setEntryPinned'], 'com.android.wm.shell.common.TaskStackListenerImpl': ['onActivityPinned', 'onActivityUnpinned']}
+SPECS['com.android.keyguard.KeyguardUpdateMonitor'] = ['handleStartedGoingToSleep', 'handleStartedWakingUp', 'handleFinishedGoingToSleep']
 METHOD=re.compile(r'(?ms)^\.method (?P<flags>[^\n]*?) (?P<sig>[^\s]+\([^\n]+)\n(?P<body>.*?)^\.end method')
 def transform(text,owner,names):
  existing={m.group('sig') for m in METHOD.finditer(text)};changed=[]

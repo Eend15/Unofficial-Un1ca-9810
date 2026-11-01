@@ -32,6 +32,7 @@ public class RecordingWaveformTest {
     @Test public void inputHistoryRendersInPillAndCardAndPauseSettlesToQuietBaseline() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
         SharedPreferences prefs = context.getSharedPreferences("recording-wave-test", 0);
+        prefs.edit().putInt(ModuleSettings.KEY_MATERIAL_STYLE, ModuleSettings.MATERIAL_CLASSIC).commit();
         ModuleSettings.configurePreview(prefs);
         assertFalse(ModuleSettings.concurrentRecordingInput());
         prefs.edit().putBoolean(ModuleSettings.KEY_CONCURRENT_RECORDING_INPUT,true).commit();
@@ -74,7 +75,7 @@ public class RecordingWaveformTest {
             Paint title = new Paint(Paint.ANTI_ALIAS_FLAG);
             title.setColor(0xFFD8D8DF); title.setTextSize(14);
             float left = 20 + col * 400;
-            canvas.drawText(col == 0 ? "Default · shared 28dp corners" : "Custom corner radius · 40dp", left, 24, title);
+            canvas.drawText(col == 0 ? "Classic · shared 28dp corners" : "Custom corner radius · 40dp", left, 24, title);
             compact.draw(canvas, new RectF(left, 38, left + width, 68), 1, 1000);
             dev.android.dynamicisland.island.view.card.CardBody recordingBody = factory.create(item,360,false);
             float expectedRadius = col == 0 ? 28 : 40;

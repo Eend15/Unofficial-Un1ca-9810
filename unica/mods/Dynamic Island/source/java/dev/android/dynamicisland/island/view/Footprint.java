@@ -55,9 +55,11 @@ final class Footprint {
     /** The part of the window that should receive touches; everything else lets them through. */
     void touchRegion(Region out) {
         out.setEmpty();
+        if (scene.sleeping) return;
         float pad = m.dp(TOUCH_PAD_DP);
         if (scene.mode == Mode.HIDDEN) {
-            if (host.hasMinimized() && !scene.suppressed && scene.shadeAlpha() > 0.5f) {
+            if ((host.hasMinimized() || scene.iMode!=null && scene.iMode.hiddenByGesture())
+                    && !scene.suppressed && scene.shadeAlpha() > 0.5f) {
                 float half = Math.max(m.dp(HIDDEN_TOUCH_HALF_WIDTH_DP), m.holeD);
                 out.op(Math.round(m.cx - half), Math.round((m.cy - (m.pillH / 2.0f)) - pad),
                         Math.round(m.cx + half), Math.round(m.cy + (m.pillH / 2.0f) + pad), Region.Op.UNION);
@@ -89,6 +91,7 @@ final class Footprint {
     }
 
     private static void add(Region region, RectF rect, float pad) {
+        if(rect.isEmpty()) return;
         region.op(Math.round(rect.left - pad), Math.round(rect.top - pad), Math.round(rect.right + pad), Math.round(rect.bottom + pad), Region.Op.UNION);
     }
 }

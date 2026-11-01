@@ -47,11 +47,11 @@ Dynamic Island replaces Samsung's Now Bar capsule in the status bar with a pill 
 
 These pictures are drawn by the app's own drawing code on a mock phone in the test environment (see `scripts/readme_images.py`); they are not photos of a device, and the app icons are made of plain shapes.
 
-## New in 0.1.13
+## New in 0.1.14
 
-This stable release collects the 0.1.13 development builds: shared music-reactive glow, simpler settings, optional charging/headset cards, recording-clock and system-font fixes, and the live-notification long-press crash fix. Cards now use circular battery gauges, clearer compact information and a shared 28dp corner radius, with an optional 0–48dp adjustment. The experimental Samsung Voice Recorder waveform is off by default; enable it under Advanced & troubleshooting when supported by your device.
+This stable release brings optional **iMotion**: one expanded activity, coordinated blur and motion, sideways activity switching, and swipe-up hiding with pull-down restoration near the camera hole. It also includes ranked settings search, one-at-a-time feature recommendations, optional expanding-beam flashlight controls, smoother sleep/AOD transitions and notification-card reuse fixes. Existing animations and Classic material remain the defaults; Frosted material is an opt-in experiment. All six languages are supported.
 
-[Release notes](docs/release-notes/0.1.13.md) · [36 current card examples](docs/cards-overview-0.1.13.png) (illustrative data, including optional features).
+[Release notes](docs/release-notes/0.1.14.md)
 
 ## Features
 

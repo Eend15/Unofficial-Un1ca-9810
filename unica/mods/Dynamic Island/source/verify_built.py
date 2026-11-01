@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import argparse,zipfile,sys,re,struct,importlib.util
+from hashlib import sha256
 HERE=Path(__file__).resolve().parent
 REPO=HERE.parents[3]
 sys.path.insert(0,str(REPO/'scripts/internal/FaceunlockFix'))
@@ -19,6 +20,21 @@ def dex_bytes(apk):
         if not result:raise RuntimeError(f'No DEX in {apk}')
         return b''.join(result)
 
+def donor_baseline(required, baseline, donor):
+    # Exact audited donor-only R8 naming delta. Unknown donors retain all checks.
+    if baseline != 'baseline-settings-classes.txt' or not donor.is_file():
+        return required
+    if sha256(donor.read_bytes()).hexdigest() != '5c9847cbdff1e594188d0304963abe6da00d1881212275a68c2f72656231a3af':
+        return required
+    delta={
+        'Lcom/android/settings/biometrics/fingerprint/FingerprintSettings$FingerprintSettingsFragment$$ExternalSyntheticLambda4;',
+        'Lcom/android/settings/nfc/DefaultPaymentSettings$$ExternalSyntheticLambda1;',
+    }
+    if delta & jar_classes(donor,False):
+        raise RuntimeError('Audited Settings donor class delta changed')
+    return required-delta
+
+
 def verify(work_dir,cert):
     system=work_dir/'system/system'
     ui=system/'system_ext/priv-app/SystemUI/SystemUI.apk'
@@ -26,7 +42,9 @@ def verify(work_dir,cert):
     native=system/'app/UnicaDynamicIsland/UnicaDynamicIsland.apk'
     for apk,baseline in ((ui,'baseline-systemui-classes.txt'),(settings,'baseline-settings-classes.txt')):
         classes=jar_classes(apk,False)
-        missing=set((HERE/baseline).read_text().splitlines())-classes
+        required=set((HERE/baseline).read_text().splitlines())
+        required=donor_baseline(required,baseline,REPO/'out/fw/SM-S901B_EUX/system/system/priv-app/SecSettings/SecSettings.apk')
+        missing=required-classes
         if missing:raise RuntimeError(f'{apk} lost original classes: {sorted(missing)[:10]}')
         dex_bytes(apk)
     uidex=dex_bytes(ui)
@@ -67,7 +85,7 @@ def verify(work_dir,cert):
     spec=importlib.util.spec_from_file_location('di_signature_verifier',path)
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     module.verify_platform_signatures((ui,settings,native),cert)
-    print('PASS built-in Dynamic Island 0.1.13: preserved original classes, compiled hooks, UI settings, exact native payload and platform signatures')
+    print('PASS built-in Dynamic Island 0.1.14: preserved original classes, compiled hooks, UI settings, exact native payload and platform signatures')
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--work-dir',type=Path,required=True);p.add_argument('--platform-cert',type=Path,required=True)

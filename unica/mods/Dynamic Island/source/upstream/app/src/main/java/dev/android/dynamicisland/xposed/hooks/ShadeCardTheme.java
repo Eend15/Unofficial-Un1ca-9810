@@ -41,6 +41,7 @@ public final class ShadeCardTheme {
     }
 
     static void install(ClassLoader cl) {
+        ShadeMaterialAppearance.install(cl);
         rowClass = Refl.findClass(ROW_CLASS, cl);
         if (rowClass == null) {
             return;

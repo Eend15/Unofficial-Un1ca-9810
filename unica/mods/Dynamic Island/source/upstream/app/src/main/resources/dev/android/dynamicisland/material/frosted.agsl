@@ -1,0 +1,489 @@
+
+       uniform float u_commonArray[12];
+        uniform float u_shadow;
+        uniform float u_shadowArray[16];
+        uniform float u_edge;
+        uniform float u_edgeArray[16];
+
+
+       const float EPS = 1e-6;
+       // GLSL smoothstep has undefined results for reversed edges. COUI uses
+       // descending ramps below; spell out the same Hermite curve so raster
+       // previews and device GPU compilers are not free to interpret it differently.
+       float couiDescendingRamp(float high, float low, float x) {
+           float t=clamp((x-high)/min(low-high,-1e-6),0.0,1.0);
+           return t*t*(3.0-2.0*t);
+       }
+       const float EFFECT_PARAM_THRESHOLD = 0.001;
+
+
+       struct CommonDataRect{
+            vec2 halfResolution;
+            vec2 pos;
+            vec2 halfSize;
+            float coner;
+            float weight;
+            float preCalcMinC;
+        };
+
+
+        float getQuadrantValue(vec2 pos, vec4 values){
+            vec2 s = step(vec2(0.0), pos);
+            float valueTop = mix(values.x, values.y, s.x);
+            float valueBot = mix(values.w, values.z, s.x);
+            float value = mix(valueTop, valueBot, s.y);
+            return value;
+        }
+
+        float noise(vec2 p){
+            return fract(sin(dot(p.yx,vec2(79.1214,78.233)))*43760.5453);
+        }
+
+        float softLight(float A,float B){
+            float l=B-(1.-2.*A)*B*(1.-B);
+            float h=B+(2.*A-1.)*(sqrt(B)-B);
+            return mix(l,h,step(.5,A));
+        }
+
+
+        const float DEFAULT_TRANSITION_PIXELS = 4.0;
+        const float kAbs = 1.0;
+        const float rRef = 80.0;
+        const float kMax = 26.6;
+        const float junctionXBand = 70.0;
+        const float junctionYBand = 60.0;
+        const float junctionPower = 1.0;
+
+        float smoothAbs(float x, float k) {
+            return sqrt(x * x + k * k);
+        }
+
+        float smoothMaxSqrt(float a, float b, float k) {
+            float d = a - b;
+            return 0.5 * (a + b + sqrt(d * d + k * k));
+        }
+
+        float sdCapsule(vec2 pLocal, vec2 halfSize, inout float zoneCap, inout float transitionPixels) {
+            bool isVertical = halfSize.x < halfSize.y;
+            vec2 hs = isVertical ? halfSize.yx : halfSize;
+            vec2 pl = isVertical ? pLocal.yx : pLocal;
+
+            vec2 q = vec2(smoothAbs(pl.x, kAbs), smoothAbs(pl.y, kAbs));
+            float r = hs.y;
+            float a = max(hs.x - r, 0.0);
+
+            zoneCap = abs(pl.x) - a;
+
+            // float scale = r / max(rRef, 1e-3);
+            float scale = r * 0.0125;
+            float kMaxEff = kMax * scale;
+            float xBandEff = junctionXBand * scale;
+            float yBandEff = junctionYBand * scale;
+
+            transitionPixels = max(DEFAULT_TRANSITION_PIXELS, xBandEff);
+
+            float s = q.x - a;
+            float xHard = max(s, 0.0);
+            float xSoft = (kMaxEff > 0.0) ? smoothMaxSqrt(s, 0.0, kMaxEff) : xHard;
+            float wx = 1.0 - smoothstep(0.0, max(xBandEff, 1e-3), abs(s));
+            float wy = smoothstep(r - max(yBandEff, 1e-3), r, q.y);
+            // float w = pow(clamp(wx * wy, 0.0, 1.0), junctionPower);
+            float w = clamp(wx * wy, 0.0, 1.0);
+            float x = mix(xHard, xSoft, w);
+            return length(vec2(x, q.y)) - r;
+        }
+
+        float powFast(float x, float n) {
+            // 保护极小值，防止 log2(0)
+            x = max(x, 1e-8);
+            return exp2(log2(x) * n);
+        }
+
+        float lpNorm(vec2 v, float n) {
+            v = abs(v);
+            float m = max(v.x, v.y);
+            if (m < 1e-8) return 0.0;
+            vec2 u = v / m;
+            float s = powFast(u.x, n) + powFast(u.y, n);
+            return m * exp2(log2(max(s, EPS)) / n);
+        }
+
+        float lpNorm4(vec2 v) {
+            v = abs(v);
+            vec2 v2 = v * v;
+            vec2 v4 = v2 * v2;
+            return sqrt(sqrt(max(v4.x + v4.y, 0.0)));
+        }
+
+        float sdRoundRect(vec2 p, vec2 halfSize, float r, float n, inout vec2 q) {
+            q = abs(p) - halfSize + vec2(r);
+            float nClamped = max(n, 2.0);
+            float dCorner = (abs(nClamped - 4.0) < 1e-3) ? lpNorm4(max(q, 0.0)) : lpNorm(max(q, 0.0), nClamped);
+            if (q.x > 0.0 && q.y > 0.0) return dCorner - r;
+            else return max(q.x, q.y) - r;
+        }
+
+
+        float smoothSDF_D(vec2 p, vec2 b, float corner, float weight, inout float aaFactor){
+            float rectSdf = 0.0;
+            float d_corner_zone = 0.0;
+            vec2 q_rect = vec2(0.0, 0.0);
+            float transitionPixels = DEFAULT_TRANSITION_PIXELS; // 默认过渡像素
+
+            if (weight  < 2.0) {
+                float zoneCap = 0.0;
+                if(weight  > 1.005){
+                    float t = couiDescendingRamp(2.0, 1.0, weight);
+                    float d_G2 = sdRoundRect( p, b, corner, 2.0, q_rect);
+                    float zone_G2 = min(q_rect.x, q_rect.y);
+
+                    float d_Capsule = sdCapsule( p, b, zoneCap, transitionPixels);
+                    rectSdf = mix(d_G2, d_Capsule, t);
+                    d_corner_zone = mix(zone_G2, zoneCap, t);
+                }
+                else
+                {
+                    rectSdf = sdCapsule( p, b, zoneCap, transitionPixels);
+                    d_corner_zone = zoneCap;
+                }
+            } else {
+                rectSdf = sdRoundRect( p, b, corner, weight, q_rect);
+                d_corner_zone = min(q_rect.x, q_rect.y);
+            }
+            // 计算抗锯齿因子 (注意区间：从直线区走向圆角区)
+            aaFactor = smoothstep(-transitionPixels - 2.0, -transitionPixels * 0.2, d_corner_zone);
+            return rectSdf;
+        }
+
+
+    float getDis(vec2 pos,vec2 halfsize){
+            vec2 rect=abs(pos-halfsize);
+            return rect.x+rect.y;
+        }
+
+    vec4 blendEdge(CommonDataRect rectData, vec4 color, float d){
+
+            vec3 uRectLineColor = vec3(u_edgeArray[0], u_edgeArray[1], u_edgeArray[2]);
+            vec2 uRectLineNear = vec2(u_edgeArray[3], u_edgeArray[4]);
+//                        vec2 uRectLineNear = vec2(0.0, 1.0);
+            vec2 uRectLineFar = vec2(u_edgeArray[5], u_edgeArray[6]);
+//                        vec2 uRectLineFar = vec2(0.0, 1.0);
+            vec2 uRectLineAlpha = vec2(u_edgeArray[7], u_edgeArray[8]);
+            vec4 uRectLineFade = vec4(u_edgeArray[9], u_edgeArray[10], u_edgeArray[11], u_edgeArray[12]);
+            float uAngle = u_edgeArray[13];
+            float uRectLinePara1 = u_edgeArray[14];
+            float uRectLinePara2 = u_edgeArray[15];
+
+            vec2 rectLineNear=uRectLineNear;
+            vec2 rectLineFar=uRectLineFar;
+            vec4 rectLineFade=uRectLineFade;
+
+            if(d<-max(rectLineNear.y, rectLineFar.y)){
+                return color;
+            }
+
+            float distanceAll = (rectData.halfSize.x+rectData.halfSize.y)*2.0;
+            vec2 halfSize = rectData.halfSize;
+
+            float ratio = mod(uAngle+rectData.halfSize.x/distanceAll*0.5+0.5,1.0);
+            vec2 dir_pos= normalize(rectData.pos);
+            vec2 dirAbs_pos = abs(dir_pos);
+            vec2 pos_n = min(vec2(dirAbs_pos.xy*halfSize.yx/max(vec2(EFFECT_PARAM_THRESHOLD),dirAbs_pos.yx)),halfSize)*sign(dir_pos);
+            vec2 halfSize_symobol = vec2(-halfSize.y,halfSize.x);
+            float flag = mix(-1.0,1.0, step(ratio,0.5))*dot(halfSize_symobol,pos_n);
+            float dis_point = distanceAll*min(ratio,1.0-ratio)*2.0;
+            float dis_pos = getDis(pos_n,halfSize);
+            float distance_near = mix(dis_point+dis_pos,abs(dis_point-dis_pos),step(0.,flag));
+            distance_near=min(2.*distanceAll-distance_near,distance_near);
+            float lineNearAlpha = uRectLineAlpha.x*couiDescendingRamp(rectLineFade.y*distanceAll, rectLineFade.x*distanceAll, distance_near);
+            float lineFarAlpha = uRectLineAlpha.y*couiDescendingRamp(rectLineFade.w*distanceAll, rectLineFade.z*distanceAll, distanceAll-distance_near);
+
+            float lineNearSdf=smoothstep(-rectLineNear.y,-rectLineNear.x,d);
+            float lineFarSdf=smoothstep(-rectLineFar.y,-rectLineFar.x,d);
+
+            if(uRectLinePara2 > EFFECT_PARAM_THRESHOLD){
+                lineNearSdf = pow(lineNearSdf, uRectLinePara1)*uRectLinePara2+(1.0-uRectLinePara2)*lineNearSdf;
+                lineFarSdf = pow(lineFarSdf, uRectLinePara1)*uRectLinePara2+(1.0-uRectLinePara2)*lineFarSdf;
+            }
+
+            lineNearAlpha*=lineNearSdf;
+            lineFarAlpha*=lineFarSdf;
+
+            float lineAlpha = clamp(lineNearAlpha+lineFarAlpha,0.,1.);
+
+            vec4 rectLineColor = vec4(uRectLineColor, lineAlpha);
+            rectLineColor.rgb *= rectLineColor.a;
+
+            vec4 reColor = vec4(0.0);
+            reColor.rgb = color.rgb*(1.0 - rectLineColor.a)+rectLineColor.rgb;
+            reColor.a = color.a*(1.0 - rectLineColor.a)+rectLineColor.a;
+            return reColor;
+        }
+
+
+        vec4 blendShadowColor(CommonDataRect rectData, vec4 color, float d, vec2 fragCoord){
+
+            vec3 uFadeColor = vec3(u_shadowArray[0], u_shadowArray[1], u_shadowArray[2]);
+                vec3 uFadeAlpha = vec3(u_shadowArray[3], u_shadowArray[4], u_shadowArray[5]);
+                float uFadeIn = u_shadowArray[6];
+                vec2 uFadeOffset = vec2(u_shadowArray[7], u_shadowArray[8]);
+                vec2 uFadeScale = vec2(u_shadowArray[9], u_shadowArray[10]);
+                float uFadeInPara1 =  u_shadowArray[11];
+                float uFadeInPara2 =  u_shadowArray[12];
+                float uFadeOut = u_shadowArray[13];
+                float uFadeOutPara1 =  u_shadowArray[14];
+                float uFadeOutPara2 = u_shadowArray[15];
+
+                vec2 fadeConer;
+                fadeConer.y = min(rectData.preCalcMinC, max(uFadeOut*1.2, rectData.coner));
+                float fadeAlpha = 0.0;
+
+
+                if(any(greaterThan(uFadeAlpha.xy, vec2(EFFECT_PARAM_THRESHOLD)))){
+                    vec2 pos_new = (rectData.pos-uFadeOffset);
+                    fadeConer.x = getQuadrantValue(pos_new, vec4(u_commonArray[6],u_commonArray[7],u_commonArray[8],u_commonArray[9]));
+                    float fadeLine = uFadeIn*-1.0;
+                    float fadeSdf = fadeLine;
+                    vec2 halfSizeFade = rectData.halfSize*uFadeScale;
+                    fadeConer.x = min(min(halfSizeFade.x, halfSizeFade.y), max(uFadeIn*1.2, fadeConer.x));
+                    if(rectData.weight<2.0 || any(greaterThan(abs(pos_new), halfSizeFade - vec2(fadeConer.x)))){
+                        float aaFactor = 1.0;
+                        fadeSdf = smoothSDF_D(pos_new, halfSizeFade, fadeConer.x, rectData.weight, aaFactor);
+                        float alpha = smoothstep(fadeLine,0.0,fadeSdf);
+                        if(uFadeInPara2>EFFECT_PARAM_THRESHOLD){
+                            alpha = pow(alpha, uFadeInPara1)*uFadeInPara2+(1.0-uFadeInPara2)*alpha;
+                        }
+                        alpha = alpha*(uFadeAlpha.x-uFadeAlpha.y) + uFadeAlpha.y;
+                        fadeAlpha = alpha;
+                    }else{
+                        fadeAlpha = uFadeAlpha.y;
+                    }
+                }
+
+
+                if(uFadeAlpha.z>EFFECT_PARAM_THRESHOLD){
+                    float fadeLine =  uFadeOut *-1.0;
+                    float fadeSdf = fadeLine;
+                    if(rectData.weight<2.0 || any(greaterThan(abs(rectData.pos), rectData.halfSize - vec2(fadeConer.y)))){
+                        if(abs(fadeConer.y - rectData.coner) < EFFECT_PARAM_THRESHOLD){
+                            fadeSdf = d;
+                        }else{
+                            float aaFactor = 1.0;
+                            fadeSdf = smoothSDF_D(rectData.pos, rectData.halfSize, fadeConer.y, rectData.weight, aaFactor);
+                        }
+                        float alpha = smoothstep(fadeLine,0.0,fadeSdf);
+                        if(uFadeOutPara2>EFFECT_PARAM_THRESHOLD){
+                            alpha = pow(alpha, uFadeOutPara1)*uFadeOutPara2+(1.0-uFadeOutPara2)*alpha;
+                        }
+                        alpha *= uFadeAlpha.z;
+                        fadeAlpha = mix(fadeAlpha, 1.0,alpha);
+                    }
+                }
+
+
+                vec2 uv_pos=fragCoord.xy*0.013;
+                float n=clamp((noise(uv_pos)-.5)*0.01+.5,0.,1.);
+                fadeAlpha=clamp(softLight(n,fadeAlpha),0.0,1.0);
+
+                vec4 fadeColor = vec4(uFadeColor, fadeAlpha);
+                fadeColor.rgb *= fadeColor.a;
+
+                vec4 reColor = vec4(0.0);
+                reColor.rgb = color.rgb*(1.0 - fadeColor.a)+fadeColor.rgb;
+                reColor.a = color.a*(1.0 - fadeColor.a)+fadeColor.a;
+                return reColor;
+        }
+
+
+        vec4 couiLight(vec2 fragCoord) {
+            //数据准备
+            float antiAliasing = u_commonArray[11];
+            CommonDataRect rectData;
+            rectData.halfResolution = vec2(u_commonArray[0], u_commonArray[1])*0.5;
+            // 将fragCoord转换为以矩形中心为原点的坐标系统
+            rectData.pos = vec2(fragCoord.x, u_commonArray[1]-fragCoord.y) - vec2(u_commonArray[2], u_commonArray[3]) - rectData.halfResolution;
+            rectData.halfSize =  vec2(u_commonArray[4], u_commonArray[5])*0.5;
+
+            vec2 s = step(vec2(0.0), rectData.pos);
+            float rTop = mix(u_commonArray[6], u_commonArray[7], s.x);
+            float rBot = mix(u_commonArray[9], u_commonArray[8], s.x);
+            float r = mix(rTop, rBot, s.y);
+            rectData.coner =  r;
+
+            rectData.weight = u_commonArray[10];
+            rectData.preCalcMinC = min(rectData.halfSize.x, rectData.halfSize.y);
+
+            //形状计算
+            float d = 0.0;
+            float aaFactor = 1.0;
+
+
+        d = smoothSDF_D(rectData.pos, rectData.halfSize, rectData.coner, rectData.weight, aaFactor);
+
+
+         float aa = 1.0;
+            aa = mix(EPS, aa, aaFactor);
+
+            float shape = 1.0 - smoothstep(-aa, aa, d);
+
+            if(shape<EFFECT_PARAM_THRESHOLD){
+                return vec4(0.0);
+            }
+
+            //基础颜色
+            vec4 color = vec4(0.0);
+
+            //内阴影
+            if(u_shadow>0.5){
+                color = blendShadowColor(rectData, color, d, fragCoord);
+            }
+
+            //描边
+            if(u_edge>0.5){
+                color = blendEdge(rectData, color, d);
+            }
+
+            return color*shape;
+        }
+
+// Material from the approved CPU/Skia study. COUI geometry/style is retained;
+// its entry point is renamed and descending ramps use the explicit polynomial.
+uniform shader background;
+uniform shader responseField;
+uniform shader previousBackground;
+uniform shader previousResponseField;
+uniform float2 sourceOffset;
+uniform float2 sourceScale;
+uniform float2 fieldSize;
+uniform float2 previousSourceOffset;
+uniform float2 previousSourceScale;
+uniform float2 previousFieldSize;
+uniform float designScale;
+uniform float cornerRadius;
+uniform float materialAmount;
+uniform float captureAmount;
+uniform float paletteAmount;
+uniform float3 tone0;
+uniform float3 tone1;
+uniform float3 tone2;
+uniform float phase;
+uniform float motionAmount;
+uniform float activity;
+
+float sm(float a,float b,float x) {
+    float t=clamp((x-a)/(b-a),0.0,1.0);return t*t*(3.0-2.0*t);
+}
+float materialSdf(float2 p,float2 halfSize,float r) {
+    float2 q=abs(p)-halfSize+r;
+    float power=max(2.0,u_commonArray[10]);
+    float d=pow(pow(max(q.x,0.0),power)+pow(max(q.y,0.0),power),1.0/power)-r;
+    return q.x>0.0 && q.y>0.0 ? d : max(q.x,q.y)-r;
+}
+float3 mixBackdrop(float3 c) {
+    float target=89.0/255.0;
+    float3 v=c+target-dot(c,float3(.3,.59,.11));
+    float low=min(v.r,min(v.g,v.b)),high=max(v.r,max(v.g,v.b));
+    if(low<0.0)v=target+(v-target)*target/max(target-low,1e-8);
+    else if(high>1.0)v=target+(v-target)*(1.0-target)/max(high-target,1e-8);
+    c=mix(c,v,89.0/255.0);
+    return clamp(c*(1.0-64.0/255.0)+c/(1.0-77.0/255.0)*(64.0/255.0),0.0,1.0);
+}
+float3 movingTone(float2 uv,float body) {
+    float along=clamp(.72*uv.x+.28*uv.y,0.0,1.0);
+    float3 local=along<.5 ? mix(tone0,tone1,along*2.0) : mix(tone1,tone2,(along-.5)*2.0);
+    float3 sum=float3(0.0);float weights=0.0;
+    for(int i=0;i<3;i++) {
+        float fi=float(i),p=phase+fi*2.0943951023931953;
+        float cx=.5+.38*cos(p)*motionAmount;
+        float cy=.88-.085*sin(p)*motionAmount;
+        float radius=.9+.1*sin(3.0*p+fi*2.0)*motionAmount;
+        float rx=i==1 ? .38 : .34;
+        float ry=i==0 ? .46 : (i==1 ? .34 : .44);
+        float2 distance=(uv-float2(cx,cy))/(float2(rx,ry)*radius);
+        float weight=.012+exp(-2.5*dot(distance,distance));
+        sum+=weight*(i==0 ? tone0 : (i==1 ? tone1 : tone2));weights+=weight;
+    }
+    return mix(local,sum/max(weights,1e-6),clamp(.94*body*motionAmount,0.0,1.0));
+}
+// Increase chroma about the existing luminance, limited by the RGB gamut.
+// Hue/luminance and the white curved lighting remain independent of this step.
+float3 vividMusic(float3 color) {
+    float light=dot(color,float3(.2126,.7152,.0722));
+    float3 chroma=(color-light)*1.25;
+    float3 limits=min((1.0-light)/max(chroma,float3(1e-6)),light/max(-chroma,float3(1e-6)));
+    float strength=min(1.0,min(limits.r,min(limits.g,limits.b)));
+    return light+chroma*strength;
+}
+half4 main(float2 position) {
+    float2 p=position/designScale;
+    float2 size=float2(u_commonArray[0],u_commonArray[1]);
+    float2 uv=(p-.5)/max(size-1.0,float2(1.0));
+    float2 centred=p-size*.5;
+    float d=materialSdf(centred,size*.5,cornerRadius);
+    float coverage=sm(.75,-.75,d);
+    if(coverage<=0.0)return half4(0.0);
+    float pos=uv.y;
+    float opacity=pos<.18 ? mix(.99,.96,sm(0.0,.18,pos)) :
+                 (pos<.55 ? mix(.96,.81,sm(.18,.55,pos)) : mix(.81,.61,sm(.55,1.0,pos)));
+    opacity*=1.0-.35*sm(.15,.65,pos);
+    float4 field=responseField.eval((p/size)*fieldSize);
+    float response=(field.r*255.0*256.0+field.g*255.0)/65535.0;
+    float3 captured=background.eval(sourceOffset+position*sourceScale).rgb;
+    if(captureAmount<1.0) {
+        float4 oldField=previousResponseField.eval((p/size)*previousFieldSize);
+        float oldResponse=(oldField.r*255.0*256.0+oldField.g*255.0)/65535.0;
+        response=mix(oldResponse,response,captureAmount);
+        float3 oldCaptured=previousBackground.eval(previousSourceOffset+position*previousSourceScale).rgb;
+        captured=mix(oldCaptured,captured,captureAmount);
+    }
+    // Bright surroundings need a coherent sheet of glass: a nearly opaque
+    // top above a highly transmissive bottom reads as two different surfaces.
+    // Approach a shallow scrim continuously, retaining the dark-room profile
+    // and most of the already approved album-colour depth.
+    float balance=response*(2.0-response);
+    float neutralBalance=balance*(1.0-paletteAmount);
+    float upper=pow(1.0-sm(0.0,.9,pos),1.4);
+    opacity-=.18*response*upper;
+    // Retain the separately approved music material. Ordinary bright cards
+    // need more filtered backdrop and less neutral paint, not a larger blur.
+    bool musicSurface=paletteAmount>0.0;
+    float evenOpacity=mix(musicSurface ? .72 : .60,musicSurface ? .60 : .46,sm(0.0,1.0,pos));
+    opacity=mix(opacity,evenOpacity,neutralBalance);
+    float3 transmitted=mixBackdrop(captured);
+    // Preserve most backdrop chroma. The former 90% desaturation on ordinary
+    // bright cards erased their glass tint and produced a flat grey panel.
+    // Album colours are mixed AFTER their existing backdrop treatment.
+    float backdropLight=dot(transmitted,float3(.2126,.7152,.0722));
+    transmitted=mix(transmitted,float3(backdropLight),(musicSurface ? .90 : .28)*balance);
+    float3 depthTint=float3(5.0,4.0,10.0)/255.0;
+    float3 brightTint=musicSurface ? float3(.055,.058,.065) : float3(.025,.027,.035);
+    depthTint=mix(depthTint,brightTint,neutralBalance);
+    if(paletteAmount>0.0) {
+        float body=sm(.12,.9,pos),lower=sm(.5,1.0,pos);
+        float3 local=movingTone(uv,body);
+        float3 family=local/max(max(local.r,max(local.g,local.b)),1e-6);
+        float light=dot(transmitted,float3(.2126,.7152,.0722));
+        float3 coloured=clamp(family*light*1.2,0.0,1.0);
+        float weight=clamp(.82*body+.022*lower,0.0,1.0);
+        transmitted=mix(transmitted,coloured,weight*paletteAmount);
+        float breathing=1.0+.012*lower*sin(phase)*motionAmount;
+        float3 tint=local*(.035+.5*body*(1.0+.22*lower)*breathing);
+        depthTint=mix(depthTint,tint,paletteAmount);
+    }
+    float3 surface=transmitted*(1.0-opacity)+depthTint*opacity;
+    if(musicSurface)surface=vividMusic(surface);
+    float depth=max(-d,0.0);
+    float nx=(materialSdf(centred+float2(1,0),size*.5,cornerRadius)-materialSdf(centred-float2(1,0),size*.5,cornerRadius))*.5;
+    float ny=(materialSdf(centred+float2(0,1),size*.5,cornerRadius)-materialSdf(centred-float2(0,1),size*.5,cornerRadius))*.5;
+    float norm=max(length(float2(nx,ny)),1e-6);
+    float curved=abs(2.0*nx*ny/(norm*norm));
+    float rim=1.0-sm(35.0,64.0,depth);
+    float roll=sm(1.5,8.0,depth)*exp(-depth/20.0)*rim;
+    surface*=1.0-.28*response*roll*(.45+.55*curved);
+    float4 lighting=couiLight(p);
+    float3 lit=lighting.rgb+surface*(1.0-lighting.a);
+    lit+=(lit-surface)*(.18*response*rim);
+    float grain=(fract(sin(p.x*12.9898+p.y*78.233)*43758.5453)-.5)/255.0;
+    float3 color=mix(float3(0.0),clamp(lit+grain,0.0,1.0),materialAmount);
+    return half4(color*coverage,coverage);
+}

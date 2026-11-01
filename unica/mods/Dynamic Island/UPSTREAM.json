@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/sampple-korea/dynamicisland",
-  "tag": "v0.1.13",
-  "commit": "db3cc0530b59f0fcc3833c44ed157ea0e68d17d4",
+  "tag": "v0.1.14",
+  "commit": "e2f45e980ffadfaec056ddddbef956d341d91e4d",
   "license": "MIT",
   "targets": [
     "starlte",

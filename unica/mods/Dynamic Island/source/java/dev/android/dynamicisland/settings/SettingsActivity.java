@@ -56,10 +56,14 @@ public final class SettingsActivity extends Activity {
     private AppearanceScreen appearance;
     private LinearLayout page;
     private ScrollView scroll;
+    private SettingChangeFeedback changeFeedback;
+    private SettingsSearchScreen search;
+    private ReleaseRecommendations recommendations;
     /** Builders of the open pages, the visible one on top. */
     private static final class PageState {
         final Runnable build;
         int scrollY;
+        String focusTitle,fallbackTitle;
         PageState(Runnable build) { this.build = build; }
     }
     private final Deque<PageState> stack = new ArrayDeque<>();
@@ -70,7 +74,7 @@ public final class SettingsActivity extends Activity {
     private final Runnable statusPoll = new Runnable() {
         @Override public void run() {
             if (statusHero == null || isFinishing() || isDestroyed()) return;
-            boolean connected = Diagnostics.statusAcknowledged(SettingsActivity.this, statusNonce);
+            boolean connected = Diagnostics.statusAcknowledgedSince(SettingsActivity.this, statusNonce);
             if (connected) ui.setHero(statusHero, true, getString(R.string.ui_connected), getString(R.string.ui_connected_detail));
             else if (SystemClock.elapsedRealtime() - statusRequested >= 3000)
                 ui.setHero(statusHero, false, getString(R.string.ui_connection_unknown), getString(R.string.status_waiting_detail));
@@ -88,6 +92,10 @@ public final class SettingsActivity extends Activity {
         animation = new AnimationScreen(this, ui, prefs);
         position = new PositionScreen(this, ui, prefs);
         appearance = new AppearanceScreen(this, ui, prefs);
+        search = new SettingsSearchScreen(this, ui);
+        recommendations=new ReleaseRecommendations(this,ui,version());
+        if(savedInstanceState!=null) recommendations.restore(savedInstanceState.getString("settings.recommendation"));
+        ui.setSearchAction(search::launch);
         getWindow().setStatusBarColor(ui.background);
         getWindow().setNavigationBarColor(ui.background);
         if (!ui.dark) {
@@ -103,13 +111,21 @@ public final class SettingsActivity extends Activity {
         page.setPadding(ui.dp(14), 0, ui.dp(14), ui.dp(40));
         scroll.addView(page);
         setContentView(scroll);
+        changeFeedback = new SettingChangeFeedback(this, ui, prefs,
+                findViewById(android.R.id.content), this::confirmRestart);
         getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         open(this::hub);
+        if(savedInstanceState!=null) {
+            search.restore(savedInstanceState.getString("settings.search.query",""));
+            if(savedInstanceState.getBoolean("settings.search.open",false))open(search::open);
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        changeFeedback.stop();
+        search.stop();
         saveScroll();
         position.stop();
         statusHandler.removeCallbacksAndMessages(null);
@@ -119,9 +135,20 @@ public final class SettingsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (changeFeedback != null) changeFeedback.start();
         if (!stack.isEmpty()) {
             render();
         }
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putString("settings.search.query",search.query());state.putBoolean("settings.search.open",search.visible());
+        state.putString("settings.recommendation",recommendations.currentId());
+    }
+    @Override protected void onDestroy() {
+        if(search!=null)search.close();
+        super.onDestroy();
     }
 
     // ---------------------------------------------------------------- navigation
@@ -157,6 +184,7 @@ public final class SettingsActivity extends Activity {
             @Override public void onGlobalLayout() {
                 scroll.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 if (stack.peek() == state) scroll.scrollTo(0, state.scrollY);
+                if (stack.peek() == state && state.focusTitle != null) revealSearchTarget(state);
             }
         });
     }
@@ -164,6 +192,52 @@ public final class SettingsActivity extends Activity {
     /** Header of a sub page: back button and title. */
     void subPage(CharSequence title) {
         ui.pageHeader(page, title, this::goBack);
+    }
+
+    void openSearchResult(SettingsSearchCatalog.Row row) {
+        openSetting(row.route,row.title,row.fallback);
+    }
+    void openSetting(SettingsSearchCatalog.Route route,int title,int fallback) {
+        if(route==SettingsSearchCatalog.Route.SEARCH) { search.launch();return; }
+        Runnable builder;
+        switch(route) {
+            case NOTIFICATIONS:builder=this::notificationsPage;break;
+            case EVENTS:builder=this::eventsPage;break;
+            case APPS:builder=this::appsPage;break;
+            case BEHAVIOR:builder=this::behaviorPage;break;
+            case ADVANCED:builder=this::advancedPage;break;
+            case ABOUT:builder=this::aboutPage;break;
+            case DIAGNOSTICS:builder=this::diagnosticsPage;break;
+            case POSITION:builder=position::open;break;
+            case CALIBRATION:builder=position::calibration;break;
+            case ANIMATION:builder=animation::open;break;
+            case ACCENT:builder=appearance::open;break;
+            case GLOW:builder=()->new AmbientGlowScreen(this,ui,prefs).open();break;
+            case ROUNDNESS:builder=()->new CardShapeScreen(this,ui,prefs).open();break;
+            case RULES:builder=rules::listPage;break;
+            case RULE_TOOLS:builder=rules::advancedPage;break;
+            default:builder=this::displayPage;break;
+        }
+        saveScroll();PageState state=new PageState(builder);
+        state.focusTitle=getString(title);state.fallbackTitle=fallback==0?null:getString(fallback);
+        stack.push(state);render();
+    }
+    private void revealSearchTarget(PageState state) {
+        View target=page.findViewWithTag(state.focusTitle);
+        if((target==null||!target.isEnabled())&&state.fallbackTitle!=null) {
+            target=page.findViewWithTag(state.fallbackTitle);
+            Toast.makeText(this,getString(R.string.search_parent_hint,state.fallbackTitle),Toast.LENGTH_LONG).show();
+        }
+        state.focusTitle=null;
+        if(target==null)return;
+        android.graphics.Rect bounds=new android.graphics.Rect();target.getDrawingRect(bounds);
+        page.offsetDescendantRectToMyCoords(target,bounds);
+        scroll.scrollTo(0,Math.max(0,bounds.top-ui.dp(88)));state.scrollY=scroll.getScrollY();
+        android.graphics.drawable.Drawable old=target.getForeground();
+        android.graphics.drawable.GradientDrawable highlight=ui.round(ui.accent,ui.dp(16));highlight.setAlpha(52);
+        target.setForeground(highlight);
+        android.animation.ObjectAnimator.ofInt(highlight,"alpha",52,0).setDuration(1500).start();
+        View selected=target;target.postDelayed(()->{if(selected.getForeground()==highlight)selected.setForeground(old);},1550);
     }
 
     // ---------------------------------------------------------------- preference access
@@ -197,6 +271,8 @@ public final class SettingsActivity extends Activity {
 
     private void hub() {
         ui.title(page, getString(R.string.app_name), getString(R.string.ui_home_hint), 28);
+        ui.searchEntry(page,search::launch);
+        recommendations.addTo(page);
         statusHero = ui.hero(page);
         ui.setHero(statusHero, false, getString(R.string.ui_checking_connection), getString(R.string.ui_status_hint));
         statusNonce = Diagnostics.requestStatus(this);
@@ -232,6 +308,10 @@ public final class SettingsActivity extends Activity {
         ui.note(page, getString(R.string.ui_language_scope));
         LinearLayout information = ui.card(page);
         ui.actionRow(information, getString(R.string.hub_version), "Dynamic Island " + version(), null);
+        if(recommendations.available()) ui.actionRow(information,getString(R.string.recommend_about),null,()->{
+            recommendations.showAgain();
+            while(stack.size()>1) stack.pop();stack.peek().scrollY=0;render();
+        });
         ui.actionRow(information, getString(R.string.hub_author), getString(R.string.hub_author_text), null);
         ui.details(page, getString(R.string.hub_credits), getString(R.string.hub_credits_text));
     }
@@ -257,6 +337,9 @@ public final class SettingsActivity extends Activity {
     private void displayPage() {
         subPage(getString(R.string.ui_appearance));
         LinearLayout design = ui.card(page);
+        choice(design, R.string.material_style, new int[]{R.string.material_frosted, R.string.material_classic},
+                ModuleSettings.readMaterialStyle(prefs),
+                selected -> prefs.edit().putInt(ModuleSettings.KEY_MATERIAL_STYLE, selected).apply());
         ui.linkRow(design, getString(R.string.accent_page), getString(R.string.accent_page_sum), () -> open(appearance::open));
         ui.linkRow(design, getString(R.string.glow_title), getString(R.string.glow_summary),
                 () -> open(() -> new AmbientGlowScreen(this, ui, prefs).open()));
@@ -291,7 +374,7 @@ public final class SettingsActivity extends Activity {
                 new AlertDialog.Builder(this).setTitle(R.string.low_performance_mode).setMessage(R.string.low_performance_details)
                         .setPositiveButton(android.R.string.ok, null).show());
         LinearLayout motion = ui.card(page);
-        ui.linkRow(motion, getString(R.string.anim_title), getString(flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? R.string.anim_legacy : R.string.anim_new), () -> open(animation::open));
+        ui.linkRow(motion, getString(R.string.anim_title), getString(flag(ModuleSettings.KEY_I_MODE, false) ? R.string.imode_title : flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? R.string.anim_legacy : R.string.anim_new), () -> open(animation::open));
         toggle(motion, R.string.setting_haptics, R.string.setting_haptics_desc, ModuleSettings.KEY_HAPTICS, true);
         if (low) {
             ui.actionRow(motion, getString(R.string.ui_wave_motion), getString(R.string.low_performance_static_wave), null);
@@ -355,6 +438,10 @@ public final class SettingsActivity extends Activity {
         toggle(device, R.string.setting_event_headset, R.string.setting_event_headset_desc, ModuleSettings.KEY_EVENT_HEADSET, false);
         toggle(device, R.string.setting_event_toggles, R.string.setting_event_toggles_desc, ModuleSettings.KEY_EVENT_TOGGLES, true);
         toggle(device, R.string.setting_torch_pill, R.string.setting_torch_pill_desc, ModuleSettings.KEY_TORCH_PILL, true);
+        choice(device, R.string.torch_style, new int[]{R.string.torch_style_classic, R.string.torch_style_beam},
+                prefs.getInt(ModuleSettings.KEY_TORCH_STYLE, 0) == 1 ? 1 : 0,
+                style -> prefs.edit().putInt(ModuleSettings.KEY_TORCH_STYLE, style).apply());
+        ui.details(page, getString(R.string.ui_details), getString(R.string.torch_style_desc));
         ui.category(page, getString(R.string.group_privacy));
         LinearLayout privacy = ui.card(page);
         Switch indicator = toggle(privacy, R.string.setting_privacy, R.string.setting_privacy_desc, ModuleSettings.KEY_PRIVACY, true);

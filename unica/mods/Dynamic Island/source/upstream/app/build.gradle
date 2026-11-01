@@ -10,8 +10,8 @@ android {
         applicationId 'dev.android.dynamicisland'
         minSdk 35
         targetSdk 36
-        versionCode 87
-        versionName '0.1.13'
+        versionCode 112
+        versionName providers.gradleProperty('localVersionName').getOrElse('0.1.14')
     }
 
     buildTypes {
@@ -80,3 +80,23 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 apply from: rootProject.file('gradle/localization.gradle')
+
+// LSPosed can load dex in memory without exposing the APK's Java resources.
+// Compile the exact AGSL asset into dex instead of opening it via getResourceAsStream.
+def materialJava = layout.buildDirectory.dir('generated/source/material')
+def generateMaterialShader = tasks.register('generateMaterialShader') {
+    def source = file('src/main/resources/dev/android/dynamicisland/material/frosted.agsl')
+    def target = materialJava.map { it.file('dev/android/dynamicisland/island/material/FrostedShaderSource.java') }
+    inputs.file(source)
+    outputs.file(target)
+    doLast {
+        def output = target.get().asFile
+        output.parentFile.mkdirs()
+        output.setText('package dev.android.dynamicisland.island.material;\n'
+                + 'final class FrostedShaderSource {\n'
+                + '    static final String CODE = ' + groovy.json.JsonOutput.toJson(source.getText('UTF-8')) + ';\n'
+                + '    private FrostedShaderSource() {}\n}\n', 'UTF-8')
+    }
+}
+android.sourceSets.main.java.srcDir(materialJava)
+tasks.named('preBuild').configure { dependsOn(generateMaterialShader) }

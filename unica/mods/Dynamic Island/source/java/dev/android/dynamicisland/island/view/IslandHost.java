@@ -11,7 +11,7 @@ import dev.android.dynamicisland.island.model.IslandItem;
  */
 public interface IslandHost {
     /** The notification popup was closed (by itself, by a swipe or by the reply): nothing of it stays behind. */
-    default void onPeekClosed() { }
+    default void onPeekClosed(String key) { }
 
     /** Inert host: shade renderers and tests create views without a controller and get this instead of null. */
     IslandHost NONE = new IslandHost() {

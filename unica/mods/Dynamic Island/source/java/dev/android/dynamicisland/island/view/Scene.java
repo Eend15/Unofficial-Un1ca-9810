@@ -1,5 +1,6 @@
 package dev.android.dynamicisland.island.view;
 
+import dev.android.dynamicisland.island.material.MaterialFrame;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ final class Scene {
     final PillOutlinePolicy pillOutline = new PillOutlinePolicy();
     Mode mode = Mode.HIDDEN;
     ContentHandoff contentHandoff;
+    /** Optional, independent single-activity presentation. */
+    IMode iMode;
     /** Shown items, most important first. */
     final List<IslandItem> items = new ArrayList<>();
     /** Minimized items that still show up (behind the live ones) when the stack is opened. */
@@ -28,8 +31,11 @@ final class Scene {
     Layer bubbleOut;
     final List<Card> cards = new ArrayList<>();
     BlurSink blur;
+    MaterialFrame materialFrame;
 
     boolean suppressed;
+    /** The display is entering sleep; the visual gate owns the exit, input stops immediately. */
+    boolean sleeping;
     /** The open card is a notification popup that goes away by itself; touches elsewhere (typing) do not close it. */
     boolean peekOpen;
     /** The user is typing a reply on the open card: nothing closes it by itself until that is over. */
@@ -64,6 +70,10 @@ final class Scene {
     }
 
     float pillOutlineOpacity() {
+        return iMode!=null ? iMode.outlineOpacity() : pillOutlineTarget();
+    }
+
+    float pillOutlineTarget() {
         boolean bubble = springs.split.value() > 0.003f;
         return pillOutline.visible(ModuleSettings.pillOutlineMode(), pillBodyColor(mainIn), pillBodyColor(bubbleIn), bubble) ? 1f : 0f;
     }

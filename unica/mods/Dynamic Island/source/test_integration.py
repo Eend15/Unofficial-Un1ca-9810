@@ -11,6 +11,10 @@ def snapshot(root):
 class IntegrationTest(unittest.TestCase):
     def fixture(self,target,root):
         tree=REPO/'out/target'/target/'apktool'
+        # Shared S22 decoded base exercises all target routing without claiming
+        # three physical devices or three complete target builds.
+        if not (tree/'system_ext/priv-app/SystemUI/SystemUI.apk').is_dir():
+            tree=REPO/'out/target/star2lte/apktool'
         systemui=root/'system_ext/priv-app/SystemUI/SystemUI.apk'
         for rel in FILES:
             src=tree/'system_ext/priv-app/SystemUI/SystemUI.apk'/rel
@@ -43,6 +47,23 @@ class IntegrationTest(unittest.TestCase):
             self.assertEqual(count,1);file.write_text(text);before=snapshot(root)
             with self.assertRaises((RuntimeError,ValueError)):mod.apply(root,'star2lte')
             self.assertEqual(snapshot(root),before)
+
+    def test_sleep_hooks_preserve_original_bodies_and_repeat(self):
+        import extend_call_sites as hooks
+        with tempfile.TemporaryDirectory(prefix='di-sleep-') as tmp:
+            root=Path(tmp);ui,_=self.fixture('star2lte',root)
+            file=ui/'smali/com/android/keyguard/KeyguardUpdateMonitor.smali'
+            before=file.read_text()
+            original={m.group('sig'):m.group('body') for m in hooks.METHOD.finditer(before)}
+            mod.apply(root,'star2lte')
+            text=file.read_text()
+            methods={m.group('sig'):m for m in hooks.METHOD.finditer(text)}
+            for name in hooks.SPECS['com.android.keyguard.KeyguardUpdateMonitor']:
+                sig=name+'(I)V'
+                renamed=hooks.identity(sig)+'(I)V'
+                self.assertEqual(methods[renamed].group('body'),original[sig])
+                self.assertIn(hooks.BRIDGE+'->invoke',methods[sig].group('body'))
+            first=text;mod.apply(root,'star2lte');self.assertEqual(file.read_text(),first)
 
     def test_reject_unknown_target(self):
         with self.assertRaises(ValueError):mod.apply(Path('/nonexistent'),'other')

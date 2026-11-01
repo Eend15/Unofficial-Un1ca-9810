@@ -78,7 +78,7 @@ EXTRACT_KERNEL_IMAGE() {
     EVAL "mkdir -p \"$TMP_DIR\""
     EVAL "cp -a \"$WORK_DIR/kernel/boot.img\" \"$TMP_DIR/boot.img\""
 
-    EVAL "unpack_bootimg --boot_img \"$TMP_DIR/boot.img\" --out \"$TMP_DIR/out\" 2>&1"
+    EVAL "python3 \"$MODPATH/extract_kernel_image.py\" --boot-image \"$TMP_DIR/boot.img\" --output \"$TMP_DIR/out/kernel\""
 
     EVAL "rm \"$TMP_DIR/boot.img\""
 
