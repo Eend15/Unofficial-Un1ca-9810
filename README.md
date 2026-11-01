@@ -50,6 +50,7 @@ Snapdragon models are not supported.
 - Custom FlipFont font support
 - Extra CSC features such as call recording, Hiya, network speed in the status bar, and AltZLife where compatible
 - BluetoothLibraryPatcher and KnoxPatch integration from upstream UN1CA
+- Dynamic Island, built into UN1CA Settings (UN1CA Settings → UI settings → Dynamic Island)
 - UN1CA Settings with custom Bixby Button remapper made for Exynos9810. Play Integrity / PIF tooling, TrickyStore options, Hide My Applist integration, developer-options hiding, app downgrade toggle, old target SDK install toggle, secure screenshot toggle, screenshot and screen-recording detection toggle, Google Photos backup option, and games FPS unlock toggle
 
 ## Exynos9810 Port Features
@@ -59,7 +60,7 @@ Snapdragon models are not supported.
 - Automatic Exynos9810 repartition and clean install flow integrated into the installer
 - DS-ACK-compatible kernel installer support
 - Permissive and enforcing kernel package support
-- KernelSU-Next support through compatible kernel packages
+- KernelSU-Next v3.4.2 with SuSFS v1.5.5 in the bundled enforcing kernels
 - Large EROFS ZIP recovery workflow for modern recovery environments
 - Full EROFS support (system, vendor, odm as erofs)
 - EROFS-aware and large ZIP recovery workflow support when paired with a compatible recovery
@@ -73,6 +74,13 @@ Snapdragon models are not supported.
 - Debloat profile tailored for legacy Exynos9810 memory and partition limits
 - Device-specific overlays, DVFS/SIOP policy hooks, floating features, CSC feature tuning, and framework feature declarations
 - Fully working face unlock ported from stock firmware
+- Fully working iris scanner: registration, lock screen unlock with camera preview and a One UI 8 settings page
+- Double tap to wake support
+- Full S Pen functionality on the Galaxy Note9, including Air Actions
+- Wired HDMI / DeX external display support
+- Aperture controller in the Camera app
+- LED View Cover support, including the LED Icon Editor app
+- RAM and smoothness tuning, with unused background services for missing hardware removed
 
 ## Build
 
@@ -187,6 +195,7 @@ Flash only on supported Exynos models. Keep backups of EFS, modem, and important
 - [salvogiangri](https://github.com/salvogiangri) and all upstream UN1CA contributors for the original project and build system
 - Exynos9810 kernel and device-port contributors in the Galaxy S9, Galaxy S9+, and Galaxy Note9 community
 - BluetoothLibraryPatcher, KnoxPatch, TrickyStore, Play Integrity Fix, and the other upstream projects used by UN1CA
+- Full credits go to [sampple-korea](https://github.com/sampple-korea) for [Dynamic Island](https://github.com/sampple-korea/dynamicisland)
 
 ## License
 
