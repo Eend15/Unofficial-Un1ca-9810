@@ -111,14 +111,28 @@ fi
 # SEC_PRODUCT_FEATURE_KNOX_SUPPORT_SDP
 APPLY_PATCH "system" "system/framework/framework.jar" \
     "$MODPATH/sdp/framework.jar/0001-Nuke-Knox-SDP.patch"
-if [ "$TARGET_PLATFORM" = "exynos9810" ]; then
-    # The embedded Screenshot services patch already removes four token checks.
-    APPLY_PATCH "system" "system/framework/services.jar" \
-        "$MODPATH/sdp/services.jar/0001-Nuke-Knox-SDP-exynos9810.patch"
-else
-    APPLY_PATCH "system" "system/framework/services.jar" \
-        "$MODPATH/sdp/services.jar/0001-Nuke-Knox-SDP.patch"
-fi
+# The exynos9810 variants were rebased on the S901BXXSNGZD7 (May) base; the
+# S901BXXSOGZH3 (August) base matches the upstream patches. Pick whichever fits.
+_DEKNOX_APPLY_PATCH_FOR_BASE()
+{
+    local FILE="$1"
+    local VARIANT="$2"
+    local GENERIC="$3"
+
+    if [ "$TARGET_PLATFORM" = "exynos9810" ]; then
+        DECODE_APK "system" "$FILE" || return 1
+        if LC_ALL=C git apply --check --unsafe-paths \
+                --directory="$APKTOOL_DIR/system/${FILE//system\//}" "$VARIANT" &> /dev/null; then
+            APPLY_PATCH "system" "$FILE" "$VARIANT"
+            return
+        fi
+    fi
+    APPLY_PATCH "system" "$FILE" "$GENERIC"
+}
+
+_DEKNOX_APPLY_PATCH_FOR_BASE "system/framework/services.jar" \
+    "$MODPATH/sdp/services.jar/0001-Nuke-Knox-SDP-exynos9810.patch" \
+    "$MODPATH/sdp/services.jar/0001-Nuke-Knox-SDP.patch"
 
 # SEC_PRODUCT_FEATURE_KNOX_SUPPORT_DUAL_DAR
 APPLY_PATCH "system" "system/app/Traceur/Traceur.apk" \
@@ -137,14 +151,9 @@ APPLY_PATCH "system" "system/priv-app/KnoxCore/KnoxCore.apk" \
     "$MODPATH/ddar/KnoxCore.apk/0001-Nuke-Knox-DualDAR.patch"
 APPLY_PATCH "system" "system/priv-app/ManagedProvisioning/ManagedProvisioning.apk" \
     "$MODPATH/ddar/ManagedProvisioning.apk/0001-Nuke-Knox-DualDAR.patch"
-if [ "$TARGET_PLATFORM" = "exynos9810" ]; then
-    # Preserve the earlier credential-result Intent fix while removing DualDAR.
-    APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-        "$MODPATH/ddar/SecSettings.apk/0001-Nuke-Knox-DualDAR-exynos9810.patch"
-else
-    APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+_DEKNOX_APPLY_PATCH_FOR_BASE "system/priv-app/SecSettings/SecSettings.apk" \
+    "$MODPATH/ddar/SecSettings.apk/0001-Nuke-Knox-DualDAR-exynos9810.patch" \
     "$MODPATH/ddar/SecSettings.apk/0001-Nuke-Knox-DualDAR.patch"
-fi
 APPLY_PATCH "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
     "$MODPATH/ddar/SecSettingsIntelligence.apk/0001-Nuke-Knox-DualDAR.patch"
 APPLY_PATCH "system_ext" "priv-app/StorageManager/StorageManager.apk" \
