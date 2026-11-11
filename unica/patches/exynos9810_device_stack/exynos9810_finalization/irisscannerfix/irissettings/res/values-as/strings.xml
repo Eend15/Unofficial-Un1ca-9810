@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">আইৰিচ চেনচৰে সঁহাৰি জনোৱা নাই। পিছত পুনঃচেষ্টা কৰক।</string>
     <string name="iris_hw_problem_msg">যদি এইটো ঘটি থাকে, তেন্তে আপোনাৰ ফোন পুনৰাৰম্ভ কৰক।</string>
     <string name="lockpattern_retry_button_text">পুনঃচেষ্টা</string>
+    <string name="bio_intelligentscan_title">ইণ্টেলিজেণ্ট স্কেন</string>
+    <string name="sec_intelligentscan_choose_lock_summary">উন্নত সঠিকতা আৰু নিৰাপত্তাৰ বাবে মুখ আৰু আইৰিচ চিনাক্তকৰণ একেলগে ব্যৱহাৰ কৰক।</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">আপোনাৰ মুখ আৰু আইৰিচসমূহ পঞ্জীয়ন কৰা হৈছে।</string>
+    <string name="sec_intelligentscan_register_face_and_iris">মুখ আৰু আইৰিচসমূহ পঞ্জীয়ন কৰক</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">মুখ আৰু আইৰিচ ডাটা আঁতৰাওক</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">মুখ আৰু আইৰিচ ডাটা আঁতৰাবনে?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">যদি আপুনি এপ্প্‌সমূহত মুখ বা আইৰিচ প্ৰমাণীকৰণ ব্যৱহাৰ কৰি আছে, তেন্তে আপুনি সেই এপ্প্‌সমূহত ছাইন ইন কৰিবলৈ আপোনাৰ মুখ বা আইৰিচসমূহ পুনঃ পঞ্জীয়ন কৰিব লাগিব।</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">সুৰক্ষা, সুবিধাজনক আনলক আৰু সত্যাপনৰ বাবে আইৰিচসমূহ আৰু মুখ চিনাক্তকৰণ একেলগে ব্যৱহাৰ কৰক।</string>
+    <string name="sec_intelligentscan_unlock_title">ইণ্টেলিজেণ্ট স্কেন আনলক</string>
+    <string name="sec_intelligentscan_unlock_summary">তুলনা কৰা মুখ আৰু আইৰিচ স্কেনিং ব্যৱহাৰ কৰি আপোনাৰ ফোন আনলক কৰক।</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">স্ক্ৰীণ-অন ইণ্টেলিজেণ্ট স্কেন</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">প্ৰথমে নঘহোঁৱাকৈ স্ক্ৰীণ অন হোৱাৰ লগে লগে ইণ্টেলিজেণ্ট স্কেনৰ সৈতে আপোনাৰ ফোনটো আনলক কৰক।</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">আপুনি ইণ্টেলিজেণ্ট স্কেনৰ সৈতে আনলক কৰাৰ সময়ত, আপুনি নঘহোৱা লৈকে লক স্ক্ৰীণত থাকক।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">মুখ আৰু আইৰিচ দুয়োটাই অফ হোৱাৰ পিছত ইণ্টেলিজেণ্ট স্কেন স্বয়ংক্ৰিয়ভাৱে অফ হয়।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ইণ্টেলিজেণ্ট স্কেন অফ কৰাৰ পিছত মুখ আৰু আইৰিচ স্বয়ংক্ৰিয়ভাৱে অফ হয়।</string>
 </resources>

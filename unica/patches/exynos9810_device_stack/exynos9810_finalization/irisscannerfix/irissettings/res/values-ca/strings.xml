@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">"El sensor d'iris no respon. Torni-ho a intentar més tard."</string>
     <string name="iris_hw_problem_msg">Si segueix passant, reiniciï el telèfon.</string>
     <string name="lockpattern_retry_button_text">Reintent</string>
+    <string name="bio_intelligentscan_title">Escaneig intel·ligent</string>
+    <string name="sec_intelligentscan_choose_lock_summary">"Utilitza el reconeixement facial i d'iris junts per a una millor precisió i seguretat."</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">"S'han registrat la cara i l'iris."</string>
+    <string name="sec_intelligentscan_register_face_and_iris">"Registra la cara i l'iris"</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Eliminar les dades de cara i iris</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Vols eliminar les dades de cara i iris?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">"Si utilitzes l'autenticació de cara o iris en aplicacions, hauràs de tornar a registrar la cara o l'iris per iniciar la sessió en aquestes aplicacions."</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">"Utilitza el reconeixement facial i d'iris junts per a un desbloqueig i una verificació còmodes i segurs."</string>
+    <string name="sec_intelligentscan_unlock_title">Desbloqueig Escaneig intel·ligent</string>
+    <string name="sec_intelligentscan_unlock_summary">"Desbloqueja el telèfon utilitzant l'escaneig combinat d'iris i de la cara."</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Escan intel·lig en activar pant</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">"Desbloqueja el telèfon amb l'Escaneig intel·ligent tan aviat com la pantalla s'activi, sense lliscar abans."</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">"Quan desbloquegis amb l'Escaneig intel·ligent, mantén-te a la Pantalla de bloqueig fins que la desplacis."</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">"L'Escaneig intel·ligent es desactiva automàticament quan s'han desactivat les opcions Cara i Iris."</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">"S'han desactivat les opcions Cara i Iris automàticament quan s'ha desactivat l'Escaneig intel·ligent."</string>
 </resources>

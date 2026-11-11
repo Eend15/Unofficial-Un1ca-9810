@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Az íriszérzékelő nem válaszol. Próbálja meg később.</string>
     <string name="iris_hw_problem_msg">Ha ez nem szűnik meg, indítsa újra a telefont.</string>
     <string name="lockpattern_retry_button_text">Újra</string>
+    <string name="bio_intelligentscan_title">Intelligens azonosítás</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Az arc- és íriszfelismerés egyidejű használatával pontosabb és biztonságosabb a hitelesítés.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Regisztrálta arcát és íriszeit.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Arcát és íriszek regisztrálása</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Arc- és íriszadatok eltávolítása</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Eltávolítja az arc- és íriszadatokat?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Ha arc- vagy íriszalapú hitelesítést használ az alkalmazásokban, akkor regisztrálja újra arcát vagy íriszeit az alkalmazásokba való bejelentkezéshez.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Az arc- és íriszfelismerés egyidejű használatával biztonságos és kényelmes a feloldás és a hitelesítés.</string>
+    <string name="sec_intelligentscan_unlock_title">Felold. Intelligens azonosítással</string>
+    <string name="sec_intelligentscan_unlock_summary">A telefon feloldása az arc- és az íriszfelismerés kombinációjával.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelligens azon. bekapcsoláskor</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">A képernyő bekapcsolása után azonnal feloldhatja a telefont az Intelligens azonosítással, nem kell előtte elhúzni a képernyőt.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Az Intelligens azonosítással végzett feloldáskor a zárolt képernyőn marad, amíg el nem húzza az ujját.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Ha az arc- és az íriszazonosítást is kikapcsolja, az Intelligens azonosítás automatikusan kikapcsol.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Az Intelligens azonosítás kikapcsolásakor automatikusan kikapcsolt az arc- és az íriszfelismerés is.</string>
 </resources>

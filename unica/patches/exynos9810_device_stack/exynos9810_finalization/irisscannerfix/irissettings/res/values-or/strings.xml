@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">ଇରିସ୍ ସେନସର୍ ପ୍ରତିକ୍ରିୟା କରୁନାହିଁ। ପରେ ପୁନଃଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="iris_hw_problem_msg">ଯଦି ଏହା ହୁଏ, ଆପଣଙ୍କ ଫୋନ୍ ପୁନଃଆରମ୍ଭ କରନ୍ତୁ।</string>
     <string name="lockpattern_retry_button_text">ପୁନଃଚେଷ୍ଟା</string>
+    <string name="bio_intelligentscan_title">ବୁଦ୍ଧିମତା ସ୍କାନ୍</string>
+    <string name="sec_intelligentscan_choose_lock_summary">ଉତ୍ତମ ସଠିକତା ଏବଂ ସୁରକ୍ଷା ପାଇଁ ମୁହଁ ଏବଂ ଇରିସ୍ ଚିହ୍ନଟକରଣ ବ୍ୟବହାର କରନ୍ତୁ।</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">ଆପଣଙ୍କ ମୁହଁ ଏବଂ ଇରିସଗୁଡିକ ପଞ୍ଜିକରଣ ହୋଇଛି।</string>
+    <string name="sec_intelligentscan_register_face_and_iris">ମୁହଁ ଏବଂ ଇରିସଗୁଡିକ ପଞ୍ଜିକରଣ</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">ମୁହଁ ଏବଂ ଇରିସ୍‌ ଡାଟା ଅପସାରଣ କରିବେ?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">ମୁହଁ ଏବଂ ଇରିସ୍‌ ଡାଟା ଅପସାରଣ କରିବେ?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">ଯଦି ଆପଣ ଆପସରେ ମୁହଁ କିମ୍ୱା ଇରିସ୍ ପ୍ରାମାଣିକରଣ ବ୍ୟବହାର କରିବେ, ଆପଣଙ୍କୁ ଏହିସବୁ ଆପ୍ଲିକେସନକୁ ସାଇନ୍ ଇନ୍ କରିବାକୁ ଆପଣଙ୍କ ମୁହଁ କିମ୍ୱା ଇରିସ୍ ପୁନଃ ପଞ୍ଜିକରଣ କରିବା ଆବଶ୍ୟକ।</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">ସୁରକ୍ଷିତ, ସୁବିଧାଜନକ ଅନଲକ୍ ଏବଂ ଯାଞ୍ଚକରଣ ପାଇଁ ଏକତ୍ର ଇରିସଗୁଡିକ ଏବଂ ମୁହଁ ଚିହ୍ନଟକରଣ ବ୍ୟବହାର କରନ୍ତୁ।</string>
+    <string name="sec_intelligentscan_unlock_title">ବୁଦ୍ଧିମତା ସ୍କାନ୍ ଅନଲକ୍ କରନ୍ତୁ</string>
+    <string name="sec_intelligentscan_unlock_summary">ମୁହଁ ଏବଂ ଇରିସ୍ ସ୍କାନ୍ କରିବା ବ୍ୟବହାର କରି ଆପଣଙ୍କ ଫୋନ୍ ଅନଲକ୍ କରନ୍ତୁ।</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">ସ୍କ୍ରିନ୍ ଅନ୍ ବୁଦ୍ଧିମତା ସ୍କାନ୍</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">ପ୍ରଥମେ ସ୍ଵାଇପ୍ ନକରି, ସ୍କ୍ରିନ୍ ଟର୍ନ୍ ଅନ୍ କରିବା ମାତ୍ରକେ ଯଥା ସମ୍ଭବ ବୁଦ୍ଧିମତା ସ୍କାନ୍ ସହ ଆପଣଙ୍କ ଫୋନ୍ ଅନଲକ୍ କରନ୍ତୁ।</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">ଆପଣ ବୁଦ୍ଧିମତା ସ୍କାନ୍ ଅନଲକ୍ କରିବା ସମୟରେ, ଆପଣ ସ୍ଵାଇପ୍ ନକରିବା ପର୍ଯ୍ୟନ୍ତ ଲକ୍ ସ୍କ୍ରିନରେ ରୁହନ୍ତୁ।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">ବୁଦ୍ଧିମତା ସ୍କାନ୍ ଉଭୟ ମୁହଁ ଏବଂ ଇରିସ୍ ଟର୍ନ୍ ଅଫ୍ ହୋଇଥିବା ସମୟରେ ସ୍ୱତଃସ୍ପୃତ ଭାବେ ଟର୍ନ୍ ଅଫ୍ ହୋଇଛି।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ବୁଦ୍ଧିମତା ସ୍କାନ୍ ଟର୍ନ୍ ଅଫ୍ ହୋଇଥିବା ସମୟରେ ମୁହଁ ଏବଂ ଇରିସ୍ ସ୍ୱତଃସ୍ପୃତ ଭାବେ ଟର୍ନ୍ ଅଫ୍ ହୋଇଛି।</string>
 </resources>

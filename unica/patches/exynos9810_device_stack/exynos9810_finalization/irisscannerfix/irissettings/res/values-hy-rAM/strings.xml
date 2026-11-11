@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Ծիածանաթաղանթի տվիչը չի պատասխանում: Ավելի ուշ կրկին փորձեք:</string>
     <string name="iris_hw_problem_msg">Եթե սա շարունակի տեղի ունենալ, վերագործարկեք հեռախոսը:</string>
     <string name="lockpattern_retry_button_text">Կրկն փրձլ</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Ավելի մեծ ճշգրտության և անվտանգության համար միասին օգտագործեք դեմքի և ծիածանաթաղանթի ճանաչումը:</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Ձեր դեմքը և ծիածանաթաղանթները գրանցվել են:</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Գրանցել դեմք և ծիածանաթաղանթներ</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Հեռացնել դեմքի և ծիած. տվյալներ</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Հեռացնե՞լ դեմքի և ծիածանաթաղանթի տվյալներ:</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Եթե դեմքով կամ ծիածանաթաղանթով նույնականացում եք օգտագործում ծրագրերում, հարկ կլինի այդ ծրագրերը մտնելու համար նորից գրանցել Ձեր դեմքը կամ ծիածանաթաղանթները:</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Անվտանգ. հարմար արգելաբացման և ինքնության հաստատման համար միասին օգտագործեք ծիածանաթաղանթների և դեմքի ճանաչումը:</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan-ի արգելաբացում</string>
+    <string name="sec_intelligentscan_unlock_summary">Հեռախոսն արգելաբացել՝ օգտագործելով դեմքի և ծիածանաթաղանթի համակցված տեսածրում:</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Էկրանային Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Հեռախոսն արգելաբացել Intelligent Scan-ով, հենց որ էկրանը միանում է՝ առանց նախ մատը սահեցնելու:</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Intelligent Scan-ով արգելաբացելու ժամանակ մնացեք Կողպված էկրանում՝ մինչև մատով սահեցնելը:</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Intelligent Scan-ն ինքնաբերաբար անջատվում է, երբ և՛ Դեմքը, և՛ Ծիածանաթաղանթը անջատվում են:</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Դեմքը և Ծիածանաթաղանթը ինքնաբերաբար անջատվեցին, երբ Intelligent Scan-ն անջատվեց:</string>
 </resources>

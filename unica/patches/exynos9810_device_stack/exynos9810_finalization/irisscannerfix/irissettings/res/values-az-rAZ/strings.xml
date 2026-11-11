@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Diafraqma sensoru cavab vermir. Daha sonra yenidən cəhd edin.</string>
     <string name="iris_hw_problem_msg">Bu, baş verməyə davam edirsə, telefonu söndürüb yandırın.</string>
     <string name="lockpattern_retry_button_text">Yenidən cəhd et</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Daha yaxşı dəqiqlik və təhlükəsizlik üçün üz və göz qüzehi tanınmasından istifadə edin.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Üzünüz və göz qüzehi eydiyyatdan keçirildi.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Üz və göz qüzehl qeyd keçirin</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Üz və göz qüzehi məlumatını sil</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Barmaq izi və göz qüzehi məlumat silinsin?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Proqramlarda üz və ya göz qüzehi təsdiqindən istifadə edirsinizsəö, bu proqramlara daxil olmaq üçün üzünüz və ya göz qüzehinizi qeydiyyatdan keçirməlisiniz.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Təhlükəsiz, rahat kiliddənaçma və təsdiq üçün göz qüzehləri və üz tanınmasından istifadə edin.</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan-ın kilid açıl</string>
+    <string name="sec_intelligentscan_unlock_summary">Ümumi üz və göz qüzehi skanından istifadə edərək telefonu kiliddən açın.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Ekranda Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Ekran yanan kimi sürüşdürmədən telefonu Intelligent Scan-la kiliddən açın.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Intelligent Scan ilə kiliddən açdıqda sürüşdürənədək Kilid ekranında qalın.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Üz və Göz qüzehi sönülü olan zaman Intelligent Scan avtomatik söndür.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan sönən zaman Üz və Göz qüzehi avtomatik söndü.</string>
 </resources>

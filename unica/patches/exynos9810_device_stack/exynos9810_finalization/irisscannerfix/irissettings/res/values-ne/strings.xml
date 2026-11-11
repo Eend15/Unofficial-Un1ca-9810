@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">आइरिस सेन्सरले प्रातिक्रिया दिइरहेको छैन। पछि फेरि प्रयास गर्नुहोस्।</string>
     <string name="iris_hw_problem_msg">यस्तो भइरखेमा आफ्नो फोनलाई पुनः सुरु गर्नुहोस्।</string>
     <string name="lockpattern_retry_button_text">पुनः प्रयास गर्नुहोस्</string>
+    <string name="bio_intelligentscan_title">इन्टेलिजेन्ट स्क्यान</string>
+    <string name="sec_intelligentscan_choose_lock_summary">अझ राम्रो सटीकता र सुरक्षाका लागि अनुहार र आइरिस पहिचानलाई सँगै प्रयोग गर्नुहोस्।</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">तपाईको अनुहार र आइरिसहरू दर्ता गरिएका छन्।</string>
+    <string name="sec_intelligentscan_register_face_and_iris">अनुहार र आइरिस दर्ता गर्नुहोस्</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">अनुहार र आइरिसको डाटा हटाउनुहोस्</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">अनुहार र आइरिसको डाटा हटाउने हो?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">यदि तपाई एपहरूमा अनुहार वा आइरिसमार्फत प्रमाणीकरणको प्रयोग गर्दै हुनुहुन्छ भने ती एपहरूमा साइन इन गर्नका लागि तपाईले फेरि आफ्नो अनुहार र आइरिसहरू दर्ता गर्नुपर्ने हुन्छ।</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">सुरक्षित, सुविधाजनक अनलक र प्रमाणीकरणको लागि आइरिस र अनुहार पहिचान एकसाथ प्रयोग गर्नुहोस्।</string>
+    <string name="sec_intelligentscan_unlock_title">इन्टेलिजेन्ट स्क्यानमार्फत अनलक</string>
+    <string name="sec_intelligentscan_unlock_summary">अनुहार र आइरिस स्क्यानिङको संयोजन प्रयोग गरी आफ्नो फोन अनलक गर्नुहोस्।</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">स्क्रीन-अन इन्टेलिजेन्ट स्क्यान</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">स्क्रीन अन हुने बित्तिकै पहिले स्वाइप नगरिकन इन्टेलिजेन्ट स्क्यानमार्फत आफ्नो ट्याबलेट अनलक गर्नुहोस्।</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">इन्टेलिजेन्ट स्क्यान प्रयोग गरी अनलक गर्दा तपाईले स्वाइप नगर्दासम्म लक स्क्रीनमै रहने बनाउनुहोस्।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">आइरिस र अनुहार दुवैलाई अफ गरिँदा इन्टेलिजेन्ट स्क्यान स्वचालित रूपमा अफ हुनेछ।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">इन्टेलिजेन्ट स्क्यानलाई अफ गरिँदा अनुहार र आइरिस सुविधा स्वचालित रूपमा अफ हुनेछ।</string>
 </resources>

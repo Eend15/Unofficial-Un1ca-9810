@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Сенсори инабия посух намедиҳад. Кӯшишро дертар такрор кунед.</string>
     <string name="iris_hw_problem_msg">Агар ин такрор шудан гирад, телефонро аз нав ба кор дароред.</string>
     <string name="lockpattern_retry_button_text">Кӯшиши дубора</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Шинохтагирии чеҳра ва инабияро якҷоя истифода бурда, дақиқӣ ва амниятро беҳтар кунед.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Чеҳра ва инабияҳои шумо қайд карда шуданд.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Чеҳра ва инабия қайд кардан</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Итт-и чеҳра ва инабияҳоро нст к</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Иттилооти чеҳра ва инабияҳоро нест кунем?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Агар дар барномаҳо шинохтагирии чеҳра ё инабияро истифода баред, барои ба чунин барномаҳо ворид шудан, бояд чеҳра ё инабияҳои худро такроран қайд кунед.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Шинохтагирии инабияҳо ва чеҳраро истифода бурда, озодкунӣ ва тафтиши шахсиятро осонтар ва эминтар созед.</string>
+    <string name="sec_intelligentscan_unlock_title">Банд бо Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_summary">Телефони худро бо истифодаи якҷояи шинохтагирии чеҳра ва инабияҳо озод кунед.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelligent Scan бо экрани фрзн</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Телефонро дарҳол баъди фурӯзон шудани экран бидуни пешакӣ молидан бо Intelligent Scan озод кунед.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Вақте ки дастгоҳро бо Intelligent Scan озод мекунед, то экранро молидан дар экрани Бандкунӣ мемонед.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Вақте ки ҳам Чеҳра ва ҳам Инабия хомӯш карда мешаванд, Intelligent Scan ба таври худкор хомӯш карда мешавад.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Чеҳра ва Инабия ҳангоми хомӯш карда шудани Intelligent Scan ба таври худкор хомӯш карда шуданд.</string>
 </resources>

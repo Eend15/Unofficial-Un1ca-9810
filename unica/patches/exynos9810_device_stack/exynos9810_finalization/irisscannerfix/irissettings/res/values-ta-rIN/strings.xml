@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">கருவிழி உணர்கருவி பதிலளிக்கவில்லை. பின்னர் மீண்டும் முயலவும்.</string>
     <string name="iris_hw_problem_msg">இது தொடர்ந்து ஏற்பட்டால் உங்கள் ஃபோனை மீண்டும் துவக்கவும்.</string>
     <string name="lockpattern_retry_button_text">மீண். முயலுக</string>
+    <string name="bio_intelligentscan_title">நுண்ணறிவு ஸ்கேன்</string>
+    <string name="sec_intelligentscan_choose_lock_summary">சிறந்த துல்லியத்தன்மை மற்றும் பாதுகாப்பிற்கு முகம் மற்றும் கருவிழி கண்டறிதலை ஒன்றாக பயன்படுத்தவும்.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">உங்கள் முகம் மற்றும் கருவிழிகள் பதிவு செய்யப்பட்டுள்ளது.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">முகத்தையும் கருவிழிகளையும் பதிவுசெய்க</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">முகம் மற்றும் கருவிழித் தரவை அகற்றுக</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">முகம் மற்றும் கருவிழித் தரவை அகற்றவா?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">பயன்பாடுகளில் நீங்கள் முகம் அல்லது கருவிழி அங்கீகரிப்பைப் பயன்படுத்தினால், அந்த பயன்பாடுகளில் நீங்கள் உள்நுழைய, உங்கள் முகம் அல்லது கருவிழிகளை மீண்டும் பதிவு செய்ய வேண்டும்.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">பாதுகாப்பான, வசதியான பூட்டு நீக்கம் மற்றும் சரிபார்ப்பிற்கு கருவிழிகள் மற்றும் முகம் கண்டறிதலை சேர்த்து பயன்படுத்தவும்.</string>
+    <string name="sec_intelligentscan_unlock_title">நுண்ணறிவு ஸ்கேன் பூட்டு நீக்கம்</string>
+    <string name="sec_intelligentscan_unlock_summary">ஒருங்கிணைக்கப்பட்ட முகம் மற்றும் கருவிழி ஸ்கேனிங்கைப் பயன்படுத்தி உங்கள் ஃபோனை பூட்டு நீக்கவும்.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">திரை-ஆன் நுண்ணறிவு ஸ்கேன்</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">முதலில் ஸ்வைப் செய்யாமலேயே திரை ஆன் செய்யப்பட்டவுடன் நுண்ணறிவு ஸ்கேன் மூலம் ஃபோனைப் பூட்டுநீக்கலாம்.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">நீங்கள் நுண்ணறிவு ஸ்கேன் மூலம் பூட்டுநீக்கும் போது, ஸ்வைப் செய்யும் வரை பூட்டுதிரையிலேயே இருக்கவும்.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">முகம் மற்றும் கருவிழி இரண்டும் ஆஃப் செய்யப்பட்ட போது, நுண்ணறிவு ஸ்கேனானது தானாகவே ஆஃப் செய்யப்பட்டது.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">நுண்ணறிவு ஸ்கேன் ஆஃப் செய்யப்பட்டுள்ள போது, முகம் மற்றும் கருவிழித் தானாகவே ஆஃப் செய்யப்பட்டது.</string>
 </resources>

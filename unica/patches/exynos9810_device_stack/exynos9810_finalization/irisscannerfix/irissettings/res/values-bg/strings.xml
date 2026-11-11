@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Сензорът за ириси не отговаря. Опитайте отново по-късно.</string>
     <string name="iris_hw_problem_msg">Ако това продължава да се случва, рестартирайте телефона.</string>
     <string name="lockpattern_retry_button_text">Отново</string>
+    <string name="bio_intelligentscan_title">Интелигентно сканиране</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Използвайте заедно разпознаване на лице и ирис за по-голяма точност и защита.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Лицето и ирисите ви са регистрирани.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Регистриране на лице и ириси</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Премахване данни лице и ириси</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Премахване на данните за лице и ириси?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Ако използвате удостоверяване на лице или ириси в приложенията, ще трябва да регистрирате лицето или ирисите си отново, за да влезете в тези приложения.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Използвайте разпознаване на ириси и лице заедно за безопасно, удобно отключване и потвърждаване.</string>
+    <string name="sec_intelligentscan_unlock_title">Отключване с Интелиг. сканиране</string>
+    <string name="sec_intelligentscan_unlock_summary">Отключете телефона чрез комбинирано сканиране на лице и ириси.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Интел. сканиране при вкл. екран</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Отключете телефона с „Интелигентно сканиране“, когато екранът се включи, без първо да плъзгате.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Когато отключите с „Интелигентно сканиране“, останете на заключения екран, докато плъзнете.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">„Интелигентно сканиране“ се изключва автоматично, когато „Лице“ и „Ирис“ се изключат.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">„Лице“ и „Ириси“ се изключват автоматично, когато се изключи „Интелигентно сканиране“.</string>
 </resources>

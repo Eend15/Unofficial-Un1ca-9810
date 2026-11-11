@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Cảm biến mống mắt không phản hồi. Hãy thử lại sau.</string>
     <string name="iris_hw_problem_msg">Nếu điều này tiếp tục xảy ra, hãy khởi động lại điện thoại của bạn.</string>
     <string name="lockpattern_retry_button_text">Thử lại</string>
+    <string name="bio_intelligentscan_title">Quét thông minh</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Sử dụng kết hợp nhận diện khuôn mặt và mống mắt để đạt độ chính xác và bảo mật tốt hơn.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Khuôn mặt và mống mắt của bạn đã được đăng ký.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Đăng ký khuôn mặt và mống mắt</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Xóa dữ liệu kh.mặt và mống mắt</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Xóa dữ liệu khuôn mặt và mống mắt?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Nếu bạn đang sử dụng xác thực khuôn mặt hoặc mống mắt trong ứng dụng, bạn sẽ cần đăng ký lại khuôn mặt hoặc mống mắt để đăng nhập vào các ứng dụng này.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Sử dụng kết hợp nhận diện khuôn mặt và mống mắt để mở khóa và xác thực an toàn, thuận tiện.</string>
+    <string name="sec_intelligentscan_unlock_title">Mở khóa bằng Quét thông minh</string>
+    <string name="sec_intelligentscan_unlock_summary">Mở khóa điện thoại bằng cách kết hợp quét khuôn mặt và mống mắt.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Quét thông minh khi bật m.hình</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Mở khóa điện thoại bằng Quét thông minh ngay khi màn hình bật mà không cần vuốt trước.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Khi bạn mở khóa bằng Quét thông minh, hãy ở tại màn hình Khóa cho đến khi bạn vuốt.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Quét thông minh tự động tắt khi cả Khuôn mặt và Mống mắt đều bị tắt.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Khuôn mặt và Mống mắt tự động tắt khi tắt Quét thông minh.</string>
 </resources>

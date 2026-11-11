@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">El sensor de iris no responde. Inténtelo de nuevo más tarde.</string>
     <string name="iris_hw_problem_msg">Si esto sigue ocurriendo, reinicie el teléfono.</string>
     <string name="lockpattern_retry_button_text">Reintentar</string>
+    <string name="bio_intelligentscan_title">Escaneo inteligente</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Use el reconocimiento de rostro y de iris al mismo tiempo para mejorar la precisión y la seguridad.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Se registraron su rostro y sus iris.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Registre el rostro y los iris</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Eliminar datos de rostro e iris</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">¿Desea eliminar datos de rostro e iris?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Si utiliza la autenticación facial o por iris en las aplicaciones, deberá volver a registrar su rostro y sus iris para iniciar sesión en esas aplicaciones.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Use el reconocimiento facial y de iris al mismo tiempo para desbloquear y verificar de forma segura y práctica.</string>
+    <string name="sec_intelligentscan_unlock_title">Desbloqueo Escaneo inteligente</string>
+    <string name="sec_intelligentscan_unlock_summary">Desbloquee su teléfono mediante el escaneo combinado de rostro e iris.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Escaneo inteligente al encender</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Desbloquear el teléfono con Escaneo inteligente apenas se enciende la pantalla, sin tener que deslizar la pantalla primero.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Cuando realice el desbloqueo con Escaneo inteligente, permanecerá en la pantalla de bloqueo hasta que deslice el dedo.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Escaneo inteligente se desactiva automáticamente cuando se desactivan Rostro e Iris.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Rostro e Iris se desactivan automáticamente cuando se desactiva Escaneo inteligente.</string>
 </resources>

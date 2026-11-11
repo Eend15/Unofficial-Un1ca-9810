@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Varavīksnenes sensors nereaģē. Mēģiniet vēlreiz vēlāk.</string>
     <string name="iris_hw_problem_msg">Ja tā notiek atkārtoti, restartējiet tālruni.</string>
     <string name="lockpattern_retry_button_text">Atkārtot</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Lai nodrošinātu augstāku precizitāti un drošību, izmantojiet sejas un varavīksnenes atpazīšanu kopā.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Jūsu seja un varavīksnenes ir reģistrētas.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Reģistrēt seju un varavīksnenes</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Noņ. sejas un varavīksn. datus</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Vai noņemt sejas un varavīksnenes datus?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Ja programmās izmantojat sejas vai varavīksnenes autentifikāciju, jums būs vēlreiz jāreģistrē seja vai varavīksnenes, lai pierakstītos šajās programmās.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Lai atbloķēšana un verificēšana būtu droša un ērta, izmantojiet gan varavīksnenes, gan sejas atpazīšanas funkciju.</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan atbloķēšana</string>
+    <string name="sec_intelligentscan_unlock_summary">Atbloķējiet tālruni, izmantojot apvienoto sejas un varavīksnenes skenēšanu.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Ekrāna Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Atbloķējiet tālruni, izmantojot Intelligent Scan, tiklīdz ekrāns tiek ieslēgts, neveicot pavilkšanu.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kad atbloķējat, izmantojot Intelligent Scan, palieciet bloķēšanas ekrānā, līdz pavelkat.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Izslēdzot funkcijas Seja un Varavīksnene, funkcija Intelligent Scan tika automātiski izslēgta.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Izslēdzot Intelligent Scan, funkcijas Seja un Varavīksnene tika automātiski izslēgtas.</string>
 </resources>

@@ -136,10 +136,13 @@ def main() -> None:
         must_block(lambda: assert_rom_inclusion(work, "standard"),
                    "experimental classes inside standard ROM")
         rc = work / "system/system/etc/init/faceunlockfixd.rc"
-        write(rc, b"service faceunlockfixd /system/bin/faced\n    disabled\n")
+        write(rc, b"service faceunlockfixd /system/bin/faced\n    restart_period 2\n")
         must_block(lambda: assert_rom_inclusion(work, "experimental"),
-                   "non-oneshot runtime")
+                   "auto-starting runtime")
         write(rc, b"service faceunlockfixd /system/bin/faced\n    disabled\n    oneshot\n")
+        must_block(lambda: assert_rom_inclusion(work, "experimental"),
+                   "oneshot runtime (not restarted after a crash)")
+        write(rc, b"service faceunlockfixd /system/bin/faced\n    disabled\n    restart_period 2\n")
         must_block(lambda: assert_rom_inclusion(work, "experimental"),
                    "missing built-in native files")
         for part in ("bin/faced", "lib64/faceunlockfix/face.faceunlockfix.so",

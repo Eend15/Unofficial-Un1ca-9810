@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Датчик райдужок не відповідає. Спробуйте ще раз пізніше.</string>
     <string name="iris_hw_problem_msg">Якщо проблема не зникне, перезапустіть телефон.</string>
     <string name="lockpattern_retry_button_text">Повторити</string>
+    <string name="bio_intelligentscan_title">Інтелектуальне сканування</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Для підвищення рівня точності та безпеки використовуйте розпізнавання обличчя та райдужок разом.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Ваше обличчя та райдужки зареєстровано.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Реєстрація обличчя та райдужок</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Видал. дані обличчя та райдужок</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Видалити дані обличчя й райдужки?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Якщо розпізнавання обличчя або райдужок використовується для автентифікації в програмах, для входу до таких програм знадобиться повторно зареєструвати обличчя або райдужки.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Безпечний, зручний спосіб розблокування та перевірки особи за допомогою розпізнавання райдужок та обличчя.</string>
+    <string name="sec_intelligentscan_unlock_title">Розбл. інтелект. сканування</string>
+    <string name="sec_intelligentscan_unlock_summary">Розблокуйте телефон, використовуючи одночасне розпізнавання обличчя та райдужки.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Інтел.скан.після ввімк. екрана</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Телефон можна розблокувати за допомогою інтелектуального сканування одразу після ввімкнення екрана (не потрібно проводити по екрану пальцем).</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Після розблокування за допомогою смарт-сканування буде відкрито екран блокування, доки ви не проведете по ньому пальцем.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Інтелектуальне сканування вимкнено, тому що ви вимкнули розпізнавання обличчя та райдужок.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Розпізнавання обличчя та райдужок автоматично вимикається після вимкнення інтелектуального сканування.</string>
 </resources>

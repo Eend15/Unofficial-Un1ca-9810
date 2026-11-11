@@ -1,6 +1,5 @@
 package com.samsung.android.settings.un1ca;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -16,19 +15,22 @@ import java.lang.reflect.Proxy;
 import java.util.List;
 
 /**
- * Adds "Irises" next to Face recognition and Fingerprints in Screen lock and
- * biometrics. One UI 8 dropped its own iris entry; the screen behind it is the
- * UN1CA iris settings app. Everything goes through reflection so this class only
+ * Adds "Intelligent Scan" and "Irises" next to Face recognition and Fingerprints in
+ * Screen lock and biometrics. Everything goes through reflection so this class only
  * needs the public SDK at build time.
  */
 public final class IrisLockMenu {
     private static final String TAG = "UN1CA-IrisMenu";
     private static final String KEY = "key_iris_menu";
+    private static final String INTEL_KEY = "key_intelligent_scan_menu";
     private static final String FACE_KEY = "key_face_menu";
     private static final String FEATURE = "com.samsung.android.camera.iris";
     private static final String UNLOCK_KEY = "un1ca_iris_unlock";
+    private static final String INTEL_SCREEN_ON_KEY = "un1ca_intelligent_scan_screen_on";
+    private static final String ARG_INTELLIGENT_SCAN = "un1ca_intelligent_scan";
     private static final String IRIS_SETTINGS_PKG = "com.samsung.android.irissettings";
     private static final String IRIS_FRAGMENT = "com.samsung.android.settings.un1ca.IrisSettingsFragment";
+    private static final int SEM_TYPE_FACE = 256;
     private static final int ICON_VISIBLE = 0, ICON_GONE = 8;
 
     private IrisLockMenu() { }
@@ -40,72 +42,119 @@ public final class IrisLockMenu {
             if (ctx == null) return;
             Method find = fragment.getClass().getMethod("findPreference", CharSequence.class);
             Object face = find.invoke(fragment, FACE_KEY);
+            Object intel = find.invoke(fragment, INTEL_KEY);
             Object iris = find.invoke(fragment, KEY);
             if (face == null || !ctx.getPackageManager().hasSystemFeature(FEATURE)) {
+                if (intel != null) removeFromParent(intel);
                 if (iris != null) removeFromParent(iris);
                 return;
             }
-            if (iris == null) iris = create(ctx, face, fragment);
+            if (intel == null || iris == null) {
+                if (intel != null) removeFromParent(intel);
+                if (iris != null) removeFromParent(iris);
+                Object[] created = createBoth(ctx, face, fragment);
+                intel = created[0];
+                iris = created[1];
+            }
             int userId = userId(fragment);
-            boolean enrolled = enrolledIrises(ctx, userId) > 0;
-            boolean active = enrolled && Settings.Secure.getInt(ctx.getContentResolver(), UNLOCK_KEY, 1) == 1;
-            set(iris, "setEnabled", boolean.class, invoke(face, "isEnabled"));
-            set(iris, "setSummary", CharSequence.class, summary(ctx, fragment, enrolled, active));
-            setIconVisibility(iris, active ? ICON_VISIBLE : ICON_GONE);
+            boolean irisEnrolled = enrolledIrises(ctx, userId) > 0;
+            boolean irisActive = irisEnrolled
+                    && Settings.Secure.getInt(ctx.getContentResolver(), UNLOCK_KEY, 1) == 1;
+            boolean faceEnrolled = hasEnrolledFace(ctx, userId);
+            boolean faceActive = faceEnrolled && isFaceUnlockEnabled(ctx, userId);
+            boolean bothEnrolled = faceEnrolled && irisEnrolled;
+            boolean bothActive = faceActive && irisActive;
+
+            if (bothActive && Settings.Secure.getInt(ctx.getContentResolver(), INTEL_SCREEN_ON_KEY, -1) == -1) {
+                Settings.Secure.putInt(ctx.getContentResolver(), INTEL_SCREEN_ON_KEY, 1);
+            }
+
+            Object enabled = invoke(face, "isEnabled");
+
+            set(intel, "setEnabled", boolean.class, enabled);
+            set(intel, "setSummary", CharSequence.class,
+                    summary(ctx, fragment,
+                            bothEnrolled
+                                    ? irisText(ctx, "sec_intelligentscan_lockscreen_biometric_registered_summary",
+                                            "Face and irises registered")
+                                    : irisText(ctx, "sec_intelligentscan_lockscreen_biometric_not_registered_summary",
+                                            "Combine face and iris scanning for better results."),
+                            bothActive));
+            setIconVisibility(intel, bothActive ? ICON_VISIBLE : ICON_GONE);
+
+            set(iris, "setEnabled", boolean.class, enabled);
+            set(iris, "setSummary", CharSequence.class,
+                    summary(ctx, fragment,
+                            irisEnrolled
+                                    ? irisText(ctx, "iris_register_summary", "Your irises have been registered.")
+                                    : irisText(ctx, "iris_add_summary", "Register your irises."),
+                            irisActive));
+            setIconVisibility(iris, irisActive ? ICON_VISIBLE : ICON_GONE);
         } catch (Throwable t) {
             Log.w(TAG, "iris menu not updated", t);
         }
     }
 
-    private static Object create(Context ctx, Object face, Object fragment) throws Exception {
-        Object iris = face.getClass().getConstructor(Context.class).newInstance(ctx);
-        set(iris, "setKey", String.class, KEY);
-        set(iris, "setTitle", CharSequence.class, irisText(ctx, "bio_iris_scanner_title", "Irises"));
-        set(iris, "setPersistent", boolean.class, false);
+    private static Object[] createBoth(Context ctx, Object face, Object fragment) throws Exception {
         Object parent = invoke(face, "getParent");
         int faceOrder = (Integer) invoke(face, "getOrder");
-        // Slot the entry in directly above Face recognition.
+        // Order: Intelligent Scan (faceOrder), Face recognition (faceOrder + 1),
+        // Irises (faceOrder + 2), Fingerprints (shifted by +2).
         int count = (Integer) invoke(parent, "getPreferenceCount");
         Method get = parent.getClass().getMethod("getPreference", int.class);
         for (int i = 0; i < count; i++) {
             Object p = get.invoke(parent, i);
             int order = (Integer) invoke(p, "getOrder");
-            if (order >= faceOrder) set(p, "setOrder", int.class, order + 1);
+            if (order > faceOrder) {
+                set(p, "setOrder", int.class, order + 2);
+            }
         }
-        set(iris, "setOrder", int.class, faceOrder);
+        set(face, "setOrder", int.class, faceOrder + 1);
+
+        Object intel = createSingle(ctx, face, parent, fragment, INTEL_KEY,
+                irisText(ctx, "bio_intelligentscan_title", "Intelligent Scan"), faceOrder, true);
+        Object iris = createSingle(ctx, face, parent, fragment, KEY,
+                irisText(ctx, "bio_iris_scanner_title", "Irises"), faceOrder + 2, false);
+        return new Object[]{intel, iris};
+    }
+
+    private static Object createSingle(Context ctx, Object face, Object parent, Object fragment,
+            String key, String title, int order, boolean intelligentScan) throws Exception {
+        Object pref = face.getClass().getConstructor(Context.class).newInstance(ctx);
+        set(pref, "setKey", String.class, key);
+        set(pref, "setTitle", CharSequence.class, title);
+        set(pref, "setPersistent", boolean.class, false);
+        set(pref, "setOrder", int.class, order);
         Class<?> listener = Class.forName("androidx.preference.Preference$OnPreferenceClickListener",
                 false, face.getClass().getClassLoader());
         Object onClick = Proxy.newProxyInstance(listener.getClassLoader(), new Class<?>[]{listener},
                 (proxy, method, args) -> {
                     if (!"onPreferenceClick".equals(method.getName())) return null;
-                    // Same host as the Face page (SubSettings), so the iris page gets the
-                    // One UI cards and animations. Like the Face entry, hand over the
-                    // handle from the PIN already entered so the iris page does not ask again.
                     Bundle pageArgs = new Bundle();
                     pageArgs.putLong("gk_pw_handle", gkPwHandle(fragment));
                     pageArgs.putInt("android.intent.extra.USER_ID", userId(fragment));
-                    Intent i = new Intent().setClassName(ctx.getPackageName(), "com.android.settings.SubSettings");
+                    pageArgs.putBoolean(ARG_INTELLIGENT_SCAN, intelligentScan);
+                    String subSettings = "com.android.settings.SubSettings";
+                    Intent i = new Intent().setClassName(ctx.getPackageName(), subSettings);
                     i.putExtra(":settings:show_fragment", IRIS_FRAGMENT);
-                    i.putExtra(":settings:show_fragment_title", irisText(ctx, "bio_iris_scanner_title", "Irises"));
+                    i.putExtra(":settings:show_fragment_title", title);
                     i.putExtra(":settings:show_fragment_args", pageArgs);
                     ctx.startActivity(i);
                     return Boolean.TRUE;
                 });
-        set(iris, "setOnPreferenceClickListener", listener, onClick);
+        set(pref, "setOnPreferenceClickListener", listener, onClick);
         parent.getClass().getMethod("addPreference", Class.forName("androidx.preference.Preference",
-                false, face.getClass().getClassLoader())).invoke(parent, iris);
-        return iris;
+                false, face.getClass().getClassLoader())).invoke(parent, pref);
+        return pref;
     }
 
-    private static CharSequence summary(Context ctx, Object fragment, boolean enrolled, boolean active)
+    private static CharSequence summary(Context ctx, Object fragment, String text, boolean active)
             throws Exception {
         Resources res = ctx.getResources();
         String pkg = ctx.getPackageName();
         int colorId = res.getIdentifier("sec_lockscreen_biometrics_summary_color", "color", pkg);
         int commaId = res.getIdentifier("comma", "string", pkg);
         int color = colorId != 0 ? res.getColor(colorId, null) : 0;
-        String text = enrolled ? irisText(ctx, "iris_register_summary", "Your irises have been registered.")
-                : irisText(ctx, "iris_add_summary", "Register your irises.");
         SpannableStringBuilder sb = new SpannableStringBuilder(text);
         if (active) {
             sb.append((commaId != 0 ? res.getString(commaId) : ",") + " ");
@@ -145,6 +194,28 @@ public final class IrisLockMenu {
         } catch (Throwable t) {
             Log.w(TAG, "iris enrollment query failed", t);
             return 0;
+        }
+    }
+
+    private static boolean hasEnrolledFace(Context ctx, int userId) {
+        try {
+            Object fm = ctx.getSystemService("face");
+            if (fm == null) return false;
+            return (Boolean) fm.getClass().getMethod("hasEnrolledTemplates", int.class).invoke(fm, userId);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static boolean isFaceUnlockEnabled(Context ctx, int userId) {
+        try {
+            Object lpu = Class.forName("com.android.internal.widget.LockPatternUtils")
+                    .getConstructor(Context.class).newInstance(ctx);
+            int state = (Integer) lpu.getClass().getMethod("getBiometricState", int.class, int.class)
+                    .invoke(lpu, SEM_TYPE_FACE, userId);
+            return state == 1;
+        } catch (Throwable t) {
+            return false;
         }
     }
 

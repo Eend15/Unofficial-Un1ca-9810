@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">虹彩センサーが反応していません。後ほどお試しください。</string>
     <string name="iris_hw_problem_msg">この問題が引き続き発生する場合、端末を再起動してください。</string>
     <string name="lockpattern_retry_button_text">再試行</string>
+    <string name="bio_intelligentscan_title">インテリジェントスキャン</string>
+    <string name="sec_intelligentscan_choose_lock_summary">顔認証と虹彩認証を一緒に使用して、正確で安全に認証することができます。</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">顔と虹彩が登録されています。</string>
+    <string name="sec_intelligentscan_register_face_and_iris">顔と虹彩を登録</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">顔および虹彩のデータを削除</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">顔および虹彩のデータを削除しますか？</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">アプリで顔認証または虹彩認証を使用している場合、それらのアプリにサインインするには再度顔または虹彩を登録する必要があります。</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">虹彩認証と顔認証を一緒に使用すると、安全で簡単にロック解除やユーザー認証ができます。</string>
+    <string name="sec_intelligentscan_unlock_title">ｲﾝﾃﾘｼﾞｪﾝﾄｽｷｬﾝでﾛｯｸ解除</string>
+    <string name="sec_intelligentscan_unlock_summary">顔認証と虹彩認証の組み合わせで、端末のロックを解除します。</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">画面ON時にｲﾝﾃﾘｼﾞｪﾝﾄｽｷｬﾝﾛｯｸ解除</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">画面がONになると、スワイプせずにインテリジェントスキャンで端末のロックを解除します。</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">インテリジェントスキャンでロックを解除する際に、スワイプするまでロック画面を維持します。</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">顔認証と虹彩認証をOFFにすると、インテリジェントスキャンは自動的にOFFになります。</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">インテリジェントスキャンをOFFにすると、顔認証と虹彩認証は自動的にOFFになります。</string>
 </resources>

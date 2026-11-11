@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">မ်က္ဝန္းအာ႐ုံခံ တုံ႔ျပန္မႈမရွိပါ။ ေနာက္မွ ထပ္မံႀကိဳးစားပါ။</string>
     <string name="iris_hw_problem_msg">ဤသုိ႔ ဆက္ျဖစ္ေနပါက သင့္ဖုန္းကုိ ပိတ္ၿပီးျပန္ဖြင့္ပါ။</string>
     <string name="lockpattern_retry_button_text">ျပန္ၾကိဳးစားပါ</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">ပုိ၍ တိက်မွန္ကန္ၿပီး လံုၿခဳံေရးပုိေကာင္းေစရန္ မ်က္ႏွာႏွင့္ မ်က္ဝန္းမွတ္သားနည္းကို အတူတကြအသုံးျပဳပါ။</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">သင့္မ်က္ႏွာႏွင့္ မ်က္ဝန္းမ်ားကို မွတ္ပုံတင္ၿပီးပါၿပီ။</string>
+    <string name="sec_intelligentscan_register_face_and_iris">မ်က္ႏွာႏွင့္ မ်က္ဝန္းမ်ားကုိ မွတ္ပံုတင္ပါ</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">မ်က္ႏွာႏွင့္ မ်က္ဝန္းေဒတာကို ဖယ္႐ွားပါ</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">မ်က္ႏွာႏွင့္ မ်က္ဝန္းေဒတာကို ဖယ္႐ွားမလား?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">သင္သည္ အက္ပ္မ်ားထဲတြင္ မ်က္ႏွာ သုိ႔မဟုတ္ မ်က္ဝန္း စိစစ္နည္းကုိ သံုးေနပါက ထုိအက္ပ္မ်ားထဲ ဆုိင္းအင္ဝင္ရန္ သင္၏ မ်က္ႏွာ သုိ႔မဟုတ္ မ်က္ဝန္းမ်ားကုိ ထပ္မံ မွတ္ပံုတင္ရန္ လုိလိမ့္မည္။</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">လံုျခံဳ၍ အဆင္ေျပေခ်ာေမြ႕စြာ ေသာ့ဖြင့္၍ စိစစ္အတည္ျပဳရန္အတြက္ မ်က္ဝန္းႏွင့္ မ်က္ႏွာ အသိအမွတ္ျပဳျခင္းကို အတူအသံုးျပဳပါ။</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan ကုိ ဖြင့္ျခင္း</string>
+    <string name="sec_intelligentscan_unlock_summary">မ်က္ႏွာႏွင့္ မ်က္ဝန္းကုိ ေပါင္းစပ္ စကန္ဖတ္ျခင္းကုိ သံုး၍ သင့္ဖုန္းကုိ ေသာ့ဖြင့္ပါ။</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelligent Scan ဖတ္သည့္အခါ စခရင္ ပြင့္ျခင္း</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">ဖန္သားျပင္ပြင့္လွ်င္ပြင့္ခ်င္း အရင္ဆံုး ပြတ္မဆြဲဘဲ အထူးစကန္ဖတ္ျခင္းကုိသံုးၿပီး သင့္ဖုန္းကုိ ေသာ့ဖြင့္ပါ။</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">အသိဉာဏ္ရွိရွိ စကန္ဖတ္ျခင္းျဖင့္ ေသာ့ဖြင့္သည့္အခါ သင္ပြတ္မဆြဲရေသးခင္အထိ ေသာ့ပိတ္ ဖန္သားျပင္ကို ဖြင့္ထားပါ။</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">မ်က္ႏွာႏွင့္ မ်က္ဝန္း ႏွစ္ခုလံုးကုိ ပိတ္ထားသည့္အခါ အထူး စကန္ဖတ္ျခင္းကုိ အလုိအေလ်ာက္ ပိတ္ပါသည္။</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">အထူး စကန္ဖတ္ျခင္းကုိ ပိတ္ထားသည့္အခါ မ်က္ႏွာႏွင့္ မ်က္ဝန္းကုိ အလုိအေလ်ာက္ ပိတ္ပါသည္။</string>
 </resources>

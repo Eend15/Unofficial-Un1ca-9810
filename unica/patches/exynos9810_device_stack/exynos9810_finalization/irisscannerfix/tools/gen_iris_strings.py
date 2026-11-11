@@ -16,12 +16,29 @@ KEYS = [
     "iris_failed_to_register", "iris_eye_safety_msg", "iris_proximity_restriction_popop_message",
     "iris_sensor_not_working_popup_title", "iris_sensor_not_working_msg", "iris_hw_problem_msg",
     "lockpattern_retry_button_text", "manage_irises", "iris_verification",
+    "bio_intelligentscan_title", "sec_intelligentscan_choose_lock_summary",
+    "sec_intelligentscan_lockscreen_biometric_not_registered_summary",
+    "sec_intelligentscan_lockscreen_biometric_registered_summary",
+    "sec_intelligentscan_register_face_and_iris", "sec_intelligentscan_remove_face_and_iris",
+    "sec_intelligentscan_remove_intelligentscan_dialog_title",
+    "sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature",
+    "sec_biometrics_disclaimer_main_guide_intelligentscan",
+    "sec_intelligentscan_unlock_title", "sec_intelligentscan_unlock_summary",
+    "sec_intelligentscan_unlock_when_turns_on_title", "sec_intelligentscan_unlock_when_turns_on_summary",
+    "sec_intelligentscan_stay_on_lock_screen_summary",
+    "sec_intelligentscan_turn_off_toast_message",
+    "sec_intelligentscan_turn_off_toast_message_intelligentscan",
 ]
 LINE = re.compile(r'^\s*<string name="([^"]+)"[^>]*>.*?</string>\s*$', re.M | re.S)
 # Samsung never translated the iris section headings; the app hides a heading that has
 # no translation for the phone's language instead of showing English.
 EXTRA = {
-    "values-nl": {"manage_irises": "Irissen beheren", "iris_verification": "Irisverificatie"},
+    "values-nl": {
+        "manage_irises": "Irissen beheren",
+        "iris_verification": "Irisverificatie",
+        "sec_intelligentscan_lockscreen_biometric_not_registered_summary":
+            "Combineer gezichts- en irisscan voor betere resultaten. Registreer uw gezicht en irissen om Intelligent Scan te gebruiken.",
+    },
 }
 
 

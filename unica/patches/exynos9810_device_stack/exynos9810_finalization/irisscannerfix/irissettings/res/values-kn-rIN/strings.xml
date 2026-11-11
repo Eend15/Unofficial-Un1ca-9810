@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">ಐರಿಸ್‍ಗಳ ಸೆನ್ಸಾರ್ ಪ್ರತಿಕ್ರಿಯಿಸುತ್ತಿಲ್ಲ. ನಂತರ ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="iris_hw_problem_msg">ಅದು ಹೀಗೆ ಮುಂದುವರಿದರೆ, ನಿಮ್ಮ ಫೋನ್ ಮರುಪ್ರಾರಂಭಿಸಿ.</string>
     <string name="lockpattern_retry_button_text">ಮರು ಪ್ರಯತ್ನ</string>
+    <string name="bio_intelligentscan_title">ಇಂಟೆಲಿಜೆಂಟ್ ಸ್ಕ್ಯಾನ್</string>
+    <string name="sec_intelligentscan_choose_lock_summary">ಉತ್ತಮ ನಿಖರತೆ ಮತ್ತು ಭದ್ರತೆಗಾಗಿ ಮುಖ ಮತ್ತು ಐರಿಸ್ ಗುರುತಿಸುವಿಕೆಗಳನ್ನು ಒಟ್ಟಿಗೆ ಬಳಸಿ.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">ನಿಮ್ಮ ಮುಖ ಮತ್ತು ಐರಿಸ್‍ಗಳನ್ನು ನೋಂದಾಯಿಸಲಾಗಿದೆ.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">ಮುಖ ಮತ್ತು ಐರಿಸ್‍ಗಳನ್ನು ನೋಂದಾಯಿಸಿ</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">ಮುಖ ಮತ್ತು ಐರಿಸ್ ಡೇಟಾ ತೆಗೆದುಹಾಕಿ</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">ಮುಖ ಮತ್ತು ಐರಿಸ್ ಡೇಟಾ ತೆಗೆದುಹಾಕುವುದೇ?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">ನೀವು ಅನ್ವಯಿಸುವಿಕೆಗಳಲ್ಲಿ ಮುಖ ಅಥವಾ ಐರಿಸ್ ದೃಢೀಕರಣವನ್ನು ಬಳಸುತ್ತಿದ್ದರೇ, ನೀವು ಅವೆಲ್ಲಾ ಅನ್ವಯಿಸುವಿಕೆಗಳಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಲು ಮತ್ತೊಮ್ಮೆ ನಿಮ್ಮ ಮುಖ ಮತ್ತು ಐರಿಸ್‍ಗಳನ್ನು ನೋಂದಾಯಿಸಬೇಕಿದೆ.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">ಸುರಕ್ಷಿತ, ಅನುಕೂಲಕರ ಲಾಕ್ ಮಾಡುವಿಕೆ ಮತ್ತು ಪರಿಶೀಲನೆಗಾಗಿ ಐರಿಸ್‍ಗಳು ಮತ್ತು ಫೇಸ್ ಗುರುತಿಸುವಿಕೆ ಎರಡನ್ನೂ ಒಟ್ಟಿಗೆ ಬಳಸಿ.</string>
+    <string name="sec_intelligentscan_unlock_title">ಇಂಟೆಲಿಜೆಂಟ್ ಸ್ಕ್ಯಾನ್ ಅನ್‍ಲಾಕ್</string>
+    <string name="sec_intelligentscan_unlock_summary">ಸಂಯೋಜಿಸಿದ ಮುಖ ಮತ್ತು ಐರಿಸ್ ಸ್ಕ್ಯಾನಿಂಗ್ ಬಳಸಿಕೊಂಡು ನಿಮ್ಮ ಫೋನ್ ಅನ್‍ಲಾಕ್ ಮಾಡಿ.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">ಸ್ಕ್ರೀನ್-ಆನ್ ಇಂಟೆಲಿಜೆಂಟ್ ಸ್ಕ್ಯಾನ್</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">ಮೊದಲೇ ಸ್ವೈಪ್ ಮಾಡದೆಯೇ, ಸ್ಕ್ರೀನ್ ಆನ್ ಆಗುತ್ತಿದ್ದಂತೆ ಇಂಟೆಲಿಜೆಂಟ್ ಸ್ಕ್ಯಾನ್ ಬಳಸಿಕೊಂಡು ನಿಮ್ಮ ಫೋನ್ ಅನ್‌ಲಾಕ್ ಮಾಡಿ.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">ನೀವು ಇಂಟೆಲಿಂಜೆಂಟ್ ಸ್ಕ್ಯಾನ್ ಮೂಲಕ ಅನ್‌ಲಾಕ್ ಮಾಡಿದಾಗ, ನೀವು ಸ್ವೈಪ್ ಮಾಡುವವರೆಗೆ ಲಾಕ್ ಸ್ಕ್ರೀನ್‌ನಲ್ಲಿಯೇ ಇರಿ.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">ಮುಖ ಅಥವಾ ಐರಿಸ್ ಆಫ್ ಮಾಡಿದಾಗ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಇಂಟೆಲಿಜೆಂಟ್ ಸ್ಕ್ಯಾನ್ ಆಫ್ ಆಗುತ್ತದೆ.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ಇಂಟೆಲಿಜೆಂಟ್ ಸ್ಕ್ಯಾನ್ ಆಫ್ ಮಾಡಿರುವಾಗ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಮುಖ ಮತ್ತು ಐರಿಸ್ ಆಫ್ ಅಗಿದೆ.</string>
 </resources>

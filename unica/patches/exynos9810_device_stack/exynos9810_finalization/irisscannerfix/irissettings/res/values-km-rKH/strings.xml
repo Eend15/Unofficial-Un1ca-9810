@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">សិនសឺ​ប្រស្រីភ្នែក​មិន​ឆ្លើយតប។ សាកល្បង​ម្ដងទៀត​ពេលក្រោយ។</string>
     <string name="iris_hw_problem_msg">បើ​វា​នៅតែ​កើតឡើង សូម​ចាប់ផ្ដើម​ទូរសព្ទ​របស់​អ្នក​ឡើងវិញ។</string>
     <string name="lockpattern_retry_button_text">សាក​ល្បង​ម្តង​ទៀត</string>
+    <string name="bio_intelligentscan_title">ស្កេន​វាងវៃ</string>
+    <string name="sec_intelligentscan_choose_lock_summary">ប្រើ​ការស្គាល់​ផ្ទៃមុខ​ឬ​ប្រស្រីភ្នែក​ជាមួយគ្នា ដើម្បី​ទទួល​សុក្រឹតភាព​និង​សន្តិសុខ​កាន់តែ​ប្រសើរ។</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">ផ្ទៃមុខ​និង​ប្រស្រីភ្នែក​របស់​អ្នក​ត្រូវ​បាន​ចុះបញ្ជី។</string>
+    <string name="sec_intelligentscan_register_face_and_iris">ចុះបញ្ជី​ផ្ទៃមុខ​និង​ប្រស្រីភ្នែក</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">លុប​ទិន្នន័យ​ផ្ទៃមុខ​និង​ប្រស្រីភ្នែក</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">លុប​ទិន្នន័យ​ផ្ទៃមុខ​និង​ប្រស្រីភ្នែក?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">បើ​អ្នក​កំពុង​ប្រើ​ការផ្ទៀងផ្ទាត់​ភាពពិត​តាម​ផ្ទៃមុខ​ឬ​ប្រស្រីភ្នែក​ក្នុង​កម្មវិធី អ្នក​នឹង​ត្រូវការ​ចុះបញ្ជី​ផ្ទៃមុខ​ឬ​ប្រស្រីភ្នែក​របស់​អ្នក​ម្ដងទៀត ដើម្បី​ចុះឈ្មោះចូល​កម្មវិធី​ទាំងនោះ។</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">ប្រើ​ការស្គាល់​ផ្ទៃមុខ​ឬ​ប្រស្រីភ្នែក​ជាមួយគ្នា​សម្រាប់​ការដោះសោ​និង​ការផ្ទៀងផ្ទាត់​ដែល​មាន​សុវត្ថិភាព​និង​ងាយស្រួល។</string>
+    <string name="sec_intelligentscan_unlock_title">ស្កេន​វាងវៃ​ដោះសោ</string>
+    <string name="sec_intelligentscan_unlock_summary">ដោះសោ​ទូរសព្ទ​របស់​អ្នក ដោយ​ប្រើ​ការស្កេន​ផ្ទៃមុខ​និង​ប្រស្រីភ្នែក​ផ្សំគ្នា។</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">ស្កេន​វាងវៃ​ពេល​បើក​អេក្រង់</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">ដោះសោ​ទូរសព្ទ​របស់​អ្នក​ជាមួយ​ស្កេន​វាងវៃ​ភ្លាមៗ​បន្ទាប់​ពី​អេក្រង់​បើក ដោយ​មិន​អូស​ជាមុន។</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">នៅពេល​អ្នក​ដោះសោ​ជាមួយ​ស្កេន​វាងវៃ សូម​ស្ថិត​លើ​អេក្រង់​ជាប់សោ​រហូត​ដល់​ពេល​អ្នក​អូស។</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">ស្កេន​វាងវៃ​ត្រូវ​បាន​បិទ​ដោយ​ស្វ័យប្រវត្តិ នៅពេល​បាន​បិទ​ទាំង​ផ្ទៃមុខ ទាំង​ប្រស្រីភ្នែក។</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ផ្ទៃមុខ​និង​ប្រស្រីភ្នែក​ត្រូវ​បាន​បិទ​ដោយ​ស្វ័យប្រវត្តិ នៅពេល​បាន​បិទ​ស្កេន​វាងវៃ។</string>
 </resources>

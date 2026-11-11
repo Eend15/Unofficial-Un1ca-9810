@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">আইরিশ সেন্সর প্রতিক্রিয়া জানাচ্ছে না। পরে আবার চেষ্টা করুন।</string>
     <string name="iris_hw_problem_msg">এটি ঘটতে থাকলে, আপনার ফোন পুনঃশুরু করুন।</string>
     <string name="lockpattern_retry_button_text">রিট্রাই</string>
+    <string name="bio_intelligentscan_title">ইন্টেলিজেন্ট স্ক্যান</string>
+    <string name="sec_intelligentscan_choose_lock_summary">আরও ভালো নির্ভুলতা ও নিরাপত্তার জন্য মুখ ও আইরিশ স্বীকৃতি একসাথে ব্যবহার করুন।</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">আপনার মুখ ও আইরিশগুলি নিবন্ধিত হয়েছে।</string>
+    <string name="sec_intelligentscan_register_face_and_iris">মুখ ও আইরিশগুলি নিবন্ধন করুন</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">মুখ এবং আইরিশ তথ্য অপসারণ করুন</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">মুখ এবং আইরিশ তথ্য অপসারণ করবেন?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">আপনি অ্যাপগুলিতে মুখ বা আইরিশ প্রমাণীকরণ ব্যবহার করলে, আপনাকে সেই অ্যাপগুলিতে আবার সাইন ইন করতে আপনার মুখ বা আইরিশগুলি নিবন্ধন করতে হবে।</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">নিরাপদ, সুবিধাজনক আনলক ও যাচাইকরণের জন্য আইরিশ ও মুখ স্বীকৃতি একসাথে ব্যবহার করুন।</string>
+    <string name="sec_intelligentscan_unlock_title">ইন্টেলিজেন্ট স্ক্যান আনলক</string>
+    <string name="sec_intelligentscan_unlock_summary">একত্রিত মুখ ও আইরিশ স্ক্যানিং ব্যবহার করে আপনার ফোন আনলক করুন।</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">স্ক্রিন-চালু ইন্টেলিজেন্ট স্ক্যান</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">স্ক্রিনটি চালু হলেই, প্রথমে সোয়াইপ না করে আপনার ইন্টেলিজেন্ট স্ক্যানের সাহায্যে আপনার ফোনটি আনলক করুন।</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">আপনি ইন্টেলিজেন্ট স্ক্যানের সাহায্যে আনলক করলে আপনি সোয়াইপ না করা অবধি লক স্ক্রিনে থাকুন।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">আইরিশ ও মুখের তথ্য উভয়ই বন্ধ থাকলে ইন্টেলিজেন্ট স্ক্যান স্বয়ংক্রিয়ভাবে বন্ধ হয়েছে।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ইন্টেলিজেন্ট স্ক্যান বন্ধ থাকলে মুখ ও আইরিশ স্বয়ংক্রিয়ভাবে বন্ধ হয়েছে।</string>
 </resources>

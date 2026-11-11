@@ -335,10 +335,10 @@ def main() -> int:
 
     rc_template = HERE / "faceunlockfixd.rc"
     rc = rc_template.read_text(encoding="utf-8") if rc_template.is_file() else ""
-    c.check("FaceunlockFix init isolated and disabled",
+    c.check("FaceunlockFix init isolated, disabled and restarted after a crash",
             bool(re.search(r"(?m)^service\s+faceunlockfixd\s+/system/bin/faced\s*$", rc))
             and bool(re.search(r"(?m)^\s+disabled\s*$", rc))
-            and bool(re.search(r"(?m)^\s+oneshot\s*$", rc))
+            and not re.search(r"(?m)^\s+oneshot\s*$", rc)
             and "persist.sys.un1ca.faceunlockfix.experimental=1" in rc)
     example = HERE / "policy/service_contexts.example"
     labels = example.read_text(encoding="utf-8") if example.is_file() else ""

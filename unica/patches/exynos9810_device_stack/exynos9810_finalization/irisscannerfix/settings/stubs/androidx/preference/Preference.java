@@ -16,6 +16,7 @@ public class Preference {
     public void setOnPreferenceClickListener(OnPreferenceClickListener l) { }
     public void setOrder(int order) { }
     public final void setPersistent(boolean persistent) { }
+    public void setSelectable(boolean selectable) { }
     public void setSummary(CharSequence summary) { }
     public void setTitle(CharSequence title) { }
     public final void setVisible(boolean visible) { }

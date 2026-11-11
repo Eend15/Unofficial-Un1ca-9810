@@ -15,9 +15,13 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.hardware.display.DisplayManager;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
+import android.os.Parcel;
 import android.os.RemoteException;
+import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Size;
@@ -87,6 +91,20 @@ public final class FaceunlockFixCamera2FrameSource implements AutoCloseable {
     private int nativeImageType;
     private int imageFormat;
     private boolean firstFrameLogged;
+    // Intelligent Scan: frames come from SecIrisService's front session instead of
+    // our own openCamera(), so face and iris scan at the same time (stock behaviour).
+    private boolean shared;
+    private boolean sharedFrameWarned;
+    private IBinder sharedIris;
+    private final IBinder shareToken = new Binder();
+
+    private static final String IRIS_SERVICE = "samsung.iris";
+    private static final String IRIS_DESCRIPTOR = "com.samsung.android.camera.iris.IIrisService";
+    private static final int IRIS_TX_ATTACH = 0x00ff5501;
+    private static final int IRIS_TX_DETACH = 0x00ff5502;
+    // SecIrisService IRV2Controller front preview size (non-cruiser): the shared session's shape.
+    static final int SHARED_WIDTH = 816;
+    static final int SHARED_HEIGHT = 1456;
 
     private static final class CameraSelection {
         final String id;
@@ -159,6 +177,7 @@ public final class FaceunlockFixCamera2FrameSource implements AutoCloseable {
             // Exact Samsung FrCamCtrl priority: native NV21 when advertised,
             // otherwise YUV_420_888 with imageType=2 (not packed NV21=0).
             CameraSelection selected;
+            Surface shareTarget = null;
             synchronized (lock) {
                 selected = cachedFrontCamera;
             }
@@ -188,15 +207,53 @@ public final class FaceunlockFixCamera2FrameSource implements AutoCloseable {
                 // can still discard stale captures while that image is held.
                 // This avoids large YUV plane copies on the camera callback
                 // thread and keeps real frames arriving at low latency.
-                imageReader = ImageReader.newInstance(WIDTH, HEIGHT,
-                        selected.format, 3);
+                shared = false;
+                sharedIris = null;
+                if (previewSurface == null) {
+                    // Intelligent Scan candidate: the iris front session is 9:16, and this
+                    // HAL crops every stream of a session to it, so a 640x480 output there
+                    // only sees the eyes. Ask for the iris shape and rescale on our side.
+                    imageReader = ImageReader.newInstance(SHARED_WIDTH, SHARED_HEIGHT,
+                            ImageFormat.YUV_420_888, 3);
+                    shareTarget = imageReader.getSurface();
+                } else {
+                    imageReader = ImageReader.newInstance(WIDTH, HEIGHT, selected.format, 3);
+                }
                 imageReader.setOnImageAvailableListener(
                         reader -> onImageAvailable(generation, reader), cameraHandler);
                 Log.i(TAG, "Genuine stock face camera payload selected, imageType="
                         + selected.imageType + ", previewSurfaceAttached="
                         + (previewSurface != null));
-                cameraManager.openCamera(selected.id, stateCallback(generation, previewSurface),
-                        cameraHandler);
+                if (previewSurface != null) {
+                    cameraManager.openCamera(selected.id, stateCallback(generation, previewSurface),
+                            cameraHandler);
+                }
+            }
+            if (shareTarget != null) {
+                // Authentication only: if an iris scan already owns the front camera,
+                // take frames from its session instead of evicting it.
+                IBinder iris = attachToIris(shareTarget);
+                synchronized (lock) {
+                    if (!isCurrent(generation)) {
+                        if (iris != null) detachFromIris(iris);
+                        return false;
+                    }
+                    if (iris != null) {
+                        shared = true;
+                        sharedIris = iris;
+                        Log.i(TAG, "Intelligent Scan: face frames shared from the iris front camera");
+                    } else {
+                        // No iris scan: our own camera with the stock 640x480 stream.
+                        imageReader.setOnImageAvailableListener(null, null);
+                        imageReader.close();
+                        imageReader = ImageReader.newInstance(WIDTH, HEIGHT, selected.format, 3);
+                        imageReader.setOnImageAvailableListener(
+                                reader -> onImageAvailable(generation, reader), cameraHandler);
+                        cameraManager.openCamera(selected.id, stateCallback(generation, null),
+                                cameraHandler);
+                    }
+                }
+                if (iris != null) safeStreaming(generation);
             }
             return true;
         } catch (CameraAccessException | RuntimeException e) {
@@ -331,7 +388,7 @@ public final class FaceunlockFixCamera2FrameSource implements AutoCloseable {
             if (frame == null) return;
             synchronized (lock) {
                 if (!isCurrent(generation) || !nativeTransportArmed
-                        || session == null || frameInFlight) return;
+                        || (session == null && !shared) || frameInFlight) return;
                 frameInFlight = true;
                 reserved = true;
             }
@@ -372,8 +429,40 @@ public final class FaceunlockFixCamera2FrameSource implements AutoCloseable {
     private void processImageOnTransport(long generation, Image frame,
             int rotation, int type, int format) {
         try {
+            boolean fromIris;
             synchronized (lock) {
                 if (!isCurrent(generation) || !nativeTransportArmed) return;
+                fromIris = shared;
+            }
+            if (fromIris) {
+                byte[] nv21;
+                boolean quarterTurn = frame.getHeight() > frame.getWidth();
+                try {
+                    nv21 = toStockPlanePayload(sharedFrameToNv21(frame));
+                } catch (RuntimeException e) {
+                    // Never fail the face operation over one shared frame: an HAL error
+                    // here leaves Android's face scheduler waiting until a restart.
+                    if (!sharedFrameWarned) {
+                        sharedFrameWarned = true;
+                        Log.w(TAG, "Shared Intelligent Scan frame dropped", e);
+                    }
+                    return;
+                }
+                int sharedRotation = quarterTurn ? sharedRotation(rotation) : rotation;
+                synchronized (lock) {
+                    if (!isCurrent(generation)) return;
+                    if (!firstFrameLogged) {
+                        firstFrameLogged = true;
+                        Log.i(TAG, "First shared Intelligent Scan frame queued: "
+                                + frame.getWidth() + "x" + frame.getHeight() + " -> NV21 "
+                                + WIDTH + "x" + HEIGHT + ", payloadBytes=" + nv21.length
+                                + ", rotation=" + sharedRotation
+                                + ", cameraToFrameMs="
+                                + (SystemClock.elapsedRealtime() - captureStartElapsedMs));
+                    }
+                }
+                dispatchFrame(generation, nv21, sharedRotation, FACEUNLOCKFIX_IMAGE_TYPE_YUV_420_888);
+                return;
             }
             if (frame.getFormat() != format
                     || frame.getWidth() != WIDTH || frame.getHeight() != HEIGHT) {
@@ -439,6 +528,129 @@ public final class FaceunlockFixCamera2FrameSource implements AutoCloseable {
         }
     }
 
+    /**
+     * Shared Intelligent Scan frame to 640x480 NV21. The iris session is 9:16 and this HAL
+     * crops every stream in it to that shape, so a 640x480 output there only sees the eyes;
+     * we request the iris size instead. Square/wide frames (what the 9810 HAL delivers:
+     * 1088x1088) get a centred 4:3 window; tall frames are turned a quarter turn first.
+     * Real camera pixels, only resampled; no synthetic content.
+     */
+    private static byte[] sharedFrameToNv21(Image frame) {
+        int sw = frame.getWidth();
+        int sh = frame.getHeight();
+        if (frame.getFormat() != ImageFormat.YUV_420_888 || sw < WIDTH / 2 || sh < HEIGHT / 2) {
+            throw new IllegalStateException("Unexpected shared frame " + sw + "x" + sh);
+        }
+        if (sh <= sw) return cropScaleToNv21(frame);
+        Image.Plane[] p = frame.getPlanes();
+        java.nio.ByteBuffer yb = p[0].getBuffer();
+        java.nio.ByteBuffer ub = p[1].getBuffer();
+        java.nio.ByteBuffer vb = p[2].getBuffer();
+        int yRow = p[0].getRowStride(), yPix = p[0].getPixelStride();
+        int uRow = p[1].getRowStride(), uPix = p[1].getPixelStride();
+        int vRow = p[2].getRowStride(), vPix = p[2].getPixelStride();
+        boolean ccw = sharedCounterClockwise();
+        // Rotated image is sh x sw; take a 4:3 window: full height (sw), width sw*4/3.
+        int winW = sw * 4 / 3;
+        int x0 = (sh - winW) / 2;
+        byte[] out = new byte[WIDTH * HEIGHT * 3 / 2];
+        for (int oy = 0; oy < HEIGHT; oy++) {
+            int ry = oy * sw / HEIGHT;               // 0..sw-1 (rotated y)
+            for (int ox = 0; ox < WIDTH; ox++) {
+                int rx = x0 + ox * winW / WIDTH;     // 0..sh-1 (rotated x)
+                int sx, sy;
+                if (ccw) { sx = sw - 1 - ry; sy = rx; } else { sx = ry; sy = sh - 1 - rx; }
+                out[oy * WIDTH + ox] = yb.get(sy * yRow + sx * yPix);
+            }
+        }
+        int uvBase = WIDTH * HEIGHT;
+        int cw = sw / 2, ch = sh / 2;
+        for (int oy = 0; oy < HEIGHT / 2; oy++) {
+            int ry = oy * cw / (HEIGHT / 2);
+            for (int ox = 0; ox < WIDTH / 2; ox++) {
+                int rx = x0 / 2 + ox * (winW / 2) / (WIDTH / 2);
+                int sx, sy;
+                if (ccw) { sx = cw - 1 - ry; sy = rx; } else { sx = ry; sy = ch - 1 - rx; }
+                int o = uvBase + oy * WIDTH + ox * 2;
+                out[o] = vb.get(sy * vRow + sx * vPix);      // NV21: V first
+                out[o + 1] = ub.get(sy * uRow + sx * uPix);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Square or wide shared frame (this HAL delivers 1088x1088 for the iris session): same
+     * orientation as our own stream, so only a centred 4:3 window scaled to 640x480.
+     */
+    private static byte[] cropScaleToNv21(Image frame) {
+        int sw = frame.getWidth();
+        int sh = frame.getHeight();
+        int winW = sw, winH = sw * 3 / 4;
+        if (winH > sh) { winH = sh; winW = sh * 4 / 3; }
+        int x0 = (sw - winW) / 2, y0 = (sh - winH) / 2;
+        Image.Plane[] p = frame.getPlanes();
+        java.nio.ByteBuffer yb = p[0].getBuffer();
+        java.nio.ByteBuffer ub = p[1].getBuffer();
+        java.nio.ByteBuffer vb = p[2].getBuffer();
+        int yRow = p[0].getRowStride(), yPix = p[0].getPixelStride();
+        int uRow = p[1].getRowStride(), uPix = p[1].getPixelStride();
+        int vRow = p[2].getRowStride(), vPix = p[2].getPixelStride();
+        byte[] out = new byte[WIDTH * HEIGHT * 3 / 2];
+        for (int oy = 0; oy < HEIGHT; oy++) {
+            int row = (y0 + oy * winH / HEIGHT) * yRow;
+            for (int ox = 0; ox < WIDTH; ox++) {
+                out[oy * WIDTH + ox] = yb.get(row + (x0 + ox * winW / WIDTH) * yPix);
+            }
+        }
+        int uvBase = WIDTH * HEIGHT;
+        for (int oy = 0; oy < HEIGHT / 2; oy++) {
+            int sy = (y0 / 2) + oy * (winH / 2) / (HEIGHT / 2);
+            for (int ox = 0; ox < WIDTH / 2; ox++) {
+                int sx = (x0 / 2) + ox * (winW / 2) / (WIDTH / 2);
+                int o = uvBase + oy * WIDTH + ox * 2;
+                out[o] = vb.get(sy * vRow + sx * vPix);      // NV21: V first
+                out[o + 1] = ub.get(sy * uRow + sx * uPix);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * faced reads imageType 2 frames in the exact layout our own 640x480 stream gives
+     * (FaceunlockFixPlanePayload): the Y plane, then the U and V plane views of the
+     * semi-planar chroma (pixel stride 2, row stride 640), each one byte shorter than the
+     * full chroma block. A packed NV21 buffer is smaller and makes faced read past it.
+     */
+    private static byte[] toStockPlanePayload(byte[] nv21) {
+        int ySize = WIDTH * HEIGHT;
+        int uvSize = ySize / 2;
+        byte[] nv12 = new byte[uvSize];
+        for (int i = 0; i < uvSize; i += 2) {
+            nv12[i] = nv21[ySize + i + 1];     // U
+            nv12[i + 1] = nv21[ySize + i];     // V
+        }
+        byte[] out = new byte[ySize + 2 * (uvSize - 1)];
+        System.arraycopy(nv21, 0, out, 0, ySize);
+        System.arraycopy(nv12, 0, out, ySize, uvSize - 1);               // U view: U V U V ...
+        System.arraycopy(nv12, 1, out, ySize + uvSize - 1, uvSize - 1);  // V view: V U V U ...
+        return out;
+    }
+
+    /**
+     * Tall shared frames are turned clockwise. Not used by the Exynos 9810 HAL, which
+     * delivers square 1088x1088 frames (verified on star2lte); kept for a HAL that honours
+     * the 9:16 size. Not hardware-verified.
+     */
+    private static boolean sharedCounterClockwise() {
+        return false;
+    }
+
+    /** The clockwise quarter turn means faced has to rotate 90 degrees less. */
+    private static int sharedRotation(int stock) {
+        return sharedCounterClockwise() ? (stock + 90) % 360 : (stock + 270) % 360;
+    }
+
     /** Stock FaceUtils.getRotationInfoForPreview: 0/90/180/270 -> 270/0/90/180. */
     private int legacyRotationDegrees() {
         Display display = defaultDisplay;
@@ -466,6 +678,12 @@ public final class FaceunlockFixCamera2FrameSource implements AutoCloseable {
             if (imageReader != null) {
                 imageReader.setOnImageAvailableListener(null, null);
             }
+            if (shared) {
+                // Out of the iris repeating request before our reader goes away.
+                if (sharedIris != null) detachFromIris(sharedIris);
+                shared = false;
+                sharedIris = null;
+            }
             if (session != null) {
                 try { session.stopRepeating(); } catch (CameraAccessException | RuntimeException e) {
                     Log.w(TAG, "stopRepeating", e);
@@ -483,6 +701,48 @@ public final class FaceunlockFixCamera2FrameSource implements AutoCloseable {
     }
 
     @Override public void close() { stop(); }
+
+    /** Iris service binder when it accepted our Surface, else null (open our own camera). */
+    private IBinder attachToIris(Surface target) {
+        IBinder iris;
+        try {
+            iris = ServiceManager.checkService(IRIS_SERVICE);
+        } catch (RuntimeException e) {
+            return null;
+        }
+        if (iris == null) return null;
+        Parcel data = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        try {
+            data.writeInterfaceToken(IRIS_DESCRIPTOR);
+            data.writeInt(1);
+            target.writeToParcel(data, 0);
+            data.writeStrongBinder(shareToken);
+            if (!iris.transact(IRIS_TX_ATTACH, data, reply, 0)) return null;
+            reply.readException();
+            return reply.readInt() == 1 ? iris : null;
+        } catch (RemoteException | RuntimeException e) {
+            Log.w(TAG, "Iris camera share unavailable", e);
+            return null;
+        } finally {
+            data.recycle();
+            reply.recycle();
+        }
+    }
+
+    private void detachFromIris(IBinder iris) {
+        Parcel data = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        try {
+            data.writeInterfaceToken(IRIS_DESCRIPTOR);
+            iris.transact(IRIS_TX_DETACH, data, reply, 0);
+        } catch (RemoteException | RuntimeException e) {
+            Log.w(TAG, "Iris camera share detach failed", e);
+        } finally {
+            data.recycle();
+            reply.recycle();
+        }
+    }
 
     private void fail(long generation, String reason, Throwable error) {
         synchronized (lock) {

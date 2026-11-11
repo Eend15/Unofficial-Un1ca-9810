@@ -252,21 +252,135 @@ def patch_keystore(text: str) -> str:
     return text
 
 
+# Android 10 startIRCamera/stopIRCamera call PowerManager.setAutoBrightnessLimit(II),
+# which One UI 8 removed: with automatic brightness on, enrollment and unlock threw
+# NoSuchMethodError and killed the service (the enroll screen then hit an ANR).
+BRIGHTNESS_OLD = re.compile(
+    r"invoke-virtual \{(v\d+|p\d+), (v\d+|p\d+), (v\d+|p\d+)\}, "
+    r"Landroid/os/PowerManager;->setAutoBrightnessLimit\(II\)V")
+BRIGHTNESS_NEW = (r"invoke-static {\1, \2, \3}, Lcom/samsung/android/server/iris/Un1caIrisGrace;"
+                  r"->setAutoBrightnessLimit(Landroid/os/PowerManager;II)V")
+
+
+def patch_brightness(text: str) -> str:
+    if "Un1caIrisGrace;->setAutoBrightnessLimit" in text:
+        if BRIGHTNESS_OLD.search(text):
+            raise ValueError("setAutoBrightnessLimit only partly redirected")
+        return text
+    text, count = BRIGHTNESS_OLD.subn(BRIGHTNESS_NEW, text)
+    if count != 2:
+        raise ValueError(f"expected 2 setAutoBrightnessLimit(II) calls, found {count}")
+    return text
+
+
+LOCKPATTERN_OLD = "Lcom/android/internal/widget/LockPatternUtils;->getBiometricLockscreen(II)I"
+LOCKPATTERN_NEW = "Lcom/android/internal/widget/LockPatternUtils;->getBiometricState(II)I"
+
+
+def patch_lockpattern(text: str) -> str:
+    if LOCKPATTERN_NEW in text:
+        if LOCKPATTERN_OLD in text:
+            raise ValueError("getBiometricLockscreen only partly replaced")
+        return text
+    if text.count(LOCKPATTERN_OLD) != 2:
+        raise ValueError(f"expected 2 getBiometricLockscreen(II)I calls, found {text.count(LOCKPATTERN_OLD)}")
+    return text.replace(LOCKPATTERN_OLD, LOCKPATTERN_NEW)
+
+
+FACE_SHARE_CLASS = "Lcom/samsung/android/server/iris/Un1caIrisFaceShare;"
+FACE_SHARE_MARKER = "# UN1CA: Intelligent Scan shares the front camera with face unlock"
+FACE_SESSION_CALL = (
+    "    invoke-virtual {v2, v1, v3, v4}, Landroid/hardware/camera2/CameraDevice;"
+    "->createCaptureSessionByOutputConfigurations(Ljava/util/List;"
+    "Landroid/hardware/camera2/CameraCaptureSession$StateCallback;Landroid/os/Handler;)V\n"
+)
+WRAPPER_ONTRANSACT = f"""
+{FACE_SHARE_MARKER}
+.method public onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z
+    .registers 7
+
+    iget-object v0, p0, Lcom/samsung/android/server/iris/IrisService$IrisServiceWrapper;->this$0:Lcom/samsung/android/server/iris/IrisService;
+
+    invoke-static {{v0, p1, p2, p3}}, {FACE_SHARE_CLASS}->onTransact(Ljava/lang/Object;ILandroid/os/Parcel;Landroid/os/Parcel;)Z
+
+    move-result v0
+
+    if-eqz v0, :un1ca_super
+
+    const/4 v0, 0x1
+
+    return v0
+
+    :un1ca_super
+    invoke-super {{p0, p1, p2, p3, p4}}, Lcom/samsung/android/camera/iris/IIrisService$Stub;->onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z
+
+    move-result v0
+
+    return v0
+.end method
+"""
+
+
+AUTH_HEAD = (".method public authenticate(Landroid/os/IBinder;Landroid/os/IBinder;IIIIJI"
+             "Lcom/samsung/android/camera/iris/IIrisServiceReceiver;ILjava/lang/String;"
+             "Landroid/os/Bundle;[B)V\n")
+
+
+def patch_face_share_wrapper(text: str) -> str:
+    if FACE_SHARE_MARKER in text:
+        return text
+    if ".method public onTransact(" in text:
+        raise ValueError("IrisServiceWrapper already overrides onTransact")
+    if text.count(AUTH_HEAD) != 1:
+        raise ValueError("IrisServiceWrapper.authenticate does not match the Android 10 code")
+    # Mark the start of an iris scan setup before the first instruction (no registers used).
+    start = text.index(AUTH_HEAD) + len(AUTH_HEAD)
+    lines = text[start:].split("\n")
+    i = next(n for n, l in enumerate(lines) if l.strip() and not l.strip().startswith("."))
+    lines.insert(i, f"    {FACE_SHARE_MARKER}\n    invoke-static {{}}, {FACE_SHARE_CLASS}->onAuthenticateStart()V\n")
+    text = text[:start] + "\n".join(lines)
+    return text.rstrip("\n") + "\n" + WRAPPER_ONTRANSACT
+
+
+def patch_face_share_session(text: str) -> str:
+    if FACE_SHARE_MARKER in text:
+        return text
+    if text.count(FACE_SESSION_CALL) != 1:
+        raise ValueError("IRV2Controller.startFrontPreview session call does not match the Android 10 code")
+    # v1 is the OutputConfiguration list; the helper only appends to it.
+    return text.replace(FACE_SESSION_CALL, f"""    {FACE_SHARE_MARKER}
+    invoke-static {{p0, v1}}, {FACE_SHARE_CLASS}->onFrontSession(Ljava/lang/Object;Ljava/util/List;)V
+
+""" + FACE_SESSION_CALL, 1)
+
+
 GRACE_SMALI = "com/samsung/android/server/iris/Un1caIrisGrace.smali"
+FACE_SHARE_SMALI = "com/samsung/android/server/iris/Un1caIrisFaceShare.smali"
 
 
 def main(root: Path, helper_smali_root: Path):
     svc = root / "smali/com/samsung/android/server/iris/IrisService.smali"
     # Un1caIrisGrace (registration window, exposure cap) lives next to IrisService.
     shutil.copyfile(helper_smali_root / GRACE_SMALI, root / "smali" / GRACE_SMALI)
+    # Un1caIrisFaceShare and its synthetic lambda classes.
+    share = sorted((helper_smali_root / FACE_SHARE_SMALI).parent.glob("Un1caIrisFaceShare*.smali"))
+    if not any(p.name == Path(FACE_SHARE_SMALI).name for p in share):
+        raise ValueError("Un1caIrisFaceShare smali missing; run tools/regen_smali.sh")
+    for p in share:
+        shutil.copyfile(p, root / "smali" / Path(FACE_SHARE_SMALI).parent / p.name)
     text = svc.read_text()
-    out = patch_keystore(patch_grace(patch_boost(patch_surface(patch_keyguard(text)))))
-    if patch_keystore(patch_grace(patch_boost(patch_surface(patch_keyguard(out))))) != out:
+    out = patch_brightness(patch_keystore(patch_grace(patch_boost(patch_surface(patch_keyguard(text))))))
+    if patch_brightness(patch_keystore(patch_grace(patch_boost(patch_surface(patch_keyguard(out)))))) != out:
         raise ValueError("not idempotent")
     svc.write_text(out)
+    wrapper = svc.parent / "IrisService$IrisServiceWrapper.smali"
+    out = patch_face_share_wrapper(patch_lockpattern(wrapper.read_text()))
+    if patch_face_share_wrapper(patch_lockpattern(out)) != out:
+        raise ValueError("not idempotent")
+    wrapper.write_text(out)
     irv2 = svc.parent / "IRV2Controller.smali"
-    out = patch_exposure(irv2.read_text())
-    if patch_exposure(out) != out:
+    out = patch_face_share_session(patch_exposure(irv2.read_text()))
+    if patch_face_share_session(patch_exposure(out)) != out:
         raise ValueError("not idempotent")
     irv2.write_text(out)
     for name in OPEN_ORDER_CLASSES:
@@ -277,7 +391,8 @@ def main(root: Path, helper_smali_root: Path):
         path.write_text(out)
     print("SecIrisService: keyguard component resolved by name, Surface parcel rebuilt for Android 16, "
           "camera characteristics loaded before openCamera, CPU boost, registration window, "
-          "exposure cap and KeyStoreAuthorization hooked")
+          "exposure cap, KeyStoreAuthorization, LockPatternUtils.getBiometricState and "
+          "One UI 8 auto brightness limit hooked, front camera shared with face unlock")
 
 
 if __name__ == "__main__":

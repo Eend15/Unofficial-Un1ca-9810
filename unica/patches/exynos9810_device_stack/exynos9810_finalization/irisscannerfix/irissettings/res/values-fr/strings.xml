@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">"Le capteur d'iris ne répond pas. Réessayez ultérieurement."</string>
     <string name="iris_hw_problem_msg">Si cela se reproduit, redémarrez votre téléphone.</string>
     <string name="lockpattern_retry_button_text">Réessayer</string>
+    <string name="bio_intelligentscan_title">Analyse intelligente</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Utilisez la reconnaissance faciale et par iris simultanément pour améliorer la précision et la sécurité.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Votre visage et vos iris ont été enregistrés.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Enregistrement visage et iris</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Supprimer données visage et iris</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">"Supprimer les données de visage et d'iris ?"</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">"Si vous utilisez l'authentification faciale ou par iris, vous devrez enregistrer à nouveau votre visage ou vos iris pour vous connecter à ces applications."</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Utilisez simultanément la reconnaissance par iris et faciale pour sécuriser et faciliter le déverrouillage et la vérification.</string>
+    <string name="sec_intelligentscan_unlock_title">Déverrouill. Analyse intelligente</string>
+    <string name="sec_intelligentscan_unlock_summary">"Déverrouillez votre téléphone en utilisant l'analyse combinée du visage et des iris."</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Analyse intelligente écran allumé</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">"Déverrouillez votre téléphone avec la fonction Analyse intelligente dès que l'écran s'allume, sans glissement préalable."</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">"Lorsque vous effectuez un déverrouillage avec la fonction Analyse intelligente, restez sur l'écran de verrouillage jusqu'à ce que vous fassiez glisser un doigt."</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">La fonction Analyse intelligente est désactivée automatiquement lorsque les éléments Visage et Iris sont désactivés.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Les éléments Visage et Iris sont désactivés automatiquement lorsque la fonction Analyse intelligente est désactivée.</string>
 </resources>

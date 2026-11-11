@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">ເຊັນເຊີມ່ານຕາບໍ່ຕອບສະໜອງ. ລອງໃໝ່ອີກພາຍຫຼັງ.</string>
     <string name="iris_hw_problem_msg">ຖ້າສິ່ງນີ້ຍັງສືບຕໍ່ເກີດຂຶ້ນຢູ່, ປິດເປີດໂທລະສັບຂອງທ່ານຄືນໃໝ່.</string>
     <string name="lockpattern_retry_button_text">ລອງໃໝ່ອີກ</string>
+    <string name="bio_intelligentscan_title">ການສະແກນທີ່ສະຫຼາດ</string>
+    <string name="sec_intelligentscan_choose_lock_summary">ໃຊ້ການຈົດຈຳໃບໜ້າແລະມ່ານຕາຮ່ວມກັນສຳລັບຄວາມຖືກຕ້ອງ ແລະ ຄວາມປອດໄພທີ່ດີກວ່າ.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">ໃບໜ້າ ແລະ ມ່ານຕາຂອງທ່ານໄດ້ຖືກລົງທະບຽນແລ້ວ.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">ລົງທະບຽນໃບໜ້າ ແລະ ມ່ານຕາ</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">ເອົາຂໍ້ມູນໃບໜ້າ ແລະ ມ່ານຕາອອກໄປ</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">ເອົາຂໍ້ມູນໃບໜ້າ ແລະ ມ່ານຕາອອກໄປບໍ?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">ຖ້າທ່ານກຳລັງໃຊ້ການຮັບຮອງໃບໜ້າ ຫຼື ມ່ານຕາໃນແອັບ, ທ່ານຈຳເປັນຈະຕ້ອງໄດ້ລົງທະບຽນໃບໜ້າ ຫຼື ມ່ານຕາຂອງທ່ານອີກຄັ້ງ ເພື່ອລົງຊື່ເຂົ້າໃຊ້ແອັບເຫຼົ່ານັ້ນ.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">ໃຊ້ການຈົດຈຳມ່ານຕາ ແລະ ໃບໜ້າພ້ອມກັນເພື່ອການປົດລັອກ ແລະ ການກວດສອບທີ່ງ່າຍ ແລະ ສະດວກສະບາຍ.</string>
+    <string name="sec_intelligentscan_unlock_title">ການປົດລັອກການສະແກນທີ່ສະຫຼາດ</string>
+    <string name="sec_intelligentscan_unlock_summary">ປົດລັອກໂທລະສັບຂອງທ່ານໂດຍໃຊ້ການສະແກນໃບໜ້າແລະມ່ານຕາທີ່ລວມເຂົ້າກັນ.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">ການສະແກນທີ່ສະຫຼາດໃນໜ້າຈໍທີ່ເປີດຢູ່</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">ປົດລັອກໂທລະສັບຂອງທ່ານດ້ວຍການສະແກນທີ່ສະຫຼາດທັນທີທີ່ໜ້າຈໍເປີດ, ໂດຍບໍ່ຕ້ອງມີການຮູດກ່ອນ.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">ເມື່ອທ່ານປົດລັອກດ້ວຍການສະແກນທີ່ສະຫຼາດ, ໃຫ້ຢູ່ໃນໜ້າຈໍລັອກຈົນກວ່າທ່ານຈະຮູດ.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">ການສະແກນທີ່ສະຫຼາດຖືກປິດໂດຍອັດຕະໂນມັດ ເມື່ອທັງໃບໜ້າ ແລະ ມ່ານຕາຖືກປິດ.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ໃບໜ້າ ແລະ ມ່ານຕາປິດໂດຍອັດຕະໂນມັດ ເມື່ອສະແກນທີ່ສະຫຼາດປິດຢູ່.</string>
 </resources>

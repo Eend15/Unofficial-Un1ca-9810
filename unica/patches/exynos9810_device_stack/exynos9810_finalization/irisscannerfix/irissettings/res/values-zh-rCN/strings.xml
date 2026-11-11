@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">虹膜传感器未响应。请稍后重试。</string>
     <string name="iris_hw_problem_msg">如果仍然如此，请重启您的手机。</string>
     <string name="lockpattern_retry_button_text">重试</string>
+    <string name="bio_intelligentscan_title">智能扫描</string>
+    <string name="sec_intelligentscan_choose_lock_summary">同时使用面部和虹膜识别来获得更好的准确性和安全性</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">您已注册面部和虹膜</string>
+    <string name="sec_intelligentscan_register_face_and_iris">注册面部和虹膜</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">移除面部和虹膜数据</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">是否移除面部和虹膜数据？</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">如果您在应用程序中使用面部或虹膜身份验证，为了登录这些应用程序，您将需要重新注册面部或虹膜。</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">同时使用虹膜和面部识别，解锁和验证更加安全方便。</string>
+    <string name="sec_intelligentscan_unlock_title">【智能扫描】解锁</string>
+    <string name="sec_intelligentscan_unlock_summary">将面部和虹膜扫描结合使用来解锁您的手机</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">亮屏智能扫描</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">屏幕打开后无需滑动，立即使用【智能扫描】解锁手机。</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">当使用智能扫描解锁时，留在锁定屏幕中，直到您滑动屏幕。</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">【智能扫描】将在关闭面部和虹膜扫描时自动关闭。</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">关闭【智能扫描】时，自动关闭面部和虹膜扫描。</string>
 </resources>

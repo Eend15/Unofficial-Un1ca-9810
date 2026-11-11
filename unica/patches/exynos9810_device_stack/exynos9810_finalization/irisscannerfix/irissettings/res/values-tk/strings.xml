@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Göz sensory jogap bermeýär. Soňra täzeden synanyşyň.</string>
     <string name="iris_hw_problem_msg">Ol gaýtalanyp dursa, telefonyňyzy açyp ýapyň.</string>
     <string name="lockpattern_retry_button_text">Täzeden synanyş</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Has gowy takyklygy we howpsuzlygy üçin, ýüz we göz tanaýyşy birlikde ulanyň.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Ýüzüňiz we gözleriňiz bellige alyndy.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Ýüz we gözleri bellige almak</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Ýüz we göz maglumatyny aýyr</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Ýüz we göz maglumatyny aýyrmalymy?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Ýüz ýa-da göz hakykylyk barlagy goýmada ulanýan bolsaňyz, şol goýmalara girmek üçin, siz ýüzüňizi ýa-da gözleriňizi bellige almaly.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Howpsuz, oňaýly gulp açyşy we tassyklaýyş üçin gözleri we ýüz tanaýyşy ulanyň.</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan gulpy açmak</string>
+    <string name="sec_intelligentscan_unlock_summary">Ýüz we göz birleşik skanirleme ulanmagy arkaly telefonyňyzyň gulpyny açyň.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelligent Scan ekran aç</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Ekran açylan badyna, ilki bilen syrman, telefonyňyzyň gulpuny Intelligent Scan bilen açyň.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Intelligent Scan bilen gulpy açanyňyzda, syrýançaňyz Gulply ekranda galyň.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Ýüz we Göz ikisinem ýapyk wagty Intelligent Scan awtomatiki ýapylýar.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan ýapylan wagty Ýüz we Göz awtomatiki ýapylýar.</string>
 </resources>

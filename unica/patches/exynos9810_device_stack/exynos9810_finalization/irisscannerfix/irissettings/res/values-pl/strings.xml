@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Czujnik tęczówek nie reaguje. Spróbuj ponownie później.</string>
     <string name="iris_hw_problem_msg">Jeśli problem nie ustępuje, uruchom telefon ponownie.</string>
     <string name="lockpattern_retry_button_text">Ponów</string>
+    <string name="bio_intelligentscan_title">Inteligentne skanowanie</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Użyj razem rozpoznawania twarzy i tęczówki w celu zwiększenia dokładności i bezpieczeństwa.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Twoja twarz i tęczówki zostały zarejestrowane.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Zarejestruj twarz i tęczówki</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Usuń dane twarzy i tęczówek</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Usunąć dane twarzy i tęczówek?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Jeśli używasz uwierzytelniania twarzą lub tęczówką w aplikacjach, będzie trzeba ponownie zarejestrować twarz lub tęczówki, aby logować się do tych aplikacji.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Użyj razem rozpoznawania tęczówek i twarzy, aby bezpiecznie i wygodnie odblokowywać i weryfikować.</string>
+    <string name="sec_intelligentscan_unlock_title">Odblok. Inteligentne skanowanie</string>
+    <string name="sec_intelligentscan_unlock_summary">Odblokuj telefon przy użyciu połączonego skanowania twarzy i tęczówki.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelig. skanow. przy wł. ekr.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Odblokuj telefon Inteligentnym skanowaniem zaraz po włączeniu ekranu, bez wcześniejszego przeciągania.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Podczas odblokowywania za pomocą Inteligentnego skanowania pozostań na ekranie blokady do czasu przeciągnięcia palcem.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Inteligentne skanowanie jest automatycznie wyłączane, gdy są wyłączone obydwie funkcje Twarz i Tęczówka.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Funkcje Twarz i Tęczówka są automatycznie wyłączane, gdy Inteligentne skanowanie jest wyłączone.</string>
 </resources>

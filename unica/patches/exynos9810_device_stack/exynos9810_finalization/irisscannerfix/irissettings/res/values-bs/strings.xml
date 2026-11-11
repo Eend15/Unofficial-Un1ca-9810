@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Senzor za šarenicu oka ne reaguje. Pokušajte ponovno kasnije.</string>
     <string name="iris_hw_problem_msg">Ako se ovo nastavi događati, ponovno pokrenite telefon.</string>
     <string name="lockpattern_retry_button_text">Pokušaj ponovno</string>
+    <string name="bio_intelligentscan_title">Inteligentno skeniranje</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Koristite prepoznavanje lica i šarenica očiju za bolju preciznost i sigurnost.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Vaše lice i šarenice očiju su registrovane.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Registrujte lice i šar. očiju</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Ukloni podatke lica i šarenice</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Ukloniti podatke lica i šarenice?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Ako koristite provjeru vjerodostojnosti lica ili šarenica očiju u aplikacijama, potrebno je da ponovno registrujete lice i šarenice očiju za prijavljivanje na te aplikacije.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Koristite prepoznavanje šarenica i lica radi sigurnog i praktičnog zaključavanja i potvrde.</string>
+    <string name="sec_intelligentscan_unlock_title">Otključav. Intelig. skeniranjem</string>
+    <string name="sec_intelligentscan_unlock_summary">Otključajte telefon pomoću kombinovanog skeniranja lica i šarenice oka.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelig. sken. pri uklj. ekrana</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Otključajte telefon pomoću Inteligentnog skeniranja čim se ekran uključi, bez prethodnog prevlačenja prstom.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Pri otključavanju Inteligentnim skeniranjem, ostanite na Zaključanom ekranu dok ne prevučete.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Inteligentno skeniranje se automatski isključuje pri isključivanju Lica i Šarenica oka.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Lice i Šarenica oka se automatski isključuju pri isključivanju Inteligentnog skeniranja.</string>
 </resources>

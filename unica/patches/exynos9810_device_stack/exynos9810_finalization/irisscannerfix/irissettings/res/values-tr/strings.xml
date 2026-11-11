@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">İris sensörü yanıt vermiyor. Daha sonra tekrar deneyin.</string>
     <string name="iris_hw_problem_msg">Bu durum devam ederse telefonunuzu yeniden başlatın.</string>
     <string name="lockpattern_retry_button_text">Y.dene</string>
+    <string name="bio_intelligentscan_title">Akıllı tarama</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Daha fazla doğruluk ve güvenlik için yüz ve iris tanımayı birlikte kullanın.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Yüzünüz ve irisleriniz kaydedildi.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Yüzü ve irisleri kaydet</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Yüz ve iris verilerini kaldır</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Yüz ve iris verileri kaldırılsın mı?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Uygulamalarda yüz veya iris doğrulaması kullanıyorsanız bu uygulamalarda oturum açmak için tekrar yüz veya iris kaydı yapmanız gerekir.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Güvenli, kolay kilit açma ve kimlik doğrulama için irisleri ve yüz tanımayı birlikte kullanın.</string>
+    <string name="sec_intelligentscan_unlock_title">Akıllı Tarama ile kilit açma</string>
+    <string name="sec_intelligentscan_unlock_summary">Yüz ve iris taramasını birlikte kullanarak telefonunuzun kilidini açın.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Ekran açık Akıllı Tarama</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Ekran açıldığında kaydırmadan Akıllı Tarama ile telefonunuzun kilidini açın.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Akıllı taramayla kilit açtığınızda kaydırana kadar Kilit ekranında kalır.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Yüz ve İris kapatıldığında Akıllı Tarama otomatik olarak kapatılır.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Akıllı Tarama kapatıldığında Yüz ve İris otomatik olarak kapatıldı.</string>
 </resources>

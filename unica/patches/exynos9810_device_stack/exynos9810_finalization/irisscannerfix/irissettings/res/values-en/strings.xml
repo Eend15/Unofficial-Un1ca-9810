@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">The iris sensor is not responding. Try again later.</string>
     <string name="iris_hw_problem_msg">If this keeps happening, restart your phone.</string>
     <string name="lockpattern_retry_button_text">Retry</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Use face and iris recognition together for better accuracy and security.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Your face and irises have been registered.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Register face and irises</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Remove face and iris data</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Remove face and iris data?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">"If you're using face or iris authentication in apps, you'll need to register your face or irises again to sign in to those apps."</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Use irises and face recognition together for safe, convenient unlocking and verification.</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan unlock</string>
+    <string name="sec_intelligentscan_unlock_summary">Unlock your phone using combined face and iris scanning.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Screen-on Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Unlock your phone with Intelligent Scan as soon as the screen turns on, without swiping first.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">When you unlock with Intelligent Scan, stay on the Lock screen until you swipe.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Intelligent Scan is turned off automatically when both Face and Iris are turned off.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Face and Iris turned off automatically when Intelligent Scan turned off.</string>
 </resources>

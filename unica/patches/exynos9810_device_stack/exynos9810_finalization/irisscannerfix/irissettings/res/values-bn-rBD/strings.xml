@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">চোখের মণির সেন্সর সাড়া দিচ্ছে না। পরে আবার চেষ্টা করুন।</string>
     <string name="iris_hw_problem_msg">এটি ঘটতে থাকলে, আপনার ফোন পুনরায় চালু করুন৷</string>
     <string name="lockpattern_retry_button_text">পুন. চেষ্টা</string>
+    <string name="bio_intelligentscan_title">ইন্টেলিজেন্ট স্ক্যান</string>
+    <string name="sec_intelligentscan_choose_lock_summary">আরো বেশি নির্ভুলতা ও নিরাপত্তার জন্য মুখ ও চোখের মণি শনাক্তকরণ একসাথে ব্যবহার করুন।</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">আপনার মুখ ও চোখের মণি নিবন্ধিত হয়েছে৷</string>
+    <string name="sec_intelligentscan_register_face_and_iris">মুখ ও চোখের মণি নিবন্ধন করুন</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">মুখ ও চোখের মণির ডাটা অপসারণ করুন</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">মুখ ও চোখের মণির ডাটা অপসারণ করবেন?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">যদি আপনি অ্যাপগুলোতে মুখ বা চোখের মণি সত্যায়ন ব্যবহার করেন, তাহলে সেই অ্যাপগুলোতে সাইন-ইন করার জন্য আপনাকে আপনার মুখ বা চোখের মণি আবার নিবন্ধন করতে হবে।</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">নিরাপদে, সুবিধাজনকভাবে আনলক ও যাচাই করতে চোখের মণি ও মুখ শনাক্তকরণ একসাথে ব্যবহার করুন৷</string>
+    <string name="sec_intelligentscan_unlock_title">ইন্টেলিজেন্ট স্ক্যান আনলক</string>
+    <string name="sec_intelligentscan_unlock_summary">মুখ ও চোখের মণির সম্মিলিত স্ক্যানিং ব্যবহার করে আপনার ফোন আনলক করুন৷</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">স্ক্রিন-চালু হলে ইন্টেলিজেন্ট স্ক্যান</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">স্ক্রিন চালু হওয়ার সাথে সাথে, প্রথমে সোয়াইপ না করে ইন্টেলিজেন্ট স্ক্যান-এর মাধ্যমে আপনার ফোন আনলক করুন৷</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">আপনি ইন্টেলিজেন্ট স্ক্যানের মাধ্যমে আনলক করার সময়, সোয়াইপ না করা পর্যন্ত লক স্ক্রিনে থাকুন৷</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">মুখ ও চোখের মণি উভয়টি বন্ধ করলে ইন্টেলিজেন্ট স্ক্যান স্বয়ংক্রিয়ভাবে বন্ধ হয়ে যায়।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ইন্টেলিজেন্ট স্ক্যান বন্ধ করা হলে মুখ ও চোখের মণি স্বয়ংক্রিয়ভাবে বন্ধ হয়ে যায়।</string>
 </resources>

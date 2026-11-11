@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">આઇરિસ સેન્સર પ્રતિસાદ આપી રહ્યું નથી. પછીથી ફરી પ્રયાસ કરો.</string>
     <string name="iris_hw_problem_msg">જો આ થવાનું ચાલુ રહે, તો તમારા ફોનને ફરીથી શરૂ કરો.</string>
     <string name="lockpattern_retry_button_text">ફરીથી પ્રયત્ન કરો</string>
+    <string name="bio_intelligentscan_title">ઇન્ટેલિજન્ટ સ્કેન</string>
+    <string name="sec_intelligentscan_choose_lock_summary">બહેતર સચોટતા અને સુરક્ષા માટે ચહેરો અથવા આઇરિસ ઓળખાણનો ઉપયોગ કરો.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">તમારો ચહેરો અને આઇરિસિઝ નોંધાયેલ છે.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">ચહેરો અને આઇરિસિઝની નોંધણી કરો</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">ચહેરો અને આઇરિસ ડેટાને દૂર કરો</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">ચહેરો અને આઇરિસ ડેટા દૂર કરીએ?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">જો તમે એપ્સમાં ચહેરો અથવા આઇરિસ પ્રમાણીકરણનો ઉપયોગ કરી રહ્યાં છો તો, તે એપ્સ પર સાઇન ઇન કરવા માટે તમને ચહેરો અથવા આઇરિસને નોંધણી કરવાની જરૂર છે.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">સુરક્ષિત, અનુકૂળ અનલૉકિંગ અને ચકાસણી માટે આઇરિસિઝ અને ચહેરા ઓળખાણનો એકસાથે ઉપયોગ કરો.</string>
+    <string name="sec_intelligentscan_unlock_title">ઇન્ટેલિજન્ટ સ્કેન અનલૉક કરો</string>
+    <string name="sec_intelligentscan_unlock_summary">સંયુક્ત ચહેરો અને આઇરિસ સ્કેનિગનો ઉપયોગ કરીને તમારા ફોનને અનલૉક કરો.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">ઇન્ટેલિજન્ટ સ્કેન સ્ક્રીન-ચાલુ કરો</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">જેમ સ્ક્રીન ચાલુ થાય તેમ તમારા ફોનને પહેલા સ્વાઇપ કર્યા વિના, તમારા ઇન્ટેલિજન્ટ સ્કેન સાથે અનલૉક કરો.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">તમે જ્યારે ઇન્ટેલિજન્ટ સ્કૅન વડે અનલૉક કરો, ત્યારે તમે સ્વાઇપ ન કરો ત્યાં સુધી લૉક સ્ક્રીન પર રહો.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">જ્યારે ચહેરો અને આઇરિસ બંધ હોય ત્યારે ઇન્ટેલિજન્ટ સ્કેન સ્વચાલિત રીતે બંધ થશે.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">જ્યારે ઇન્ટેલિજન્ટ સ્કેન બંધ થશે ત્યારે ચહેરો અને આઇરિસ સ્વચાલિત રીતે બંધ થશે.</string>
 </resources>

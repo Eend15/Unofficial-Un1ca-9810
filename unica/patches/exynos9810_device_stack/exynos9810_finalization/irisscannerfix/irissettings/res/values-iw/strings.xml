@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">חיישן הקשתיות אינו מגיב. נסה שוב מאוחר יותר.</string>
     <string name="iris_hw_problem_msg">אם הבעיה נמשכת, הפעל מחדש את הטלפון שלך.</string>
     <string name="lockpattern_retry_button_text">נסה שוב</string>
+    <string name="bio_intelligentscan_title">סריקה חכמה</string>
+    <string name="sec_intelligentscan_choose_lock_summary">היעזר בזיהוי משולב של פנים וקשתיות כדי לשפר את הדיוק והאבטחה.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">נתוני הפנים והקשתיות שלך נרשמו.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">רשום נתוני פנים וקשתיות</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">הסר נתוני פנים וקשתיות</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">האם להסיר נתוני פנים וקשתיות?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">אם אתה נעזר בזיהוי פנים או קשתיות ביישומים, תצטרך לרשום נתוני פנים או קשתיות מחדש כדי להיכנס אל אותם יישומים.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">היעזר בזיהוי קשתיות וזיהוי פנים יחד, כדי ליהנות מביטחון ונוחות בביטול נעילה ואימות.</string>
+    <string name="sec_intelligentscan_unlock_title">"ביטול נעילה עם 'סריקה חכמה'"</string>
+    <string name="sec_intelligentscan_unlock_summary">בטל את נעילת הטלפון בעזרת סריקה משולבת של נתוני פנים וקשתיות.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">"הפעלת מסך עם 'סריקה חכמה'"</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">"בטל את נעילת הטלפון בעזרת 'סריקה חכמה' ברגע שהמסך יופעל, מבלי להחליק תחילה."</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">"בעת ביטול נעילה בעזרת 'סריקה חכמה', הישאר במסך הנעילה עד להחלקה."</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">"כיבוי התכונות 'פנים' ו'קשתיות' יגרום לכיבוי אוטומטי של התכונה 'סריקה חכמה'."</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">"כיבוי התכונה 'סריקה חכמה' יגרום לכיבוי אוטומטי של התכונה 'פנים וקשתיות'."</string>
 </resources>

@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">حسگر چشم پاسخ نمی‌دهد. بعداً دوباره امتحان کنید.</string>
     <string name="iris_hw_problem_msg">اگر همچنان ادامه داشت، تلفن خود را راه‎اندازی مجدد کنید.</string>
     <string name="lockpattern_retry_button_text">امتحان دوباره</string>
+    <string name="bio_intelligentscan_title">اسکن هوشمند</string>
+    <string name="sec_intelligentscan_choose_lock_summary">برای دقت و امنیت بیشتر، از شناسایی چهره و چشم با هم استفاده کنید.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">چهره و چشم‌های شما ثبت شدند.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">ثبت چهره و چشم‌ها</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">حذف اطلاعات چهره و چشم</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">اطلاعات چهره و چشم حذف شود؟</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">اگر از تایید اعتبار با چهره یا چشم در برنامه‌ها استفاده می‌کنید، باید دوباره چهره و چشم‌های خود را ثبت کنید تا بتوانید به آن برنامه‌ها وارد شوید.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">برای تایید اعتبار و بازگشایی قفل راحت و ایمن، از شناسایی چشم و چهره با هم استفاده کنید.</string>
+    <string name="sec_intelligentscan_unlock_title">بازگشایی قفل اسکن هوشمند</string>
+    <string name="sec_intelligentscan_unlock_summary">با ترکیب اسکن چهره و چشم، قفل تلفنتان را باز کنید.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">اسکن هوشمند صفحه</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">با روشن شدن صفحه، بدون کشیدن صفحه در ابتدا، قفل تلفن را با اسکن هوشمند باز کنید.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">وقتی با اسکن هوشمند قفل را باز می‌کنید، در صفحه قفل می‌ماند تا وقتی انگشت را روی صفحه بکشید.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">وقتی هم چهره و هم چشم خاموش شوند، اسکن هوشمند به طور خودکار خاموش می‌شود.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">وقتی اسکن هوشمند خاموش است، چهره و چشم به طور خودکار خاموش می‌شوند.</string>
 </resources>

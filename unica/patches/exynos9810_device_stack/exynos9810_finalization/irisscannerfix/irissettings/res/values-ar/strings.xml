@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">مستشعر بصمة العين لا يستجيب. حاول مرة أخرى لاحقاً.</string>
     <string name="iris_hw_problem_msg">إذا استمر هذا الخطأ، فأعد تشغيل هاتفك.</string>
     <string name="lockpattern_retry_button_text">حاول ثانية</string>
+    <string name="bio_intelligentscan_title">المسح الذكي</string>
+    <string name="sec_intelligentscan_choose_lock_summary">استخدم ميزتي التعرف على الوجه وبصمة العين معاً للحصول على دقة وحماية أفضل.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">تم تسجيل وجهك وبصمة عينيك.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">تسجيل الوجه وبصمة العينين</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">إزالة بيانات الوجه وبصمة العين</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">هل تريد إزالة بيانات الوجه وبصمة العين؟</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">إذا كنت تستخدم المصادقة عبر التعرف على الوجه أو بصمة العين، فستحتاج إلى تسجيل وجهك أو بصمة عينيك مجدداً لتسجيل الدخول إلى تلك التطبيقات.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">استخدم ميزتَي التعرف على بصمة العينين والوجه معاً لإلغاء القفل والتحقق بشكل آمن ومناسب.</string>
+    <string name="sec_intelligentscan_unlock_title">إلغاء قفل المسح الذكي</string>
+    <string name="sec_intelligentscan_unlock_summary">قم بإلغاء قفل هاتفك باستخدام الجمع بين مسح الوجه ومسح بصمة العين.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">المسح الذكي والشاشة مفتوحة</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">قم بإلغاء قفل هاتفك عن طريق المسح الذكي عند تشغيل الشاشة، من دون سحبها أولاً.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">عندما تقوم بإلغاء القفل بواسطة المسح الذكي، ابقَ على شاشة القفل حتى تقوم بالسحب.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">يتم إيقاف تشغيل المسح الذكي تلقائياً عند إيقاف تشغيل كل من الوجه وبصمة العين.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">يتم إيقاف تشغيل الوجه وبصمة العين تلقائياً عند إيقاف تشغيل المسح الذكي.</string>
 </resources>

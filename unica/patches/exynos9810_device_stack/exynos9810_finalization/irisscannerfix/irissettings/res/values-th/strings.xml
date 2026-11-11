@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">เซ็นเซอร์ม่านตาไม่ตอบสนอง ลองใหม่ภายหลัง</string>
     <string name="iris_hw_problem_msg">หากยังเกิดซ้ำ ให้เริ่มโทรศัพท์ของคุณใหม่</string>
     <string name="lockpattern_retry_button_text">ลอง​ใหม่</string>
+    <string name="bio_intelligentscan_title">การสแกนอัจฉริยะ</string>
+    <string name="sec_intelligentscan_choose_lock_summary">ใช้การจำแนกม่านตาและใบหน้าร่วมกันเพื่อความแม่นยำและความปลอดภัยที่ดีขึ้น</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">ลงทะเบียนใบหน้าและม่านตาของคุณแล้ว</string>
+    <string name="sec_intelligentscan_register_face_and_iris">ลงทะเบียนใบหน้าและม่านตา</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">ลบข้อมูลใบหน้าและม่านตาออก</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">ลบข้อมูลใบหน้าและม่านตาออกหรือไม่</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">หากคุณกำลังใช้การยืนยันด้วยใบหน้าหรือม่านตาในแอพ คุณจำเป็นต้องลงทะเบียนใบหน้าและม่านตาของคุณอีกครั้งเพื่อเข้าสู่ระบบแอพเหล่านั้น</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">ใช้การจำแนกม่านตาและใบหน้าร่วมกันเพื่อการปลดล็อกและการยืนยันที่ปลอดภัยและสะดวกสบาย</string>
+    <string name="sec_intelligentscan_unlock_title">ปลดล็อกการสแกนอัจฉริยะ</string>
+    <string name="sec_intelligentscan_unlock_summary">ปลดล็อกโทรศัพท์ของคุณโดยใช้การสแกนใบหน้าและม่านตาที่รวมเข้าด้วยกัน</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">การสแกนอัจฉริยะแบบเปิดหน้าจอ</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">ปลดล็อกโทรศัพท์ของคุณด้วยการสแกนอัจฉริยะทันทีที่หน้าจอเปิด โดยไม่ต้องปัดก่อน</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">เมื่อคุณปลดล็อกด้วย การสแกนอัจฉริยะ ให้อยู่ในหน้าจอล็อกจนกว่าคุณจะปัด</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">ปิดการสแกนอัจฉริยะโดยอัตโนมัติเมื่อปิดทั้งใบหน้าและม่านตา</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ปิดใบหน้าและม่านตาโดยอัตโนมัติเมื่อปิดการสแกนอัจฉริยะ</string>
 </resources>

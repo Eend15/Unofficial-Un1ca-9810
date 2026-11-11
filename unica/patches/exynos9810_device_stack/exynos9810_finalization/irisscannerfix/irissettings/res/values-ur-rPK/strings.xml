@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">آئریسز سینسر جواب نہیں دے رہا ہے۔ بعد میں دوبارہ کوشش کریں۔</string>
     <string name="iris_hw_problem_msg">اگر یہ ہوتا رہتا ہے، تو اپنا فون پھر سے اسٹارٹ کریں۔</string>
     <string name="lockpattern_retry_button_text">دوبارہ کوشش</string>
+    <string name="bio_intelligentscan_title">انٹیلیجنٹ اسکین</string>
+    <string name="sec_intelligentscan_choose_lock_summary">بہتر درستگی اور سیکیورٹی کے لیے چہرہ اور آئریس پہچان ایک ساتھ استعمال کریں۔</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">آپ کا چہرہ اور آئریسیز رجسٹر ہوگیا ہے۔</string>
+    <string name="sec_intelligentscan_register_face_and_iris">چہرہ اور آئریسز رجسٹر کریں</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">چہرہ اور آئریس ڈیٹا کو ہٹائیں؟</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">چہرہ اور آئریس ڈیٹا کو ہٹائیں؟</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">اگر آپ ایپلیکیشنز میں چہرہ یا آئریس توثیق کاری استعمال کررہے ہیں، تو آپ کو ان ایپلیکیشنز میں سائن ان کرنے کے لیے اپنا چہرہ یا آئریسز دوبارہ رجسٹر کرنے کی ضرورت پڑے گی۔</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">محفوظ، آسان انلاک کرنے اور تصدیق کے لیے آئریسز اور چہرہ پہچان کو ایک ساتھ استعمال کریں۔</string>
+    <string name="sec_intelligentscan_unlock_title">انٹیلیجنٹ اسکین ان لاک</string>
+    <string name="sec_intelligentscan_unlock_summary">ملاجلا چہرہ اور ائریس اسکیننگ کے استعمال سے اپنا فون انلاک کریں۔</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">اسکرین-آن انٹیلیجنٹ اسکین</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">پہلے سوائپ کیے بغیر، اسکرین آن ہوتے ہی انٹیلیجنٹ اسکین کے ذریعہ اپنا فون انلاک کریں۔</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">جب آپ انٹیلیجنٹ اسکین کے ذریعہ انلاک کرتے ہیں، تو لاک اسکرین پر تب تک رہیں جب تک آپ سوائپ نہ کرلیں۔</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">چہرہ اور آئریس دونوں آف کیے جانے پر انٹیلیجنٹ اسکین خودکار طورپر آف ہوجاتا ہے۔</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">انٹیلیجنٹ اسکین آف ہونے پر چہرہ اور آئریس خودکار طورپر آف ہوجاتے ہیں۔</string>
 </resources>

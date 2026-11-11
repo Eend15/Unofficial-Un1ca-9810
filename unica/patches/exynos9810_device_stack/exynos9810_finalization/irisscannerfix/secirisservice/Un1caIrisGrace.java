@@ -1,6 +1,7 @@
 package com.samsung.android.server.iris;
 
 import android.os.Handler;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -30,6 +31,22 @@ final class Un1caIrisGrace {
     private static final int MAX_GAIN = 20;
 
     private Un1caIrisGrace() { }
+
+    /**
+     * Replaces IrisService's PowerManager.setAutoBrightnessLimit(II) calls. One UI 8 only
+     * has the (IIZ) variant (semSetAutoBrightnessLimit passes false), so the Android 10 call
+     * threw NoSuchMethodError in startIRCamera and killed the iris service whenever
+     * automatic brightness was on.
+     */
+    static void setAutoBrightnessLimit(PowerManager pm, int min, int max) {
+        if (pm == null) return;
+        try {
+            PowerManager.class.getMethod("setAutoBrightnessLimit", int.class, int.class, boolean.class)
+                    .invoke(pm, min, max, false);
+        } catch (Throwable t) {
+            Log.w(TAG, "auto brightness limit unavailable", t);
+        }
+    }
 
     /** Called at the start of IRV2Controller.onIRPropertyChanged with the engine's values. */
     static String clampExposure(String value) {

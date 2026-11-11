@@ -56,6 +56,17 @@ vendor; the build stops if they are missing.
   biometric, so Android's strong-auth rules still require the PIN after
   reboot, idle timeout and lockout. "Stay on Lock screen" uses Samsung's own
   biometric-unlocked state and opens on the next swipe.
+* Intelligent Scan (face + iris enrolled) works like stock: one front camera
+  feeds both. SystemUI announces the scan to SecIrisService (binder code
+  `0x00ff5503`) and starts face at once; the face HAL
+  (`FaceunlockFixCamera2FrameSource`) hands its ImageReader to SecIrisService
+  (`0x00ff5501` attach / `0x00ff5502` detach, system uid only) and
+  `Un1caIrisFaceShare` adds it to the iris front session. That session is 9:16,
+  and the 9810 HAL crops every stream in it to that shape, so face asks for the
+  iris size (it receives 1088x1088), takes a centred 4:3 window and scales it to
+  the stock 640x480 three-plane layout faced reads. Without an iris scan face
+  uses its own camera as before. Face stays on the shared stream across iris
+  attempts and continues alone on its own camera once iris gives up.
 
 Settings keys (`Settings.Secure`): `un1ca_iris_unlock`,
 `un1ca_iris_unlock_screen_on`, `un1ca_iris_stay_on_lockscreen`.

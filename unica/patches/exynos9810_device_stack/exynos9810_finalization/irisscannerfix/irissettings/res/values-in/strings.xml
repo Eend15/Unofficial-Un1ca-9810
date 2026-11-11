@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Sensor iris tidak merespons. Coba lagi nanti.</string>
     <string name="iris_hw_problem_msg">Jika ini terus berlangsung, mulai ulang telepon Anda.</string>
     <string name="lockpattern_retry_button_text">Coba ulang</string>
+    <string name="bio_intelligentscan_title">Pemindaian Cerdas</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Gunakan pengenalan wajah dan iris secara bersamaan agar akurasi dan kemanan lebih baik.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Wajah dan iris Anda telah terdaftar.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Daftarkan wajah dan iris</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Hapus data wajah dan iris</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Hapus data wajah dan iris?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Jika Anda menggunakan otentikasi wajah atau iris di aplikasi, Anda harus mendaftarkan kembali wajah atau iris untuk masuk ke aplikasi tersebut.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Gunakan pengenalan wajah dan iris bersamaan untuk membuka kunci dan verifikasi dengan mudah dan aman.</string>
+    <string name="sec_intelligentscan_unlock_title">Buka kunci Pemindaian Cerdas</string>
+    <string name="sec_intelligentscan_unlock_summary">Buka kunci ponsel melalui kombinasi pemindaian wajah dan iris.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Pemindaian Cerdas layar nyala</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Buka kunci ponsel dengan Pemindaian Cerdas segera setelah layar hidup, tanpa mengusapnya terlebih dahulu.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Saat membuka kunci dengan Pemindaian Cerdas, tetaplah pada Layar kunci sampai Anda mengusap.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Pemindaian Cerdas dinonaktifkan secara otomatis saat Wajah dan Iris dinonaktifkan.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Wajah dan Iris dinonaktifkan secara otomatis saat Pemindaian Cerdas dinonaktifkan.</string>
 </resources>

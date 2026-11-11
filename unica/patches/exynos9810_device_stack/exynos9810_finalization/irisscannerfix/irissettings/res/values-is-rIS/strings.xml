@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Lithimnuskynjarinn svarar ekki. Reyndu aftur síðar.</string>
     <string name="iris_hw_problem_msg">Ef þetta kemur ítrekað fyrir skaltu endurræsa símann.</string>
     <string name="lockpattern_retry_button_text">Reyna aftur</string>
+    <string name="bio_intelligentscan_title">Snjöll skönnun</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Nota andlitsgreiningu og augnskanna saman til að auka nákvæmni og öryggi.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Andlitið og lithimnurnar hafa verið skráð.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Skrá andlit og lithimnur</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Fjarl. andlits- og augnskgögn</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Fjarlægja andlits- og augnskannagögn?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Ef þú notar andlits- eða lithimnusannvottun í forritum þarftu að skrá andlitið þitt eða lithimnur aftur til að skrá þig inn á þessi forrit.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Notaðu augnskanna og andlitsgreiningu saman til að tryggja örugga og hentuga opnun og staðfestingu.</string>
+    <string name="sec_intelligentscan_unlock_title">Opna með snjallri skönnun</string>
+    <string name="sec_intelligentscan_unlock_summary">Opna símann með andlitsgreiningu og augnskanna.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Snjöll skönnun á lásskjá</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Taka símann úr lás með snjallri skönnun þegar kviknar á skjánum, án þess að strjúka fyrst.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Vera áfram á lásskjá þangað til strokið er yfir skjáinn, eftir að tekið er úr lás með snjallri skönnun.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Slökkt er sjálfkrafa á snjallri skönnun þegar slökkt er á bæði andlitsgreiningu og augnskanna.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Slökkt er sjálfkrafa á andlitsgreiningu og augnskanna þegar slökkt er á snjallri skönnun.</string>
 </resources>

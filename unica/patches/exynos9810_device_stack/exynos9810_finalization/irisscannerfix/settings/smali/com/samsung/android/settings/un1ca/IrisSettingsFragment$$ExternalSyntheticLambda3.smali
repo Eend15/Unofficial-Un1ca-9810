@@ -30,7 +30,7 @@
     .line 0
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment$$ExternalSyntheticLambda3;->f$0:Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;
 
-    invoke-virtual {v0, p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->lambda$showEnrollError$6$com-samsung-android-settings-un1ca-IrisSettingsFragment(Landroid/content/DialogInterface;)V
+    invoke-virtual {v0, p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->lambda$showEnrollError$7$com-samsung-android-settings-un1ca-IrisSettingsFragment(Landroid/content/DialogInterface;)V
 
     return-void
 .end method

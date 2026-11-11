@@ -139,7 +139,7 @@ def stage() -> None:
     manifest = ("FaceunlockFix Android16 optional genuine stock native runtime\n"
                 "SELinux: reuse existing faced_exec/faced_service; no policy modifications\n"
                 "Enable only with persist.sys.un1ca.faceunlockfix.experimental=1 on a debug build\n"
-                "Default: disabled and oneshot, no vendor Face HAL overwrite\n"
+                "Default: disabled (explicit start only), restarted after a crash, no vendor Face HAL overwrite\n"
                 "Requires framework adapter integration and real enrollment test\n")
     store("README.txt", manifest.encode())
     print("PASS source-only FaceunlockFix native runtime staging; NO DEPLOYMENT")

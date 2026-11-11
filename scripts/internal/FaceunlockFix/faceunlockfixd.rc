@@ -4,10 +4,14 @@
 # retain that security transition, but a different init service name so that
 # this opt-in backend cannot collide with vendor's original "faced" name.
 # The ROM staging step MUST disable BOTH old vendor faced auto-start stanzas.
+# "disabled" keeps it from starting with its class; only the triggers below start
+# it. Not "oneshot": once started, init restarts faced if it crashes. A dead faced
+# made Android fall back to the vendor face HAL (empty template store), which drops
+# the enrolled face and turns Face unlock off in Settings.
 service faceunlockfixd /system/bin/faced
     class late_start
     disabled
-    oneshot
+    restart_period 2
     user system
     group system
     setenv LD_PRELOAD /system/lib64/faceunlockfix/libfaceunlockfix_hwredirect.so

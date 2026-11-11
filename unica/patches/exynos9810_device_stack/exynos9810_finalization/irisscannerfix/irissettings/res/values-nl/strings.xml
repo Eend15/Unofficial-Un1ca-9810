@@ -24,4 +24,20 @@
     <string name="lockpattern_retry_button_text">Opnieuw</string>
     <string name="manage_irises">Irissen beheren</string>
     <string name="iris_verification">Irisverificatie</string>
+    <string name="bio_intelligentscan_title">Intelligente scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Combineer gezichts- en irisherkenning voor betere nauwkeurigheid en veiligheid.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_not_registered_summary">Combineer gezichts- en irisscan voor betere resultaten. Registreer uw gezicht en irissen om Intelligent Scan te gebruiken.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Uw gezicht en irissen zijn geregistreerd.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Gezicht en irissen registreren</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Gezicht- en irisgegevens wissen</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Gezicht- en irisgegevens verwijderen?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Als u gezichts- of irisverificatie in apps gebruikt, moet u uw gezicht of irissen opnieuw registreren om bij deze apps in te loggen.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Combineer iris- en gezichtsherkenning om veilig en handig te ontgrendelen en te verifiëren.</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligente scan ontgrendelen</string>
+    <string name="sec_intelligentscan_unlock_summary">Ontgrendel uw telefoon met gecombineerde gezichts- en irisscan.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelligente scan bij scherm aan</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Ontgrendel uw telefoon met Intelligente scan zodra het scherm wordt ingeschakeld, zonder eerst te vegen.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Wanneer u ontgrendelt met Intelligente scan, blijft u op het Vergrendelscherm totdat u veegt.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Intelligente scan wordt automatisch uitgeschakeld wanneer Gezicht en Iris zijn uitgeschakeld.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Gezicht en Iris automatisch uitgeschakeld wanneer Intelligente scan is uitgeschakeld.</string>
 </resources>

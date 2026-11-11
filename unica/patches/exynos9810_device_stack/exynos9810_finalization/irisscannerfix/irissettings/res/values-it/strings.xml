@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Il sensore delle iridi non risponde. Riprovate più tardi.</string>
     <string name="iris_hw_problem_msg">Se il problema persiste, riavviate il telefono.</string>
     <string name="lockpattern_retry_button_text">Riprova</string>
+    <string name="bio_intelligentscan_title">Scansione intelligente</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Utilizzate il riconoscimento del viso e delle iridi per maggior precisione e protezione.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Il viso e le iridi sono stati registrati.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Registra viso e iridi</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Rimuovi dati di viso e iride</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Rimuovere i dati del viso e dell’iride?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Se utilizzate l’autenticazione del viso o dell’iride nelle applicazioni, dovrete registrare nuovamente il viso o le iridi per accedere a tali applicazioni.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Utilizzate il riconoscimento delle iridi e del viso per delle operazioni di verifica e sblocco sicure e semplici.</string>
+    <string name="sec_intelligentscan_unlock_title">Sblocco Scansione intelligente</string>
+    <string name="sec_intelligentscan_unlock_summary">Consente di sbloccare lo smartphone usando la scansione combinata di viso e iride.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Scans. int. all’accens. schermo</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Consente di sbloccare lo smartphone usando la funzione Scansione intelligente non appena lo schermo si accende, senza dover trascinare lo schermo.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Quando è attivo lo sblocco con Scansione intelligente, rimane sulla schermata di blocco finché non trascinate.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">La funzione Scansione intelligente viene disattivata automaticamente quando Viso e Iride sono disattivati.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Viso e Iride disattivati automaticamente quando Scansione intelligente è disattivata.</string>
 </resources>

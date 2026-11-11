@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Der Irissensor reagiert nicht. Versuchen Sie es später erneut.</string>
     <string name="iris_hw_problem_msg">Wenn dieses Problem bestehen bleibt, starten Sie Ihr Telefon neu.</string>
     <string name="lockpattern_retry_button_text">Wiederholen</string>
+    <string name="bio_intelligentscan_title">Intelligenter Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Die Gesichts- und Iriserkennung für bessere Genauigkeit und mehr Sicherheit zusammen verwenden .</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Ihr Gesicht und Ihre Iris wurden registriert.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Gesicht und Iris registrieren</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Gesichts- und Irisdaten entfernen</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Gesichts- und Irisdaten entfernen?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Wenn Sie die Gesichts- oder Irisauthentifizierung in Apps verwenden, müssen Sie Ihr Gesicht oder Ihre Iris erneut registrieren, um sich bei diesen Apps anzumelden.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Verwenden Sie die Iris- und Gesichtserkennung für sicheres und einfaches Entsperren und Bestätigen zusammen.</string>
+    <string name="sec_intelligentscan_unlock_title">Entsperren mit intelligentem Scan</string>
+    <string name="sec_intelligentscan_unlock_summary">Ihr Telefon mit kombinierten Gesichts- und Irisscans entsperren.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelligenter Scan bei akt. Bilds.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Ihr Telefon, sobald der Bildschirm eingeschaltet wird, mit dem intelligenten Scan entsperren, ohne erst streichen zu müssen.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Wenn Sie mit dem intelligenten Scan entsperren, bleiben Sie auf dem Sperrbildschirm, bis Sie streichen.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Der intelligente Scan wird automatisch ausgeschaltet, wenn Gesichts- und Irisscans ausgeschaltet sind.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Gesichts- und Irisscan werden beim Ausschalten des intelligenten Scans automatisch ausgeschaltet.</string>
 </resources>

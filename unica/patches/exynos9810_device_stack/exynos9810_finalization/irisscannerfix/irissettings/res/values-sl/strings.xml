@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Tipalo za šarenico se ne odziva. Poskusite znova pozneje.</string>
     <string name="iris_hw_problem_msg">Če se to ponavlja, znova zaženite telefon.</string>
     <string name="lockpattern_retry_button_text">Pos.znova</string>
+    <string name="bio_intelligentscan_title">Pametno optično branje</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Sočasno prepoznavanje obraza in šarenic za večjo natančnost in boljšo varnost.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Obraz in šarenici so bili registrirani.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Registrirajte obraz in šarenici</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Odstr. podat. o obrazu in šar.</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Želite odstr. podat. o obrazu in šar.?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Če v aplikacijah uporabljate preverjanje pristnosti z obrazom ali šarenicama, morate za prijavo v te aplikacije znova registrirati svoj obraz ali šarenici.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Za varno in priročno odklepanje ter potrjevanje pristnosti uporabite tako šarenici kot prepoznavanje obraza.</string>
+    <string name="sec_intelligentscan_unlock_title">Odklep. s Pamet. opti. bran.</string>
+    <string name="sec_intelligentscan_unlock_summary">Odklepanje telefona z združenim optičnim branjem obraza in šarenice.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Pamet. opt. br. ob vklop. zasl.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Odklepanje telefona s funkcijo Pametno optično branje takoj, ko se zaslon vklopi, brez predhodnega drsanja.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Pri odklepanju s funkcijo Pametno optično branje bo naprava ostala na zaklenjenem zaslonu, dokler ne podrsate.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Funkcija Pametno optično branje je samodejno izklopljena, sta izklopljeni tudi funkciji Obraz in Šarenica.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Ko je funkcija Pametno optično branje izklopljena, sta samodejno izklopljeni tudi funkciji Obraz in Šarenica.</string>
 </resources>

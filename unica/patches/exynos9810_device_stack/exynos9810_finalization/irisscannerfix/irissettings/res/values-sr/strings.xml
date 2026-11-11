@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Senzor za dužicu ne reaguje. Pokušaj ponovo kasnije.</string>
     <string name="iris_hw_problem_msg">Ukoliko se ovo stalno ponavlja, restartujte telefon.</string>
     <string name="lockpattern_retry_button_text">Pokušaj ponovo</string>
+    <string name="bio_intelligentscan_title">Inteligentno skeniranje</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Koristi zajedno prepoznavanje lica i dužice za bolju preciznost i zaštitu.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Lice i dužice su registrovani.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Registrujte lice i dužice</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Uklonite podatke o licu i dužicama</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Ukloniti podatke o licu i dužicama?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Ako u aplikacijama koristite prepoznavanje lica ili dužice, moraćete ponovo da registrujete lice ili dužice da biste se prijavili na te aplikacije.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Koristite zajedno prepoznavanje dužica i lica radi bezbednog i zgodnog otključavanja i verifikacije.</string>
+    <string name="sec_intelligentscan_unlock_title">Otključ. Inteligentnim skeniranjem</string>
+    <string name="sec_intelligentscan_unlock_summary">Otključajte telefon koristeći kombinaciju skeniranja lica i dužice.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intel. skeniranje po uklj. ekrana</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Otključajte telefon koristeći Inteligentno skeniranje čim se ekran uključi, bez prethodnog prevlačenja prstom.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kada otključate pomoću Inteligentnog skeniranja, ostaje na zaključanom ekranu dok ne prevučete.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Inteligentno skeniranje se automatski isključuje kada se opcije Lice i Dužica (obe) isključe.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Opcije Lice i Dužica se automatski isključuju kada se funkcija Inteligentno skeniranje isključi.</string>
 </resources>

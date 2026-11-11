@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Irisen sentsoreak ez du erantzuten. Saiatu berriz geroago.</string>
     <string name="iris_hw_problem_msg">Arazoak badirau, berrabiarazi telefonoa.</string>
     <string name="lockpattern_retry_button_text">Berriro saiatu</string>
+    <string name="bio_intelligentscan_title">Eskaneatze adimenduna</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Zehaztasuna eta segurtasuna hobetzeko, erabili aurpegi eta iris bidezko hautematea aldi berean.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Erregistratu dira aurpegia eta irisak.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Erregistratu aurpegia eta irisak</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Kendu aurpegi eta irisen datuak</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Aurpegi eta irisen datuak kendu?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Aurpegi edo iris bidezko autentifikazioa erabiltzen baduzu aplikazioetan, aurpegia edo irisak berriz erregistratu beharko dituzu aplikazio horietan saioa hasteko.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Erabili irisak eta aurpegi bidezko hautematea aldi berean segurtasun eta erosotasunez desblokeatzeko eta egiaztatzeko.</string>
+    <string name="sec_intelligentscan_unlock_title">Eskaneatze adimenduna desblok.</string>
+    <string name="sec_intelligentscan_unlock_summary">Desblokeatu telefonoa aurpegi eta irisen eskaneatze konbinatua erabiliz.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Pantailako Eskaneatze adimenduna</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Desblokeatu telefonoa Eskaneatze adimenduna erabiliz pantaila piztu bezain laster, hatza irristatu behar izan gabe.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Eskaneatze adimendunarekin desblokeatuz gero, gelditu Blokeo pantailan irristatu arte.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Eskaneatze adimenduna automatikoki desaktibatzen da Aurpegia eta irisa hautemateko eginbidea desaktibatuta dagoenean.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Aurpegia eta irisa hautemateko eginbidea automatikoki desaktibatu da Eskaneatze adimenduna desaktibatu denean.</string>
 </resources>

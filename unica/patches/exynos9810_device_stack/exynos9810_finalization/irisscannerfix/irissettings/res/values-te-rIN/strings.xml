@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">కనుపాప సెన్సార్ ప్రతిస్పందించడం లేదు. తర్వాత మళ్లీ ప్రయత్నించండి.</string>
     <string name="iris_hw_problem_msg">ఇలా జరుగుతూ ఉంటే, మీ ఫోన్‌ని పునఃప్రారంభించండి.</string>
     <string name="lockpattern_retry_button_text">మళ్ళీ ప్రయత్నించు</string>
+    <string name="bio_intelligentscan_title">తెలివైన స్కాన్</string>
+    <string name="sec_intelligentscan_choose_lock_summary">మెరుగైన ఖచ్చితత్వం మరియు భద్రత కోసం ముఖం మరియు కనుపాప గుర్తింపును ఒకటిగా ఉపయోగించండి.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">మీ మఖం మరియు కనుపాపలు నమోదు చేయబడ్డాయి.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">ముఖం మరియు కనుపాపలను నమోదు చేయండి</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">ముఖం మరియు కనుపాప డేటాను తీసివేయి</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">ముఖం మరియు కనుపాప డేటాను తీసివేయాలా?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">మీరు అప్లికేషన్‌లలో ముఖం లేదా కనుపాప ప్రమాణీకరణని ఉపయోగిస్తుంటే, మీరు ఆ అప్లికేషన్‌లకు సైన్ ఇన్ చేయడానికి మీ ముఖం లేదా కనుపాపలను మళ్లీ నమోదు చేయాల్సి ఉంటుంది.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">సురక్షితమైన, సౌకర్యవంతమైన అన్‌లాకింగ్ మరియు ధృవీకరణ కోసం కనుపాపలు మరియు ముఖం గుర్తింపుని ఒకేసారి ఉపయోగించండి.</string>
+    <string name="sec_intelligentscan_unlock_title">తెలివైన స్కాన్ అన్‌లాక్</string>
+    <string name="sec_intelligentscan_unlock_summary">మిళితం చేసిన ముఖం మరియు కనుపాప స్కానింగ్‌తో మీ ఫోన్‌ని అన్‌లాక్ చేయండి.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">స్క్రీన్-ఆన్ తెలివైన స్కాన్</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">మొదట స్వైప్ చేయకుండానే, స్క్రీన్ ఆన్ అయిన వెంటనే తెలివైన స్కాన్‌తో మీ ఫోన్‌ని అన్‌లాక్ చేయండి.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">మీరు తెలివైన స్కాన్‌తో అన్‌లాక్ చేసినప్పుడు, మీరు స్వైప్ చేసే వరకు లాక్ స్క్రీన్ అలాగే ఉంటుంది.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">ముఖం మరియు కనుపాప రెండూ ఆఫ్ చేయబడినప్పుడు తెలివైన స్కాన్ స్వయంచాలకంగా ఆఫ్ అవుతుంది.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">తెలివైన స్కాన్ ఆఫ్ చేయబడినప్పుడు ముఖం మరియు కనుపాప స్వయంచాలకంగా ఆఫ్ చేయబడతాయి.</string>
 </resources>

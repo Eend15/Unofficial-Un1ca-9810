@@ -35,13 +35,18 @@ def main(root: Path, helper_smali_root: Path):
         raise ValueError("not idempotent")
     frags[0].write_text(out)
     # The helper gets its own dex so no existing dex grows past the method limit.
-    existing = sorted(p.name for p in root.glob("smali_classes*"))
-    n = max([1] + [int(p[len("smali_classes"):]) for p in existing]) + 1
-    if not list(root.glob("smali*/" + HELPER)):
+    pkg = Path(HELPER).parent
+    found_helper = list(root.glob("smali*/" + HELPER))
+    if found_helper:
+        dst_pkg = found_helper[0].parent
+        shutil.rmtree(dst_pkg)
+        shutil.copytree(helper_smali_root / pkg, dst_pkg)
+    else:
+        existing = sorted(p.name for p in root.glob("smali_classes*"))
+        n = max([1] + [int(p[len("smali_classes"):]) for p in existing]) + 1
         # Copy the whole package: D8 emits synthetic lambda classes next to the helper.
-        pkg = Path(HELPER).parent
         shutil.copytree(helper_smali_root / pkg, root / f"smali_classes{n}" / pkg)
-    print("SecSettings: Irises entry hooked into Screen lock and biometrics")
+    print("SecSettings: Intelligent Scan and Irises entries hooked into Screen lock and biometrics")
 
 
 if __name__ == "__main__":

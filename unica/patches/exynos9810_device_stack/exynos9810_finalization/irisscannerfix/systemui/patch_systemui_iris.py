@@ -3,6 +3,9 @@
 * KeyguardUpdateMonitor.handleStartedWakingUp hands the monitor to Un1caIrisKeyguard,
   which registers a keyguard callback and drives SecIrisService with Samsung's own
   preview window.
+* KeyguardSecUpdateMonitorImpl.shouldListenForFace yields Camera 1 to SecIrisService
+  while Iris is active or starting so its full-color RGB preview and IR scan never
+  collide with FaceService, and allows FaceService to run as Intelligent Scan fallback.
 * AppOpsControllerImpl.isUserVisible exempts the platform-signed iris service from
   the privacy dot, like Samsung's own sead/sightcare sensor services.
 Usage: patch_systemui_iris.py <decoded SystemUI.apk> <helper smali root>
@@ -25,6 +28,34 @@ def patch(text: str) -> str:
     if len(found) != 1 or found[0][0].count("return-void") != 0:
         raise ValueError("handleStartedWakingUp does not have the single trailing return-void expected")
     return METHOD.sub(lambda m: f"{m[1]}\n    {MARKER}\n{HOOK}{m[2]}{m[3]}", text, count=1)
+
+
+FACE_GUARD_MARKER = "# UN1CA: yield Camera 1 to Iris RGB preview when Iris is active"
+FACE_GUARD_HEAD = """.method public final shouldListenForFace()Z
+    .locals 15
+"""
+FACE_GUARD_HOOK = f"""
+    {FACE_GUARD_MARKER}
+    invoke-static {{p0}}, Lcom/android/keyguard/Un1caIrisKeyguard;->shouldAllowFaceAuth(Lcom/android/keyguard/KeyguardUpdateMonitor;)Z
+
+    move-result v0
+
+    if-nez v0, :un1ca_allow_face
+
+    const/4 v0, 0x0
+
+    return v0
+
+    :un1ca_allow_face
+"""
+
+
+def patch_face_guard(text: str) -> str:
+    if FACE_GUARD_MARKER in text:
+        return text
+    if text.count(FACE_GUARD_HEAD) != 1:
+        raise ValueError("KeyguardSecUpdateMonitorImpl.shouldListenForFace does not match One UI 8")
+    return text.replace(FACE_GUARD_HEAD, FACE_GUARD_HEAD + FACE_GUARD_HOOK, 1)
 
 
 PRIVACY_MARKER = "# UN1CA: system iris service camera use is not a privacy item"
@@ -91,21 +122,32 @@ def main(root: Path, helper_smali_root: Path):
     if patch(out) != out:
         raise ValueError("not idempotent")
     kum.write_text(out)
+    sec_kum = list(root.glob("smali*/com/android/keyguard/KeyguardSecUpdateMonitorImpl.smali"))
+    if len(sec_kum) == 1:
+        out = patch_face_guard(sec_kum[0].read_text())
+        if patch_face_guard(out) != out:
+            raise ValueError("not idempotent")
+        sec_kum[0].write_text(out)
     ops = one(root, "com/android/systemui/appops/AppOpsControllerImpl.smali")
     out = patch_privacy(ops.read_text())
     if patch_privacy(out) != out:
         raise ValueError("not idempotent")
     ops.write_text(out)
     # The helper gets its own dex so no existing dex grows past the method limit.
-    if not list(root.glob("smali*/" + HELPER)):
+    found_helper = list(root.glob("smali*/" + HELPER))
+    if found_helper:
+        dst = found_helper[0].parent
+        for old_f in dst.glob("Un1caIrisKeyguard*.smali"):
+            old_f.unlink()
+    else:
         existing = [p.name for p in root.glob("smali_classes*")]
         n = max([1] + [int(p[len("smali_classes"):]) for p in existing]) + 1
         dst = root / f"smali_classes{n}" / HELPER_PKG
-        dst.mkdir(parents=True)
-        # Copy only the helper and its synthetic classes; the package itself is SystemUI's.
-        for f in (helper_smali_root / HELPER_PKG).glob("Un1caIrisKeyguard*.smali"):
-            shutil.copyfile(f, dst / f.name)
-    print("SystemUI: KeyguardUpdateMonitor wake hook added for iris unlock, iris service exempt from privacy dot")
+        dst.mkdir(parents=True, exist_ok=True)
+    # Copy only the helper and its synthetic classes; the package itself is SystemUI's.
+    for f in (helper_smali_root / HELPER_PKG).glob("Un1caIrisKeyguard*.smali"):
+        shutil.copyfile(f, dst / f.name)
+    print("SystemUI: KeyguardUpdateMonitor wake hook, Face/Iris Camera 1 guard, and privacy dot exemption added")
 
 
 if __name__ == "__main__":

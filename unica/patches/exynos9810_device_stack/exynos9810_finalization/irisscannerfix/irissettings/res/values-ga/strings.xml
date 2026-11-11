@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Níl an braiteoir inteachán ag freagairt. Triail arís ar ball.</string>
     <string name="iris_hw_problem_msg">"Má leanann sé seo ar aghaidh, atosaigh d'fhón."</string>
     <string name="lockpattern_retry_button_text">Atriail</string>
+    <string name="bio_intelligentscan_title">Scanadh Cliste</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Úsáid aithint aghaidhe agus inteacháin le chéile le cruinneas agus slándáil a fheabhsú.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">"Tá d'aghaidh agus d'inteacháin cláraithe."</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Cláraigh aghaidh &amp; inteacháin</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Bain sonraí aghaidhe/inteacháin</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Bain sonraí aghaidhe agus inteacháin?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">"Má tá fíordheimhniú aghaidhe nó inteacháin á úsáid agat i bhfeidhmchláir, ní foláir duit d'aghaidh nó d'inteacháin a chlárú arís le síniú isteach chuig na feidhmchláir sin."</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Úsáid inteacháin agus aithint aghaidhe le chéile le díghlasáil agus fíorú ar bhealach slán sábháilte, áisiúil.</string>
+    <string name="sec_intelligentscan_unlock_title">Díghlasáil Scanadh Cliste</string>
+    <string name="sec_intelligentscan_unlock_summary">"Díghlasáil d'fhón le scanadh aghaidhe agus inteacháin le chéile."</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Scanadh Cliste ar Scáileán air</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">"Díghlasáil d'fhón le Scanadh Cliste chomh luath agus a chastar air an scáileán, gan svaidhpeáil ar dtús."</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Nuair a dhíghlasálann tú le Scanadh Cliste, fan ar an Scáileán glasála go dtí go ndéanfaidh tú svaidhpeáil.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Castar as Scanadh Cliste go huathoibríoch nuair a chastar as Aghaidh agus Inteachán araon.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Castar as Aghaidh agus Inteachán go huathoibríoch nuair a chastar as Scanadh Cliste.</string>
 </resources>

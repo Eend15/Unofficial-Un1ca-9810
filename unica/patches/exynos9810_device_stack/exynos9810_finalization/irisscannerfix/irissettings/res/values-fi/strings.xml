@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Iiristunnistin ei vastaa. Yritä myöhemmin uudelleen.</string>
     <string name="iris_hw_problem_msg">Jos ongelma jatkuu, käynnistä puhelin uudelleen.</string>
     <string name="lockpattern_retry_button_text">Yr. uud.</string>
+    <string name="bio_intelligentscan_title">Älykäs skannaus</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Voit parantaa tarkkuutta ja suojausta käyttämällä kasvontunnistusta ja iiriksen tunnistusta yhdessä.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Kasvosi ja iiriksesi on rekisteröity.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Rekisteröi kasvot ja iirikset</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Poista kasvo- ja iiristiedot</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Poistetaanko kasvo- ja iiristiedot?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Jos käytät sovelluksissa kasvo- tai iiristodennusta, sinun on rekisteröitävä kasvosi tai iiriksesi uudelleen kirjautuaksesi kyseisiin sovelluksiin.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Voit poistaa lukituksen ja suorittaa vahvistuksen turvallisesti ja kätevästi käyttämällä iiriksiä ja kasvojentunnistusta yhdessä.</string>
+    <string name="sec_intelligentscan_unlock_title">Lukit. poisto Älykkäällä skann.</string>
+    <string name="sec_intelligentscan_unlock_summary">Poista puhelimen lukitus kasvojen ja iiriksen skannauksen yhdistelmällä.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Älykäs skannaus näytön käynnist.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Poista puhelimen lukitus Älykkäällä skannauksella heti näytön käynnistyessä pyyhkäisemättä näyttöä ensin.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kun poistat lukituksen Älykkäällä skannauksella, pysy lukitusnäytössä, kunnes pyyhkäiset.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Älykäs skannaus poistetaan automaattisesti käytöstä, kun sekä Kasvot että Iiris poistetaan käytöstä.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Kasvot ja Iiris poistetaan automaattisesti käytöstä, kun Älykäs skannaus poistetaan käytöstä.</string>
 </resources>

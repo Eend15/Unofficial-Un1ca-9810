@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Synsor tynczōwek niy ryaguje. Wybadej drugi rŏz potym.</string>
     <string name="iris_hw_problem_msg">Kej problym niy mijŏ, resztartuj telefōn.</string>
     <string name="lockpattern_retry_button_text">Ponōw</string>
+    <string name="bio_intelligentscan_title">Inteligyntne skanowanie</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Użyj cuzamyn rozpoznŏwaniŏ gymby i tynczōwki coby zwielgszyć akuratność i bezpieczyństwo.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Twoja gymba i tynczōwki ôstały zaregistrowane.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Zaregistruj gymba i tynczōwki</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Wyciep dane gymby i tynczōwki</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Wyciepnōńć dane gymby i tynczōwek?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Jak używŏsz przituplowaniŏ bez użycie gymby abo tynczōwkōm w aplikacyjach, bydzie trza jeszcze rŏz zaregistrować gymba abo tynczōwki, coby logować sie do tych aplikacyjōw.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Użyj cuzamyn poznŏwanio tynczōwek i ôbliczo, coby bezpiecznie i poryncznie ôdblokowywać i kōntrolować.</string>
+    <string name="sec_intelligentscan_unlock_title">Ôdblokn.Inteligyntne skanowanie</string>
+    <string name="sec_intelligentscan_unlock_summary">Ôdbloknij telefōn bez użycie pożyniōnego skanowaniŏ gymby i tynczōwki.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intel.skanow.kej załōncz.ekrōn</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Ôdbloknij telefōn Inteligyntnym skanowaniym zarŏzki po załōnczyniu ekranu bez przeciōngania przōdzij.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Bezczŏs ôdblokniyńciŏ bez Inteligyntne skanowanie ôstōń na ekranie blokady do czasu przeciōngniyńciŏ palcym.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Inteligyntne skanowanie je z autōmatu wyłōnczne, kej sōm wyłōnczōne ôbie fōnkcyje - Gymba i Tynczōwka.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Fōnkcyje Gymba i Tynczōwka sōm z autōmatu wyłōnczane, kej Inteligyntne skanowanie je wyłōnczōne.</string>
 </resources>

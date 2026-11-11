@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Ο αισθητήρας ίριδας δεν ανταποκρίνεται. Δοκιμάστε ξανά αργότερα.</string>
     <string name="iris_hw_problem_msg">Αν συνεχίσει να συμβαίνει αυτό, επανεκκινήστε το τηλέφωνό σας.</string>
     <string name="lockpattern_retry_button_text">Επανάληψη</string>
+    <string name="bio_intelligentscan_title">Έξυπνη σάρωση</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Χρησιμοποιήστε ταυτόχρονα την αναγνώριση προσώπου και ιρίδων για μεγαλύτερη ακρίβεια και ασφάλεια.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Το πρόσωπο και οι ίριδές σας καταχωρήθηκαν.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Καταχώρηση προσώπου και ιρίδων</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Κατάργ. δεδ. προσώπ. και ιρίδ.</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Κατάργηση δεδομένων προσώπου και ιρίδων;</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Αν χρησιμοποιείτε έλεγχο ταυτότητας μέσω αναγνώρισης προσώπου ή ιρίδων σε εφαρμογές, θα χρειαστεί να καταχωρήσετε ξανά το πρόσωπο ή τις ίριδές σας, για να συνδεθείτε σε αυτές τις εφαρμογές.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Χρησιμοποιήστε μαζί την αναγνώριση ιρίδων και προσώπου για ασφαλές και βολικό ξεκλείδωμα καθώς και για επαλήθευση.</string>
+    <string name="sec_intelligentscan_unlock_title">Ξεκλείδωμα μέσω Έξυπνης σάρωσης</string>
+    <string name="sec_intelligentscan_unlock_summary">Ξεκλειδώστε το τηλέφωνό σας, χρησιμοποιώντας ένα συνδυασμό σάρωσης προσώπου και ιρίδων.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Έξ. σάρωση με την ενερ. της οθ.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Ξεκλειδώστε το τηλέφωνο μέσω Έξυπνης σάρωσης μόλις ενεργοποιηθεί η οθόνη, χωρίς να κάνετε πρώτα σάρωση.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Όταν ξεκλειδώνετε τη συσκευή με την Έξυπνη σάρωση, θα παραμένετε στην οθόνη κλειδώματος μέχρι να κάνετε τη χειρονομία σάρωσης.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Η Έξυπνη σάρωση απενεργοποιείται αυτόματα όταν απενεργοποιείται η σάρωση προσώπου και η σάρωση ιρίδων.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Η σάρωση προσώπου και ιρίδων απενεργοποιείται αυτόματα όταν απενεργοποιείται η Έξυπνη σάρωση.</string>
 </resources>

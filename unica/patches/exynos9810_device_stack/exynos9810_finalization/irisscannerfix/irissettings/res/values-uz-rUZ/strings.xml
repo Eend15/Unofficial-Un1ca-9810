@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Ko‘z pardasi sensori javob bermayapti. Keyinroq qayta urinib ko‘ring.</string>
     <string name="iris_hw_problem_msg">Ushbu holat davom etsa, telefonni qayta ishga tushiring.</string>
     <string name="lockpattern_retry_button_text">Qay/urin.</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Yaxshiroq aniqlik va xavfsizlik uchun yuz va ko‘z pardasini tanishdan birgalikda foydalaning.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Yuz va ko‘z pardalari ro‘yxatga olindi.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Yuz va ko‘z prd. ryxt. o‘tkaz</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Yuz va ko‘z pardasini ol/tashla</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Yuz va ko‘z pardasi ma’l. olib tash-mi?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Ilovalarda yuz yoki ko‘z pardasi orqali shaxsni tasdiqlashdan foydalanayotgan bo‘lsangiz, bu ilovalarga kirish uchun yuz yoki ko‘z pardalaringiz ma’lumotini qayta ro‘yxatdan o‘tkazishingiz lozim bo‘ladi.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Xavfsiz, qulay blokdan chiqarish va haqiqiylik tekshiruvi uchun ko‘z pardasi va yuzni tanishdan birgalikda foydalaning.</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan’ni blk. chiqar</string>
+    <string name="sec_intelligentscan_unlock_summary">Birlashtirilgan yuz va ko‘z pardasini skanerlash yordamida telefonni blokdan chiqaring.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Ekrandagi Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Surmasingizdan avval, ekran yoqilishi bilanoq Intelligent Scan yordamida telefoningizni blokdan chiqaring.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Intelligent Scan yordamida blokdan chiqarganingizda, surishdan oldin Bloklash ekranida turing.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Yuz va Ko‘z pardasi o‘chirilgan vaqtda Intelligent Scan ham avtomatik tarzda o‘chiriladi.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan o‘chirilgan vaqtda Yuz va Ko‘z pardasi ham avtomatik tarzda o‘chiriladi.</string>
 </resources>

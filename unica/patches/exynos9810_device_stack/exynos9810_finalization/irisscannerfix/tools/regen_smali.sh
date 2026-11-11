@@ -28,7 +28,8 @@ build() { # <name> <stub dir or -> <out smali dir> <java files...>
     java -cp "$APKTOOL_JAR" com.android.tools.smali.baksmali.Main d "$TMP/$name/dex/classes.dex" -o "$out"
 }
 
-build secirisservice - "$FIX/secirisservice/smali" "$FIX/secirisservice/Un1caIrisGrace.java"
+build secirisservice - "$FIX/secirisservice/smali" "$FIX/secirisservice/Un1caIrisGrace.java" \
+    "$FIX/secirisservice/Un1caIrisFaceShare.java"
 build systemui "$FIX/systemui/stubs" "$FIX/systemui/smali" "$FIX/systemui/Un1caIrisKeyguard.java"
 build settings "$FIX/settings/stubs" "$FIX/settings/smali" \
     "$FIX/settings/IrisLockMenu.java" "$FIX/settings/IrisSettingsFragment.java"

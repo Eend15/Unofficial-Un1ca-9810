@@ -82,6 +82,13 @@ public final class FaceunlockFixProbe {
         Factory active = factory;
         try {
             IBinder nativeBinder = ServiceManager.checkService(NATIVE_SERVICE);
+            if (nativeBinder == null && trustedRomIntegration) {
+                // faced crashed: init restarts it after its restart period. Returning null
+                // here makes Android fall back to the vendor face HAL, whose storage holds
+                // no templates: the enrolled face is then dropped (re-enroll notification)
+                // and Settings switches Face unlock off. Wait for faced to come back.
+                nativeBinder = waitForRestartedDaemon();
+            }
             if (nativeBinder == null || !nativeBinder.isBinderAlive() ||
                     !NATIVE_SERVICE.equals(nativeBinder.getInterfaceDescriptor())) {
                 Slog.w(TAG, "Genuine Samsung IFaceDaemon is unavailable");
@@ -105,5 +112,28 @@ public final class FaceunlockFixProbe {
             Slog.e(TAG, "Experimental FaceunlockFix HAL probe rejected", failure);
             return null;
         }
+    }
+
+    private static final String NATIVE_INIT_SVC = "init.svc.faceunlockfixd";
+    private static final long RESTART_WAIT_MS = 10000;
+
+    /**
+     * Polls for faced while init is (re)starting it. Gives up at once when the service
+     * was stopped on purpose, and after RESTART_WAIT_MS otherwise.
+     */
+    private static IBinder waitForRestartedDaemon() {
+        long deadline = android.os.SystemClock.uptimeMillis() + RESTART_WAIT_MS;
+        while (android.os.SystemClock.uptimeMillis() < deadline) {
+            String state = SystemProperties.get(NATIVE_INIT_SVC, "");
+            if (!"running".equals(state) && !"restarting".equals(state)) return null;
+            IBinder binder = ServiceManager.checkService(NATIVE_SERVICE);
+            if (binder != null) {
+                Slog.i(TAG, "Genuine Samsung IFaceDaemon is back after restart");
+                return binder;
+            }
+            android.os.SystemClock.sleep(200);
+        }
+        Slog.w(TAG, "Genuine Samsung IFaceDaemon did not come back in time");
+        return null;
     }
 }

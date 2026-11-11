@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">කළු ඉංගිරියා සංවේදකය ප්‍රතිචාර නොදක්වයි. පසුව නැවත උත්සාහ කරන්න.</string>
     <string name="iris_hw_problem_msg">මෙය දිගටම සිදු වේ නම්, ඔබේ දුරකථනය යළි අරඹන්න.</string>
     <string name="lockpattern_retry_button_text">නැ. උත්. කර</string>
+    <string name="bio_intelligentscan_title">බුද්ධිමත් පිරික්සුම</string>
+    <string name="sec_intelligentscan_choose_lock_summary">වඩා හොඳ නිරවද්‍යතාවය සහ ආරක්ෂාව සඳහා මුහුණ සහ කළු ඉංගිරියා හැඳුනුම එකට භාවිතා කරන්න.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">ඔබේ මුහුණ සහ කළු ඉංගිරියා ලියාපදිංචි කෙරිණි.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">මුහුණ සහ කළු ඉංගි. ලියාපදිංචිය</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">මුහුණ සහ කළු ඉංගිරියා දත්ත ඉවත.</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">මුහුණ සහ කළු ඉංගිරියා දත්ත ඉවත් කරන්න ද?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">ඔබ යෙදුම්වල මුහුණ හෝ කළු ඉංගිරියා සත්‍යාපනය භාවිතා කරන්නේ නම්, ඔබට එම යෙදුම්වලට පිවිසීමට ඔබේ මුහුණ හෝ කළු ඉංගිරියා නැවත ලියාපදිංචි කිරීමට අවශ්‍ය වනු ඇත.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">සුරක්ෂිත, පහසුවෙන් අගුළු හැරීම සහ සත්‍යාපනය සඳහා කළු ඉංගිරියා සහ මුහුණ හැඳුනුම එකට භාවිතා කරන්න.</string>
+    <string name="sec_intelligentscan_unlock_title">බුද්ධි පිරික්සුම් අගුළු හැරීම</string>
+    <string name="sec_intelligentscan_unlock_summary">ඒකාබද්ධ මුහුණ සහ කළු ඉංගිරියා පිරික්සුම භාවිතයෙන් ඔබේ දුරකථනය අගුළු හරින්න.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">තිරය-ක්‍රි. බුද්ධිමත් පිරික්සුම</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">පළමුව ස්වයිප් නොකර, තිරය ක්‍රියාත්මක වන විගස බුද්ධිමත් පිරික්සුම සමග ඔබේ දුරකථනය අගුළු හරින්න.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">ඔබ බුද්ධිමත් පිරික්සුම සමග අගුළු හරින විට, ඔබ ස්වයිප් කරන තෙක් අගුළු තිරයේ රැඳී සිටින්න.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">මුහුණ සහ කළු ඉංගිරියාව යන දෙකම ක්‍රියා විරහිත වන විට බුද්ධිමත් පිරික්සුම ස්වයංක්‍රීයව ක්‍රියා විරහිත කෙරිණි.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">බුද්ධිමත් පිරික්සුම ක්‍රියා විරහිත විට මුහුණ සහ කළු ඉංගිරියාව ස්වයංක්‍රීයව ක්‍රියා විරහිත කෙරිණි.</string>
 </resources>

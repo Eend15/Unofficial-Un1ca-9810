@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Senzorul pentru iris nu răspunde. Încercați din nou mai târziu.</string>
     <string name="iris_hw_problem_msg">Dacă eroarea persistă, reporniți telefonul.</string>
     <string name="lockpattern_retry_button_text">Reîncerc.</string>
+    <string name="bio_intelligentscan_title">Scanare inteligentă</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Utilizați simultan recunoașterea facială și prin iris pentru îmbunătățirea exactității și a securității.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Irisurile și fața dvs. au fost înregistrate.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Înregistrare față și irisuri</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Eliminare date față și iris</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Eliminați datele feței și ale irisului?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Dacă utilizați autentificarea prin față sau iris în aplicații, va trebui să înregistrați din nou fața sau irisurile dvs. pentru a vă conecta la aceste aplicații.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Utilizați simultan irisurile și recunoașterea facială pentru o deblocare și o verificare sigură și comodă.</string>
+    <string name="sec_intelligentscan_unlock_title">Debloc. prin Scanare inteligentă</string>
+    <string name="sec_intelligentscan_unlock_summary">Deblocați telefonul utilizând scanarea combinată a feței și a irisului.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Scanare inteligentă ecran pornit</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Deblocați telefonul cu ajutorul funcției Scanare inteligentă imediat ce pornește ecranul, fără a-l glisa mai întâi.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Atunci când deblocați utilizând funcția Scanare inteligentă, rămâneți pe ecranul de blocare până când glisați.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Funcția Scanare inteligentă este oprită automat atunci când sunt oprite metodele Față și Iris.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Metodele Față și Iris sunt oprite automat atunci când este oprită funcția Scanare inteligentă.</string>
 </resources>

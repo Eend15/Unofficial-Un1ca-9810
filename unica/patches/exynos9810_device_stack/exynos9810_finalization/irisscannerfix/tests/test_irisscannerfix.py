@@ -135,13 +135,23 @@ class SystemUiTest(unittest.TestCase):
 
 class PrebuiltSmaliTest(unittest.TestCase):
     def test_only_helper_classes_are_shipped(self):
-        allowed = {"secirisservice": "com/samsung/android/server/iris/Un1caIrisGrace",
-                   "systemui": "com/android/keyguard/Un1caIrisKeyguard",
-                   "settings": "com/samsung/android/settings/un1ca/"}
-        for part, prefix in allowed.items():
+        allowed = {"secirisservice": ("com/samsung/android/server/iris/Un1caIrisGrace",
+                                      "com/samsung/android/server/iris/Un1caIrisFaceShare"),
+                   "systemui": ("com/android/keyguard/Un1caIrisKeyguard",),
+                   "settings": ("com/samsung/android/settings/un1ca/",)}
+        for part, prefixes in allowed.items():
             for f in (FIX / part / "smali").rglob("*.smali"):
                 rel = f.relative_to(FIX / part / "smali").as_posix()
-                self.assertTrue(rel.startswith(prefix), f"{part}: unexpected class {rel} (stub leaked?)")
+                self.assertTrue(rel.startswith(prefixes), f"{part}: unexpected class {rel} (stub leaked?)")
+
+    def test_face_share_hooks(self):
+        """SecIrisService: binder hook on the wrapper, face output in startFrontPreview."""
+        share = (FIX / "secirisservice" / "smali/com/samsung/android/server/iris/Un1caIrisFaceShare.smali").read_text()
+        for sig in ("onTransact(Ljava/lang/Object;ILandroid/os/Parcel;Landroid/os/Parcel;)Z",
+                    "onFrontSession(Ljava/lang/Object;Ljava/util/List;)V",
+                    "onAuthenticateStart()V"):
+            self.assertIn(sig, share)
+        self.assertNotIn("debug.un1ca", share)
 
 
 class StringsTest(unittest.TestCase):
@@ -175,10 +185,17 @@ class SecIrisServiceFirmwareTest(unittest.TestCase):
                                check=True)
                 sis.main(Path(tmp), FIX / "secirisservice" / "smali")
                 svc = Path(tmp) / "smali/com/samsung/android/server/iris/IrisService.smali"
+                wrapper = Path(tmp) / "smali/com/samsung/android/server/iris/IrisService$IrisServiceWrapper.smali"
                 before = svc.read_text()
+                before_wrapper = wrapper.read_text()
                 sis.main(Path(tmp), FIX / "secirisservice" / "smali")
                 self.assertEqual(before, svc.read_text(), f"{m}: not idempotent")
+                self.assertEqual(before_wrapper, wrapper.read_text(), f"{m} wrapper: not idempotent")
                 self.assertNotIn("Landroid/security/KeyStore;", before)
+                self.assertNotIn("Landroid/os/PowerManager;->setAutoBrightnessLimit(II)V", before)
+                self.assertEqual(before.count("Un1caIrisGrace;->setAutoBrightnessLimit"), 2)
+                self.assertNotIn("getBiometricLockscreen(II)I", before_wrapper)
+                self.assertEqual(before_wrapper.count("LockPatternUtils;->getBiometricState(II)I"), 2)
 
 
 if __name__ == "__main__":

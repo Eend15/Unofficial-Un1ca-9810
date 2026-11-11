@@ -12,6 +12,7 @@ import android.os.Looper;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.Log;
+import android.widget.Toast;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceScreen;
@@ -19,18 +20,17 @@ import androidx.preference.SwitchPreference;
 import com.android.settings.SettingsPreferenceFragment;
 import com.samsung.android.camera.iris.Iris;
 import com.samsung.android.camera.iris.SemIrisManager;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * The iris page, hosted by SecSettings' SubSettings like the One UI 8 face page so it
- * gets the same rounded cards, switches and animations. Layout follows the Galaxy S9
- * (Android 10) iris page without Samsung Pass; texts come from Samsung's Android 10
- * translations shipped in com.samsung.android.irissettings.
+ * The Iris and Intelligent Scan pages, hosted by SecSettings' SubSettings like the
+ * One UI 8 face page so they get the same rounded cards, switches and animations.
  *
- * Credentials are confirmed with Settings' own lock screen activity (or the handle
- * lent by Screen lock and biometrics), registration runs in SecIrisService.
+ * When opened with un1ca_intelligent_scan=true, presents the stock Galaxy S9
+ * Intelligent Scan menu (combining Face Recognition + Iris Scanner).
+ * Also automatically activates Intelligent Scan when both Face Unlock and Iris Unlock
+ * are enabled.
  */
 public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     static final String TAG = "UN1CA-IrisSettings";
@@ -38,10 +38,14 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     static final String IRIS_PKG = "com.samsung.android.server.iris";
     static final String KEY_UNLOCK = "un1ca_iris_unlock";
     static final String KEY_SCREEN_ON = "un1ca_iris_unlock_screen_on";
+    static final String KEY_INTEL_SCREEN_ON = "un1ca_intelligent_scan_screen_on";
     static final String KEY_STAY = "un1ca_iris_stay_on_lockscreen";
+    static final String KEY_FACE_STAY = "face_stay_on_lock_screen";
+    static final String ARG_INTELLIGENT_SCAN = "un1ca_intelligent_scan";
     // Set by SecIrisService while the IR camera runs; irisd.rc turns it into a CPU floor.
     static final String BOOST_PROP = "sys.un1ca.iris_boost";
-    static final int REQUEST_CONFIRM = 1, REQUEST_ENROLL = 2;
+    static final int SEM_TYPE_FACE = 256;
+    static final int REQUEST_CONFIRM = 1, REQUEST_ENROLL = 2, REQUEST_FACE_ENROLL = 3;
     // LockPatternUtils.CREDENTIAL_TYPE_*
     static final int CREDENTIAL_TYPE_NONE = -1, CREDENTIAL_TYPE_PATTERN = 1;
     // SemIrisManager enrollment results that stock Settings answers with a Retry popup.
@@ -53,11 +57,13 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     private Object mLockUtils;
     private int mUserId;
     private long mGkHandle;
+    private boolean mIntelligentScan;
     // Handle lent by Screen lock and biometrics; Settings owns it, so never remove it here.
     private boolean mBorrowedHandle;
     private boolean mEnrollAfterConfirm;
     private boolean mRetriedStaleToken;
     private boolean mHadIrises;
+    private boolean mWaitingForFaceEnroll;
 
     private PreferenceCategory mManage;
     private Preference mRemove, mRegister;
@@ -71,6 +77,8 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
         // onCreatePreferences() runs inside super.onCreate() and needs the managers.
         mContext = getContext();
         mUserId = myUserId();
+        Bundle args = getArguments();
+        mIntelligentScan = args != null && args.getBoolean(ARG_INTELLIGENT_SCAN, false);
         try {
             mIris = SemIrisManager.getSemIrisManager(mContext);
             mLockUtils = Class.forName("com.android.internal.widget.LockPatternUtils")
@@ -83,17 +91,18 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
             finish();
             return;
         }
-        getActivity().setTitle(title(mContext));
+        getActivity().setTitle(pageTitle(mContext));
         if (savedInstanceState != null) return;
         // Like stock Settings: confirm the screen lock first, register at once if nothing
         // is enrolled. Coming from Screen lock and biometrics the PIN was just entered.
-        boolean enroll = enrolled().isEmpty();
-        Bundle args = getArguments();
+        boolean enroll = mIntelligentScan
+                ? (enrolled().isEmpty() || !hasEnrolledFace())
+                : enrolled().isEmpty();
         long lent = args != null ? args.getLong("gk_pw_handle", 0) : 0;
         if (lent != 0) {
             mGkHandle = lent;
             mBorrowedHandle = true;
-            if (enroll) startEnroll(false);
+            if (enroll) startRequestedEnroll(false);
         } else {
             mEnrollAfterConfirm = enroll;
             if (!confirmCredential()) finish();
@@ -104,30 +113,78 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
         Context ctx = mContext;
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(ctx);
 
+        if (mIntelligentScan) {
+            Preference guide = new Preference(ctx);
+            guide.setSelectable(false);
+            guide.setPersistent(false);
+            guide.setSummary(text(ctx, "sec_biometrics_disclaimer_main_guide_intelligentscan",
+                    "Intelligent Scan improves accuracy and security by using both iris and face data."));
+            screen.addPreference(guide);
+        }
+
         mManage = new PreferenceCategory(ctx);
         screen.addPreference(mManage);
         mRemove = new Preference(ctx);
-        mRemove.setTitle(text(ctx, "my_irises", "Remove iris data"));
+        mRemove.setTitle(mIntelligentScan
+                ? text(ctx, "sec_intelligentscan_remove_face_and_iris", "Remove face and iris data")
+                : text(ctx, "my_irises", "Remove iris data"));
         mRemove.setOnPreferenceClickListener(p -> { confirmRemove(); return true; });
         mManage.addPreference(mRemove);
         mRegister = new Preference(ctx);
-        mRegister.setTitle(text(ctx, "register_irises", "Register irises"));
-        mRegister.setOnPreferenceClickListener(p -> { startEnroll(false); return true; });
+        mRegister.setTitle(mIntelligentScan
+                ? text(ctx, "sec_intelligentscan_register_face_and_iris", "Register face and irises")
+                : text(ctx, "register_irises", "Register irises"));
+        mRegister.setOnPreferenceClickListener(p -> { startRequestedEnroll(false); return true; });
         mManage.addPreference(mRegister);
 
         PreferenceCategory unlocking = new PreferenceCategory(ctx);
         screen.addPreference(unlocking);
-        mUnlock = toggle(unlocking, KEY_UNLOCK, 1,
-                text(ctx, "iris_unlock", "Iris unlock"),
-                text(ctx, "iris_unlock_summary", "Unlock your phone with your irises."));
-        mScreenOn = toggle(unlocking, KEY_SCREEN_ON, 0,
-                text(ctx, "use_iris_first_lock", "Iris unlock when screen turns on"),
-                text(ctx, "use_iris_first_lock_summary",
-                        "Unlock your phone with your irises as soon as the screen turns on, without swiping first."));
-        mStay = toggle(unlocking, KEY_STAY, 0,
-                text(ctx, "sec_biometrics_common_option_title_stay_on_lock_screen", "Stay on Lock screen"),
-                text(ctx, "iris_stay_on_lockscreen_summary",
-                        "When you unlock with iris recognition, stay on the Lock screen until you swipe."));
+        if (mIntelligentScan) {
+            mUnlock = new SwitchPreference(ctx, null);
+            mUnlock.setKey(KEY_UNLOCK);
+            mUnlock.setPersistent(false);
+            mUnlock.setTitle(text(ctx, "sec_intelligentscan_unlock_title", "Intelligent Scan unlock"));
+            mUnlock.setSummary(text(ctx, "sec_intelligentscan_unlock_summary",
+                    "Unlock your phone using combined face and iris scanning."));
+            mUnlock.setOnPreferenceChangeListener((p, v) -> {
+                boolean on = (Boolean) v;
+                setFaceUnlockEnabled(on);
+                Settings.Secure.putInt(ctx.getContentResolver(), KEY_UNLOCK, on ? 1 : 0);
+                if (on && Settings.Secure.getInt(ctx.getContentResolver(), KEY_INTEL_SCREEN_ON, -1) == -1) {
+                    Settings.Secure.putInt(ctx.getContentResolver(), KEY_INTEL_SCREEN_ON, 1);
+                }
+                if (!on) {
+                    Toast.makeText(ctx,
+                            text(ctx, "sec_intelligentscan_turn_off_toast_message_intelligentscan",
+                                    "Turning off Intelligent Scan unlock will also turn off face and iris unlock."),
+                            Toast.LENGTH_SHORT).show();
+                }
+                new Handler(Looper.getMainLooper()).post(this::refresh);
+                return true;
+            });
+            unlocking.addPreference(mUnlock);
+
+            mScreenOn = toggle(unlocking, KEY_INTEL_SCREEN_ON, 1,
+                    text(ctx, "sec_intelligentscan_unlock_when_turns_on_title", "Screen-on Intelligent Scan"),
+                    text(ctx, "sec_intelligentscan_unlock_when_turns_on_summary",
+                            "Unlock your phone with Intelligent Scan as soon as the screen turns on, without swiping first."));
+            mStay = toggle(unlocking, KEY_STAY, 0,
+                    text(ctx, "sec_biometrics_common_option_title_stay_on_lock_screen", "Stay on Lock screen"),
+                    text(ctx, "sec_intelligentscan_stay_on_lock_screen_summary",
+                            "When you unlock with Intelligent Scan, stay on the Lock screen until you swipe."));
+        } else {
+            mUnlock = toggle(unlocking, KEY_UNLOCK, 1,
+                    text(ctx, "iris_unlock", "Iris unlock"),
+                    text(ctx, "iris_unlock_summary", "Unlock your phone with your irises."));
+            mScreenOn = toggle(unlocking, KEY_SCREEN_ON, 0,
+                    text(ctx, "use_iris_first_lock", "Iris unlock when screen turns on"),
+                    text(ctx, "use_iris_first_lock_summary",
+                            "Unlock your phone with your irises as soon as the screen turns on, without swiping first."));
+            mStay = toggle(unlocking, KEY_STAY, 0,
+                    text(ctx, "sec_biometrics_common_option_title_stay_on_lock_screen", "Stay on Lock screen"),
+                    text(ctx, "iris_stay_on_lockscreen_summary",
+                            "When you unlock with iris recognition, stay on the Lock screen until you swipe."));
+        }
 
         // Always the last card, like "About face recognition" on the face page.
         PreferenceCategory help = new PreferenceCategory(ctx);
@@ -135,7 +192,8 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
         Preference tips = new Preference(ctx);
         tips.setTitle(text(ctx, "tips_for_iris", "Tips for using iris recognition"));
         tips.setOnPreferenceClickListener(p -> {
-            Intent i = new Intent().setComponent(new ComponentName(IRIS_PKG, IRIS_PKG + ".guide.IrisGuideActivity"));
+            String guideCls = IRIS_PKG + ".guide.IrisGuideActivity";
+            Intent i = new Intent().setComponent(new ComponentName(IRIS_PKG, guideCls));
             i.putExtra("from_iris_settings", true);
             startActivity(i);
             return true;
@@ -148,6 +206,19 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
 
     @Override public void onResume() {
         super.onResume();
+        if (mWaitingForFaceEnroll) {
+            mWaitingForFaceEnroll = false;
+            if (hasEnrolledFace()) {
+                setFaceUnlockEnabled(true);
+                if (enrolled().isEmpty()) {
+                    startEnroll(false);
+                    return;
+                }
+                enableIntelligentScanDefaults();
+            } else {
+                leaveIfNothingEnrolled();
+            }
+        }
         refresh();
     }
 
@@ -164,7 +235,16 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
         s.setSummary(summary);
         s.setChecked(Settings.Secure.getInt(mContext.getContentResolver(), key, def) == 1);
         s.setOnPreferenceChangeListener((p, v) -> {
-            Settings.Secure.putInt(mContext.getContentResolver(), key, (Boolean) v ? 1 : 0);
+            int val = (Boolean) v ? 1 : 0;
+            Settings.Secure.putInt(mContext.getContentResolver(), key, val);
+            if (KEY_STAY.equals(key) && (mIntelligentScan || isFaceUnlockEnabled())) {
+                Settings.System.putInt(mContext.getContentResolver(), KEY_FACE_STAY, val);
+            }
+            if (KEY_UNLOCK.equals(key) && val == 1 && isFaceUnlockEnabled()) {
+                if (Settings.Secure.getInt(mContext.getContentResolver(), KEY_INTEL_SCREEN_ON, -1) == -1) {
+                    Settings.Secure.putInt(mContext.getContentResolver(), KEY_INTEL_SCREEN_ON, 1);
+                }
+            }
             new Handler(Looper.getMainLooper()).post(this::refresh);
             return true;
         });
@@ -174,16 +254,35 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
 
     private void refresh() {
         if (mRemove == null || mIris == null) return;
-        boolean any = !enrolled().isEmpty();
-        mHadIrises |= any;
-        mRemove.setEnabled(any);
-        // The S9 stores one iris registration: offer "Register" only while there is none.
-        mRegister.setVisible(!any);
-        boolean unlocking = any && Settings.Secure.getInt(mContext.getContentResolver(), KEY_UNLOCK, 1) == 1;
-        mUnlock.setEnabled(any);
-        mUnlock.setChecked(unlocking);
-        mScreenOn.setEnabled(unlocking);
-        mStay.setEnabled(unlocking);
+        boolean hasIris = !enrolled().isEmpty();
+        boolean hasFace = hasEnrolledFace();
+        if (mIntelligentScan) {
+            boolean both = hasIris && hasFace;
+            boolean any = hasIris || hasFace;
+            mHadIrises |= both;
+            mRemove.setEnabled(any);
+            mRegister.setVisible(!both);
+            boolean irisUnlock = Settings.Secure.getInt(mContext.getContentResolver(), KEY_UNLOCK, 1) == 1;
+            boolean unlocking = both && irisUnlock && isFaceUnlockEnabled();
+            mUnlock.setEnabled(both);
+            mUnlock.setChecked(unlocking);
+            mScreenOn.setEnabled(unlocking);
+            mScreenOn.setChecked(Settings.Secure.getInt(mContext.getContentResolver(), KEY_INTEL_SCREEN_ON, 1) == 1);
+            mStay.setEnabled(unlocking);
+            mStay.setChecked(Settings.Secure.getInt(mContext.getContentResolver(), KEY_STAY, 0) == 1);
+        } else {
+            mHadIrises |= hasIris;
+            mRemove.setEnabled(hasIris);
+            // The S9 stores one iris registration: offer "Register" only while there is none.
+            mRegister.setVisible(!hasIris);
+            boolean unlocking = hasIris && Settings.Secure.getInt(mContext.getContentResolver(), KEY_UNLOCK, 1) == 1;
+            mUnlock.setEnabled(hasIris);
+            mUnlock.setChecked(unlocking);
+            mScreenOn.setEnabled(unlocking);
+            mScreenOn.setChecked(Settings.Secure.getInt(mContext.getContentResolver(), KEY_SCREEN_ON, 0) == 1);
+            mStay.setEnabled(unlocking);
+            mStay.setChecked(Settings.Secure.getInt(mContext.getContentResolver(), KEY_STAY, 0) == 1);
+        }
     }
 
     private void finish() {
@@ -211,7 +310,7 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
         i.putExtra("foreground_only", true);
         i.putExtra("com.android.settings.ConfirmCredentials.showCancelButton", true);
         i.putExtra("android.intent.extra.USER_ID", mUserId);
-        i.putExtra("com.android.settings.ConfirmCredentials.header", title(mContext));
+        i.putExtra("com.android.settings.ConfirmCredentials.header", pageTitle(mContext));
         try {
             startActivityForResult(i, REQUEST_CONFIRM);
             return true;
@@ -234,6 +333,40 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     }
 
     // ---- registration ----
+
+    private void startRequestedEnroll(boolean retry) {
+        if (mIntelligentScan && !hasEnrolledFace()) {
+            startFaceEnroll();
+        } else {
+            startEnroll(retry);
+        }
+    }
+
+    private void startFaceEnroll() {
+        if (mGkHandle == 0) {
+            mEnrollAfterConfirm = true;
+            confirmCredential();
+            return;
+        }
+        try {
+            Bundle pageArgs = new Bundle();
+            pageArgs.putLong("gk_pw_handle", mGkHandle);
+            pageArgs.putInt("android.intent.extra.USER_ID", mUserId);
+            String subSettings = "com.android.settings.SubSettings";
+            String faceFrag = "com.samsung.android.settings.biometrics.face.FaceLockSettings";
+            Intent i = new Intent().setClassName(mContext.getPackageName(), subSettings);
+            i.putExtra(":settings:show_fragment", faceFrag);
+            i.putExtra(":settings:show_fragment_args", pageArgs);
+            i.putExtra("gk_pw_handle", mGkHandle);
+            i.putExtra("android.intent.extra.USER_ID", mUserId);
+            mWaitingForFaceEnroll = true;
+            startActivityForResult(i, REQUEST_FACE_ENROLL);
+        } catch (Throwable t) {
+            Log.e(TAG, "cannot launch face enrollment", t);
+            mWaitingForFaceEnroll = false;
+            startEnroll(false);
+        }
+    }
 
     private void startEnroll(boolean retry) {
         if (mGkHandle == 0) {
@@ -258,12 +391,23 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
             confirmCredential();
             return;
         }
-        Intent i = new Intent().setComponent(new ComponentName(IRIS_PKG, IRIS_PKG + ".enroll.IrisEnrollActivity"));
+        String enrollCls = IRIS_PKG + ".enroll.IrisEnrollActivity";
+        Intent i = new Intent().setComponent(new ComponentName(IRIS_PKG, enrollCls));
         i.putExtra("hw_auth_token", token);
         i.putExtra("android.intent.extra.USER_ID", mUserId);
         // Opens the enroll screen on its "try again" page, as stock Settings does.
         if (retry) i.putExtra("iris_enroll_retry", true);
         startActivityForResult(i, REQUEST_ENROLL);
+    }
+
+    private void enableIntelligentScanDefaults() {
+        if (!enrolled().isEmpty() && hasEnrolledFace()) {
+            setFaceUnlockEnabled(true);
+            Settings.Secure.putInt(mContext.getContentResolver(), KEY_UNLOCK, 1);
+            if (Settings.Secure.getInt(mContext.getContentResolver(), KEY_INTEL_SCREEN_ON, -1) == -1) {
+                Settings.Secure.putInt(mContext.getContentResolver(), KEY_INTEL_SCREEN_ON, 1);
+            }
+        }
     }
 
     /** Stock IrisLockSettings.showErrorPopup: explain the failure and offer Retry. */
@@ -289,7 +433,10 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     }
 
     private void leaveIfNothingEnrolled() {
-        if (enrolled().isEmpty() && !mHadIrises) finish();
+        boolean missing = mIntelligentScan
+                ? (enrolled().isEmpty() && !hasEnrolledFace())
+                : enrolled().isEmpty();
+        if (missing && !mHadIrises) finish();
     }
 
     @Override public void onActivityResult(int request, int result, Intent data) {
@@ -304,7 +451,7 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
             mGkHandle = data.getLongExtra("gk_pw_handle", 0);
             if (mEnrollAfterConfirm) {
                 mEnrollAfterConfirm = false;
-                startEnroll(false);
+                startRequestedEnroll(false);
             }
         } else if (request == REQUEST_ENROLL) {
             Log.i(TAG, "enroll result " + result);
@@ -323,8 +470,13 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
                 return;
             }
             mRetriedStaleToken = false;
-            if (!enrolled().isEmpty() && Settings.Secure.getInt(mContext.getContentResolver(), KEY_UNLOCK, -1) == -1)
-                Settings.Secure.putInt(mContext.getContentResolver(), KEY_UNLOCK, 1);
+            if (!enrolled().isEmpty()) {
+                if (mIntelligentScan) {
+                    enableIntelligentScanDefaults();
+                } else if (Settings.Secure.getInt(mContext.getContentResolver(), KEY_UNLOCK, -1) == -1) {
+                    Settings.Secure.putInt(mContext.getContentResolver(), KEY_UNLOCK, 1);
+                }
+            }
             if (!showEnrollError(result)) leaveIfNothingEnrolled();
         }
         refresh();
@@ -333,17 +485,34 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     // ---- removal ----
 
     private void confirmRemove() {
+        String title = mIntelligentScan
+                ? text(mContext, "sec_intelligentscan_remove_intelligentscan_dialog_title",
+                        "Remove face and iris data?")
+                : text(mContext, "iris_delete_popup_title", "Remove iris data?");
+        String body = mIntelligentScan
+                ? text(mContext, "sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature",
+                        "Intelligent Scan features will be turned off.")
+                : text(mContext, "iris_delete_popup_message_with_related_func",
+                        "Features that use irises will be turned off.");
         new AlertDialog.Builder(getActivity())
-                .setTitle(text(mContext, "iris_delete_popup_title", "Remove iris data?"))
-                .setMessage(text(mContext, "iris_delete_popup_message_with_related_func",
-                        "Features that use irises will be turned off."))
+                .setTitle(title)
+                .setMessage(body)
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(text(mContext, "common_remove", "Remove"), (d, w) -> removeAll())
                 .show();
     }
 
     private void removeAll() {
-        for (Object iris : enrolled()) {
+        if (mIntelligentScan) {
+            setFaceUnlockEnabled(false);
+            removeFaceTemplates();
+        }
+        List<Object> irises = enrolled();
+        if (irises.isEmpty()) {
+            onRemoved();
+            return;
+        }
+        for (Object iris : irises) {
             try {
                 mIris.remove((Iris) iris, mUserId, new SemIrisManager.RemovalCallback() {
                     @Override public void onRemovalSucceeded(Iris removed) { onRemoved(); }
@@ -381,6 +550,64 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
         return Collections.emptyList();
     }
 
+    private boolean hasEnrolledFace() {
+        try {
+            Object fm = mContext.getSystemService("face");
+            if (fm == null) return false;
+            return (Boolean) fm.getClass().getMethod("hasEnrolledTemplates", int.class).invoke(fm, mUserId);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private boolean isFaceUnlockEnabled() {
+        try {
+            int state = (Integer) mLockUtils.getClass().getMethod("getBiometricState", int.class, int.class)
+                    .invoke(mLockUtils, SEM_TYPE_FACE, mUserId);
+            return state == 1;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private void setFaceUnlockEnabled(boolean enabled) {
+        try {
+            mLockUtils.getClass().getMethod("setBiometricState", int.class, int.class, int.class)
+                    .invoke(mLockUtils, SEM_TYPE_FACE, enabled ? 1 : 0, mUserId);
+        } catch (Throwable t) {
+            Log.w(TAG, "setBiometricState failed", t);
+        }
+    }
+
+    private void removeFaceTemplates() {
+        try {
+            Object fm = mContext.getSystemService("face");
+            if (fm == null) return;
+            Class<?> faceClass = Class.forName("android.hardware.face.Face");
+            Class<?> cbClass = Class.forName("android.hardware.face.FaceManager$RemovalCallback");
+            Object emptyFace = faceClass.getConstructor(CharSequence.class, int.class, long.class)
+                    .newInstance("", 0, 0L);
+            fm.getClass().getMethod("removeAll", int.class, cbClass).invoke(fm, mUserId, null);
+        } catch (Throwable t) {
+            try {
+                Object fm = mContext.getSystemService("face");
+                if (fm != null) {
+                    List<?> faces = (List<?>) fm.getClass().getMethod("getEnrolledFaces", int.class).invoke(fm, mUserId);
+                    Class<?> faceClass = Class.forName("android.hardware.face.Face");
+                    Class<?> cbClass = Class.forName("android.hardware.face.FaceManager$RemovalCallback");
+                    if (faces != null) {
+                        for (Object f : faces) {
+                            fm.getClass().getMethod("remove", faceClass, int.class, cbClass)
+                                    .invoke(fm, f, mUserId, null);
+                        }
+                    }
+                }
+            } catch (Throwable inner) {
+                Log.w(TAG, "removeFaceTemplates failed", inner);
+            }
+        }
+    }
+
     // ---- helpers ----
 
     private static int invokeInt(Object target, String name, int arg, int fallback) {
@@ -408,6 +635,12 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
         } catch (Throwable t) {
             return 0;
         }
+    }
+
+    private String pageTitle(Context ctx) {
+        return mIntelligentScan
+                ? text(ctx, "bio_intelligentscan_title", "Intelligent Scan")
+                : title(ctx);
     }
 
     static String title(Context ctx) {

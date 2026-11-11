@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Көздің мөлдір қабығы датчигі жауап бермеуде. Әрекетті кейінірек қайталаңыз.</string>
     <string name="iris_hw_problem_msg">Егер бұл үнемі қайталанса, онда телефоныңызды өшіріп, қайта қосыңыз.</string>
     <string name="lockpattern_retry_button_text">Қайталау</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Үздік дәлдік пен қауіпсіздікке қол жеткізу үшін бет пен көздің қабығын тануды бірге пайдаланыңыз.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Бетіңіз бен көзіңіздің қабықтары тіркелді.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Бет пен көз қабықтарын тіркеу</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Бет пен көз қабығы дерегін жою</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Саусақ ізі мен көз қабығы дерегін жою ма?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Егер қолданбаларда бетпен немесе көздің қабығымен аутентификациялауды пайдалансаңыз, онда сол қолданбаларға кіру үшін сізге бетіңізді немесе көзіңіздің қабықтарын қайтадан тіркеу қажет болады.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Көз қабықтары және бетті тану функцияларын құлыпты қауіпсіз әрі қолайлы ашу және тексеру үшін бірге пайдаланыңыз.</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan құлпын ашу</string>
+    <string name="sec_intelligentscan_unlock_summary">Біріктірілген бет пен көздің қабығын сканерлеу мүмкіндігін пайдалану арқылы телефоныңыздың құлпын ашыңыз.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Экран қосулы Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Экран қосыла салысымен, алдымен жүргізіп өтпей-ақ Intelligent Scan көмегімен телефоныңыздың құлпын ашыңыз.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Intelligent Scan арқылы құлыптан ашқан кезде, жүргізіп өткенше Құлыптау экранында қалыңыз.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Бет және Көздің қабығы функцияларының екеуі де өшірілген кезде Intelligent Scan автоматты түрде өшіріледі.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan өшірілген кезде “Бет және көздің қабығы” функциясы да автоматты түрде өшіріледі.</string>
 </resources>

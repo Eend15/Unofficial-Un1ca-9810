@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">O sensor de íris não está respondendo. Tente novamente mais tarde.</string>
     <string name="iris_hw_problem_msg">Se isso continuar ocorrendo, reinicie seu telefone.</string>
     <string name="lockpattern_retry_button_text">Repetir</string>
+    <string name="bio_intelligentscan_title">Leitura inteligente</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Use os reconhecimentos facial e de íris juntos para melhorar a precisão e a segurança.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Seu rosto e suas íris foram registradas.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Cadastrar rosto e íris</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Remover registro facial e íris</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Remover registro facial e da íris?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Se você estiver usando a autenticação facial ou de íris nos aplicativos, precisará registrar seu rosto ou suas íris novamente para entrar nesses aplicativos.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Use o reconhecimento facial e de íris ao mesmo tempo para desbloqueio e validação de forma prática e segura.</string>
+    <string name="sec_intelligentscan_unlock_title">Desbloq. Leitura inteligente</string>
+    <string name="sec_intelligentscan_unlock_summary">Desbloqueie seu telefone usando a leitura combinada do rosto e da íris.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Leitura inteligente ao ligar</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Desbloqueie seu telefone com a Leitura inteligente assim que a tela ligar, sem deslizar primeiro.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Quando desbloqueia com a Leitura inteligente, você permanece na Tela de bloqueio até deslizar.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">A Leitura inteligente é desativada automaticamente quando tanto Rosto quanto Íris são desativados.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Rosto e Íris são desativados automaticamente quando a Leitura inteligente é desativada.</string>
 </resources>

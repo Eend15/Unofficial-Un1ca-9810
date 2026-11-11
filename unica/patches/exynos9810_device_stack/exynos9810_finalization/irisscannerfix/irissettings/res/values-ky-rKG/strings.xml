@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Көздүн кареги сенсору жооп кайтарбай жатат. Кийинирээк дагы аракеттениңиз.</string>
     <string name="iris_hw_problem_msg">Эгерде бул кайталана бере турган болсо, телефонуңузду кайра иштетиңиз.</string>
     <string name="lockpattern_retry_button_text">Дагы аракет</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Тагыраак жана коопсуздураак болушу үчүн жүз жана карек аныктоосун бирге колдонуңуз.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Жүзүңүз менен каректериңиз катталды.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Жүзүңүздү ж-а карек-ди каттаңыз</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Жүз жана карек маалымат. өчүрүү</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Жуз жана карек маалыматтары өчүрүлсүнбү?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Эгер сиз колдонмолордо жүз же каректин накталыгын аныктоосун пайдаланып жатсаңыз, анда сиз жүзүңүздү же каректериңизди ошол колдонмолорго кирүү үчүн пайдалана аласыз.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Каректер жана жүз таануусун бирге, коопсуз, ыңгайлуу кулпуну ачып жана ырастоо үчүн колдонуңуз.</string>
+    <string name="sec_intelligentscan_unlock_title">"Intelligent Scan'дын кулп. ачуу"</string>
+    <string name="sec_intelligentscan_unlock_summary">Бириккен жүз жана карек издөөнү колдонуп телефонуңуздун кулпусун ачыңыз.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Экрандагы Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Экраныңыз күйөөр замат, биринчи жылдырбастан Intelligent Scan менен телефонуңуздун кулпусун ачыңыз.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Сиз Intelligent Scan менен кулпуну ачканда, жылдырганга чейин Кулпу экранда күтүңүз.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Жүз жана Карек өчүрүлгөндө Intelligent Scan автоматтуу түрдө өчүрүлөт.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan өчүрүлгөндө Жүз жана Карек автоматтуу түрдө өчүрүлөт.</string>
 </resources>

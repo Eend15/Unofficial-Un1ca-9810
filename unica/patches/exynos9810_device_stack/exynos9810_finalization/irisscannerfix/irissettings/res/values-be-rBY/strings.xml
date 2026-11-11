@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Датчык вясёлкавай абалонкі не адказвае. Паўтарыце спробу пазней.</string>
     <string name="iris_hw_problem_msg">Калі гэта адбываецца зноў, перазапусціце тэлефон.</string>
     <string name="lockpattern_retry_button_text">Паўтарыць</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Для павышэння дакладнасці і бяспекі выкарыстоўвайце распазнаванне твару і вясёлкавых абалонак разам.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Твар і вясёлкавыя абалонкі зарэгістраваны.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Зарэг твар і вясёлк абалонкі</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Выдал. даныя твару і вяс. абал.</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Выдаліць даныя твару і вясёлк. абалонак?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Калі вы выкарыстоўваеце распазнаванне твару або вясёлкавых абалонак у праграмах, вам трэба будзе зарэгістраваць твар або вясёлкавыя абалонкі яшчэ раз, каб уваходзіць у гэтыя праграмы.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Выкарыстоўвайце распазнаванне вясёлкавых абалонак і твару разам для бяспечнай, зручнай разблакіроўкі і праверкі.</string>
+    <string name="sec_intelligentscan_unlock_title">Разблакіроўка Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_summary">Разблакіруйце тэлефон з дапамогай скамбінаванага сканіравання твару і вясёлкавых абалонак.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelligent Scan на экране</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Разблакіруйце тэлефон з дапамогай Intelligent Scan адразу пасля ўключэння экрана, без папярэдняга правядзення пальцам.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Калі вы разблакіруеце з дапамогай Intelligent Scan, заставайцеся на экране блакіроўкі, пакуль не праведзяце.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Intelligent Scan аўтаматычна выключана, калі выключаны даныя твару і вясёлкавых абалонак.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Твар і вясёлкавыя абалонкі аўтаматычна выключаны пры выключэнні Intelligent Scan.</string>
 </resources>

@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">თვალის ირისის სენსორი არ რეაგირებს. მოგვიანებით სცადეთ.</string>
     <string name="iris_hw_problem_msg">თუ პრობლემა არ მოგვარდება, გადატვირთეთ ტელეფონი.</string>
     <string name="lockpattern_retry_button_text">ხელახალი ცდა</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">უფრო მეტი სიზუსტისა და უსაფრთხოებისთვის, ერთად გამოიყენეთ სახისა და თვალის ირისის ამოცნობა.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">თქვენი სახე და თვალის ირისები დარეგისტრირდა.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">სახისა და თვ. ირისის რეგისტ.</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">სახის და თვალის მონაცემთა წაშლა</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">წაიშალოს სახისა და თვალის მონაცემები?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">თუ აპლიკაციებში იყენებთ სახით ან თვალის ირისით ავტორიზაციას, ხელახლა უნდა დაარეგისტრიროთ სახე და თვალის ირისები, რომ შეხვიდეთ ამ აპლიკაციებში.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">უსაფრთხოდ, მოსახერხებლად განსაბლოკად და დასამოწმებლად, ერთად გამოიყენეთ თვალის ირისებისა და სახის ამოცნობა.</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan-ით განბლოკვა</string>
+    <string name="sec_intelligentscan_unlock_summary">ტელეფონის განსაბლოკად გამოიყენეთ სახისა და თვალის ირისის დასკანერების კომბინაცია.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelligent Scan ეკრანზე</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">ეკრანის ჩართვისთანავე განბლოკეთ ტელეფონი Intelligent Scan-ით, მანამდე თითის გადასმის გარეშე.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">როდესაც განბლოკავთ Intelligent Scan-ით, ეკრანი დაბლოკილი დარჩეს თითის გადასმამდე.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Intelligent Scan ავტომატურად გამოირთვება, სახისა და ირისის ამოცნობის გამორთვის დროს.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">სახისა და თვალის ირისის ამოცნობა ავტომატურად გამოირთვება, როდესაც Intelligent Scan გამოირთვება.</string>
 </resources>

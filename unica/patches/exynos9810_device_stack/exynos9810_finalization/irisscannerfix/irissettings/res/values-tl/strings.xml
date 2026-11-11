@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Hindi tumutugon ang sensor ng iris. Subukan muli mamaya.</string>
     <string name="iris_hw_problem_msg">Kung patuloy itong nangyayari, i-restart ang telepono mo.</string>
     <string name="lockpattern_retry_button_text">I-retry</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Magkasamang gamitin ang face at iris recognition para sa mas mahusay na katumpakan at seguridad.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Nairehistro na ang mukha at mga iris mo.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Irehistro ang mukha at mga iris</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Alisin ang face at iris data</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Alisin ang face at iris data?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Kung ginagamit mo ang face o iris authentication sa mga app, kakailanganin mong irehistro muli ang mukha o mga iris mo para mag-sign in sa mga app na iyon.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Gamitin nang magkasama ang iris at face recognition para sa ligtas at maginhawang pag-unlock at pag-verify.</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan na pag-unlock</string>
+    <string name="sec_intelligentscan_unlock_summary">I-unlock ang telepono mo gamit ang pinagsamang face at iris scanning.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Screen-on Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">I-unlock ang telepono mo gamit ang Intelligent Scan sa sandaling mag-on ang screen, nang hindi muna nagsi-swipe.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kapag nag-unlock ka gamit ang Intelligent Scan, manatili sa Lock screen hanggang sa mag-swipe ka.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Awtomatikong ino-off ang Intelligent Scan kapag kapwa ini-off ang Face at Iris.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Awtomatikong ini-off ang Face at Iris kapag ini-off ang Intelligent Scan.</string>
 </resources>

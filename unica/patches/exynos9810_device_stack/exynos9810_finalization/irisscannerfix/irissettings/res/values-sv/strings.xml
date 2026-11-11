@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Irissensorn svarar inte. Försök igen senare.</string>
     <string name="iris_hw_problem_msg">Om det händer igen startar du om telefonen.</string>
     <string name="lockpattern_retry_button_text">Förs.igen</string>
+    <string name="bio_intelligentscan_title">Intelligent skanning</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Använd ansiktsigenkänning och irisidentifiering tillsammans för bättre noggrannhet och säkerhet.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Ditt ansikte och dina irisar har registrerats.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Registrera ansikte och irisar</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Ta bort ansikts- och irisinfo</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Ta bort ansikts- och irisinformation?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Om du använder ansikts- eller irisautentisering i appar måste du registrera ditt ansikte eller dina irisar igen för att kunna logga in i apparna.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Använd irisar och ansiktsigenkänning tillsammans för säker och bekväm upplåsning och verifiering.</string>
+    <string name="sec_intelligentscan_unlock_title">Lås upp med Intelligent skanning</string>
+    <string name="sec_intelligentscan_unlock_summary">Lås upp telefonen med en kombinationsskanning av både ansikte och iris.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Intelligent skanning vid start</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Lås upp telefonen med Intelligent skanning så fort skärmen slås på, utan att svepa först.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Stanna på låsskärmen tills du sveper när du låser upp med Intelligent skanning.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Intelligent skanning stängs automatiskt av när både Ansikte och Iris stängs av.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Ansikte och Iris stängs automatiskt av när Intelligent skanning stängs av.</string>
 </resources>

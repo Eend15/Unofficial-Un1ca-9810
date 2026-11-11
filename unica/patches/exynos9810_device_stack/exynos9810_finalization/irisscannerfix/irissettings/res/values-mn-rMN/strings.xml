@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Солонгон бүрхэвч мэдрэгч хариу үйлдэл үзүүлэхгүй байна. Дараа дахин оролд.</string>
     <string name="iris_hw_problem_msg">Энэ дахин тохиолдоод байвал утсаа унтрааж асаана уу.</string>
     <string name="lockpattern_retry_button_text">Ахин орлд</string>
+    <string name="bio_intelligentscan_title">Intelligent Scan</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Илүү сайн нарийвчлал ба хамгаалалттай болохын тулд нүүр болон солонгон бүрхэвчийн танилтыг зэрэг ашиглана уу.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Та нүүр болон солонгон бүрхэвчээ бүртгүүлсэн.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Нүүр, солонгон бүрхэвч бүртгүүл</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Нүүр, сол.гн бүрхвч.н өгдл алга</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Хурууны хээ, сол.н бүрхвч.н өггдл арлгх у?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Хэрэв та хэрэглүүрүүд дээр нүүр эсвэл нүдний солонгон бүрхэвчийн баталгаажуулалтыг ашиглаж байгаа бол тэдгээр хэрэглүүрүүдэд нэвтрэхийн тулд нүүр эсвэл нүдний солонгон бүрхэвчийг дахин бүртгүүлэх хэрэгтэй болно.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Солонгон бүрхэвч болон нүүр танилтыг хамтдаа аюулгүй, тохиромжтой түгжээ тайлах, баталгаажуулалтад ашиглана уу.</string>
+    <string name="sec_intelligentscan_unlock_title">Intelligent Scan-р түгжээ тайлх</string>
+    <string name="sec_intelligentscan_unlock_summary">Утасныхаа түгжээг нэгтгэсэн нүүр болон солонгон бүрхэвч уншихийг ашиглан тайлна уу.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Длгц ассн үе.н Intelligent Scan</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Дэлгэц асмагц эхлээд шудралгүйгээр Intelligent Scan-р утасныхаа түгжээг тайлна уу.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Intelligent Scan-аар түгжээ тайлахдаа, шудрах хүртлээ Түгжих дэлгэц дээр барь.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Нүүр ба Солонгон бүрхэвч хоёрын хоёулаа унтарсан үед Intelligent Scan-г автоматаар унтраасан.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan-г унтраасан үед Нүүр болон Солонгон бүрхэвчийг автоматаар унтарсан.</string>
 </resources>

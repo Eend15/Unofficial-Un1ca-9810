@@ -120,9 +120,13 @@ def assert_rom_inclusion(root: Path, variant: str) -> None:
     if not rc.is_file():
         raise RuntimeError("Experimental ROM lacks built-in native FaceunlockFix init")
     init = rc.read_text(encoding="utf-8")
-    if not re.search(r"(?m)^\s*disabled\s*$", init) or not re.search(
-            r"(?m)^\s*oneshot\s*$", init):
+    # "disabled" keeps faced from starting with its class. It must NOT be oneshot:
+    # a crashed faced has to be restarted, or Android falls back to the vendor face
+    # HAL (empty store), drops the enrolled face and Settings turns Face unlock off.
+    if not re.search(r"(?m)^\s*disabled\s*$", init):
         raise RuntimeError("FaceunlockFix native service may auto-start")
+    if re.search(r"(?m)^\s*oneshot\s*$", init):
+        raise RuntimeError("FaceunlockFix native service is not restarted after a crash")
     if set(dexes) != {"classes.dex", "classes2.dex", "classes3.dex"}:
         raise RuntimeError("Unexpected experimental services.jar DEX layout")
     if PROBE_CLASS not in dexes.get("classes.dex", b"") + dexes.get("classes2.dex", b""):

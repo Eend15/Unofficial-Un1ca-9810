@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">മിഴിപടല സെന്‍സര്‍ പ്രതികരിക്കുന്നില്ല. പിന്നീട് വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="iris_hw_problem_msg">ഇത് സംഭവിച്ചുകൊണ്ടിരിക്കുന്നുവെങ്കിൽ, നിങ്ങളുടെ ഫോൺ പുനരാരംഭിക്കുക.</string>
     <string name="lockpattern_retry_button_text">വീണ്ടും ശ്രമിക്കുക</string>
+    <string name="bio_intelligentscan_title">ഇന്‍റലിജന്‍റ് സ്കാൻ</string>
+    <string name="sec_intelligentscan_choose_lock_summary">മികച്ച കൃത്യതയ്ക്കും സുരക്ഷയ്ക്കുമായി മുഖം, മിഴിപടലം തിരിച്ചറിയൽ എന്നിവ ഒന്നിച്ച് ഉപയോഗിക്കുക.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">നിങ്ങളുടെ മുഖവും മിഴിപടലങ്ങളും രജിസ്റ്റര്‍ ചെയ്യപ്പെട്ടു.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">മുഖവും മിഴിപടലങ്ങളും രജിസ്റ്റർ ചെയ്യുക</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">മുഖ, മിഴിപടല ഡാറ്റ നീക്കംചെയ്യുക</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">മുഖ, മിഴിപടല ഡാറ്റ നീക്കംചെയ്യണോ?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">ആപ്പുകളിൽ മുഖം അല്ലെങ്കിൽ മിഴിപടല ആധികാരികമാക്കലാണ് നിങ്ങൾ ഉപയോഗിക്കുന്നതെങ്കിൽ, അത്തരം ആപ്പുകളിൽ സൈൻ ഇൻ ചെയ്യുന്നതിന് നിങ്ങളുടെ മുഖമോ മിഴിപടലങ്ങളോ നിങ്ങൾ വീണ്ടും രജിസ്റ്റർ ചെയ്യേണ്ടിവരും.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">സുരക്ഷിതവും സൗകര്യപ്രദവുമായി അൺലോക്ക് ചെയ്യാനും പരിശോധിച്ചുറപ്പിക്കാനും മിഴിപടലങ്ങളും മുഖം തിരിച്ചറിയലും ഒരുമിച്ച് ഉപയോഗിക്കുക.</string>
+    <string name="sec_intelligentscan_unlock_title">ഇന്‍റലിജന്‍റ് സ്കാൻ അൺലോക്ക്</string>
+    <string name="sec_intelligentscan_unlock_summary">സംയോജിത മുഖ, മിഴിപടല സ്കാനിംഗ് ഉപയോഗിച്ച് നിങ്ങളുടെ ഫോൺ അൺലോക്ക് ചെയ്യുക.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">ഇന്‍റലിജന്‍റ് സ്കാനിലെ സ്ക്രീൻ</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">സ്കീൻ ഓൺ ചെയ്യപ്പെടുന്ന ഉടനെ ആദ്യം സ്വൈപ് ചെയ്യാതെ ഇന്‍റലിജന്‍റ് സ്കാൻ ഉപയോഗിച്ച് ഫോൺ അൺലോക്ക് ചെയ്യുക.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">ഇന്‍റലിജന്‍റ് സ്കാൻ ഉപയോഗിച്ച് നിങ്ങൾ അൺലോക്ക് ചെയ്യുമ്പോൾ, നിങ്ങൾ സ്വൈപ് ചെയ്യുന്നത് വരെ ലോക്ക് സ്ക്രീനിൽ തുടരുക.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">മുഖം, മിഴിപടലം എന്നിവ രണ്ടും ഓഫ് ചെയ്യപ്പെടുമ്പോൾ ഇന്‍റലിജന്‍റ് സ്കാൻ ഓട്ടോമാറ്റിക്കായി ഓഫ് ചെയ്യപ്പെടുന്നു.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ഇന്‍റലിജന്‍റ് സ്കാൻ ഓഫ് ചെയ്തപ്പോൾ മുഖവും മിഴിപടലവും ഓട്ടോമാറ്റിക്കായി ഓഫ് ചെയ്തു.</string>
 </resources>

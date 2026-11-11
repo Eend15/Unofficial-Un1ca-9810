@@ -1803,8 +1803,33 @@ _EXYNOS9810_FINAL_ADD_IRIS_SCANNER()
     python3 "$FIX/native/apply_byte_patch.py" "$FIX/native/libIrisService.patch.json" \
         "$STOCK/lib64/libIrisService.so" "$SYS/lib64/libIrisService.so" || return 1
     cp -f "$FIX/native/libiris_a10_shim.so" "$SYS/lib64/libiris_a10_shim.so" || return 1
-    mkdir -p "$SYS/etc/init"
+    mkdir -p "$SYS/etc/init" "$SYS/etc/sysconfig"
     cp -f "$FIX/native/irisd.rc" "$SYS/etc/init/irisd.rc" || return 1
+    cat > "$SYS/etc/sysconfig/un1ca_iris.xml" << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+    <allow-in-power-save package="com.samsung.android.server.iris" />
+    <allow-in-data-usage-save package="com.samsung.android.server.iris" />
+</config>
+EOF
+    # Lower Iris IR camera (cam_id=90) resource_cost from 51 to 49 in libexynoscamera3.so
+    # so CameraService allows Front Camera (cam_id=1, cost=51) and Iris IR Camera (cost=49)
+    # to run simultaneously (51 + 49 = 100 <= 100) for Intelligent Scan (Face + Iris).
+    python3 - "$WORK_DIR/vendor/lib/libexynoscamera3.so" "$WORK_DIR/vendor/lib64/libexynoscamera3.so" << 'PY' || return 1
+import pathlib, sys
+old = bytes.fromhex("5a000000010000000e01000033000000")
+new = bytes.fromhex("5a000000010000000e01000031000000")
+for p in sys.argv[1:]:
+    path = pathlib.Path(p)
+    if not path.is_file():
+        continue
+    data = path.read_bytes()
+    if new in data and old not in data:
+        continue
+    if data.count(old) != 1:
+        raise SystemExit(f"expected 1 cam_id=90 resource_cost entry in {p}, found {data.count(old)}")
+    path.write_bytes(data.replace(old, new, 1))
+PY
     python3 "$FIX/sepolicy/patch_sepolicy.py" "$SYS/system_ext/etc/selinux" || return 1
 
     _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/irisd" 0 2000 755 "u:object_r:irisd_exec:s0"
@@ -1812,7 +1837,8 @@ _EXYNOS9810_FINAL_ADD_IRIS_SCANNER()
             lib64/libIrisSensorListener.so lib64/libIrisService.so lib64/libiris_a10_shim.so; do
         _EXYNOS9810_FINAL_SET_METADATA "system" "system/$REL" 0 0 644 "u:object_r:system_lib_file:s0"
     done
-    for REL in framework/semcamera.jar etc/init/irisd.rc etc/permissions/irisservice.xml \
+    for REL in framework/semcamera.jar etc/init/irisd.rc etc/sysconfig/un1ca_iris.xml \
+            etc/permissions/irisservice.xml \
             etc/permissions/semcamera.xml \
             etc/permissions/privapp-permissions-com.samsung.android.server.iris.xml \
             priv-app/SecIrisService/SecIrisService.apk priv-app/IrisSettings/IrisSettings.apk; do
@@ -3367,6 +3393,16 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME()
     local ORIGINAL
     local PATCHED
 
+    # November 7 on the S9+: with this safeguard removed the current stack ran
+    # 11 consecutive 5-frame LLS captures, including QuickView, with every JPEG
+    # saved and no FLITE/PIPE_3AA starvation (reprocessing recovery and flush
+    # recovery now cover that path). Keep stock multi-frame low-light/HDR there;
+    # S9 and Note9 keep the safeguard until their own HALs are tested.
+    if [ "$TARGET_CODENAME" = "star2lte" ]; then
+        LOG "- Keeping stock multi-frame low-light capture on $TARGET_CODENAME"
+        return 0
+    fi
+
     # checkLDCaptureMode() is built at a different address for every device
     # HAL, which changes both branch and BL encodings even though the source
     # logic is the same. Force its existing disabled/single-frame branch with
@@ -3535,6 +3571,1058 @@ PY
             return 1
             ;;
     esac
+}
+
+_EXYNOS9810_FINAL_ENABLE_PHOTO_REMASTER()
+{
+    # Gallery offers Remaster because SAIV_CONFIG_AI_REVITAL_VERSION is kept,
+    # but the target floating features drop SAIV_SUPPORT_AI_REVITAL, so
+    # PhotoRemasterService rejects every request ("This device is not
+    # supported") without answering and Gallery hangs (ANR). The engine runs
+    # on CPU/GPU (OpenCV, TFLite GPU delegate); the earlier Exynos9810 port
+    # shipped the same key with version 1.7.
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_SAIV_SUPPORT_AI_REVITAL" "TRUE"
+}
+
+_EXYNOS9810_FINAL_PATCH_CAMERA_FILTER_AND_FULL_RATIO()
+{
+    # Filters: the menu's live thumbnails enable MAIN_PREVIEW_CALLBACK, the
+    # stream this HAL cannot provide (see PREVIEW_CALLBACK_STREAM above). The
+    # repeating preview stalls with request errors and the provider stays
+    # wedged until restarted, so keep the callback off for that menu. The list
+    # only appears after a first thumbnail frame, so feed it a neutral frame.
+    # Selfie Full ratio: the crop map gives 3264x1592 -> 2640x1288, which the
+    # front HAL supports but the Resolution enum lacks, so selecting Full threw
+    # on the UI thread. Add the missing enum value.
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
+
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
+
+    LOG "- Keeping camera filters and selfie Full ratio from wedging Exynos9810"
+    python3 - "$APK_DIR" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+root = Path(sys.argv[1])
+
+def one(pattern):
+    hits = list(root.glob(pattern))
+    if len(hits) != 1:
+        raise SystemExit(f"{pattern}: expected 1 file, found {len(hits)}")
+    return hits[0]
+
+def replace_method(path, signature, body):
+    text = path.read_text()
+    new, count = re.subn(
+        r"(?ms)^\.method " + re.escape(signature) + r"\n.*?^\.end method",
+        lambda _: ".method " + signature + "\n" + body + "\n.end method",
+        text,
+    )
+    if count != 1:
+        raise SystemExit(f"{path.name}: {signature} not found")
+    path.write_text(new)
+
+LIVE = "Lcom/sec/android/app/camera/engine/core/callback/LiveThumbnailPreviewCallback;"
+replace_method(
+    one("smali*/com/sec/android/app/camera/engine/core/callback/LiveThumbnailPreviewCallback.smali"),
+    "public enable(Z)V",
+    f"""    .locals 0
+
+    iput-boolean p1, p0, {LIVE}->mIsCallbackEnabled:Z
+
+    return-void""",
+)
+
+MGR = "Lcom/sec/android/app/camera/layer/menu/effects/manager/LiveThumbnailPreviewManager;"
+FEEDER = MGR[:-1] + "$Un1caFeeder;"
+mgr_path = one("smali*/com/sec/android/app/camera/layer/menu/effects/manager/LiveThumbnailPreviewManager.smali")
+text = mgr_path.read_text()
+if "un1caFeed" not in text:
+    start_sig = ".method public start(ILandroid/util/Size;)V\n    .locals 10\n"
+    if text.count(start_sig) != 1:
+        raise SystemExit("LiveThumbnailPreviewManager.start not found")
+    text = text.replace(
+        start_sig,
+        start_sig + "\n    const/4 v0, 0x0\n\n    iput-object v0, p0, @M->mUn1caFrame:[B\n\n"
+        "    iput-object p2, p0, @M->mUn1caSize:Landroid/util/Size;\n".replace("@M", MGR),
+    ).replace("@M", MGR)
+    start = re.search(r"(?ms)^\.method public start\(ILandroid/util/Size;\)V\n.*?^\.end method", text)
+    body = start.group(0)
+    call = "    iget-object p1, p0, " + MGR + "->mCallbackManager:"
+    if body.count(call) != 1:
+        raise SystemExit("LiveThumbnailPreviewManager.start callback setup not found")
+    body = body.replace(
+        call,
+        "    const-wide/16 v0, 0x32\n\n    invoke-virtual {p0, v0, v1}, " + MGR + "->un1caPostFeed(J)V\n\n" + call,
+    )
+    text = text[:start.start()] + body + text[start.end():]
+    text = text.replace(
+        "# direct methods\n",
+        ".field private mUn1caFrame:[B\n\n.field private mUn1caSize:Landroid/util/Size;\n\n\n# direct methods\n",
+        1,
+    )
+    text += """
+.method public un1caPostFeed(J)V
+    .locals 2
+
+    iget-object v0, p0, @M->mPreviewHandler:@M_H
+
+    if-eqz v0, :cond_0
+
+    new-instance v1, @F
+
+    invoke-direct {v1, p0}, @F-><init>(@M)V
+
+    invoke-virtual {v0, v1, p1, p2}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
+
+    :cond_0
+    return-void
+.end method
+
+.method public un1caFeed()V
+    .locals 6
+
+    iget-object v0, p0, @M->mUn1caSize:Landroid/util/Size;
+
+    if-nez v0, :cond_0
+
+    return-void
+
+    :cond_0
+    invoke-virtual {v0}, Landroid/util/Size;->getWidth()I
+
+    move-result v1
+
+    invoke-virtual {v0}, Landroid/util/Size;->getHeight()I
+
+    move-result v2
+
+    iget-object v0, p0, @M->mUn1caFrame:[B
+
+    if-nez v0, :cond_1
+
+    mul-int v0, v1, v2
+
+    mul-int/lit8 v0, v0, 0x3
+
+    div-int/lit8 v0, v0, 0x2
+
+    new-array v0, v0, [B
+
+    const/16 v3, -0x80
+
+    invoke-static {v0, v3}, Ljava/util/Arrays;->fill([BB)V
+
+    iput-object v0, p0, @M->mUn1caFrame:[B
+
+    :cond_1
+    const/4 v3, 0x0
+
+    invoke-virtual {p0, v0, v1, v2, v3}, @M->onPreviewFrame([BIIZ)V
+
+    const-wide/16 v4, 0x3e8
+
+    invoke-virtual {p0, v4, v5}, @M->un1caPostFeed(J)V
+
+    return-void
+.end method
+""".replace("@M_H", MGR[:-1] + "$PreviewHandler;").replace("@M", MGR).replace("@F", FEEDER)
+    mgr_path.write_text(text)
+    (mgr_path.parent / "LiveThumbnailPreviewManager$Un1caFeeder.smali").write_text(""".class public final @F
+.super Ljava/lang/Object;
+.implements Ljava/lang/Runnable;
+
+
+.field private final a:@M
+
+
+.method public constructor <init>(@M)V
+    .locals 0
+
+    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    iput-object p1, p0, @F->a:@M
+
+    return-void
+.end method
+
+.method public final run()V
+    .locals 0
+
+    iget-object p0, p0, @F->a:@M
+
+    invoke-virtual {p0}, @M->un1caFeed()V
+
+    return-void
+.end method
+""".replace("@M", MGR).replace("@F", FEEDER))
+
+RES = "Lcom/sec/android/app/camera/interfaces/Resolution;"
+RATIO = "Lcom/sec/android/app/camera/interfaces/AspectRatio;"
+NEW = "RESOLUTION_2640X1288"
+res_path = one("smali*/com/sec/android/app/camera/interfaces/Resolution.smali")
+text = res_path.read_text()
+if f"->{NEW}:" not in text:
+    anchor = f".field public static final enum RESOLUTION_3264X1592:{RES}\n"
+    if text.count(anchor) != 1:
+        raise SystemExit("Resolution: anchor field not found")
+    text = text.replace(anchor, f".field public static final enum {NEW}:{RES}\n\n" + anchor)
+
+    values = re.search(r"(?ms)^\.method private static synthetic \$values\(\).*?^\.end method", text)
+    if not values:
+        raise SystemExit("Resolution.$values not found")
+    body = values.group(0)
+    size = re.search(r"const/16 v0, (0x[0-9a-f]+)\s+new-array v0, v0, \[", body)
+    if not size:
+        raise SystemExit("Resolution.$values size not found")
+    ordinal = int(size.group(1), 16)
+    if body.count("return-object v0") != 1:
+        raise SystemExit("Resolution.$values return not found")
+    body = body.replace(size.group(0), size.group(0).replace(size.group(1), hex(ordinal + 1)), 1)
+    body = body.replace(
+        "return-object v0",
+        f"sget-object v1, {RES}->{NEW}:{RES}\n\n    const/16 v2, {hex(ordinal)}\n\n"
+        "    aput-object v1, v0, v2\n\n    return-object v0",
+    )
+    text = text[:values.start()] + body + text[values.end():]
+
+    clinit = re.search(r"(?ms)^\.method static constructor <clinit>\(\)V\n.*?^\.end method", text)
+    if not clinit:
+        raise SystemExit("Resolution.<clinit> not found")
+    body = clinit.group(0)
+    ids, v4 = [], None
+    for line in body.splitlines():
+        hit = re.match(r"\s*const(?:/4|/16)? v4, (-?0x[0-9a-f]+)$", line)
+        if hit:
+            v4 = int(hit.group(1), 16)
+        elif "invoke-direct/range {v1 .. v" in line and f"{RES}-><init>" in line:
+            ids.append(v4)
+    if len(ids) < 300 or None in ids:
+        raise SystemExit("Resolution ids could not be read")
+    new_id = max(ids) + 1
+    call = f"    invoke-static {{}}, {RES}->$values()[{RES}\n"
+    if body.count(call) != 1:
+        raise SystemExit("Resolution.<clinit> $values call not found")
+    block = f"""    new-instance v0, {RES}
+
+    const-string v2, "{NEW}"
+
+    const/16 v3, {hex(ordinal)}
+
+    const/16 v4, {hex(new_id)}
+
+    const/16 v5, 0xa50
+
+    const/16 v6, 0x508
+
+    sget-object v7, {RES}->RESOLUTION_3264X1592:{RES}
+
+    iget-object v7, v7, {RES}->mRatio:{RATIO}
+
+    const/16 v8, 0x1e
+
+    move-object v1, v0
+
+    invoke-direct/range {{v1 .. v8}}, {RES}-><init>(Ljava/lang/String;IIIIL{RATIO[1:]}I)V
+
+    sput-object v0, {RES}->{NEW}:{RES}
+
+"""
+    body = body.replace(call, block + call)
+    text = text[:clinit.start()] + body + text[clinit.end():]
+    res_path.write_text(text)
+PY
+}
+
+_EXYNOS9810_FINAL_RESTORE_CAMERA_SEAMLESS_ZOOM()
+{
+    # The camera app was patched to report seamless zoom as unavailable, which
+    # keeps the back camera on ID 0 and makes the 2x button a digital crop. The
+    # dual-camera targets expose the real seamless device (ID 20), so give them
+    # the stock S22 method back and let the HAL switch to the telephoto at 2x.
+    local APK_DIR="$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk"
+
+    case "$TARGET_CODENAME" in
+        star2lte|crownlte) ;;
+        *) return 0 ;;
+    esac
+
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" || return 1
+
+    LOG "- Restoring seamless zoom so the 2x button uses the telephoto lens"
+    python3 - "$APK_DIR" <<'PY' || return 1
+from pathlib import Path
+import re
+import sys
+
+hits = list(Path(sys.argv[1]).glob("smali*/com/sec/android/app/camera/Camera.smali"))
+if len(hits) != 1:
+    raise SystemExit(f"Camera.smali: expected 1 file, found {len(hits)}")
+path = hits[0]
+CAM = "Lcom/sec/android/app/camera/Camera;"
+ID = "Lcom/sec/android/app/camera/interfaces/CameraId;"
+FEATURE = "Lcom/sec/android/app/camera/interfaces/ShootingModeFeature;"
+SETTINGS = "Lcom/sec/android/app/camera/interfaces/CameraSettings;"
+KEY = "Lcom/sec/android/app/camera/interfaces/CameraSettings$Key;"
+RES = "Lcom/sec/android/app/camera/util/CameraResolution;"
+sig = f"public isSeamlessZoomAvailable({ID})Z"
+body = f"""    .locals 4
+
+    sget-object v0, {ID}->BACK_SEAMLESS_ZOOM:{ID}
+
+    const/4 v1, 0x0
+
+    if-eq p1, v0, :cond_0
+
+    return v1
+
+    :cond_0
+    iget-object v0, p0, {CAM}->mShootingModeFeature:{FEATURE[:-1]}Provider;
+
+    invoke-interface {{v0}}, {FEATURE}->isRecordingMode()Z
+
+    move-result v0
+
+    const/4 v2, 0x1
+
+    if-eqz v0, :cond_2
+
+    iget-object v0, p0, {CAM}->mCameraSettings:{SETTINGS}
+
+    sget-object v3, {KEY}->NIGHT_VIDEO:{KEY}
+
+    invoke-interface {{v0, v3}}, {SETTINGS}->get({KEY})I
+
+    move-result v0
+
+    if-ne v0, v2, :cond_1
+
+    return v1
+
+    :cond_1
+    iget-object v0, p0, {CAM}->mCameraSettings:{SETTINGS}
+
+    invoke-interface {{v0, p1}}, {SETTINGS}->getCameraFacing({ID})I
+
+    move-result v0
+
+    iget-object p0, p0, {CAM}->mCameraSettings:{SETTINGS}
+
+    invoke-interface {{p0, p1}}, {SETTINGS}->getCamcorderResolution({ID})I
+
+    move-result p0
+
+    invoke-static {{v0, p0}}, {RES}->getCamcorderSeamlessZoomRecordingAvailableFeature(II)Z
+
+    move-result p0
+
+    if-nez p0, :cond_2
+
+    return v1
+
+    :cond_2
+    return v2"""
+text = path.read_text()
+new, count = re.subn(
+    r"(?ms)^\.method " + re.escape(sig) + r"\n.*?^\.end method",
+    lambda _: ".method " + sig + "\n" + body + "\n.end method",
+    text,
+)
+if count != 1:
+    raise SystemExit("Camera.isSeamlessZoomAvailable not found")
+path.write_text(new)
+
+# The S22 drives lens-button zooms from its frame-by-frame zoom curve, gated on
+# a HAL capability this legacy HAL does not report. Without it the app falls
+# back to a separate eased animation. Use the same curve path as the S22.
+hits = list(Path(sys.argv[1]).glob("smali*/com/sec/android/app/camera/layer/keyscreen/zoom/ZoomConditionChecker.smali"))
+if len(hits) != 1:
+    raise SystemExit(f"ZoomConditionChecker.smali: expected 1 file, found {len(hits)}")
+path = hits[0]
+sig = "public isSmoothZoomSupported()Z"
+text, count = re.subn(
+    r"(?ms)^\.method " + re.escape(sig) + r"\n.*?^\.end method",
+    lambda _: ".method " + sig + "\n    .locals 1\n\n    const/4 v0, 0x1\n\n    return v0\n.end method",
+    path.read_text(),
+)
+if count != 1:
+    raise SystemExit("ZoomConditionChecker.isSmoothZoomSupported not found")
+path.write_text(text)
+
+# The HAL only force-switches lenses cleanly when it sees a direct 1x -> 2x
+# jump (m_check2XButtonPressed); an animated ramp misses that path and the
+# telephoto swaps in with a visible jump a second later. So the 1x -> 2x button
+# sends the jump and draws the zoom itself: a snapshot of the preview scales to
+# 2x over the handover and fades into the live telephoto. Other zooms keep the
+# S22 curve.
+hits = list(Path(sys.argv[1]).glob("smali*/com/sec/android/app/camera/layer/keyscreen/zoom/ZoomView.smali"))
+if len(hits) != 1:
+    raise SystemExit(f"ZoomView.smali: expected 1 file, found {len(hits)}")
+path = hits[0]
+text = path.read_text()
+if "un1ca_zoom_anim" not in text:
+    Z = "Lcom/sec/android/app/camera/layer/keyscreen/zoom/ZoomView;"
+    P = "Lcom/sec/android/app/camera/layer/keyscreen/zoom/ZoomPresenter;"
+    C = "Lcom/sec/android/app/camera/layer/keyscreen/zoom/ZoomContract$Presenter;"
+    O = "Lcom/sec/android/app/camera/layer/keyscreen/zoom/Un1caZoomOverlay;"
+    CTX = "Lcom/sec/android/app/camera/interfaces/CameraContext;"
+    PM = "Lcom/sec/android/app/camera/interfaces/PreviewManager;"
+    def fill(s):
+        return (s.replace("@PM", PM).replace("@CTX", CTX).replace("@Z", Z)
+                .replace("@P", P).replace("@C", C).replace("@O", O))
+    head = ".method public startZoomTransition(II)V\n    .locals 2\n"
+    if text.count(head) != 1:
+        raise SystemExit("ZoomView.startZoomTransition(II) not found")
+    text = text.replace(head, head + fill("""
+    const/16 v0, 0x3e8
+
+    if-ne p1, v0, :un1ca_zoom_anim
+
+    const/16 v0, 0x7d0
+
+    if-ne p2, v0, :un1ca_zoom_anim
+
+    iget-object v0, p0, @Z->mPresenter:@C
+
+    invoke-interface {v0}, @C->isFrontFacing()Z
+
+    move-result v1
+
+    if-nez v1, :un1ca_zoom_anim
+
+    check-cast v0, @P
+
+    invoke-virtual {v0}, @P->un1caGetCameraContext()@CTX
+
+    move-result-object v0
+
+    invoke-interface {v0}, @CTX->getPreviewManager()@PM
+
+    move-result-object v0
+
+    invoke-static {p0, v0}, @O->start(@Z@PM)V
+
+    return-void
+
+    :un1ca_zoom_anim
+"""))
+    text += fill("""
+.method public un1caSetZoom(I)V
+    .locals 0
+
+    invoke-direct {p0, p1}, @Z->setZoomValue(I)V
+
+    return-void
+.end method
+""")
+    path.write_text(text)
+    pres = path.parent / "ZoomPresenter.smali"
+    ptext = pres.read_text()
+    ptext += fill("""
+.method public un1caGetCameraContext()@CTX
+    .locals 1
+
+    iget-object v0, p0, @P->mCameraContext:@CTX
+
+    return-object v0
+.end method
+""")
+    pres.write_text(ptext)
+    (path.parent / "Un1caZoomOverlay.smali").write_text(fill(r""".class public final @O
+.super Ljava/lang/Object;
+.implements Landroid/view/PixelCopy$OnPixelCopyFinishedListener;
+.implements Landroid/animation/ValueAnimator$AnimatorUpdateListener;
+.implements Ljava/lang/Runnable;
+
+
+.field private final a:@Z
+
+.field private final b:Landroid/graphics/Rect;
+
+.field private final c:Landroid/graphics/Bitmap;
+
+.field private d:Landroid/widget/ImageView;
+
+.field private e:Landroid/view/ViewGroup;
+
+.field private final f:Landroid/graphics/Matrix;
+
+.field private g:I
+
+
+.method private constructor <init>(@ZLandroid/graphics/Rect;Landroid/graphics/Bitmap;)V
+    .locals 1
+
+    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    iput-object p1, p0, @O->a:@Z
+
+    iput-object p2, p0, @O->b:Landroid/graphics/Rect;
+
+    iput-object p3, p0, @O->c:Landroid/graphics/Bitmap;
+
+    new-instance v0, Landroid/graphics/Matrix;
+
+    invoke-direct {v0}, Landroid/graphics/Matrix;-><init>()V
+
+    iput-object v0, p0, @O->f:Landroid/graphics/Matrix;
+
+    return-void
+.end method
+
+.method public static start(@Z@PM)V
+    .locals 8
+
+    :try_start_0
+    invoke-interface {p1}, @PM->getPreviewLayoutRect()Landroid/graphics/Rect;
+
+    move-result-object v0
+
+    invoke-virtual {v0}, Landroid/graphics/Rect;->width()I
+
+    move-result v1
+
+    invoke-virtual {v0}, Landroid/graphics/Rect;->height()I
+
+    move-result v2
+
+    if-lez v1, :cond_0
+
+    if-lez v2, :cond_0
+
+    invoke-interface {p1}, @PM->getSurfaceHolder()Landroid/view/SurfaceHolder;
+
+    move-result-object v3
+
+    invoke-interface {v3}, Landroid/view/SurfaceHolder;->getSurface()Landroid/view/Surface;
+
+    move-result-object v3
+
+    sget-object v4, Landroid/graphics/Bitmap$Config;->ARGB_8888:Landroid/graphics/Bitmap$Config;
+
+    invoke-static {v1, v2, v4}, Landroid/graphics/Bitmap;->createBitmap(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;
+
+    move-result-object v4
+
+    new-instance v5, @O
+
+    invoke-direct {v5, p0, v0, v4}, @O-><init>(@ZLandroid/graphics/Rect;Landroid/graphics/Bitmap;)V
+
+    new-instance v6, Landroid/os/Handler;
+
+    invoke-static {}, Landroid/os/Looper;->getMainLooper()Landroid/os/Looper;
+
+    move-result-object v7
+
+    invoke-direct {v6, v7}, Landroid/os/Handler;-><init>(Landroid/os/Looper;)V
+
+    invoke-static {v3, v4, v5, v6}, Landroid/view/PixelCopy;->request(Landroid/view/Surface;Landroid/graphics/Bitmap;Landroid/view/PixelCopy$OnPixelCopyFinishedListener;Landroid/os/Handler;)V
+    :try_end_0
+    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
+
+    return-void
+
+    :catch_0
+    move-exception v0
+
+    :cond_0
+    const/16 v0, 0x7d0
+
+    invoke-virtual {p0, v0}, @Z->un1caSetZoom(I)V
+
+    return-void
+.end method
+
+.method public final onPixelCopyFinished(I)V
+    .locals 9
+
+    if-nez p1, :cond_0
+
+    :try_start_0
+    iget-object v0, p0, @O->a:@Z
+
+    invoke-virtual {v0}, Landroid/view/View;->getContext()Landroid/content/Context;
+
+    move-result-object v1
+
+    invoke-virtual {v1}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+
+    move-result-object v2
+
+    const-string v3, "preview_animation_layer"
+
+    const-string v4, "id"
+
+    invoke-virtual {v1}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
+
+    move-result-object v5
+
+    invoke-virtual {v2, v3, v4, v5}, Landroid/content/res/Resources;->getIdentifier(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+
+    move-result v2
+
+    invoke-virtual {v0}, Landroid/view/View;->getRootView()Landroid/view/View;
+
+    move-result-object v3
+
+    invoke-virtual {v3, v2}, Landroid/view/View;->findViewById(I)Landroid/view/View;
+
+    move-result-object v2
+
+    invoke-virtual {v2}, Landroid/view/View;->getParent()Landroid/view/ViewParent;
+
+    move-result-object v3
+
+    check-cast v3, Landroid/view/ViewGroup;
+
+    iput-object v3, p0, @O->e:Landroid/view/ViewGroup;
+
+    invoke-virtual {v3, v2}, Landroid/view/ViewGroup;->indexOfChild(Landroid/view/View;)I
+
+    move-result v2
+
+    add-int/lit8 v2, v2, 0x1
+
+    new-instance v4, Landroid/widget/ImageView;
+
+    invoke-direct {v4, v1}, Landroid/widget/ImageView;-><init>(Landroid/content/Context;)V
+
+    iput-object v4, p0, @O->d:Landroid/widget/ImageView;
+
+    sget-object v5, Landroid/widget/ImageView$ScaleType;->MATRIX:Landroid/widget/ImageView$ScaleType;
+
+    invoke-virtual {v4, v5}, Landroid/widget/ImageView;->setScaleType(Landroid/widget/ImageView$ScaleType;)V
+
+    iget-object v5, p0, @O->c:Landroid/graphics/Bitmap;
+
+    invoke-virtual {v4, v5}, Landroid/widget/ImageView;->setImageBitmap(Landroid/graphics/Bitmap;)V
+
+    iget-object v5, p0, @O->b:Landroid/graphics/Rect;
+
+    iget v6, v5, Landroid/graphics/Rect;->left:I
+
+    int-to-float v6, v6
+
+    invoke-virtual {v4, v6}, Landroid/view/View;->setX(F)V
+
+    iget v6, v5, Landroid/graphics/Rect;->top:I
+
+    int-to-float v6, v6
+
+    invoke-virtual {v4, v6}, Landroid/view/View;->setY(F)V
+
+    invoke-virtual {v5}, Landroid/graphics/Rect;->width()I
+
+    move-result v6
+
+    invoke-virtual {v5}, Landroid/graphics/Rect;->height()I
+
+    move-result v7
+
+    new-instance v8, Landroid/view/ViewGroup$LayoutParams;
+
+    invoke-direct {v8, v6, v7}, Landroid/view/ViewGroup$LayoutParams;-><init>(II)V
+
+    invoke-virtual {v3, v4, v2, v8}, Landroid/view/ViewGroup;->addView(Landroid/view/View;ILandroid/view/ViewGroup$LayoutParams;)V
+
+    const/16 v1, 0x7d0
+
+    invoke-virtual {v0, v1}, @Z->un1caSetZoom(I)V
+
+    const/4 v0, 0x2
+
+    new-array v0, v0, [F
+
+    const/high16 v1, 0x3f800000
+
+    const/4 v2, 0x0
+
+    aput v1, v0, v2
+
+    const/high16 v1, 0x40000000
+
+    const/4 v2, 0x1
+
+    aput v1, v0, v2
+
+    invoke-static {v0}, Landroid/animation/ValueAnimator;->ofFloat([F)Landroid/animation/ValueAnimator;
+
+    move-result-object v0
+
+    const-wide/16 v1, 0xf0
+
+    invoke-virtual {v0, v1, v2}, Landroid/animation/ValueAnimator;->setDuration(J)Landroid/animation/ValueAnimator;
+
+    new-instance v1, Landroid/view/animation/DecelerateInterpolator;
+
+    invoke-direct {v1}, Landroid/view/animation/DecelerateInterpolator;-><init>()V
+
+    invoke-virtual {v0, v1}, Landroid/animation/ValueAnimator;->setInterpolator(Landroid/animation/TimeInterpolator;)V
+
+    invoke-virtual {v0, p0}, Landroid/animation/ValueAnimator;->addUpdateListener(Landroid/animation/ValueAnimator$AnimatorUpdateListener;)V
+
+    invoke-virtual {v0}, Landroid/animation/ValueAnimator;->start()V
+
+    const-wide/16 v0, 0x1e0
+
+    invoke-virtual {v4, p0, v0, v1}, Landroid/view/View;->postDelayed(Ljava/lang/Runnable;J)Z
+    :try_end_0
+    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
+
+    return-void
+
+    :catch_0
+    move-exception p1
+
+    :cond_0
+    iget-object p1, p0, @O->a:@Z
+
+    const/16 v0, 0x7d0
+
+    invoke-virtual {p1, v0}, @Z->un1caSetZoom(I)V
+
+    return-void
+.end method
+
+.method public final onAnimationUpdate(Landroid/animation/ValueAnimator;)V
+    .locals 5
+
+    invoke-virtual {p1}, Landroid/animation/ValueAnimator;->getAnimatedValue()Ljava/lang/Object;
+
+    move-result-object p1
+
+    check-cast p1, Ljava/lang/Float;
+
+    invoke-virtual {p1}, Ljava/lang/Float;->floatValue()F
+
+    move-result p1
+
+    iget-object v0, p0, @O->b:Landroid/graphics/Rect;
+
+    invoke-virtual {v0}, Landroid/graphics/Rect;->width()I
+
+    move-result v1
+
+    int-to-float v1, v1
+
+    invoke-virtual {v0}, Landroid/graphics/Rect;->height()I
+
+    move-result v2
+
+    int-to-float v2, v2
+
+    const/high16 v3, 0x40000000
+
+    div-float/2addr v1, v3
+
+    div-float/2addr v2, v3
+
+    iget-object v4, p0, @O->f:Landroid/graphics/Matrix;
+
+    invoke-virtual {v4, p1, p1, v1, v2}, Landroid/graphics/Matrix;->setScale(FFFF)V
+
+    iget-object v0, p0, @O->d:Landroid/widget/ImageView;
+
+    invoke-virtual {v0, v4}, Landroid/widget/ImageView;->setImageMatrix(Landroid/graphics/Matrix;)V
+
+    return-void
+.end method
+
+.method public final run()V
+    .locals 3
+
+    iget-object v0, p0, @O->d:Landroid/widget/ImageView;
+
+    iget v1, p0, @O->g:I
+
+    if-nez v1, :cond_0
+
+    const/4 v1, 0x1
+
+    iput v1, p0, @O->g:I
+
+    invoke-virtual {v0}, Landroid/view/View;->animate()Landroid/view/ViewPropertyAnimator;
+
+    move-result-object v0
+
+    const/4 v1, 0x0
+
+    invoke-virtual {v0, v1}, Landroid/view/ViewPropertyAnimator;->alpha(F)Landroid/view/ViewPropertyAnimator;
+
+    move-result-object v0
+
+    const-wide/16 v1, 0x8c
+
+    invoke-virtual {v0, v1, v2}, Landroid/view/ViewPropertyAnimator;->setDuration(J)Landroid/view/ViewPropertyAnimator;
+
+    move-result-object v0
+
+    invoke-virtual {v0, p0}, Landroid/view/ViewPropertyAnimator;->withEndAction(Ljava/lang/Runnable;)Landroid/view/ViewPropertyAnimator;
+
+    return-void
+
+    :cond_0
+    iget-object v1, p0, @O->e:Landroid/view/ViewGroup;
+
+    invoke-virtual {v1, v0}, Landroid/view/ViewGroup;->removeView(Landroid/view/View;)V
+
+    iget-object v0, p0, @O->c:Landroid/graphics/Bitmap;
+
+    invoke-virtual {v0}, Landroid/graphics/Bitmap;->recycle()V
+
+    return-void
+.end method
+"""))
+PY
+}
+
+_EXYNOS9810_FINAL_ENABLE_FINGERPRINT_SWIPE_ENROLL()
+{
+    # Stock S9/S9+/Note9 put the Egis rear sensor into swipe enrollment by
+    # sending HAL request 18 before every enroll. The S22 framework still sends
+    # it, but with FP_FEATURE_SWIPE_ENROLL hard-coded to false, so swipes were
+    # rejected as partial touches. Read the swipe_enroll token from the
+    # BIOAUTH fingerprint features (set to rear[,_land],swipe_enroll here).
+    local JAR_DIR="$APKTOOL_DIR/system/framework/services.jar"
+    local FEATURE
+
+    DECODE_APK "system" "system/framework/services.jar" || return 1
+    FEATURE="$(find "$JAR_DIR" -path '*/com/android/server/biometrics/SemBiometricFeature.smali' | head -n 1)"
+    [ -f "$FEATURE" ] || {
+        LOGE "SemBiometricFeature.smali not found; cannot enable fingerprint swipe enrollment"
+        return 1
+    }
+
+    LOG "- Enabling stock rear-sensor swipe fingerprint enrollment"
+    python3 - "$FEATURE" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+if '"swipe_enroll"' in text:
+    print("already patched")
+    raise SystemExit(0)
+
+F = "Lcom/android/server/biometrics/SemBiometricFeature;"
+SFF = "Lcom/samsung/android/feature/SemFloatingFeature;"
+old = f"    sput-boolean v3, {F}->FP_FEATURE_SWIPE_ENROLL:Z\n"
+if text.count(old) != 1 or "const/4 v3, 0x0" not in text:
+    raise SystemExit("SemBiometricFeature: FP_FEATURE_SWIPE_ENROLL store not found")
+new = f"""    invoke-static {{}}, {SFF}->getInstance(){SFF}
+
+    move-result-object v0
+
+    const-string v4, "SEC_FLOATING_FEATURE_BIOAUTH_CONFIG_FINGERPRINT_FEATURES"
+
+    invoke-virtual {{v0, v4}}, {SFF}->getString(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v0
+
+    const-string v4, "swipe_enroll"
+
+    invoke-virtual {{v0, v4}}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
+
+    move-result v0
+
+    sput-boolean v0, {F}->FP_FEATURE_SWIPE_ENROLL:Z
+"""
+path.write_text(text.replace(old, new))
+PY
+}
+
+_EXYNOS9810_FINAL_SET_CAMERA_SINGLE_BOKEH()
+{
+    # The vendor lib list is the target's Android 10 one. One UI 8 Camera only
+    # implements single_bokeh.samsung.v2, so v1_1 maps to SingleBokehDummyNode:
+    # Portrait/Live focus opens but never blurs. The S22 v2 portrait engine
+    # (libPortraitSolution, libportrait_controller_*) is already in system.
+    local KEY="SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO"
+    local VALUE
+    VALUE="$(GET_FLOATING_FEATURE_CONFIG "$KEY")"
+
+    [ -f "$WORK_DIR/system/system/lib64/libPortraitSolution.camera.samsung.so" ] || {
+        LOGE "S22 single bokeh v2 engine missing"
+        return 1
+    }
+    case ",$VALUE," in
+        *,single_bokeh.samsung.v2,*) return 0 ;;
+        *,single_bokeh.samsung.v1_1,*)
+            VALUE="$(sed 's/\(^\|,\)single_bokeh\.samsung\.v1_1\(,\|$\)/\1single_bokeh.samsung.v2\2/' <<< "$VALUE")"
+            ;;
+        *) VALUE="$VALUE,single_bokeh.samsung.v2" ;;
+    esac
+    LOG "- Using One UI 8 single bokeh v2 for Portrait/Live focus"
+    SET_FLOATING_FEATURE_CONFIG "$KEY" "$VALUE"
+}
+
+_EXYNOS9810_FINAL_ADD_POLARR_COMPOSITION_LIBS()
+{
+    # Shot suggestions (SUPPORT_COMPOSITION_GUIDE) loads Polarr's composition
+    # SDK. The S22 source ships its databases but none of these libraries, so
+    # enabling the option threw UnsatisfiedLinkError (libFeature.polarr.so /
+    # libBestComposition.polarr.so not found) and crashed Camera until its data
+    # was cleared. Their only dependencies (Snap AIDL, camera OpenCV) are present.
+    local LIB
+
+    LOG "- Adding Polarr composition libraries for camera Shot suggestions"
+    for LIB in libBestComposition libFeature libPolarrSnap libTracking libYuv; do
+        ADD_TO_WORK_DIR "a73xqxx" "system" "system/lib64/$LIB.polarr.so" \
+            0 0 644 "u:object_r:system_lib_file:s0" || return 1
+    done
+    ADD_TO_WORK_DIR "a73xqxx" "system" "system/etc/public.libraries-polarr.txt" \
+        0 0 644 "u:object_r:system_file:s0" || return 1
+}
+
+_EXYNOS9810_FINAL_PATCH_AOD_RELATIVE_LINK_FILL()
+{
+    # AOD settings end with a "Looking for something else?" card and the list
+    # fills the space below it in the card colour. The card only gets a link
+    # with an under-display fingerprint or without a notification LED
+    # (/sys/class/sec/led/led_pattern), so on Exynos9810 it is hidden and the
+    # fill is left as an empty card. Turn the fill off when the card is hidden.
+    local REL="system/priv-app/AODService_v80/AODService_v80.apk"
+    local APK_DIR="$APKTOOL_DIR/$REL"
+
+    [ -f "$WORK_DIR/system/$REL" ] || return 0
+    [ -d "$APK_DIR" ] || DECODE_APK "system" "$REL" || return 1
+
+    LOG "- Hiding empty AOD settings link card on Exynos9810"
+
+    python3 - "$APK_DIR" <<'PY' || return 1
+from pathlib import Path
+import sys
+
+MARKER = "UN1CA_AOD_RELATIVE_LINK_FILL"
+root = Path(sys.argv[1])
+matches = [p for p in root.glob("smali*/aod/I2.smali")]
+if len(matches) != 1:
+    raise SystemExit(f"aod/I2.smali: expected 1 file, found {len(matches)}")
+path = matches[0]
+text = path.read_text()
+if MARKER in text:
+    raise SystemExit(0)
+if not text.startswith(".class public final Laod/I2;\n.super Laod/do0;"):
+    raise SystemExit("aod/I2 is not the AOD main settings fragment")
+
+old = """    invoke-super {p0, p1, p2}, Laod/do0;->L(Landroid/view/View;Landroid/os/Bundle;)V
+"""
+new = old + """
+    invoke-static {p0}, Laod/I2;->un1caRelativeLinkFill(Laod/I2;)V
+"""
+start = text.find(".method public final L(Landroid/view/View;Landroid/os/Bundle;)V")
+end = text.find(".end method", start)
+if start < 0 or text.count(old, start, end) != 1:
+    raise SystemExit("aod/I2.L onViewCreated anchor not found")
+for needle in (
+    'const-string v5, "prefsRelativeLink"',
+    "Lcom/samsung/android/app/aod/common/settings/RelativeLinkPreference;->e0:Ljava/util/ArrayList;",
+    'const-string p1, "prefsRelativeLinkCategory"',
+):
+    if needle not in text:
+        raise SystemExit(f"aod/I2 relative link code changed: {needle}")
+text = text[:start] + text[start:end].replace(old, new, 1) + text[end:]
+
+text += """
+.method public static un1caRelativeLinkFill(Laod/I2;)V
+    .registers 4
+
+    # UN1CA_AOD_RELATIVE_LINK_FILL
+    iget-object v0, p0, Laod/do0;->i0:Landroidx/recyclerview/widget/RecyclerView;
+
+    if-eqz v0, :cond_done
+
+    sget-boolean v1, Laod/aB0;->z:Z
+
+    if-nez v1, :cond_off
+
+    const-string v1, "prefsRelativeLink"
+
+    invoke-virtual {p0, v1}, Laod/do0;->X(Ljava/lang/CharSequence;)Landroidx/preference/Preference;
+
+    move-result-object v1
+
+    instance-of v2, v1, Lcom/samsung/android/app/aod/common/settings/RelativeLinkPreference;
+
+    if-eqz v2, :cond_off
+
+    check-cast v1, Lcom/samsung/android/app/aod/common/settings/RelativeLinkPreference;
+
+    iget-object v1, v1, Lcom/samsung/android/app/aod/common/settings/RelativeLinkPreference;->e0:Ljava/util/ArrayList;
+
+    invoke-virtual {v1}, Ljava/util/ArrayList;->isEmpty()Z
+
+    move-result v1
+
+    if-eqz v1, :cond_done
+
+    :cond_off
+    const/4 v1, 0x0
+
+    iput-boolean v1, v0, Landroidx/recyclerview/widget/RecyclerView;->J1:Z
+
+    invoke-virtual {v0}, Landroid/view/View;->invalidate()V
+
+    :cond_done
+    return-void
+.end method
+"""
+path.write_text(text)
+PY
+
+    local RV
+    RV="$(find "$APK_DIR" -path '*/androidx/recyclerview/widget/RecyclerView.smali' | head -n 1)"
+    if [ -z "$RV" ] || ! grep -q "iput-boolean v0, p0, Landroidx/recyclerview/widget/RecyclerView;->J1:Z" "$RV" \
+            || ! grep -q "iget-boolean v4, p0, Landroidx/recyclerview/widget/RecyclerView;->J1:Z" "$RV"; then
+        LOGE "AODService RecyclerView fill-bottom flag J1 not found"
+        return 1
+    fi
+    grep -q "UN1CA_AOD_RELATIVE_LINK_FILL" "$(find "$APK_DIR" -path '*/aod/I2.smali' | head -n 1)" || return 1
+}
+
+_EXYNOS9810_FINAL_PATCH_CAMERA_EXIF_MODEL()
+{
+    # The stock camera HAL writes EXIF Model from ro.product.model, which on
+    # this ROM is the S22 source identity (SM-S901B), so Gallery shows the
+    # wrong phone in photo details. ro.boot.em.model has the same length, holds
+    # the real model and is readable by the camera HAL. ro.factory.model is
+    # default_prop, which the HAL cannot read, so EXIF fell back to "SAMSUNG".
+    local ARCH LIB RESULT
+    for ARCH in lib lib64; do
+        LIB="$WORK_DIR/vendor/$ARCH/libexynoscamera3.so"
+        if [ ! -f "$LIB" ]; then
+            LOGE "Exynos9810 camera HAL missing: vendor/$ARCH/libexynoscamera3.so"
+            return 1
+        fi
+        RESULT="$(python3 - "$LIB" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+old, stale, new = b"ro.product.model\0", b"ro.factory.model\0", b"ro.boot.em.model\0"
+data = path.read_bytes()
+if data.count(stale) == 1 and data.count(old) == 0:
+    old = stale
+counts = (data.count(old), data.count(new))
+if counts == (1, 0):
+    path.write_bytes(data.replace(old, new, 1))
+    print("patched")
+elif counts == (0, 1):
+    print("present")
+else:
+    print(f"unknown:{counts[0]}:{counts[1]}")
+PY
+)" || return 1
+        case "$RESULT" in
+            patched) LOG "- Writing the real device model into camera EXIF (vendor/$ARCH)" ;;
+            present) LOG "- Camera EXIF device model already patched (vendor/$ARCH)" ;;
+            *)
+                LOGE "Exynos9810 camera EXIF model pattern mismatch in vendor/$ARCH ($RESULT)"
+                return 1
+                ;;
+        esac
+    done
 }
 
 _EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY()
@@ -4912,7 +6000,13 @@ PY
     python3 "$MODPATH/spen/patch_crown_standard_scan.py" "$APK_DIR/smali/R2/b.smali" || return 1
     python3 "$MODPATH/spen/patch_crown_direct_gatt_v8.py" \
         "$APK_DIR/smali/L2/p.smali" "$APK_DIR/smali/L2/m.smali" || return 1
+    # The pen ignores SCAN_REQ, so the Android 16 reassembler drops its
+    # advertisements during an active scan. Samsung's passive service filter
+    # makes the native stack deliver them, which also covers pens without a
+    # saved address (new pen, S Pen reset, empty EFS).
+    python3 "$MODPATH/spen/patch_crown_passive_scan_v10.py" "$APK_DIR/smali/R2/b.smali" || return 1
     grep -q "UN1CA_CROWN_STANDARD_SCAN_V6" "$APK_DIR/smali/R2/b.smali" && \
+        grep -q "UN1CA_CROWN_PASSIVE_SCAN_V10" "$APK_DIR/smali/R2/b.smali" && \
         grep -q "UN1CA_CROWN_DIRECT_GATT_V8" "$APK_DIR/smali/L2/m.smali" || {
         LOGE "Note9 Crown scan/direct GATT patches did not survive patching"
         return 1
@@ -6353,6 +7447,30 @@ _EXYNOS9810_FINAL_ENABLE_REPORTED_FEATURES()
     # not restore the current Settings/SystemUI/WM entry points.
     _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
         "SEC_FLOATING_FEATURE_COMMON_SUPPORT_DESKTOP_WINDOWING" "TRUE" || return 1
+
+    case "$TARGET_CODENAME" in
+        crownlte)
+            _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+                "SEC_FLOATING_FEATURE_BIOAUTH_CONFIG_FINGERPRINT_FEATURES" "rear_land,swipe_enroll" || return 1
+            ;;
+        starlte|star2lte)
+            _EXYNOS9810_FINAL_SET_FLOATING_FEATURE_BOTH \
+                "SEC_FLOATING_FEATURE_BIOAUTH_CONFIG_FINGERPRINT_FEATURES" "rear,swipe_enroll" || return 1
+            ;;
+    esac
+}
+
+_EXYNOS9810_FINAL_RESTORE_BIOMETRIC_SETTING()
+{
+    LOG "- Ensuring target-specific BiometricSetting for rear fingerprint sensor and swipe-enroll"
+    local APK_SRC="$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$TARGET_CODENAME/system/priv-app/BiometricSetting/BiometricSetting.apk"
+    local APK_DST="$WORK_DIR/system/system/priv-app/BiometricSetting/BiometricSetting.apk"
+
+    if [ -f "$APK_SRC" ]; then
+        mkdir -p "$(dirname "$APK_DST")"
+        cp -f "$APK_SRC" "$APK_DST"
+        _EXYNOS9810_FINAL_SET_METADATA "system" "priv-app/BiometricSetting/BiometricSetting.apk" 0 0 644 "u:object_r:system_file:s0"
+    fi
 }
 
 _EXYNOS9810_FINAL_ENABLE_EXTRA_BRIGHTNESS()
@@ -7128,6 +8246,14 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_FLUSH_RECOVERY
 _EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME
 _EXYNOS9810_FINAL_PATCH_CAMERA_PORTRAIT_RESUME
 _EXYNOS9810_FINAL_PATCH_CAMERA_REPROCESSING_RECOVERY
+_EXYNOS9810_FINAL_PATCH_CAMERA_EXIF_MODEL || return 1
+_EXYNOS9810_FINAL_ENABLE_PHOTO_REMASTER || return 1
+_EXYNOS9810_FINAL_PATCH_AOD_RELATIVE_LINK_FILL || return 1
+_EXYNOS9810_FINAL_ADD_POLARR_COMPOSITION_LIBS || return 1
+_EXYNOS9810_FINAL_SET_CAMERA_SINGLE_BOKEH || return 1
+_EXYNOS9810_FINAL_PATCH_CAMERA_FILTER_AND_FULL_RATIO || return 1
+_EXYNOS9810_FINAL_RESTORE_CAMERA_SEAMLESS_ZOOM || return 1
+_EXYNOS9810_FINAL_ENABLE_FINGERPRINT_SWIPE_ENROLL || return 1
 _EXYNOS9810_FINAL_PATCH_CAMERA_QR_POPUP_CRASH || return 1
 _EXYNOS9810_FINAL_PATCH_CAMERA_SEAMLESS_ZOOM_GUARD
 _EXYNOS9810_FINAL_FIX_BIXBY_KEYLAYOUT
@@ -7147,6 +8273,7 @@ _EXYNOS9810_FINAL_VERIFY_RAM_PROFILE || return 1
 _EXYNOS9810_FINAL_ENABLE_EXTRA_BRIGHTNESS
 _EXYNOS9810_FINAL_SET_BRIGHTNESS_PROFILE
 _EXYNOS9810_FINAL_ENABLE_REPORTED_FEATURES || return 1
+_EXYNOS9810_FINAL_RESTORE_BIOMETRIC_SETTING || return 1
 _EXYNOS9810_FINAL_CLEAN_GRAPHICS_STATE || return 1
 _EXYNOS9810_FINAL_APPLY_EMBEDDED_SEPOLICY || return 1
 _EXYNOS9810_FINAL_ENSURE_TARGET_IDENTITY

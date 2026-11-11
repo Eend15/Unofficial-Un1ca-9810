@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Sensori i irisit nuk po përgjigjet. Provo sërish më vonë.</string>
     <string name="iris_hw_problem_msg">Nëse kjo përsëritet, rinise telefonin.</string>
     <string name="lockpattern_retry_button_text">Provo përsëri</string>
+    <string name="bio_intelligentscan_title">Skanimi inteligjent</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Përdor njohjen me fytyrë dhe me iris së bashku, për saktësi dhe siguri më të madhe.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Fytyra dhe iriset e tua u regjistruan.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Regjistro fytyrën dhe iriset</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Hiq të dhënat fytyrë dhe irise</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">T’i heq të dhënat e fytyrës dhe iriseve?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Nëse po përdor autentifikimin me fytyrë ose me iris në app-et, duhet ta regjistrosh fytyrën ose iriset sërish, për të hyrë me sign-in në ato app-e.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Përdor iriset dhe njohjen me fytyrë së bashku, për zhbllokim dhe verifikim të sigurt dhe të volitshëm.</string>
+    <string name="sec_intelligentscan_unlock_title">Zhbllokim me Skanim inteligjent</string>
+    <string name="sec_intelligentscan_unlock_summary">Zhbllokoje telefonin duke përdorur skanim të kombinuar të fytyrës dhe të iriseve.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Skanimi inteligjent në ekran</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Zhbllokoje telefonin me Skanim inteligjent sapo të ndizet ekrani, pa rrëshqitur më parë.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kur të zhbllokosh përmes Skanimit inteligjent, rri në Ekranin e bllokimit derisa të rrëshqasësh.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Skanimi inteligjent fiket automatikisht kur fiken edhe Fytyra edhe Irisi.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Fytyra dhe Irisi u fikën automatikisht, kur u fik Skanimi inteligjent.</string>
 </resources>

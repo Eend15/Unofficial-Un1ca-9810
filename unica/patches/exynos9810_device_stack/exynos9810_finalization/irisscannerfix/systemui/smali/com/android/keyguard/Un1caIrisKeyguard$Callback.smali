@@ -38,40 +38,56 @@
         }
     .end annotation
 
-    .line 243
+    .line 557
     iput-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     invoke-direct {p0}, Lcom/samsung/android/camera/iris/SemIrisManager$AuthenticationCallback;-><init>()V
 
-    .line 244
+    .line 558
     iput-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->mSession:Landroid/os/CancellationSignal;
 
-    .line 245
+    .line 559
     iput p3, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->mUser:I
 
-    .line 246
+    .line 560
     return-void
 .end method
 
 
 # virtual methods
-.method synthetic lambda$onAuthenticationError$0$com-android-keyguard-Un1caIrisKeyguard$Callback()V
-    .registers 3
+.method synthetic lambda$onAuthenticationError$0$com-android-keyguard-Un1caIrisKeyguard$Callback(I)V
+    .registers 5
 
-    .line 261
+    .line 576
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
-    const-string v1, "retry"
+    new-instance v1, Ljava/lang/StringBuilder;
 
-    invoke-static {v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$mstart(Lcom/android/keyguard/Un1caIrisKeyguard;Ljava/lang/String;)V
+    invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
+
+    const-string v2, "retry after error "
+
+    invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+
+    move-result-object v1
+
+    invoke-virtual {v1, p1}, Ljava/lang/StringBuilder;->append(I)Ljava/lang/StringBuilder;
+
+    move-result-object p1
+
+    invoke-virtual {p1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+
+    move-result-object p1
+
+    invoke-static {v0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$mstart(Lcom/android/keyguard/Un1caIrisKeyguard;Ljava/lang/String;)V
 
     return-void
 .end method
 
 .method public onAuthenticationError(ILjava/lang/CharSequence;)V
-    .registers 5
+    .registers 6
 
-    .line 256
+    .line 570
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     invoke-static {v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmCancel(Lcom/android/keyguard/Un1caIrisKeyguard;)Landroid/os/CancellationSignal;
@@ -84,7 +100,7 @@
 
     return-void
 
-    .line 257
+    .line 571
     :cond_b
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
@@ -92,7 +108,7 @@
 
     invoke-static {v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$mfinish(Lcom/android/keyguard/Un1caIrisKeyguard;Landroid/os/CancellationSignal;)V
 
-    .line 258
+    .line 572
     invoke-static {p2}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
 
     move-result-object p2
@@ -129,68 +145,105 @@
 
     invoke-static {v0, p2}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 259
-    const/16 p2, 0x9
-
-    if-ne p1, p2, :cond_5f
-
-    iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
-
-    invoke-static {p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmRetriesLeft(Lcom/android/keyguard/Un1caIrisKeyguard;)I
-
-    move-result p1
-
-    if-lez p1, :cond_5f
-
-    .line 260
-    iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
-
-    invoke-static {p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmRetriesLeft(Lcom/android/keyguard/Un1caIrisKeyguard;)I
+    .line 573
+    invoke-static {p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$smisRetryableError(I)Z
 
     move-result p2
 
-    add-int/lit8 p2, p2, -0x1
+    if-eqz p2, :cond_69
 
-    invoke-static {p1, p2}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fputmRetriesLeft(Lcom/android/keyguard/Un1caIrisKeyguard;I)V
+    iget-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
-    .line 261
-    iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
+    invoke-static {p2}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmRetriesLeft(Lcom/android/keyguard/Un1caIrisKeyguard;)I
 
-    invoke-static {p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmHandler(Lcom/android/keyguard/Un1caIrisKeyguard;)Landroid/os/Handler;
+    move-result p2
 
-    move-result-object p1
+    if-lez p2, :cond_69
 
-    new-instance p2, Lcom/android/keyguard/Un1caIrisKeyguard$Callback$$ExternalSyntheticLambda0;
+    .line 574
+    iget-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
-    invoke-direct {p2, p0}, Lcom/android/keyguard/Un1caIrisKeyguard$Callback$$ExternalSyntheticLambda0;-><init>(Lcom/android/keyguard/Un1caIrisKeyguard$Callback;)V
+    invoke-static {p2}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmRetriesLeft(Lcom/android/keyguard/Un1caIrisKeyguard;)I
+
+    move-result v0
+
+    add-int/lit8 v0, v0, -0x1
+
+    invoke-static {p2, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fputmRetriesLeft(Lcom/android/keyguard/Un1caIrisKeyguard;I)V
+
+    .line 575
+    const/16 p2, 0x9
+
+    if-ne p1, p2, :cond_58
 
     const-wide/16 v0, 0x1f4
 
-    invoke-virtual {p1, p2, v0, v1}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
+    goto :goto_5a
 
-    .line 263
-    :cond_5f
+    :cond_58
+    const-wide/16 v0, 0xfa
+
+    .line 576
+    :goto_5a
+    iget-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
+
+    invoke-static {p2}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmHandler(Lcom/android/keyguard/Un1caIrisKeyguard;)Landroid/os/Handler;
+
+    move-result-object p2
+
+    new-instance v2, Lcom/android/keyguard/Un1caIrisKeyguard$Callback$$ExternalSyntheticLambda0;
+
+    invoke-direct {v2, p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard$Callback$$ExternalSyntheticLambda0;-><init>(Lcom/android/keyguard/Un1caIrisKeyguard$Callback;I)V
+
+    invoke-virtual {p2, v2, v0, v1}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
+
+    goto :goto_77
+
+    .line 577
+    :cond_69
+    iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
+
+    invoke-static {p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$misIntelligentScanActive(Lcom/android/keyguard/Un1caIrisKeyguard;)Z
+
+    move-result p1
+
+    if-eqz p1, :cond_77
+
+    .line 578
+    iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
+
+    invoke-static {p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$mstartFaceFallback(Lcom/android/keyguard/Un1caIrisKeyguard;)V
+
+    goto :goto_78
+
+    .line 577
+    :cond_77
+    :goto_77
+    nop
+
+    .line 580
+    :goto_78
     return-void
 .end method
 
 .method public onAuthenticationFailed()V
     .registers 3
 
-    .line 266
+    .line 583
     const-string v0, "UN1CA-IrisKeyguard"
 
     const-string v1, "iris not recognised"
 
     invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 267
+    .line 584
     return-void
 .end method
 
 .method public onAuthenticationSucceeded(Lcom/samsung/android/camera/iris/SemIrisManager$AuthenticationResult;)V
     .registers 3
 
-    .line 249
+    .line 563
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     invoke-static {p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmCancel(Lcom/android/keyguard/Un1caIrisKeyguard;)Landroid/os/CancellationSignal;
@@ -203,7 +256,7 @@
 
     return-void
 
-    .line 250
+    .line 564
     :cond_b
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
@@ -211,20 +264,20 @@
 
     invoke-static {p1, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$mfinish(Lcom/android/keyguard/Un1caIrisKeyguard;Landroid/os/CancellationSignal;)V
 
-    .line 251
+    .line 565
     const-string p1, "UN1CA-IrisKeyguard"
 
     const-string v0, "iris matched"
 
     invoke-static {p1, v0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 252
+    .line 566
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     iget v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->mUser:I
 
     invoke-static {p1, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$monMatched(Lcom/android/keyguard/Un1caIrisKeyguard;I)V
 
-    .line 253
+    .line 567
     return-void
 .end method

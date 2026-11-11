@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Сензорот за зеница не реагира. Обидете се повторно подоцна.</string>
     <string name="iris_hw_problem_msg">Ако ова продолжи да се случува, рестартирајте го телефонот.</string>
     <string name="lockpattern_retry_button_text">Повторно</string>
+    <string name="bio_intelligentscan_title">Интелигентно скенирање</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Користете препознавање на лице и зеници заедно за подобра прецизност и безбедност.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Вашето лице и зениците се регистрирани.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Регистрир. ги лицето и зениците</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Отстр. ги под. за лице и зеници</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Да се отстранат податоц. за лице и зеници?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Ако користите потврда со лице или зеници во апликациите, ќе треба повторно да ги регистрирате Вашето лице или зениците за да се најавите на тие апликации.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Користете препознавање на зеници и лице заедно за безбедно, практично отклучување и потврда.</string>
+    <string name="sec_intelligentscan_unlock_title">Отклуч. на Интелигент.скенирање</string>
+    <string name="sec_intelligentscan_unlock_summary">Отклучете го телефонот со користење на комбинирање скенирање на лице и зеници.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Интелигент. скен. на вкл. екран</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Отклучете го телефонот со Интелигентно скенирање веднаш штом ќе се вклучи екранот, без прво да поминувате.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Кога ќе отклучите со Интелигентно скенирање, останете на Екранот за заклучување сѐ додека не поминете.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Интелигентното скенирање се исклучува автоматски кога се исклучуваат и Лицето и Зениците.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Лицето и Зениците се исклучени автоматски кога е исклучено Интелигентно скенирање.</string>
 </resources>

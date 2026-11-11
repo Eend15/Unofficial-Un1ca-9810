@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">Penderia iris tidak memberikan respons. Cuba lagi kemudian.</string>
     <string name="iris_hw_problem_msg">Jika ini kerap berlaku, mulakan semula telefon anda.</string>
     <string name="lockpattern_retry_button_text">Cuba semula</string>
+    <string name="bio_intelligentscan_title">Imbas Pintar</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Gunakan pengecaman muka dan iris bersama-sama untuk ketepatan dan keselamatan yang lebih baik.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">Muka dan iris anda telah didaftarkan.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Daftar muka dan iris</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Alih keluar data muka dan iris</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Alih keluar data muka dan iris?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Jika anda menggunakan pengesahan muka atau iris dalam aplikasi, anda akan perlu mendaftarkan muka dan iris anda sekali lagi dan log masuk ke aplikasi tersebut.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Guna iris dan pengecaman muka bersama-sama untuk pembukaan kunci dan pengesahan yang selamat dan mudah.</string>
+    <string name="sec_intelligentscan_unlock_title">Buka kunci Imbas Pintar</string>
+    <string name="sec_intelligentscan_unlock_summary">Buka kunci telefon anda menggunakan gabungan pengimbasan muka dan iris.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Imbas Pintar Skrin Hidup</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Buka kunci telefon anda dengan Imbas Pintar anda sebaik sahaja skrin dihidupkan, tanpa perlu menyapu terlebih dahulu.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Apabila anda membuka kunci dengan Imbas Pintar, kekal pada Skrin kunci sehingga anda menyapu.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">Imbas Pintar dimatikan secara automatik apabila kedua-dua Muka dan Iris dimatikan.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Muka dan Iris dimatikan secara automatik apabila Imbas Pintar dimatikan.</string>
 </resources>

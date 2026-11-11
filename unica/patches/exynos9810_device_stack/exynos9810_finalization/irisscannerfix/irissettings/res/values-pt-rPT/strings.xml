@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">O sensor de íris não está a responder. Tente novamente mais tarde.</string>
     <string name="iris_hw_problem_msg">Se isto continuar a acontecer, reinicie o telefone.</string>
     <string name="lockpattern_retry_button_text">Repetir</string>
+    <string name="bio_intelligentscan_title">Reconhecimento Inteligente</string>
+    <string name="sec_intelligentscan_choose_lock_summary">Utilizar reconhecimento de rosto e íris em simultâneo para melhor precisão e segurança.</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">O seu rosto e as suas íris foram registados.</string>
+    <string name="sec_intelligentscan_register_face_and_iris">Registar rosto e íris</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">Remover dados de rosto e íris</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">Remover dados de rosto e íris?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">Se estiver a utilizar a autenticação de rosto ou íris nas aplicações, terá de registar o seu rosto e as suas íris novamente para iniciar sessão nessas aplicações.</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">Utilizar reconhecimento de rosto e íris em simultâneo, para desbloqueio e verificação práticos e seguros.</string>
+    <string name="sec_intelligentscan_unlock_title">Desbloq. Reconhecimento Inteligente</string>
+    <string name="sec_intelligentscan_unlock_summary">Desbloquear o telefone utilizando digitalização de rosto e íris.</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">Reconhecimento Intelig. Ecrã Ligado</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">Desbloquear o telefone com o Reconhecimento Inteligente assim que o ecrã se liga, sem deslizar primeiro.</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">Quando desbloquear com Reconhecimento Inteligente, ficar no Ecrã bloqueado até deslizar.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">O Reconhecimento Inteligente é desligado automaticamente quando se desliga Rosto e Íris.</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Rosto e Íris desligados automaticamente quando se desliga o Reconhecimento Inteligente.</string>
 </resources>

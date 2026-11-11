@@ -21,6 +21,9 @@ public class KeyguardUpdateMonitor {
     public void registerCallback(KeyguardUpdateMonitorCallback callback) { throw new RuntimeException(); }
     public boolean isUnlockingWithBiometricAllowed(boolean isStrongBiometric) { throw new RuntimeException(); }
     public boolean getUserCanSkipBouncer(int userId) { throw new RuntimeException(); }
+    public boolean isFaceEnabledAndEnrolled() { throw new RuntimeException(); }
+    public boolean isFaceDetectionRunning() { throw new RuntimeException(); }
+    public final void setFaceRunningState(int state) { throw new RuntimeException(); }
 
     static class BiometricAuthenticated {
         BiometricAuthenticated(boolean authenticated, boolean isStrongBiometric) { }

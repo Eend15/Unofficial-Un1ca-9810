@@ -22,4 +22,19 @@
     <string name="iris_sensor_not_working_msg">आइरिस सेंसर जवाब नहीं दे रहा है। बाद में फिर से प्रयास करें।</string>
     <string name="iris_hw_problem_msg">यदि ऐसा होता रहता है, तो अपना फोन पुनः चालू करें।</string>
     <string name="lockpattern_retry_button_text">रीट्राई</string>
+    <string name="bio_intelligentscan_title">इंटेलिजेंट स्कैन</string>
+    <string name="sec_intelligentscan_choose_lock_summary">बेहतर सटीकता और सुरक्षा के लिए चेहरा और आइरिस पहचान का उपयोग एक साथ करें।</string>
+    <string name="sec_intelligentscan_lockscreen_biometric_registered_summary">आपका चेहरा और आइरिस पंजीकृत हो गए हैं।</string>
+    <string name="sec_intelligentscan_register_face_and_iris">चेहरा और आइरिसेस पंजीकृत करें</string>
+    <string name="sec_intelligentscan_remove_face_and_iris">चेहरे और आइरिस का डाटा निकालें</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_title">चेहरा और आइरिस डाटा निकालें?</string>
+    <string name="sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature">यदि आप एप्स में चेहरा या आइरिस प्रमाणीकरण का उपयोग कर रहे हैं, तो उन एप्स में साइन इन करने के लिए आपको अपना चेहरा या आइरिसेस फिर से पंजीकृत करने की जरूरत होगी।</string>
+    <string name="sec_biometrics_disclaimer_main_guide_intelligentscan">सुरक्षित, सुविधाजनक रूप से अनलॉक करने और सत्यापन के लिए आइरिसेस और चेहरा पहचान को एक साथ उपयोग करें।</string>
+    <string name="sec_intelligentscan_unlock_title">इंटेलिजेंट स्कैन अनलॉक</string>
+    <string name="sec_intelligentscan_unlock_summary">चेहरे और आइरिस की संयुक्त स्कैनिंग का उपयोग करके अपना फोन अनलॉक करें।</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_title">स्क्रीन-ऑन इंटेलिजेंट स्कैन</string>
+    <string name="sec_intelligentscan_unlock_when_turns_on_summary">स्क्रीन चालू होते ही, पहले स्वाइप किए बिना इंटेलिजेंट स्कैन से अपना फोन अनलॉक करें।</string>
+    <string name="sec_intelligentscan_stay_on_lock_screen_summary">आपके द्वारा इंटेलीजेंट स्कैन के साथ अनलॉक करने पर, लॉक स्क्रीन पर तब तक रहें जब तक आप स्वाइप नहीं करते।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message">चेहरा और आइरिस दोनों के बंद होने पर इंटेलिजेंट स्कैन स्वचालित रूप से बंद हो जाता है।</string>
+    <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">इंटेलिजेंट स्कैन के बंद होने पर चेहरे और आइरिस स्वचालित रूप से बंद हो जाते हैं।</string>
 </resources>
