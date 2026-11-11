@@ -191,4 +191,18 @@ public class SleepTransitionTest {
             }
         }
     }
+
+    @Test public void aShadeCloseThatWasNeverReportedIsForgottenWhenTheScreenGoesOff() throws Exception {
+        try(Fixture f=new Fixture()) {
+            f.view.setShadeFraction(0.9f);
+            Object scene=ReflectionHelpers.getField(f.view,"scene");
+            assertTrue("pulled shade: the pill is gone",ReflectionHelpers.getField(scene,"shadeGone"));
+            assertTrue(f.view.shadeNeedsWatching());
+            f.flag("setSleeping",true);
+            assertFalse("System UI closed the shade with the screen",ReflectionHelpers.getField(scene,"shadeGone"));
+            assertFalse(f.view.shadeNeedsWatching());
+            f.flag("setSleeping",false);
+            assertFalse("and the pill is not held back by it after the wake",ReflectionHelpers.getField(scene,"shadeGone"));
+        }
+    }
 }

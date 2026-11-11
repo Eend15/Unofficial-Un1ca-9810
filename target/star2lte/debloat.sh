@@ -39,17 +39,11 @@ system/priv-app/StickerFaceARAvatar
 system/priv-app/YourPhone_Stub
 product/overlay/NotesRoleEnabled
 system/product/overlay/NotesRoleEnabled
-
-system/etc/default-permissions/default-permissions-com.samsung.android.themestore.xml
-system/etc/permissions/privapp-permissions-com.samsung.android.themecenter.xml
-system/etc/permissions/privapp-permissions-com.samsung.android.themestore.xml
-system/etc/permissions/signature-permissions-com.samsung.android.themestore.xml
-system/priv-app/ThemeCenter
-system/priv-app/ThemeStore
 "
+# ThemeCenter/ThemeStore stay: Theme Park, Good Lock and Galaxy Themes need
+# ThemeCenter to apply themes and icon packs (S9 and Note9 keep them too).
 
 _EXYNOS9810_TARGET_DEBLOAT_NAMES="
-AndroidAutoStub
 AREmoji
 BixbyVisionFramework3.5
 DuoStub

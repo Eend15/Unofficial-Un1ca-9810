@@ -22,7 +22,7 @@ public final class RecorderInput {
     private final Context context;
     private final AudioManager audio;
     private final PowerManager power;
-    private final Handler main = new Handler(Looper.getMainLooper());
+    private final Handler main = new dev.android.dynamicisland.xposed.GuardedHandler(Looper.getMainLooper());
     private final Handler worker;
     private final Runnable onChanged;
     public final RecordingEnvelope envelope = new RecordingEnvelope();
@@ -41,7 +41,7 @@ public final class RecorderInput {
         power = context.getSystemService(PowerManager.class);
         HandlerThread thread = new HandlerThread("IslandRecordingInput");
         thread.start();
-        worker = new Handler(thread.getLooper());
+        worker = new dev.android.dynamicisland.xposed.GuardedHandler(thread.getLooper());
     }
 
     /** Main thread. A failed attempt is retried only after the target changes (pause/resume/new session). */

@@ -41,8 +41,21 @@ final class SettingsSearchScreen {
     String query(){return query;}
     void restore(String value){query=value==null?"":value.substring(0,Math.min(value.length(),SettingsSearchEngine.MAX_QUERY));}
     void launch(){focusOnce=true;activity.open(this::open);}
+    /** Builds the index in the background as soon as search is opened, so the first keystrokes are not slow. */
+    private void warmUp() {
+        if(catalog!=null||closed)return;
+        worker.execute(()->{
+            try{ensureCatalog();}catch(Throwable failure){android.util.Log.w("DynamicIsland","Settings search index failed",failure);}
+        });
+    }
+    private void ensureCatalog() {
+        if(catalog==null){
+            catalog=new SettingsSearchCatalog(activity);
+        }
+    }
     boolean visible(){return activity.page().findViewWithTag(PAGE_TAG)!=null;}
     void open() {
+        warmUp();
         activity.subPage(activity.getString(R.string.search_title));
         LinearLayout bar=ui.card(activity.page());bar.setTag(PAGE_TAG);bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setOrientation(LinearLayout.HORIZONTAL);bar.setPadding(ui.dp(16),ui.dp(4),ui.dp(4),ui.dp(4));
@@ -67,6 +80,10 @@ final class SettingsSearchScreen {
             }
             public void afterTextChanged(Editable e) { }
         });
+        input.setOnKeyListener((v,keyCode,event)->{
+            if(keyCode!=android.view.KeyEvent.KEYCODE_ENTER||event.getAction()!=android.view.KeyEvent.ACTION_UP)return false;
+            hideKeyboard();main.removeCallbacks(search);submit();return true;
+        });
         input.setOnEditorActionListener((v,action,event)->{
             if(action!=android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH)return false;
             hideKeyboard();main.removeCallbacks(search);submit();return true;
@@ -86,7 +103,7 @@ final class SettingsSearchScreen {
             suggestion(card,R.string.setting_paused_timeout);suggestion(card,R.string.pos_title);
         }else{
             if(results.getChildCount()==0)ui.note(results,activity.getString(R.string.search_working));
-            main.postDelayed(search,120);
+            main.postDelayed(search,40);
         }
     }
     private void suggestion(LinearLayout card,int title) {
@@ -102,12 +119,14 @@ final class SettingsSearchScreen {
             if(token!=generation)return;
             List<SettingsSearchEngine.Document> hits;
             try {
-                if(catalog==null)catalog=new SettingsSearchCatalog(activity);
+                ensureCatalog();
                 hits=catalog.engine.search(text,catalog.rows.size());
-            }catch(RuntimeException unavailable) {
+            }catch(Throwable unavailable) {
+                // Not only RuntimeException: an Error would end this worker silently and leave the page empty.
                 android.util.Log.w("DynamicIsland","Settings search unavailable",unavailable);
                 main.post(()->{if(!closed&&token==generation&&target==results&&visible()){
-                    target.removeAllViews();ui.note(target,activity.getString(R.string.search_unavailable));
+                    target.removeAllViews();
+                    ui.note(target,activity.getString(R.string.search_unavailable)+" ("+unavailable.getClass().getSimpleName()+")");
                 }});return;
             }
             SettingsSearchCatalog ready=catalog;

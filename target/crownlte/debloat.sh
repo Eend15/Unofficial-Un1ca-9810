@@ -44,7 +44,6 @@ system/priv-app/YourPhone_Stub
 "
 
 _EXYNOS9810_TARGET_DEBLOAT_NAMES="
-AndroidAutoStub
 AREmoji
 BixbyVisionFramework3.5
 DuoStub

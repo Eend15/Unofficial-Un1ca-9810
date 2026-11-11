@@ -38,6 +38,7 @@ public final class Entry implements IXposedHookLoadPackage {
         Diagnostics.fact("module", CrashGuard.BUILD + " from " + moduleApk());
         if (!CrashGuard.enter(lpparam.appInfo)) {
             Diagnostics.stage("crash guard", false, new IllegalStateException("switched the module off for this System UI process"));
+            CrashGuard.publishReportLater();
             return;
         }
         Diagnostics.stage("crash guard", true, null);

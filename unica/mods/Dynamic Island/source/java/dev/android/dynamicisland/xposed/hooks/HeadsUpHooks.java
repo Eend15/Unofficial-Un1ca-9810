@@ -1,6 +1,8 @@
 package dev.android.dynamicisland.xposed.hooks;
 
 import android.service.notification.StatusBarNotification;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import de.robv.android.xposed.XC_MethodHook;
 import dev.android.dynamicisland.island.IslandController;
 import dev.android.dynamicisland.settings.ModuleSettings;
@@ -49,7 +51,7 @@ public final class HeadsUpHooks {
             Boolean up = status(heads, key);
             if (Boolean.FALSE.equals(up)) return "stock banner removed";
             for (long delay : new long[]{150, 500}) {
-                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                new dev.android.dynamicisland.xposed.GuardedHandler(android.os.Looper.getMainLooper()).postDelayed(() -> {
                     if (manager != heads || !owned(key) || Boolean.FALSE.equals(status(heads, key))) return;
                     try { remove(heads, key); }
                     catch (Throwable t) { XLog.once("heads-up retry", t); }
@@ -68,27 +70,21 @@ public final class HeadsUpHooks {
         if (heads == null || key == null) {
             return "no heads-up manager seen yet";
         }
-        String arity;
-        if (Refl.method(heads.getClass(), "removeNotification", 3) != null) {
-            arity = "3";
-        } else if (Refl.method(heads.getClass(), "removeNotification", 2) != null) {
-            arity = "2";
-        } else {
-            return "no removeNotification with 2 or 3 parameters";
-        }
+        Method removal = removalMethod(heads.getClass());
+        if (removal == null) return "no supported removeNotification signature";
         try {
-            remove(heads, arity, key);
+            remove(heads, removal, key);
             if (!stillUpCompat(heads, key)) {
-                return "removeNotification(key, reason, immediately) called, and it went";
+                return "stock banner removed";
             }
             // It said it removed it and did not: try again now, and once more shortly after, because the
             // entry may only be registered a moment after the banner is shown.
-            remove(heads, arity, key);
+            remove(heads, removal, key);
             if (!stillUpCompat(heads, key)) {
                 return "removed on the second call";
             }
-            retryCompatLater(heads, arity, key, 150L);
-            retryCompatLater(heads, arity, key, 500L);
+            retryCompatLater(heads, removal, key, 150L);
+            retryCompatLater(heads, removal, key, 500L);
             return "still up after two calls; retrying";
         } catch (Throwable t) {
             XLog.once("HeadsUpHooks.dismissStock", t);
@@ -96,22 +92,22 @@ public final class HeadsUpHooks {
         }
     }
 
-    private static void remove(Object heads, String arity, String key) {
-        if ("3".equals(arity)) {
-            Refl.call(heads, "removeNotification", key, "dynamic island", Boolean.TRUE);
-        } else {
-            Refl.call(heads, "removeNotification", key, Boolean.TRUE);
-        }
+    private static void remove(Object heads, Method method, String key) throws ReflectiveOperationException {
+        Class<?>[] types = method.getParameterTypes();
+        Object[] args = types.length == 2 ? new Object[]{key, true}
+                : types[1] == boolean.class ? new Object[]{key, true, "dynamic island"}
+                : new Object[]{key, "dynamic island", true};
+        method.invoke(heads, args);
     }
 
     /** One more attempt after {@code delayMs}, on the main thread. */
-    private static void retryCompatLater(Object heads, String arity, String key, long delayMs) {
+    private static void retryCompatLater(Object heads, Method removal, String key, long delayMs) {
         try {
-            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            new dev.android.dynamicisland.xposed.GuardedHandler(android.os.Looper.getMainLooper()).postDelayed(() -> {
                 if (!ModuleSettings.experimentalRecovery()) return;
                 try {
                     if (stillUpCompat(heads, key)) {
-                        remove(heads, arity, key);
+                        remove(heads, removal, key);
                         if (stillUpCompat(heads, key)) {
                             XLog.event("stock banner still up after retry: " + key);
                         }
@@ -155,20 +151,32 @@ public final class HeadsUpHooks {
         return false; // no way to tell: do not claim it is stuck
     }
 
-    private static boolean remove(Object heads, String key) throws ReflectiveOperationException {
-        for (Class<?> level = heads.getClass(); level != null; level = level.getSuperclass()) {
-            for (java.lang.reflect.Method method : level.getDeclaredMethods()) {
-                if (!method.getName().equals("removeNotification")) continue;
-                Class<?>[] types = method.getParameterTypes();
-                boolean two = java.util.Arrays.equals(types, new Class<?>[]{String.class, boolean.class});
-                boolean three = java.util.Arrays.equals(types, new Class<?>[]{String.class, String.class, boolean.class});
-                if (!two && !three) continue;
-                method.setAccessible(true);
-                method.invoke(heads, three ? new Object[]{key, "dynamic island", true} : new Object[]{key, true});
-                return true;
+    /** Match types, not arity: Samsung and AOSP/Nothing order the reason and immediate flag differently. */
+    private static Method removalMethod(Class<?> type) {
+        Class<?>[][] supported = {
+                {String.class, String.class, boolean.class},
+                {String.class, boolean.class, String.class},
+                {String.class, boolean.class}
+        };
+        for (Class<?>[] signature : supported) {
+            for (Class<?> level = type; level != null; level = level.getSuperclass()) {
+                for (Method method : level.getDeclaredMethods()) {
+                    if (method.getName().equals("removeNotification")
+                            && Arrays.equals(method.getParameterTypes(), signature)) {
+                        method.setAccessible(true);
+                        return method;
+                    }
+                }
             }
         }
-        return false;
+        return null;
+    }
+
+    private static boolean remove(Object heads, String key) throws ReflectiveOperationException {
+        Method method = removalMethod(heads.getClass());
+        if (method == null) return false;
+        remove(heads, method, key);
+        return true;
     }
 
     /** null means the build has no readable accessor, never a proven removal. */

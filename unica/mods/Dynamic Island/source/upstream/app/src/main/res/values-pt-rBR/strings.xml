@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Partial translation (Brazilian Portuguese): what is missing falls back to English. -->
+    <string name="settings_hint">Ative o módulo para a interface do sistema no LSPosed. As alterações são aplicadas em alguns segundos.</string>
+    <string name="setting_card_header">Cabeçalho do cartão</string>
+    <string name="setting_card_header_desc">Mostrar o nome do aplicativo e a hora acima dos cartões de notificações ao vivo.</string>
+    <string name="setting_shade_media">Reprodutor de música no painel</string>
+    <string name="setting_shade_media_desc">Mostrar o cartão de música da ilha no painel de notificações.</string>
+    <string name="setting_visualizer">Forma de onda de áudio</string>
+    <string name="setting_event_ringer">Modo de som</string>
+    <string name="setting_event_bluetooth">Áudio Bluetooth</string>
+    <string name="setting_haptics">Resposta tátil</string>
+    <string name="setting_privacy">Indicadores de privacidade</string>
+    <string name="setting_privacy_location">Localização em uso</string>
+    <string name="setting_progress">Downloads e transferências</string>
+    <string name="setting_heads_up">Notificações na ilha</string>
+    <string name="setting_all_notifications">Todas as notificações na ilha</string>
+    <string name="setting_otp_copy">Copiar códigos automaticamente</string>
+    <string name="setting_calls">Chamadas de voz</string>
+    <string name="restart_systemui">Reiniciar interface do sistema</string>
+    <string name="restart_systemui_confirm">A barra de status e o painel de notificações serão reiniciados por um momento para recarregar o módulo. Requer root.</string>
+    <string name="restart_systemui_failed">Não foi possível reiniciar a interface do sistema. O acesso root não foi concedido; reinicie-a pelo gerenciador do LSPosed ou reinicie o aparelho.</string>
+    <string name="diagnostics_title">Diagnóstico</string>
+    <string name="apps_title">Notificações de aplicativos</string>
+    <string name="apps_choose">Escolher aplicativos</string>
+    <string name="apps_status">%d aplicativos selecionados</string>
+    <string name="hub_settings">Configurações</string>
+    <string name="hub_display">Exibição e movimento</string>
+    <string name="hub_notifications">Cartões de notificações</string>
+    <string name="hub_events">Eventos do sistema</string>
+    <string name="hub_tools">Ferramentas</string>
+    <string name="hub_about">Sobre</string>
+    <string name="hub_version">Versão</string>
+    <string name="group_codes">Códigos de verificação</string>
+    <string name="group_calls">Chamadas</string>
+    <string name="imode_title">iMotion</string>
+    <string name="imode_desc">Abra uma atividade por vez com desfoque e movimento coordenados. Deslize para os lados para alternar entre as atividades. Deslize para cima para ocultar as cápsulas e puxe para baixo perto da câmera para exibi-las novamente.</string>
+</resources>

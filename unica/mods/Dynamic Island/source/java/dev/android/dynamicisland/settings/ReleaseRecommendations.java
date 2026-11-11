@@ -121,7 +121,7 @@ final class ReleaseRecommendations {
     private void open() { activity.openSetting(current.route(),current.settingTitle(),0); }
 
     /** Static decorative diagrams use the current settings palette; no downloaded art or ambient animation. */
-    private static final class Illustration extends View {
+    static final class Illustration extends View {
         final ReleaseHighlights.Art art;
         final OneUi ui;
         final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -150,6 +150,69 @@ final class ReleaseRecommendations {
                     paint.setColor(ui.dark ? 0xffeaf3ff : 0xff3d6eac);canvas.drawRoundRect(8,30,24,42,4,4,paint);
                     path.reset();path.moveTo(23,30);path.lineTo(30,26);path.lineTo(30,46);path.lineTo(23,42);path.close();canvas.drawPath(path,paint);
                     canvas.drawRoundRect(32,25,35,47,1.5f,1.5f,paint);
+                }
+                case PREVIEW -> {
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(14,14,58,24,5,5,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawCircle(21,19,2.4f,paint);
+                    paint.setColor(ui.dark ? 0xff3a5f90 : 0xffa9c6ee);
+                    for(int i=0;i<3;i++) {
+                        canvas.drawRoundRect(16,32+i*10,56,40+i*10,4,4,paint);
+                    }
+                    paint.setColor(ui.accent);canvas.drawCircle(23,36,2.6f,paint);
+                    paint.setColor(ui.dark ? 0xffeaf3ff : 0xffffffff);canvas.drawCircle(23,36,1.1f,paint);
+                    canvas.drawRoundRect(30,34.5f,50,37.5f,1.5f,1.5f,paint);
+                }
+                case SWIPE -> {
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(14,40,58,56,8,8,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawCircle(23,48,3,paint);
+                    paint.setColor(ui.accent);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(4);paint.setStrokeCap(Paint.Cap.ROUND);
+                    canvas.drawLine(36,32,36,14,paint);canvas.drawLine(36,14,29,21,paint);canvas.drawLine(36,14,43,21,paint);
+                    paint.setStrokeWidth(2.5f);paint.setColor(ui.dark ? 0xff4372ac : 0xff98bceb);
+                    canvas.drawLine(27,30,27,22,paint);canvas.drawLine(45,30,45,22,paint);paint.setStyle(Paint.Style.FILL);
+                }
+                case BLUR -> {
+                    paint.setColor(0xff699cf0);canvas.drawCircle(27,30,16,paint);paint.setColor(0xffa98be3);canvas.drawCircle(46,44,15,paint);
+                    paint.setShader(new LinearGradient(12,14,60,58,ui.dark ? 0x99dfe9ff : 0xaaffffff,ui.dark ? 0x333d6296 : 0x5583ace9,Shader.TileMode.CLAMP));
+                    canvas.drawCircle(36,36,22,paint);paint.setShader(null);
+                    paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.4f);paint.setColor(0xccffffff);canvas.drawCircle(36,36,22,paint);
+                    paint.setStrokeWidth(2.4f);paint.setStrokeCap(Paint.Cap.ROUND);paint.setColor(ui.dark ? 0xffeaf3ff : 0xff3d6eac);
+                    canvas.drawLine(26,36,46,36,paint);paint.setStyle(Paint.Style.FILL);
+                }
+                case NOTIFY -> {
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(10,20,62,52,10,10,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawCircle(23,36,7,paint);
+                    paint.setColor(ui.dark ? 0xffcfe0ff : 0xffe6f0ff);canvas.drawRoundRect(34,29,55,32.5f,1.7f,1.7f,paint);
+                    paint.setColor(ui.dark ? 0xff7f9fcf : 0xff9db9e4);canvas.drawRoundRect(34,37,50,40.5f,1.7f,1.7f,paint);
+                    paint.setColor(ui.accent);canvas.drawCircle(58,22,5.5f,paint);
+                    paint.setColor(0xffffffff);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.8f);paint.setStrokeCap(Paint.Cap.ROUND);
+                    canvas.drawLine(55.5f,22,57.3f,24,paint);canvas.drawLine(57.3f,24,60.7f,20,paint);paint.setStyle(Paint.Style.FILL);
+                }
+                case PROGRESS -> {
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(10,22,62,50,9,9,paint);
+                    paint.setColor(ui.dark ? 0xff4372ac : 0xff98bceb);canvas.drawRoundRect(18,40,54,45,2.5f,2.5f,paint);
+                    paint.setColor(ui.accent);canvas.drawRoundRect(18,40,40,45,2.5f,2.5f,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawCircle(21,31,3.4f,paint);
+                    paint.setColor(ui.dark ? 0xffcfe0ff : 0xffe6f0ff);canvas.drawRoundRect(28,29,50,32.4f,1.7f,1.7f,paint);
+                }
+                case HOTSPOT -> {
+                    paint.setColor(ui.accent);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(3.6f);paint.setStrokeCap(Paint.Cap.ROUND);
+                    for(int i=1;i<=3;i++) canvas.drawArc(36-i*9,44-i*9,36+i*9,44+i*9,225,90,false,paint);
+                    paint.setStyle(Paint.Style.FILL);canvas.drawCircle(36,44,3.4f,paint);
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(14,52,26,63,3,3,paint);canvas.drawRoundRect(46,52,58,63,3,3,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawCircle(20,57.5f,1.5f,paint);canvas.drawCircle(52,57.5f,1.5f,paint);
+                }
+                case UNLOCK -> {
+                    paint.setColor(ui.accent);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(4.4f);paint.setStrokeCap(Paint.Cap.ROUND);
+                    canvas.drawArc(25,12,47,34,180,180,false,paint);canvas.drawLine(47,23,47,25,paint);canvas.drawLine(25,23,25,30,paint);
+                    paint.setStyle(Paint.Style.FILL);paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(19,31,53,58,8,8,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawCircle(36,42,3.6f,paint);canvas.drawRoundRect(34.6f,43,37.4f,50,1.4f,1.4f,paint);
+                }
+                case HEADSET -> {
+                    paint.setColor(ui.accent);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(4.4f);paint.setStrokeCap(Paint.Cap.ROUND);
+                    canvas.drawArc(17,13,55,51,180,180,false,paint);canvas.drawLine(17,32,17,40,paint);canvas.drawLine(55,32,55,40,paint);
+                    paint.setStyle(Paint.Style.FILL);paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);
+                    canvas.drawRoundRect(11,36,23,54,5,5,paint);canvas.drawRoundRect(49,36,61,54,5,5,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawRoundRect(15,40,19,50,2,2,paint);canvas.drawRoundRect(53,40,57,50,2,2,paint);
                 }
                 case GLASS -> {
                     paint.setColor(0xff699cf0);canvas.drawCircle(25,29,18,paint);paint.setColor(0xffa98be3);canvas.drawCircle(48,47,18,paint);

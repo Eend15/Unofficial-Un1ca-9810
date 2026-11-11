@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <locale-config xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- English is the source/fallback. Register new completed translations here. -->
+    <!-- English is the source/fallback. Register new translations here; unfinished ones are also listed in scripts/partial-languages.txt. -->
     <locale android:name="en" />
     <locale android:name="ko" />
     <locale android:name="ja" />
     <locale android:name="zh" />
     <locale android:name="ru" />
     <locale android:name="tr" />
+    <locale android:name="pt-BR" />
 </locale-config>

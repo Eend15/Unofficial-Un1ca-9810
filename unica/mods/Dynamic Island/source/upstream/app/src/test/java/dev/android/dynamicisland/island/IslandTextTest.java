@@ -36,5 +36,25 @@ public class IslandTextTest {
             assertEquals("충전 중", text("ko", "island_charging"));
         } finally { Locale.setDefault(previous); }
     }
+    @Test public void inMemoryModuleLoaderKeepsLocalizedTorchTextAndFormattingWithoutApkResources() throws Exception {
+        ClassLoader loader = new dev.android.dynamicisland.testutil.ResourceBlindModuleLoader(
+                IslandText.class.getClassLoader(), IslandText.class.getName(),
+                "dev.android.dynamicisland.island.EmbeddedResources");
+        assertNull(loader.getResource("dev/android/dynamicisland/i18n/en.properties"));
+        Class<?> text = loader.loadClass(IslandText.class.getName());
+        assertSame(loader, text.getClassLoader());
+        var get = text.getMethod("get", Locale.class, String.class, Object[].class);
+        String[][] expected = {{"en", "On", "Off"}, {"ko", "켜짐", "꺼짐"}, {"ja", "オン", "オフ"},
+                {"zh", "开启", "关闭"}, {"ru", "Вкл.", "Выкл."}, {"tr", "Açık", "Kapalı"}};
+        for (String[] row : expected) {
+            Locale locale = Locale.forLanguageTag(row[0]);
+            assertEquals(row[0], row[1], get.invoke(null, locale, "island_on", new Object[0]));
+            assertEquals(row[0], row[2], get.invoke(null, locale, "island_off", new Object[0]));
+        }
+        assertEquals("On", get.invoke(null, Locale.forLanguageTag("pt-BR"), "island_on", new Object[0]));
+        assertEquals("54% remaining", get.invoke(null, Locale.ENGLISH, "island_battery_remaining", new Object[]{54}));
+        assertEquals("unknown_key", get.invoke(null, Locale.ENGLISH, "unknown_key", new Object[0]));
+        assertEquals(IslandText.languages(), text.getMethod("languages").invoke(null));
+    }
     private String text(String tag, String key) { return IslandText.get(Locale.forLanguageTag(tag), key); }
 }

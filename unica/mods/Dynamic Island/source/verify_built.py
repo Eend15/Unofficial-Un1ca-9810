@@ -85,7 +85,7 @@ def verify(work_dir,cert):
     spec=importlib.util.spec_from_file_location('di_signature_verifier',path)
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
     module.verify_platform_signatures((ui,settings,native),cert)
-    print('PASS built-in Dynamic Island 0.1.14: preserved original classes, compiled hooks, UI settings, exact native payload and platform signatures')
+    print('PASS built-in Dynamic Island 0.1.15: preserved original classes, compiled hooks, UI settings, exact native payload and platform signatures')
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--work-dir',type=Path,required=True);p.add_argument('--platform-cert',type=Path,required=True)

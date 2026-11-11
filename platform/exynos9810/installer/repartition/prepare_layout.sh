@@ -1,6 +1,12 @@
 #!/sbin/sh
 
 SELF_DIR="$(dirname "$0")"
+if [ -f "$SELF_DIR/installer_ui.sh" ]; then
+    # shellcheck source=/dev/null
+    . "$SELF_DIR/installer_ui.sh"
+else
+    ui_print() { echo "$1"; }
+fi
 TARGET="$1"
 DISK=/dev/block/sda
 STATE_FILE="$SELF_DIR/layout.prop"
@@ -65,7 +71,8 @@ if /sbin/sh "$SELF_DIR/preflight.sh" "$TARGET"; then
     exit 0
 fi
 
-echo "E9810: partition layout is too small; starting repartition"
+ui_print "E9810: partition layout is too small for this ROM (first install)."
+ui_print "E9810: repartitioning: this erases data and internal storage."
 sync
 
 if /sbin/sh "$SELF_DIR/repartition.sh" "$TARGET"; then

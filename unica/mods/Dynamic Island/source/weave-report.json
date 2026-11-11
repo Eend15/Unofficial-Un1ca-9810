@@ -50,11 +50,12 @@
     "com.android.systemui.shade.ShadeExpansionStateManager#<init>(Lcom/android/systemui/dump/DumpManager;)V",
     "com.android.systemui.statusbar.window.StatusBarWindowStateController#<init>(ILcom/android/systemui/statusbar/CommandQueue;)V"
   ],
-  "v0.1.14_native_extensions": {
+  "v0.1.15_native_extensions": {
     "com.android.keyguard.KeyguardUpdateMonitor": [
       "handleStartedGoingToSleep(I)V",
       "handleStartedWakingUp(I)V",
-      "handleFinishedGoingToSleep(I)V"
+      "handleFinishedGoingToSleep(I)V",
+      "dispatchStartedWakingUp(I)V"
     ]
   }
 }

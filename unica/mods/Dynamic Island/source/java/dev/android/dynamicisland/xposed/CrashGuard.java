@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
  * Keeps a faulty build from crash-looping System UI (which makes Android's rescue party, and then
  * LSPosed's safe mode, kick in).
  *
- * <p>Two ways to switch the module off until it is updated:
+ * <p>Two ways to switch the module off until it is updated (or, at the next start, an hour later):
  * <ul>
  * <li>Every System UI start that loads the module is counted as "unstable" until the process has
  * survived {@link #STABLE_AFTER_MS}; {@link #MAX_UNSTABLE_STARTS} unstable starts in a row (a crash loop
@@ -29,15 +29,19 @@ import java.nio.charset.StandardCharsets;
  */
 public final class CrashGuard {
     /** Bump together with the module version: a new build gets a fresh chance. */
-    static final String BUILD = "0.1.14";
+    static final String BUILD = "0.1.15";
 
     private static final long STABLE_AFTER_MS = 45_000;
     // two quick restarts (theme / font change, double reboot) are normal; three in a row are a loop
     private static final int MAX_UNSTABLE_STARTS = 3;
     private static final int MAX_OUR_CRASHES = 3;
     private static final long OUR_CRASH_WINDOW_MS = 10 * 60_000;
-    /** After this long the "stays off" verdict is forgotten and the module gets another try. */
-    private static final long OFF_EXPIRES_MS = 12 * 3_600_000L;
+    /**
+     * After this long the "stays off" verdict is forgotten and the module gets another try on the next System UI
+     * start. A crash loop would hit the limit again within minutes, so a retry every hour costs the phone nothing,
+     * while a one-off bad day no longer leaves the island missing until the next update.
+     */
+    private static final long OFF_EXPIRES_MS = 3_600_000L;
     private static final String STATE = "dynamicisland-guard.txt";
     private static final String REPORT = "dynamicisland-crash.txt";
 
@@ -78,6 +82,25 @@ public final class CrashGuard {
         } catch (Throwable t) {
             // never let the guard itself be the reason the module does not load
             return true;
+        }
+    }
+
+    /**
+     * The module is off for this process, so nothing in it would ever publish its report and the settings app would
+     * keep showing the last report of the run before. Once System UI has an application, publish the one that says why.
+     */
+    static void publishReportLater() {
+        try {
+            new GuardedHandler(Looper.getMainLooper()).postDelayed(() -> {
+                try {
+                    Object app = Refl.callStatic(Class.forName("android.app.ActivityThread"), "currentApplication");
+                    if (app instanceof android.content.Context) Diagnostics.publish((android.content.Context) app);
+                } catch (Throwable ignored) {
+                    // the module log has the same lines
+                }
+            }, 20_000);
+        } catch (Throwable ignored) {
+            // no main looper: nothing to publish with
         }
     }
 
@@ -180,7 +203,7 @@ public final class CrashGuard {
         log(sb.toString());
         String text = sb.toString();
         // keep the cause where the settings app can show it: LSPosed logs are rarely at hand
-        Diagnostics.fact("previous crash", text.length() > 1500 ? text.substring(0, 1500) : text);
+        Diagnostics.fact("previous crash", text, 1500);
         //noinspection ResultOfMethodCallIgnored
         new File(dir, REPORT).delete();
     }

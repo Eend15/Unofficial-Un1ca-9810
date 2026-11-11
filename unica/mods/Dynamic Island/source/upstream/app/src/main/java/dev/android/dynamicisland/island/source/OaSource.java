@@ -31,7 +31,7 @@ public final class OaSource {
     /** Run on the main thread when the call card changed without a notification update (speaker route). */
     public Runnable onChanged;
 
-    private final Handler main = new Handler(Looper.getMainLooper());
+    private final Handler main = new dev.android.dynamicisland.xposed.GuardedHandler(Looper.getMainLooper());
     private final OaReader reader;
     private final ProgressBinder progress;
     private final OaCardBuilder cards;

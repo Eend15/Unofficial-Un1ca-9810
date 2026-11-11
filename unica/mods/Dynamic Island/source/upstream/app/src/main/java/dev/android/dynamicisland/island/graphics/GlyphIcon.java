@@ -21,7 +21,7 @@ import dev.android.dynamicisland.settings.ModuleSettings;
  */
 public final class GlyphIcon extends Drawable {
     /** Which pictogram to draw. {@code POWER_SAVE} is drawn as a battery with a plus cut out. */
-    public enum Kind { BATTERY, BATTERY_CHARGING, BELL, BELL_OFF, VIBRATE, HEADPHONES, CAMERA, MIC, LOCATION, MOON, PLANE, TORCH, HOTSPOT, ROTATE_LOCK, POWER_SAVE, DOWNLOAD, SPEAKER }
+    public enum Kind { BATTERY, BATTERY_CHARGING, BELL, BELL_OFF, VIBRATE, HEADPHONES, CAMERA, MIC, LOCATION, MOON, PLANE, TORCH, HOTSPOT, ROTATE_LOCK, POWER_SAVE, DOWNLOAD, SPEAKER, FINGERPRINT, FACE, PIN }
 
     private static final int INTRINSIC_SIZE_PX = 96;
     /** An icon drawn again after this long without a draw plays from the start, like a fresh island. */
@@ -229,6 +229,15 @@ public final class GlyphIcon extends Drawable {
             case SPEAKER:
                 drawSpeaker(c, cx, cy, s);
                 break;
+            case FINGERPRINT:
+                drawFingerprint(c, cx, cy, s);
+                break;
+            case FACE:
+                drawFace(c, cx, cy, s);
+                break;
+            case PIN:
+                drawPin(c, cx, cy, s);
+                break;
             default:
                 break;
         }
@@ -377,6 +386,54 @@ public final class GlyphIcon extends Drawable {
         c.drawLine(cx, cy + (s * 0.22f), cx, cy + (s * 0.36f), paint);
         c.drawLine(cx - (s * 0.12f), cy + (s * 0.36f), cx + (s * 0.12f), cy + (s * 0.36f), paint);
         paint.setStyle(Paint.Style.FILL);
+    }
+
+    /** Three ridges and a core: arcs opening downwards, like the print on a sensor. */
+    private void drawFingerprint(Canvas c, float cx, float cy, float s) {
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(Math.max(1.5f, s * 0.07f));
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        for (float radius : new float[] {0.38f, 0.27f, 0.16f}) {
+            rect.set(cx - (s * radius), cy - (s * radius) - (s * 0.04f), cx + (s * radius), cy + (s * radius) - (s * 0.04f));
+            c.drawArc(rect, 200f, 140f, false, paint);
+        }
+        c.drawLine(cx, cy - (s * 0.06f), cx, cy + (s * 0.22f), paint);
+        c.drawLine(cx - (s * 0.2f), cy + (s * 0.02f), cx - (s * 0.2f), cy + (s * 0.3f), paint);
+        c.drawLine(cx + (s * 0.2f), cy + (s * 0.02f), cx + (s * 0.2f), cy + (s * 0.3f), paint);
+        paint.setStyle(Paint.Style.FILL);
+    }
+
+    /** Four corner brackets, two eyes and a smile. */
+    private void drawFace(Canvas c, float cx, float cy, float s) {
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(Math.max(1.5f, s * 0.07f));
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        float half = s * 0.36f;
+        float arm = s * 0.14f;
+        for (int sx = -1; sx <= 1; sx += 2) {
+            for (int sy = -1; sy <= 1; sy += 2) {
+                float x = cx + (sx * half);
+                float y = cy + (sy * half);
+                c.drawLine(x, y, x - (sx * arm), y, paint);
+                c.drawLine(x, y, x, y - (sy * arm), paint);
+            }
+        }
+        c.drawLine(cx - (s * 0.13f), cy - (s * 0.12f), cx - (s * 0.13f), cy - (s * 0.04f), paint);
+        c.drawLine(cx + (s * 0.13f), cy - (s * 0.12f), cx + (s * 0.13f), cy - (s * 0.04f), paint);
+        rect.set(cx - (s * 0.15f), cy - (s * 0.02f), cx + (s * 0.15f), cy + (s * 0.2f));
+        c.drawArc(rect, 20f, 140f, false, paint);
+        paint.setStyle(Paint.Style.FILL);
+    }
+
+    /** A keypad: three rows of three dots. */
+    private void drawPin(Canvas c, float cx, float cy, float s) {
+        paint.setStyle(Paint.Style.FILL);
+        float step = s * 0.22f;
+        for (int row = -1; row <= 1; row++) {
+            for (int col = -1; col <= 1; col++) {
+                c.drawCircle(cx + (col * step), cy + (row * step), s * 0.07f, paint);
+            }
+        }
     }
 
     private void drawLocation(Canvas c, float cx, float cy, float s) {

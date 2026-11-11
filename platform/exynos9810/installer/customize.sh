@@ -89,15 +89,16 @@ chmod 0755 "$TMP_DIR/exynos9810/sgdisk"
 # ext4 package carries the non-EROFS DTBs; the EROFS package remains the
 # repository's EROFS-specific payload.
 DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Enforcing-KernelSU-Next-v3.4.2-SuSFS}"
-DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-24.10.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-SuSFS-erofs-dtb.zip"
-DS_ACK_EROFS_PREBUILT_SHA256="87f62131e904b2061f1761cf87587b685b5d6c170e4e3b823283e00b946408cc"
-DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-24.10.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-SuSFS-ext4-dtb.zip"
-# These October24 archives contain the tested Linux4.9 persistence/cache fixes,
-# maximum compiled legacy SuSFS features and the complete six-model family.
+DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-07.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-SuSFS-erofs-dtb.zip"
+DS_ACK_EROFS_PREBUILT_SHA256="309ae8c7ee1132199d9519339273254e6df2db4f3b0df8b0c8c5c7925c14489c"
+DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-07.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-SuSFS-ext4-dtb.zip"
+# These November7 archives add the sec_ts LPM-exit touch freeze fix to the
+# October24 Linux4.9 persistence/cache fixes, maximum compiled legacy SuSFS
+# features and the complete six-model family.
 # Filesystem-specific DTBs/tools/installer remain from their proven baselines.
 # A missing package must fail, not silently fall back to
 # the older OneUI7 kernel or a differently signed same-name archive.
-DS_ACK_EXT4_PREBUILT_SHA256="e5a366110357a0d7807f12c61d1f71088c4508471df50fbf36deb62c064a1aca"
+DS_ACK_EXT4_PREBUILT_SHA256="6e7323958ca2a26e521be5f7902beea667a3fea65a7a090056a5067ae7590670"
 case "${TARGET_OS_FILE_SYSTEM_TYPE:-}" in
     ext4)
         DS_ACK_PREBUILT_ZIP="$DS_ACK_EXT4_PREBUILT_ZIP"
@@ -230,6 +231,35 @@ if "Applying Exynos9810 vendor boot fixes" not in script:
         raise SystemExit("vendor image patch marker not found")
     index += len(marker)
     script = script[:index] + "\n" + block + script[index:]
+    path.write_text(script)
+PY
+fi
+
+# A single read error from a USB stick or SD card aborts block_image_update
+# after the partition was partly written. The zip CRC check at the start
+# rules out a damaged package, so give each image one more attempt before
+# giving up. block_image_update resumes from /cache/recovery/last_command.
+if [ -f "$UPDATER_SCRIPT" ]; then
+    LOG "- Adding one retry to each Exynos9810 image update"
+    python3 - "$UPDATER_SCRIPT" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+script = path.read_text()
+pattern = re.compile(
+    r'(?P<call>block_image_update\("[^"]+/by-name/(?P<part>[A-Z]+)", [^\n]*\)) \|\|\n'
+    r'(?P<indent>[ \t]*)abort\((?P<msg>"E\d+: Failed to update \w+ image\.")\);')
+if "retrying once" not in script:
+    script, count = pattern.subn(
+        lambda m: (f'{m["call"]} ||\n'
+                   f'{m["indent"]}(ui_print("Read error while writing {m["part"]}, retrying once...");\n'
+                   f'{m["indent"]} {m["call"]}) ||\n'
+                   f'{m["indent"]}abort({m["msg"]});'),
+        script)
+    if count == 0:
+        raise SystemExit("block_image_update calls not found")
     path.write_text(script)
 PY
 fi

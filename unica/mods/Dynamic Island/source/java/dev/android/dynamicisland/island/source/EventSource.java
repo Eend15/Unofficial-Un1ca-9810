@@ -218,6 +218,9 @@ public final class EventSource {
         if (!ModuleSettings.eventToggles()) {
             return;
         }
+        if (on && "hotspot".equals(name) && ModuleSettings.hotspotCard()) {
+            return; // the hotspot card is the announcement
+        }
         IslandItem it = base("event:toggle:" + name);
         GlyphIcon.Kind icon;
         String labelKey;

@@ -4,6 +4,7 @@ import subprocess
 import unittest
 
 from patch_crown_scan import patch, OLD, NEW, MARKER, UUID
+import patch_crown_passive_scan_v10
 from verify_note9_rebuilt_artifacts import verify_crown_discovery
 
 ROOT = Path(__file__).resolve().parents[5]
@@ -37,7 +38,8 @@ class CrownDiscoveryTests(unittest.TestCase):
         jar = ROOT / 'out/tools/bin/apktool.jar'
         if not source.exists() or not jar.exists():
             self.skipTest('real decoded donor and Apktool required')
-        result = patch(source.read_text())
+        # Same chain as the build: the verifier also requires the passive filter.
+        result = patch_crown_passive_scan_v10.patch(patch(source.read_text()))
         with tempfile.TemporaryDirectory(prefix='crown-discovery-') as td:
             directory = Path(td)
             (directory / 'scanner.smali').write_text(result)

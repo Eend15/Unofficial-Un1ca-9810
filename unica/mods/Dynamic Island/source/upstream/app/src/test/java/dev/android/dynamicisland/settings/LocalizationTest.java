@@ -48,4 +48,21 @@ public class LocalizationTest {
             assertEquals("My preparation", custom.statusText("food", 1, Locale.forLanguageTag(language)));
         }
     }
+    @Test public void builtinDetectionAndStageLabelsSurviveAResourceBlindModuleLoader() throws Exception {
+        ClassLoader loader = new dev.android.dynamicisland.testutil.ResourceBlindModuleLoader(
+                RuleStore.class.getClassLoader(), RuleStore.class.getName(),
+                "dev.android.dynamicisland.island.EmbeddedResources");
+        assertNull(loader.getResource("dev/android/dynamicisland/rules/builtin-en.json"));
+        Class<?> store = loader.loadClass(RuleStore.class.getName());
+        assertSame(loader, store.getClassLoader());
+        var build = store.getMethod("build", RuleConfig.class);
+        var rules = (dev.android.dynamicisland.island.rules.RuleDictionary) build.invoke(null, RuleConfig.DEFAULT);
+        assertFalse("smart-rule detection must not disappear with APK resources", rules.smartRules.isEmpty());
+        assertFalse("OTP detection must not disappear with APK resources", rules.otpStrongTriggers.isEmpty());
+        assertEquals("準備中", rules.statusText("food", 1, Locale.JAPANESE));
+        assertEquals("Готовится", rules.statusText("food", 1, Locale.forLanguageTag("ru")));
+        var custom = new RuleConfig("{\"status_labels\":{\"food\":{\"en\":{\"1\":\"Custom preparation\"}}}}");
+        var edited = (dev.android.dynamicisland.island.rules.RuleDictionary) build.invoke(null, custom);
+        assertEquals("Custom preparation", edited.statusText("food", 1, Locale.JAPANESE));
+    }
 }

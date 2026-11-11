@@ -82,6 +82,7 @@ public final class SystemUiHooks {
         runGroup("flashlight", () -> hookFlashlight(cl));
         runGroup("signals", () -> hookSignals(cl));
         runGroup("wakefulness", () -> WakefulnessHooks.install(cl));
+        runGroup("unlock notice", () -> UnlockHooks.install(cl));
         runGroup("charging animation", () -> {
             try {
                 ChargingAnimation.install(cl);
@@ -477,7 +478,18 @@ public final class SystemUiHooks {
         Refl.hookConstructors(cl, "com.android.systemui.statusbar.window.StatusBarWindowStateController", SafeHook.after("window state ctor", param -> listenToWindowState(cl, param)));
     }
 
+    /** System UI's own record of the shade, kept to check the reports the island got (see ShadeWatch). */
+    private static volatile Object shadeManager;
+
+    /** Where the shade really is (0 closed, 1 open), or null when System UI cannot say. */
+    public static Float shadeFraction() {
+        Object manager = shadeManager;
+        Object fraction = manager == null ? null : Refl.get(manager, "fraction");
+        return fraction instanceof Float ? (Float) fraction : null;
+    }
+
     private static void listenToShade(ClassLoader cl, XC_MethodHook.MethodHookParam p) {
+        shadeManager = p.thisObject;
         Class<?> listener = Refl.findClass("com.android.systemui.shade.ShadeExpansionListener", cl);
         if (listener == null) {
             return;

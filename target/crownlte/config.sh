@@ -41,3 +41,5 @@ TARGET_COMMON_SUPPORT_EMBEDDED_SIM=false
 # WQHD/FHD/HD and is determined entirely by the initial density.
 TARGET_COMMON_SUPPORT_DYN_RESOLUTION_CONTROL=true
 TARGET_CAMERA_SUPPORT_SDK_SERVICE=false
+
+TARGET_FINGERPRINT_CONFIG_SENSOR="google_touch_rear_land,swipe_enroll,settings=3,navi=1"

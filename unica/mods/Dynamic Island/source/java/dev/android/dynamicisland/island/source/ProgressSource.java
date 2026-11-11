@@ -109,11 +109,45 @@ public final class ProgressSource {
         }
     }
 
+    /** A real, determinate progress bar in the notification's own fields. */
+    static boolean hasBar(Bundle extras) {
+        return extras != null && !extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE, false)
+                && extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0) > 0 && extras.getInt(Notification.EXTRA_PROGRESS, 0) >= 0;
+    }
+
+    /**
+     * An ordinary notification (one that is not ongoing) with a real progress bar, which the "progress of ordinary
+     * notifications" option turns into a progress card. Such a notification is no message popup then.
+     */
+    public static boolean takesOrdinary(StatusBarNotification sbn) {
+        Notification n = sbn == null ? null : sbn.getNotification();
+        if (n == null || n.extras == null || !ModuleSettings.progressAny() || !ModuleSettings.progressNotifications()
+                || IGNORED.contains(sbn.getPackageName())) {
+            return false;
+        }
+        boolean ongoing = (n.flags & (Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE)) != 0;
+        return !ongoing && (n.flags & Notification.FLAG_GROUP_SUMMARY) == 0 && hasBar(n.extras) && !isSpecial(sbn, n, n.extras);
+    }
+
+    private static String liveSource(IslandItem live) {
+        if (!(live.key.startsWith("oa:") || live.key.startsWith("live:"))) return null;
+        if (live.sourceKey != null) return live.sourceKey;
+        return live.key.startsWith("oa:") ? live.key.substring(3) : null;
+    }
+
     /** Adds the progress cards, except for the foreground app and those One UI already shows as live notification. */
     public void collect(List<IslandItem> out, String foregroundPackage) {
         if (items.isEmpty() || !ModuleSettings.progressNotifications()) {
             publishShown(Collections.emptySet());
             return;
+        }
+        Set<String> withBar = new HashSet<>();
+        if (ModuleSettings.progressAny()) {
+            // a card with a real bar beats the live card of the same notification, which usually has none
+            for (IslandItem it : items.values()) {
+                if (it.progress >= 0.0f || it.progressIndeterminate) withBar.add(it.key.substring(TASK_PREFIX.length()));
+            }
+            out.removeIf(live -> withBar.contains(liveSource(live)));
         }
         Set<String> promoted = new HashSet<>();
         for (IslandItem it : out) {
@@ -124,7 +158,7 @@ public final class ProgressSource {
         }
         Set<String> shown = new HashSet<>();
         for (IslandItem it : items.values()) {
-            if (it.packageName != null && it.packageName.equals(foregroundPackage)) {
+            if (it.packageName != null && it.packageName.equals(foregroundPackage) && !ModuleSettings.progressForeground()) {
                 continue;
             }
             if (promoted.contains(it.key.substring(TASK_PREFIX.length()))) {
@@ -164,7 +198,7 @@ public final class ProgressSource {
             return null;
         }
         boolean ongoing = (n.flags & (Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE)) != 0;
-        if (!ongoing || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) {
+        if (!(ongoing || takesOrdinary(sbn)) || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) {
             return null;
         }
         if (isSpecial(sbn, n, extras)) {

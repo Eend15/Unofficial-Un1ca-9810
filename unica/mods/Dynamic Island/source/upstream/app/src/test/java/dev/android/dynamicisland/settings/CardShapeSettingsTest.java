@@ -22,8 +22,7 @@ public class CardShapeSettingsTest {
     @Test public void customCornersAreOptInPersistAndRestoreDefaults() throws Exception {
         SettingsActivity activity=Robolectric.buildActivity(SettingsActivity.class).setup().get();
         SharedPreferences prefs=ReflectionHelpers.getField(activity,"prefs");
-        OneUi ui=ReflectionHelpers.getField(activity,"ui");
-        activity.open(()->new CardShapeScreen(activity,ui,prefs).open());
+        activity.openSetting(SettingsSearchCatalog.Route.APPEARANCE,R.string.card_roundness_custom,0);
         ModuleSettings.configurePreview(prefs);
         assertFalse(ModuleSettings.customCardRoundness());
         assertNull(find(activity.page(),SeekBar.class));

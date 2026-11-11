@@ -190,6 +190,13 @@ final class IslandPlacement {
     // ---- system state --------------------------------------------------------------------------
 
     /** @param state SystemUI StatusBarState: 0 shade, 1 keyguard, 2 locked shade */
+    /** Told when the keyguard goes away (set by the controller; used for the unlock notice). */
+    private Runnable onUnlocked;
+
+    void setOnUnlocked(Runnable listener) {
+        onUnlocked = listener;
+    }
+
     void setBarState(int state) {
         if (barState == state) {
             return;
@@ -198,6 +205,7 @@ final class IslandPlacement {
         XLog.event("status bar state " + barState + " -> " + state);
         barState = state;
         if (wasLocked && state == BAR_STATE_SHADE) {
+            if (onUnlocked != null) onUnlocked.run();
             revealPending = true;
             main.removeCallbacks(revealTimer);
             main.postDelayed(revealTimer, UNLOCK_REVEAL_DELAY_MS);

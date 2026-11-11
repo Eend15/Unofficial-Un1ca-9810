@@ -1,6 +1,6 @@
 # iMotion
 
-iMotion is an optional presentation under **Behavior → Animations → iMotion**. It is off by default.
+iMotion is an optional presentation under **Appearance → Animation → iMotion**. It is off by default.
 The existing modern and legacy stack presentations remain available. Changing the selection is live;
 installing a different module APK still requires restarting SystemUI to load its new code.
 
@@ -36,10 +36,16 @@ constants and display refresh timing cannot be recovered from the video.
   springs return their position and shape after release without discarding the current geometry.
 - New compact surfaces grow and fade into their destination. Removed sources shrink and fade at
   their last position; returning sources reverse the existing motion instead of being seeded again.
-- Swipe upward on the row or expanded card to temporarily hide the entire presentation. Pull down
-  near the camera hole to restore the compact row. This preserves every source and priority, blocks
-  automatic popup reveals while hidden, and keeps the hidden state across sleep and source updates.
-  The invisible restore hotspot is disabled on the lock/sleep/shade paths that suppress normal input.
+- Swipe upward on the compact row to temporarily hide the entire presentation. A short slow drag does
+  nothing; a quick flick hides it after a short move, and it leaves faster the faster it was thrown.
+  Pull down near the camera hole to restore the compact row. This preserves every source and priority,
+  blocks automatic popup reveals while hidden, and keeps the hidden state across sleep and source
+  updates. The invisible restore hotspot is disabled on the lock/sleep/shade paths that suppress
+  normal input.
+- Swipe upward on an expanded card to fold it back into the compact row (the island stays). The card
+  follows the finger; on release it folds when the swipe went far enough, counting where the finger
+  was heading, otherwise it springs back, and a quick flick folds it at once. The fold carries the
+  speed of the swipe.
 - With more activities than fit in the row, the bubble shows a remaining count. With more than three
   total activities, the open card also shows its position in the activity list.
 - Native custom notification layouts retain their buttons and sliders. A horizontal swipe can switch

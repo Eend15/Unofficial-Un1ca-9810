@@ -1,6 +1,11 @@
 ui_print("Checking Exynos9810 partition layout...");
 package_extract_dir("exynos9810", "/tmp/exynos9810");
 run_program("/system/bin/chmod", "-R", "0755", "/tmp/exynos9810");
+run_program("/sbin/sh", "/tmp/exynos9810/check_battery.sh") == 0 ||
+    abort("E9810: Battery too low. Charge the phone or connect a charger, then flash again. Nothing was changed.");
+ui_print("Verifying ROM zip (this can take a few minutes)...");
+run_program("/sbin/sh", "/tmp/exynos9810/verify_package.sh") == 0 ||
+    abort("E9810: The ROM zip is damaged or incomplete. Nothing was changed. Download it again, check the SHA256 and copy it to internal storage before flashing.");
 ifelse(is_mounted("/system"), unmount("/system"));
 ifelse(is_mounted("/system_root"), unmount("/system_root"));
 ifelse(is_mounted("/vendor"), unmount("/vendor"));

@@ -34,6 +34,12 @@ public final class ModuleSettings {
     public static final String KEY_CHARGING_INFO = "charging_info";
     public static final String KEY_CHARGING_STATS = "charging_statistics";
     public static final String KEY_EVENT_HEADSET = "event_headset";
+    public static final String KEY_HEADSET_STAY = "headset_card_stay";
+    public static final String KEY_HOTSPOT_CARD = "hotspot_card";
+    public static final String KEY_UNLOCK_NOTICE = "unlock_notice";
+    public static final String KEY_PEEK_PROGRESS = "peek_progress";
+    public static final String KEY_PROGRESS_FOREGROUND = "progress_foreground";
+    public static final String KEY_PROGRESS_ANY = "progress_any";
     public static final String KEY_EVENT_RINGER = "event_ringer";
     public static final String KEY_EVENT_BLUETOOTH = "event_bluetooth";
     public static final String KEY_HAPTICS = "haptics";
@@ -53,6 +59,11 @@ public final class ModuleSettings {
     public static final int PILL_OUTLINE_AUTO = 0;
     public static final int PILL_OUTLINE_ALWAYS = 1;
     public static final int PILL_OUTLINE_NONE = 2;
+    /** The blur while the island opens and closes: automatic (off while the phone stutters), always on, or off. */
+    public static final String KEY_TRANSITION_BLUR = "transition_blur";
+    public static final int TRANSITION_BLUR_AUTO = 0;
+    public static final int TRANSITION_BLUR_ALWAYS = 1;
+    public static final int TRANSITION_BLUR_OFF = 2;
     public static final String KEY_PILL_X_DP = "pill_x_dp";
     public static final String KEY_PILL_Y_DP = "pill_y_dp";
     /** Wall-clock time until which the position page is open; a slower way (the settings file) to ask for the sample. */
@@ -163,6 +174,12 @@ public final class ModuleSettings {
     private static volatile boolean chargingInfo;
     private static volatile boolean chargingStats;
     private static volatile boolean eventHeadset;
+    private static volatile boolean headsetStay;
+    private static volatile boolean hotspotCard;
+    private static volatile boolean unlockNotice;
+    private static volatile boolean peekProgress;
+    private static volatile boolean progressForeground;
+    private static volatile boolean progressAny;
     private static volatile boolean eventRinger = true;
     private static volatile boolean eventBluetooth = true;
     private static volatile boolean haptics = true;
@@ -193,6 +210,7 @@ public final class ModuleSettings {
     private static volatile boolean smartRules = true;
     private static volatile int pillAnchor = ANCHOR_AUTO;
     private static volatile int pillOutlineMode = PILL_OUTLINE_AUTO;
+    private static volatile int transitionBlurMode = TRANSITION_BLUR_AUTO;
     private static volatile int cardCornerRadiusDp = 28;
     private static volatile boolean customCardRoundness;
     private static volatile int pillXDp;
@@ -283,6 +301,17 @@ public final class ModuleSettings {
     }
 
     /** Outline policy, independent of animation style. Auto uses contrast with the actual background. */
+    public static int transitionBlurMode() { return transitionBlurMode; }
+
+    public static int readTransitionBlurMode(SharedPreferences source) {
+        try {
+            int mode = source.getInt(KEY_TRANSITION_BLUR, TRANSITION_BLUR_AUTO);
+            return mode >= TRANSITION_BLUR_AUTO && mode <= TRANSITION_BLUR_OFF ? mode : TRANSITION_BLUR_AUTO;
+        } catch (ClassCastException corrupt) {
+            return TRANSITION_BLUR_AUTO;
+        }
+    }
+
     public static int pillOutlineMode() {
         ensureStarted();
         return pillOutlineMode;
@@ -489,6 +518,7 @@ public final class ModuleSettings {
             legacyAnimation = source.getBoolean(KEY_LEGACY_ANIMATION, false);
             iMode = source.getBoolean(KEY_I_MODE, false);
             pillOutlineMode = readPillOutlineMode(source);
+            transitionBlurMode = readTransitionBlurMode(source);
             headsUpIsland = source.getBoolean(KEY_HEADS_UP_ISLAND, true);
             progressNotifications = source.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
             allNotifications = source.getBoolean(KEY_ALL_NOTIFICATIONS, false);
@@ -577,6 +607,7 @@ public final class ModuleSettings {
         legacyAnimation = settings.getBoolean(KEY_LEGACY_ANIMATION, false);
         iMode = settings.getBoolean(KEY_I_MODE, false);
         pillOutlineMode = readPillOutlineMode(settings);
+        transitionBlurMode = readTransitionBlurMode(settings);
         lowPerformance = settings.getBoolean(KEY_LOW_PERFORMANCE, false);
         materialStyle = readMaterialStyle(settings);
         torchStyle = settings.getInt(KEY_TORCH_STYLE, 0) == 1 ? 1 : 0;
@@ -587,7 +618,14 @@ public final class ModuleSettings {
         cardHeader = settings.getBoolean(KEY_CARD_HEADER, true);
         colorIcons = settings.getBoolean(KEY_COLOR_ICONS, false);
         accentCustom = settings.getBoolean(KEY_ACCENT_CUSTOM, false);
-        accentColor = settings.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT);
+        accentColor = settings.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT) | 0xFF000000;
+        compactEventIcons = settings.getBoolean(KEY_COMPACT_EVENT_ICONS, false);
+        hideBatteryIcon = settings.getBoolean(KEY_HIDE_BATTERY_ICON, true);
+        visualizer = settings.getBoolean(KEY_VISUALIZER, true);
+        haptics = settings.getBoolean(KEY_HAPTICS, true);
+        autoCollapseS = settings.getInt(KEY_AUTO_COLLAPSE_S, DEF_AUTO_COLLAPSE_S);
+        eventToggles = settings.getBoolean(KEY_EVENT_TOGGLES, true);
+        torchPill = settings.getBoolean(KEY_TORCH_PILL, true);
         readGlow(settings);
     }
 
@@ -621,6 +659,16 @@ public final class ModuleSettings {
     public static boolean concurrentRecordingInput() { ensureStarted(); return concurrentRecordingInput && !lowPerformance; }
     public static boolean chargingStats() { return chargingInfo() && chargingStats; }
     public static boolean eventHeadset() { ensureStarted(); return eventHeadset; }
+    /** The headset card stays while a wired/USB headset is plugged in (needs the headset events). */
+    public static boolean hotspotCard() { ensureStarted(); return hotspotCard; }
+    public static boolean unlockNotice() { ensureStarted(); return unlockNotice; }
+    /** A notification card shows the notification's own progress bar. */
+    public static boolean peekProgress() { ensureStarted(); return peekProgress; }
+    /** Progress cards are also made for the app that is open (they are left out by default). */
+    public static boolean progressForeground() { ensureStarted(); return progressForeground; }
+    /** Ordinary (not ongoing) notifications with a progress bar also become progress cards, and a bar card beats a live card. */
+    public static boolean progressAny() { ensureStarted(); return progressAny; }
+    public static boolean headsetCardStays() { ensureStarted(); return eventHeadset && headsetStay; }
     public static int holeTextPaddingDp() { ensureStarted(); return holeTextPaddingDp; }
     public static int cardCornerRadiusDp() { ensureStarted(); return cardCornerRadiusDp; }
     public static boolean customCardRoundness() { ensureStarted(); return customCardRoundness; }
@@ -637,6 +685,12 @@ public final class ModuleSettings {
         chargingInfo = source.getBoolean(KEY_CHARGING_INFO, false);
         chargingStats = source.getBoolean(KEY_CHARGING_STATS, false);
         eventHeadset = source.getBoolean(KEY_EVENT_HEADSET, false);
+        headsetStay = source.getBoolean(KEY_HEADSET_STAY, false);
+        hotspotCard = source.getBoolean(KEY_HOTSPOT_CARD, false);
+        unlockNotice = source.getBoolean(KEY_UNLOCK_NOTICE, false);
+        peekProgress = source.getBoolean(KEY_PEEK_PROGRESS, false);
+        progressForeground = source.getBoolean(KEY_PROGRESS_FOREGROUND, false);
+        progressAny = source.getBoolean(KEY_PROGRESS_ANY, false);
     }
 
     public static boolean autoOpenCards() { return autoOpenCards; }
@@ -651,8 +705,8 @@ public final class ModuleSettings {
     private static String switchSignature() {
         return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + "/torchStyle=" + torchStyle + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
                 + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
-                + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/stockCharging=" + stockChargingAnimation + "/recordingInput=" + concurrentRecordingInput
-                + "/iMotion=" + iMode + "/material=" + materialStyle + "/roundness=" + customCardRoundness + "/" + cardCornerRadiusDp + "/outline=" + pillOutlineMode + "/" + appFilter.onlyListed() + appFilter.size();
+                + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/" + headsetStay + "/hotspot=" + hotspotCard + "/unlock=" + unlockNotice + "/peekProgress=" + peekProgress + "/progressForeground=" + progressForeground + "/progressAny=" + progressAny + "/stockCharging=" + stockChargingAnimation + "/recordingInput=" + concurrentRecordingInput
+                + "/iMotion=" + iMode + "/material=" + materialStyle + "/roundness=" + customCardRoundness + "/" + cardCornerRadiusDp + "/outline=" + pillOutlineMode + "/blur=" + transitionBlurMode + "/" + appFilter.onlyListed() + appFilter.size();
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
@@ -666,7 +720,7 @@ public final class ModuleSettings {
         Diagnostics.fact("pill outline mode", Integer.toString(pillOutlineMode));
         Diagnostics.fact("island presentation", iMode ? "iMotion" : "stack");
         Diagnostics.fact("card material selected", materialStyle == MATERIAL_CLASSIC ? "classic" : "frosted");
-        Diagnostics.fact("optional device cards", "charging=" + chargingInfo + " statistics=" + chargingStats + " headset=" + eventHeadset + " stockCharging=" + stockChargingAnimation);
+        Diagnostics.fact("optional device cards", "charging=" + chargingInfo + " statistics=" + chargingStats + " headset=" + eventHeadset + " hotspot=" + hotspotCard + " unlock=" + unlockNotice + " stockCharging=" + stockChargingAnimation);
         Diagnostics.fact("settings file", prefs.getFile() + " readable=" + prefs.getFile().canRead() + " keys=" + prefs.getAll().size());
         Diagnostics.fact("settings source", viaProvider ? "provider (" + source.getAll().size() + " keys)" : "preference file (" + source.getAll().size() + " keys)");
         if (!now.equals(lastLogged)) {

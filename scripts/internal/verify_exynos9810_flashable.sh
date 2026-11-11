@@ -13,10 +13,10 @@ EXPECTED_FS="${2:?expected filesystem is required}"
 }
 case "$EXPECTED_FS" in
     erofs)
-        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-87f62131e904b2061f1761cf87587b685b5d6c170e4e3b823283e00b946408cc}"
+        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-309ae8c7ee1132199d9519339273254e6df2db4f3b0df8b0c8c5c7925c14489c}"
         ;;
     ext4)
-        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-e5a366110357a0d7807f12c61d1f71088c4508471df50fbf36deb62c064a1aca}"
+        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-6e7323958ca2a26e521be5f7902beea667a3fea65a7a090056a5067ae7590670}"
         ;;
     *)
         echo "Exynos9810 flashable verification: invalid filesystem $EXPECTED_FS" >&2
@@ -38,12 +38,32 @@ for ENTRY in \
     exynos9810/ramdisk.img \
     exynos9810/vendor_bootfix.sh \
     exynos9810/format_partitions.sh \
+    exynos9810/verify_package.sh \
+    exynos9810/check_battery.sh \
+    exynos9810/installer_ui.sh \
     META-INF/com/google/android/updater-script; do
     grep -Fxq "$ENTRY" "$VERIFY_TMP/outer.list" || {
         echo "Exynos9810 flashable verification: missing $ENTRY" >&2
         exit 1
     }
 done
+
+# Updating to a new ROM version must keep user data: the installer itself
+# never formats USERDATA (only a repartition on first install recreates it).
+unzip -p "$ZIP_FILE" exynos9810/format_partitions.sh > "$VERIFY_TMP/format_partitions.sh"
+if grep -q -E 'format_ext4[[:space:]]+data|USERDATA' "$VERIFY_TMP/format_partitions.sh"; then
+    echo "Exynos9810 flashable verification: installer would format user data" >&2
+    exit 1
+fi
+
+# The payload check has to run before the installer touches any partition.
+unzip -p "$ZIP_FILE" META-INF/com/google/android/updater-script > "$VERIFY_TMP/updater-script"
+VERIFY_LINE="$(grep -n -F '/tmp/exynos9810/verify_package.sh' "$VERIFY_TMP/updater-script" | head -n 1 | cut -d: -f1)"
+LAYOUT_LINE="$(grep -n -F '/tmp/exynos9810/prepare_layout.sh' "$VERIFY_TMP/updater-script" | head -n 1 | cut -d: -f1)"
+if [ -z "$VERIFY_LINE" ] || [ -z "$LAYOUT_LINE" ] || [ "$VERIFY_LINE" -ge "$LAYOUT_LINE" ]; then
+    echo "Exynos9810 flashable verification: ROM zip check does not run before repartitioning" >&2
+    exit 1
+fi
 
 for UNSAFE_ENTRY in exynos9810/bootlogger-init exynos9810/patch_bootlogger.sh; do
     if grep -Fxq "$UNSAFE_ENTRY" "$VERIFY_TMP/outer.list"; then

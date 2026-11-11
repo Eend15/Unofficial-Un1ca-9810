@@ -35,7 +35,7 @@ public final class PillBackgroundSampler {
     private final Consumer<Float> consumer;
     private final BackendFactory factory;
     private final SurfaceAccess surfaces;
-    private final Handler main = new Handler(Looper.getMainLooper());
+    private final Handler main = new dev.android.dynamicisland.xposed.GuardedHandler(Looper.getMainLooper());
     private final Rect bounds = new Rect();
     private final Rect registeredBounds = new Rect();
     private final Point displaySize = new Point();

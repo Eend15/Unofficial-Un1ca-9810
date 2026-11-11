@@ -177,6 +177,15 @@ final class OneUi {
         page.addView(label);
     }
 
+    /** A section label with a small line below it saying what the section is. */
+    void category(LinearLayout page, CharSequence title, CharSequence description) {
+        category(page, title);
+        if (description == null || description.length() == 0) return;
+        TextView sub = text(description, 13, muted);
+        sub.setPadding(dp(22), dp(2), dp(22), 0);
+        page.addView(sub);
+    }
+
     LinearLayout card(LinearLayout page) {
         LinearLayout c = new LinearLayout(ctx);
         c.setOrientation(LinearLayout.VERTICAL);
@@ -344,6 +353,93 @@ final class OneUi {
     TextView valueRow(LinearLayout group, CharSequence title, CharSequence value, Runnable open) {
         LinearLayout box = box(group, title, value, accent, open, false);
         return (TextView) ((LinearLayout) box.getChildAt(0)).getChildAt(1);
+    }
+
+    /**
+     * A One UI radio list: a small accent label, then a card with one row per option and a radio dot at the end.
+     * Tapping a row selects it at once, with no dialog in between, so the preview above can show the result.
+     * The card carries the tag the search jumps to.
+     */
+    static final int TAG_DEFAULT = 1, TAG_RECOMMENDED = 2;
+
+    LinearLayout radioGroup(LinearLayout page, CharSequence title, CharSequence description, CharSequence[] labels, int[] tags, int selected, java.util.function.IntConsumer onSelect) {
+        category(page, title, description);
+        LinearLayout card = card(page);
+        card.setTag(title.toString());
+        RadioDot[] dots = new RadioDot[labels.length];
+        for (int i = 0; i < labels.length; i++) {
+            separator(card);
+            LinearLayout row = new LinearLayout(ctx);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(22), dp(10), dp(16), dp(10));
+            row.setMinimumHeight(dp(56));
+            row.setBackground(ripple());
+            LinearLayout line = new LinearLayout(ctx);
+            line.setGravity(Gravity.CENTER_VERTICAL);
+            line.addView(text(labels[i], 17, textColor));
+            int flags = tags == null ? 0 : tags[i];
+            if ((flags & TAG_DEFAULT) != 0) line.addView(tagPill(ctx.getString(R.string.ui_default), accent));
+            if ((flags & TAG_RECOMMENDED) != 0) line.addView(tagPill(ctx.getString(R.string.tag_recommended), good));
+            row.addView(line, new LinearLayout.LayoutParams(0, -2, 1));
+            RadioDot dot = new RadioDot(ctx, i == selected);
+            dots[i] = dot;
+            row.addView(dot, new LinearLayout.LayoutParams(dp(24), dp(24)));
+            row.setSelected(i == selected);
+            row.setContentDescription(labels[i]);
+            final int index = i;
+            row.setOnClickListener(v -> {
+                for (int k = 0; k < dots.length; k++) dots[k].set(k == index);
+                onSelect.accept(index);
+            });
+            card.addView(row, new LinearLayout.LayoutParams(-1, -2));
+        }
+        return card;
+    }
+
+    /** A small rounded label next to an option ("Default", "Recommended"), tinted with {@code colour}. */
+    private TextView tagPill(CharSequence label, int colour) {
+        TextView pill = text(label, 12, colour);
+        pill.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        pill.setPadding(dp(8), dp(2), dp(8), dp(2));
+        GradientDrawable bg = round(colour, dp(8));
+        bg.setAlpha(36);
+        pill.setBackground(bg);
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, -2);
+        p.leftMargin = dp(10);
+        pill.setLayoutParams(p);
+        return pill;
+    }
+
+    /** The round selection mark of a radio row: an outline, or the accent colour with a tick when chosen. */
+    private final class RadioDot extends View {
+        private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private boolean on;
+        RadioDot(Context context, boolean on) { super(context); this.on = on; setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO); }
+        void set(boolean value) { on = value; invalidate(); }
+        @Override protected void onDraw(android.graphics.Canvas c) {
+            float r = getWidth() / 2f - dp(2);
+            float cx = getWidth() / 2f, cy = getHeight() / 2f;
+            if (on) {
+                paint.setStyle(android.graphics.Paint.Style.FILL);
+                paint.setColor(accent);
+                c.drawCircle(cx, cy, r + dp(1), paint);
+                paint.setStyle(android.graphics.Paint.Style.STROKE);
+                paint.setColor(0xffffffff);
+                paint.setStrokeWidth(dp(2));
+                paint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+                paint.setStrokeJoin(android.graphics.Paint.Join.ROUND);
+                android.graphics.Path tick = new android.graphics.Path();
+                tick.moveTo(cx - r * 0.42f, cy + r * 0.02f);
+                tick.lineTo(cx - r * 0.08f, cy + r * 0.38f);
+                tick.lineTo(cx + r * 0.5f, cy - r * 0.32f);
+                c.drawPath(tick, paint);
+            } else {
+                paint.setStyle(android.graphics.Paint.Style.STROKE);
+                paint.setColor(dark ? 0xff6a6a72 : 0xffb4b4bc);
+                paint.setStrokeWidth(dp(2));
+                c.drawCircle(cx, cy, r, paint);
+            }
+        }
     }
 
     /** Entry to a sub page. */

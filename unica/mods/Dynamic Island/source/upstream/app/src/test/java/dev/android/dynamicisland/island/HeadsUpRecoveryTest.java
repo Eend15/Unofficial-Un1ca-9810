@@ -74,6 +74,51 @@ public class HeadsUpRecoveryTest {
         assertFalse(takeover.take(note(app, 3, false, System.currentTimeMillis() + 2)));
     }
 
+    @Test public void normalAndRecoveryRemovalMatchOemParameterTypesIncludingInheritedOverloads() throws Exception {
+        var remove = HeadsUpHooks.class.getDeclaredMethod("remove", Object.class, String.class);
+        remove.setAccessible(true);
+        for (RemovalProbe probe : new RemovalProbe[]{new SamsungRemoval(), new NothingRemoval(),
+                new LegacyRemoval(), new InheritedRemoval()}) {
+            assertEquals(true, remove.invoke(null, probe, "normal"));
+            assertEquals("normal", probe.key);assertTrue(probe.immediately);assertEquals(1, probe.removals);
+            probe.removals = 0;
+            ReflectionHelpers.setStaticField(ModuleSettings.class, "experimentalRecovery", true);
+            ReflectionHelpers.setStaticField(HeadsUpHooks.class, "manager", probe);
+            assertEquals("removed on the second call", HeadsUpHooks.dismissStock("recovery"));
+            assertEquals(2, probe.removals);assertEquals("recovery", probe.key);assertTrue(probe.immediately);
+            if (!(probe instanceof LegacyRemoval)) assertEquals("dynamic island", probe.reason);
+        }
+        Object unsupported = new UnsupportedRemoval();
+        assertEquals(false, remove.invoke(null, unsupported, "unsupported"));
+        ReflectionHelpers.setStaticField(HeadsUpHooks.class, "manager", unsupported);
+        assertEquals("no supported removeNotification signature", HeadsUpHooks.dismissStock("unsupported"));
+    }
+
+    public static class RemovalProbe {
+        int removals;
+        String key, reason;
+        boolean immediately;
+        boolean removed(String key, String reason, boolean immediately) {
+            this.key = key;this.reason = reason;this.immediately = immediately;removals++;return true;
+        }
+        public Object getHeadsUpEntry(String key) { return removals < 2 ? this : null; }
+    }
+    public static final class SamsungRemoval extends RemovalProbe {
+        public boolean removeNotification(String key, String reason, boolean immediately) { return removed(key, reason, immediately); }
+    }
+    public static class NothingRemoval extends RemovalProbe {
+        public boolean removeNotification(String key, boolean immediately, String reason) { return removed(key, reason, immediately); }
+    }
+    public static final class LegacyRemoval extends RemovalProbe {
+        public boolean removeNotification(String key, boolean immediately) { return removed(key, null, immediately); }
+    }
+    public static final class InheritedRemoval extends NothingRemoval {
+        public boolean removeNotification(String key, String reason, String unrelated) { throw new AssertionError("wrong overload"); }
+    }
+    public static final class UnsupportedRemoval {
+        public boolean removeNotification(String key, boolean immediately, int unrelated) { throw new AssertionError("unsupported API"); }
+    }
+
     private StatusBarNotification note(Context app, int id, boolean summary, long postTime) {
         Notification notification = new Notification.Builder(app, "messages")
                 .setSmallIcon(android.R.drawable.stat_notify_chat).setContentTitle("Sender")

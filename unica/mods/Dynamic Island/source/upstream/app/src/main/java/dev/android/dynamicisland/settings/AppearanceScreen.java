@@ -35,7 +35,7 @@ final class AppearanceScreen {
         activity.choice(mode, R.string.accent_enabled, new int[]{R.string.ui_default, R.string.ui_custom}, enabled ? 1 : 0,
                 selected -> prefs.edit().putBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, selected == 1).apply());
         if (enabled) {
-            ui.category(page, activity.getString(R.string.accent_presets));
+            ui.category(page, activity.getString(R.string.accent_presets), activity.getString(R.string.desc_presets));
             LinearLayout choices = ui.card(page);
             LinearLayout palette = new LinearLayout(activity);
             palette.setOrientation(LinearLayout.VERTICAL);

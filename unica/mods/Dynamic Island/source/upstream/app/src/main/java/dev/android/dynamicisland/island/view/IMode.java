@@ -423,6 +423,17 @@ final class IMode {
         page.clear();changed();
     }
 
+    /**
+     * Folds the cards into the pill and lets them leave with the speed of the swipe that closed them: they were
+     * moving up, and the pill is above them.
+     */
+    void collapse(float upwardSpeed) {
+        collapse();
+        float kick=Math.min(upwardSpeed,m.dp(3000))*.5f;
+        if(kick<=0) return;
+        for(Card card:scene.cards) if(card.leaving) card.cy.impulse(-kick);
+    }
+
     void collapse() {
         if(scene.mode!=Mode.EXPANDED) return;
         finishCompactInteraction();
@@ -439,7 +450,9 @@ final class IMode {
     }
 
     boolean hiddenByGesture() { return gestureHidden; }
-    void hideByGesture() {
+    void hideByGesture() { hideByGesture(0); }
+    /** @param upwardSpeed how fast the swipe was moving up (px/s): the pill leaves faster the faster it was thrown */
+    void hideByGesture(float upwardSpeed) {
         if(gestureHidden || scene.sleeping || scene.suppressed || scene.held) return;
         finishCompactInteraction();abortSwipe();
         boolean expanded=scene.mode==Mode.EXPANDED;
@@ -447,7 +460,8 @@ final class IMode {
         scene.peekOpen=false;selected=null;gestureHidden=true;scene.mode=Mode.HIDDEN;
         director.cancelAutoCollapse();closeCards();layout();
         scene.springs.stackDx.animateTo(0);scene.springs.stackDy.animateTo(0);
-        scene.springs.visibility.animateTo(0,.36f,1);
+        float hurry=Math.max(0,Math.min(1,upwardSpeed/m.dp(2500)));
+        scene.springs.visibility.animateTo(0,.36f-.14f*hurry,1);
         if(expanded) host.onExpandedChanged(false);
         Haptics.perform(view,HapticFeedbackConstants.CONTEXT_CLICK);changed();
     }

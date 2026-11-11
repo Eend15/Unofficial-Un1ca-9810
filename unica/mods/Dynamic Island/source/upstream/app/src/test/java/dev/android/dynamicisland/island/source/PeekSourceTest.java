@@ -171,4 +171,32 @@ public class PeekSourceTest {
         dir.mkdirs();
         RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
+
+    @Test
+    public void anUploadNotificationShowsItsBarOnTheCardOnlyWithTheOption() throws Exception {
+        android.content.SharedPreferences prefs = dev.android.dynamicisland.settings.ModuleSettings.openStore(app);
+        Notification.Builder upload = new Notification.Builder(app, "msg").setSmallIcon(android.R.drawable.stat_notify_chat)
+                .setContentTitle("Minji").setContentText("Sending photo").setProgress(100, 40, false);
+        Notification.Builder waiting = new Notification.Builder(app, "msg").setSmallIcon(android.R.drawable.stat_notify_chat)
+                .setContentTitle("Minji").setContentText("Preparing").setProgress(0, 0, true);
+        try {
+            prefs.edit().putBoolean(dev.android.dynamicisland.settings.ModuleSettings.KEY_PEEK_PROGRESS, false).apply();
+            dev.android.dynamicisland.settings.ModuleSettings.configurePreview(prefs);
+            IslandItem plain = source().build(sbn("com.kakao.talk", 11, upload));
+            assertEquals("no bar without the option", -1f, plain.progress, 0f);
+            org.junit.Assert.assertFalse(plain.progressIndeterminate);
+
+            prefs.edit().putBoolean(dev.android.dynamicisland.settings.ModuleSettings.KEY_PEEK_PROGRESS, true).apply();
+            dev.android.dynamicisland.settings.ModuleSettings.configurePreview(prefs);
+            IslandItem bar = source().build(sbn("com.kakao.talk", 11, upload));
+            assertEquals(0.4f, bar.progress, 0.001f);
+            IslandItem pending = source().build(sbn("com.kakao.talk", 12, waiting));
+            assertTrue(pending.progressIndeterminate);
+            IslandItem message = source().build(sbn("com.kakao.talk", 13, message(false)));
+            assertEquals("a message without a bar stays as it was", -1f, message.progress, 0f);
+        } finally {
+            prefs.edit().putBoolean(dev.android.dynamicisland.settings.ModuleSettings.KEY_PEEK_PROGRESS, false).apply();
+            dev.android.dynamicisland.settings.ModuleSettings.configurePreview(prefs);
+        }
+    }
 }

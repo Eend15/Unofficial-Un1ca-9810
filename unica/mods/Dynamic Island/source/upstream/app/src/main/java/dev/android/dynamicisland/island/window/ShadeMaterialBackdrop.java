@@ -52,7 +52,7 @@ public final class ShadeMaterialBackdrop {
     }
     private static final class Shared {
         final View root;
-        final Handler main=new Handler(Looper.getMainLooper());
+        final Handler main=new dev.android.dynamicisland.xposed.GuardedHandler(Looper.getMainLooper());
         final Map<View,Boolean> clients=new WeakHashMap<>();
         final MaterialCapture capture;
         final Point size=new Point();

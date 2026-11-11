@@ -149,8 +149,9 @@ for EROFS or EXT4. The build creates the ROM ZIP in `out/`.
 
 - Use a [supported Exynos Galaxy S9, S9+ or Note9](#supported-devices).
   **Snapdragon models are not supported.**
-- **Back up your files, EFS and modem.** The installer may resize partitions
-  and formats `/data`, so **your data and internal storage can be erased**.
+- **Back up your files, EFS and modem.** On the first install the installer
+  may resize partitions, which **erases your data and internal storage**.
+  Updating to a newer UN1CA 9810 version keeps your data.
 - Flash the [custom TWRP recovery](https://drive.google.com/drive/u/1/folders/1fHC1F6aZkXxVGCHYRtzU_RQqX51rYGtk)
   for your device through Download Mode. This TWRP supports **EROFS** and
   **ROM ZIP files larger than 5 GB**.
@@ -160,7 +161,9 @@ for EROFS or EXT4. The build creates the ROM ZIP in `out/`.
 1. Download the UN1CA ZIP for your device. Copy it to a **microSD card or USB
    OTG drive** (recommended, since internal storage may be wiped).
 2. Boot into TWRP, select **Install**, choose the ROM ZIP and swipe to flash.
-   The installer handles repartitioning if needed.
+   The installer first checks the battery (at least 15% or charging) and that
+   the ZIP is not damaged, then handles repartitioning if needed. If it reports
+   a damaged ZIP, nothing was changed: download it again and check the SHA256.
 3. If installation stops with a partition/recovery refresh error, reboot back
    into TWRP, select **Wipe > Format Data**, type `yes`, then flash the ZIP again.
 4. When coming from an older One UI version, or if encryption/mount problems

@@ -25,8 +25,13 @@ final class TouchController {
     static final float MIN_TOUCHABLE_ALPHA = 0.4f;
     private static final float SWIPE_MIN_DP = 26.0f;
     private static final float SWIPE_DOMINANCE = 1.2f;
-    private static final float SWIPE_UP_DISMISS_DP = 48.0f;
+    private static final float SWIPE_UP_DISMISS_DP = 40.0f;
     private static final float SWIPE_UP_CLOSE_DP = 30.0f;
+    /** A flick this fast (dp per second) closes after a short move: speed counts for distance. */
+    private static final float FLICK_UP_DP_PER_S = 900.0f;
+    private static final float FLICK_UP_MIN_DP = 10.0f;
+    /** On release the finger is taken as travelling this much longer: where the swipe was heading counts. */
+    private static final float RELEASE_LOOKAHEAD_S = 0.12f;
     private static final int HAPTIC_SEEK_DONE = HapticFeedbackConstants.CLOCK_TICK;
     private static final int HAPTIC_CONFIRM = HapticFeedbackConstants.CONTEXT_CLICK;
 
@@ -92,7 +97,7 @@ final class TouchController {
         int action = e.getActionMasked();
         if(action==MotionEvent.ACTION_DOWN) {
             recycleVelocity();
-            if(scene.iMode!=null) velocity=VelocityTracker.obtain();
+            velocity=VelocityTracker.obtain();
         }
         if(velocity!=null) velocity.addMovement(e);
         if (action != MotionEvent.ACTION_DOWN && ignoreGesture) {
@@ -133,6 +138,18 @@ final class TouchController {
         return true;
     }
     private void recycleVelocity() { if(velocity!=null) velocity.recycle();velocity=null; }
+
+    /** How fast the finger is moving up right now, in px per second (0 when it is not, or nothing is tracked). */
+    private float upwardSpeed() {
+        if(velocity==null) return 0;
+        velocity.computeCurrentVelocity(1000,m.dp(8000));
+        return Math.max(0,-velocity.getYVelocity(pointerId));
+    }
+
+    /** A swipe up has gone far enough to act on: far enough, or a quick flick that only needs a short move. */
+    private boolean swipedUp(float dy) {
+        return dy < -m.dp(SWIPE_UP_CLOSE_DP) || (dy < -m.dp(FLICK_UP_MIN_DP) && upwardSpeed() > m.dp(FLICK_UP_DP_PER_S));
+    }
 
     // ---- down -------------------------------------------------------------------------------------------------------
 
@@ -278,8 +295,8 @@ final class TouchController {
         if(scene.iMode!=null && downActivity!=null) {
             // Status-row paging owns horizontal drags; downward drags still open the system shade.
             if(scene.iMode.hasCompactDrag()) scene.iMode.dragCompact(dx);
-            else if(dy < -m.dp(SWIPE_UP_CLOSE_DP) && -dy>Math.abs(dx)*SWIPE_DOMINANCE) {
-                scene.iMode.hideByGesture();ignoreGesture=true;return;
+            else if(swipedUp(dy) && -dy>Math.abs(dx)*SWIPE_DOMINANCE) {
+                scene.iMode.hideByGesture(upwardSpeed());ignoreGesture=true;return;
             }
             else if(dy>touchSlop && Math.abs(dy)>Math.abs(dx)) handOverToShade(e);
             else if(Math.abs(dx)>touchSlop && Math.abs(dx)>Math.abs(dy)) scene.iMode.dragCompact(dx);
@@ -318,11 +335,10 @@ final class TouchController {
                     other.dx.animateTo((0.12f * pull) / (Math.abs(other.order - downCard.order) + 1), 0.25f, 0.8f);
                 }
             }
-        } else if (dy < -m.dp(SWIPE_UP_CLOSE_DP)) {
-            // a swipe up closes the cards right away, without waiting for the finger to lift
-            releaseStack();
+        } else if (dy < -m.dp(FLICK_UP_MIN_DP) && upwardSpeed() > m.dp(FLICK_UP_DP_PER_S)) {
+            // a quick flick up folds the cards back at once, with the speed it was thrown at
+            foldCards(upwardSpeed());
             ignoreGesture = true;
-            if(scene.iMode!=null) scene.iMode.hideByGesture();else director.collapse();
             return;
         } else {
             sp.stackDy.snapTo(rubber(dy, m.dp(dy > 0.0f ? 90.0f : 60.0f)));
@@ -448,13 +464,20 @@ final class TouchController {
             } else {
                 host.onCycle(-1);
             }
-        } else if (scene.mode == Mode.EXPANDED && axis == Axis.VERTICAL && dy < -m.dp(SWIPE_UP_DISMISS_DP)) {
-            releaseStack();
-            director.collapse();
+        } else if (scene.mode == Mode.EXPANDED && axis == Axis.VERTICAL && dy < -m.dp(6)
+                && dy - (upwardSpeed() * RELEASE_LOOKAHEAD_S) < -m.dp(SWIPE_UP_DISMISS_DP)) {
+            // let go: far enough, counting where the finger was heading, folds the cards; otherwise they spring back
+            foldCards(upwardSpeed());
         } else if (scene.mode == Mode.EXPANDED) {
             releaseStack();
             director.postAutoCollapse();
         }
+    }
+
+    /** Folds the open cards back into the pill (the island stays); a fast swipe carries its speed into the fold. */
+    private void foldCards(float upwardSpeed) {
+        releaseStack();
+        if(scene.iMode!=null) scene.iMode.collapse(upwardSpeed);else director.collapse();
     }
 
     private void cancel(MotionEvent e) {

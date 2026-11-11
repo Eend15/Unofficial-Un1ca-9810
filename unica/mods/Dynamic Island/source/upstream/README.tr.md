@@ -73,7 +73,7 @@ Samsung devam eden etkinliklerinin başlığı, metni, görselleri, ilerlemesi v
 
 ### Normal bildirimler ve kodlar
 
-- Normal bildirim kartları kapatılabilir, yalnızca açılır bildirimler gösterilebilir veya sessiz bildirimler de dahil edilebilir.
+- **Bildirim kartları** kapatılabilir (standart bannerlar), yalnızca banner olarak açılan bildirimler için kullanılabilir veya sessiz bildirimler de dahil edilebilir. Yalnızca sistemin banner olarak göstereceği bildirimler kart olur; kullandığınız uygulamanın bildirimleri varsayılan olarak standart banner kalır (açarsanız onlar da kart olur).
 - Kalıcı hizmet bildirimleri isteğe bağlıdır ve varsayılan olarak alınmaz.
 - Doğrulama kodları ayrı denetlenir. Otomatik kopyalama isteğe bağlıdır; varsayılan olarak kapalıdır.
 - İndirme ve aktarım ilerlemesi ayrı denetlenir. Kart gösterildiğinde özgün bildirimi gizleme seçeneği bulunur.
@@ -91,7 +91,7 @@ Yerleşik kurallar teslimat, kargo, navigasyon, taksi, giyilebilir cihaz, pil, h
 ### Sistem olayları
 
 - **Şarj:** hızlı veya kablosuz şarj ve güncel yüzde; pil simgesi varsayılan olarak gizlidir.
-- **İsteğe bağlı cihaz kartları:** **Bildirimler → Sistem olayları** bölümündeki ayrıntılı şarj kartı, şarj istatistikleri ve kablolu/USB kulaklık bildirimleri varsayılan olarak kapalıdır. Şarj kartı olay önceliğini korur ve etkinken kısa şarj açılır bildirimini değiştirir. İstatistikler şarj kartını gerektirir; her seçeneği kapatmak ilgili toplamayı durdurur. Güç pil tarafında tahmin edilir; ekran durumuna göre şarj değişimi gözlenen aralıklara dayalı bir tahmindir. **Gelişmiş ayarlar → Kamera kalibrasyonu** bölümünde 0–16dp ek metin boşluğu ayarlanabilir; 0 özgün aralığı korur.
+- **İsteğe bağlı cihaz kartları:** **Bildirimler → Sistem olayları** bölümündeki ayrıntılı şarj kartı, şarj istatistikleri ve kablolu/USB kulaklık bildirimleri varsayılan olarak kapalıdır. Şarj kartı olay önceliğini korur ve etkinken kısa şarj açılır bildirimini değiştirir. İstatistikler şarj kartını gerektirir; her seçeneği kapatmak ilgili toplamayı durdurur. Güç pil tarafında tahmin edilir; ekran durumuna göre şarj değişimi gözlenen aralıklara dayalı bir tahmindir. **Gelişmiş ayarlar → Kamera kalibrasyonu** bölümünde 0–16dp ek metin boşluğu ayarlanabilir; 0 özgün aralığı korur. Varsayılan olarak kapalı başka isteğe bağlı kartlar da vardır: **Bağlıyken kulaklık kartını koru**, **Erişim noktası kartı** (cihazlar, kullanılan veri, süre), **Kilit açma bildirimi** (parmak izi, yüz, güvenilir cihaz veya PIN; kilit ayarlıysa) sistem olaylarında; **Bildirim kartlarında ilerleme** ve **Açık uygulamanın ilerlemesi**, **Sıradan bildirimlerin ilerlemesi** (ilerleme çubuğu olan sıradan bildirimler de kart olur) bildirim kartı ayarlarında açılır.
 - **Samsung pil şarj efekti:** **Bildirimler → Sistem olayları → Samsung pil şarj efektini göster** varsayılan olarak kapalıdır. Durum çubuğundaki pilin genişleyerek renk değiştirdiği efekt gizlenir; normal pil simgesi, yüzde, şarj göstergesi, ses ve ada bildirimleri korunur. Varsa incelenen One UI 9 Compose yolu ve BatteryEvent zamanlayıcı yolu işlenir; desteklenmeyen sürümler özgün davranışını korur.
 - **Pil ve bağlantılar:** düşük pil, ses modu ve Bluetooth ses cihazının bağlantısı; varsa cihazın pil bilgisi.
 - **Gizlilik:** kamera ve mikrofon kullanımını gösterir. Konum göstergesi ayrıca açılır ve varsayılan olarak kapalıdır. Ana anahtar bu göstergelerin tümünü kontrol eder.
@@ -134,7 +134,7 @@ Yerleşik kurallar teslimat, kargo, navigasyon, taksi, giyilebilir cihaz, pil, h
 
 | Sayfa | İçerik |
 |---|---|
-| Bildirimler ve etkinlikler | Normal bildirim modu, sistem olayları, otomatik sınıflandırma, indirmeler, aramalar ve kodlar |
+| Bildirimler ve etkinlikler | Bildirim kartları (kapalı, yalnızca bannerlar, sessizler dahil), sistem olayları, otomatik kart kuralları, indirmeler, aramalar ve kodlar |
 | Uygulama bildirimleri | Seçilenler dışında tümü veya yalnızca seçilenler; arama; yalnızca normal kartlar |
 | Görünüm | Vurgu rengi, konum ve boyut, başlıklar, simgeler, şarj pili ve bildirim panelindeki müzik |
 | Davranış | Varsayılan veya klasik animasyon, titreşim, ses veya demo dalgası, ayrı kart süreleri |

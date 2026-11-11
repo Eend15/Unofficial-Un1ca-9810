@@ -23,12 +23,18 @@ import java.util.function.Consumer;
 /** Cropped compositor backdrop excluding our entire window, processed off the SystemUI main thread. */
 final class MaterialCapture {
     private static final int SAMPLE_WIDTH=420;
+    /**
+     * A full-display crop keeps its coverage but is sampled with at most this many rows: the blur radius follows the
+     * image width, so the look is the same and the cost is about a quarter (110 MB and 1.1 s down to 27 MB and 0.3 s).
+     */
+    private static final int SAMPLE_MAX_HEIGHT=480;
     private static final long PERIOD_MS=100;
-    private static final long PREWARM_PERIOD_MS=1000;
+    private static final long PREWARM_PERIOD_MS=3000;
+    private static final long COST_REPORT_MS=10_000;
     private long periodMs=PERIOD_MS;
     private final View host;
     private final Consumer<MaterialFrame> receiver;
-    private final Handler main=new Handler(Looper.getMainLooper());
+    private final Handler main=new dev.android.dynamicisland.xposed.GuardedHandler(Looper.getMainLooper());
     private final ExecutorService worker=Executors.newSingleThreadExecutor(r -> {
         Thread t=new Thread(r,"Island material backdrop");t.setDaemon(true);return t;
     });
@@ -38,6 +44,8 @@ final class MaterialCapture {
     private boolean active,busy,destroyed,failed;
     private long epoch;
     private long lastPublishedAt;
+    private long lastCostReport;
+    private int captures;
     private long accessibilityCheckedAt;
     private boolean reduceTransparency;
     private Class<?> rootType;
@@ -122,16 +130,17 @@ final class MaterialCapture {
             busy=true;
             long generation=epoch,start=SystemClock.uptimeMillis();
             Rect crop=new Rect(requested);int displayWidth=displaySize.x;
+            float scale=sampleScale(crop.width(),crop.height());
             android.view.ViewGroup.LayoutParams params=host.getRootView().getLayoutParams();
             int windowType=params instanceof WindowManager.LayoutParams ? ((WindowManager.LayoutParams)params).type : 0;
-            worker.execute(() -> capture(owned,crop,displayWidth,generation,start,windowType));
+            worker.execute(() -> capture(owned,crop,scale,displayWidth,generation,start,windowType));
         } catch(Throwable t) { fail(t); }
     }
-    private void capture(SurfaceControl exclusion,Rect crop,int displayWidth,long generation,long start,int windowType) {
+    private void capture(SurfaceControl exclusion,Rect crop,float scale,int displayWidth,long generation,long start,int windowType) {
         MaterialFrame result=null;Throwable error=null;
         try {
             if(api==null)api=new DisplayCaptureApi(host.getContext());
-            Bitmap raw=api.read(crop,Math.min(1f,SAMPLE_WIDTH/(float)crop.width()),exclusion,windowType);
+            Bitmap raw=api.read(crop,scale,exclusion,windowType);
             if(raw!=null) {
                 int w=raw.getWidth(),h=raw.getHeight();int[] pixels=new int[w*h];raw.getPixels(pixels,0,w,0,0,w,h);
                 raw.recycle(); // This private CPU copy was never handed to a Canvas or RenderNode.
@@ -161,11 +170,26 @@ final class MaterialCapture {
             finally {
                 exclusion.release();
                 if(active&&!destroyed&&!failed) {
+                    long cost=SystemClock.uptimeMillis()-start;
+                    reportCost(cost);
                     main.removeCallbacks(tick);
-                    main.postDelayed(tick,Math.max(16,periodMs-(SystemClock.uptimeMillis()-start)));
+                    // Rest at least as long as the work took: a slow phone must not filter back to back, the garbage
+                    // of that (tens of MB per frame) keeps System UI in the collector.
+                    main.postDelayed(tick,Math.max(16,Math.max(periodMs-cost,cost)));
                 }
             }
         });
+    }
+    /** The capture scale for a crop: 420 px wide at most, and at most 480 rows so a full-display crop stays cheap. */
+    static float sampleScale(int width,int height) {
+        return Math.min(1f,Math.min(SAMPLE_WIDTH/(float)width,SAMPLE_MAX_HEIGHT/(float)height));
+    }
+    private void reportCost(long cost) {
+        captures++;
+        long now=SystemClock.uptimeMillis();
+        if(now-lastCostReport<COST_REPORT_MS)return;
+        lastCostReport=now;
+        Diagnostics.fact("card material cost",cost+" ms for the last capture and filter, "+captures+" so far");
     }
     private void missing() {
         // A temporary null/changed root must not erase a valid texture for one

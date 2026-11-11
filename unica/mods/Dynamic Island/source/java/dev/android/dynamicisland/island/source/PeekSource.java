@@ -98,6 +98,9 @@ public final class PeekSource {
         if ((n.flags & (Notification.FLAG_ONGOING_EVENT | Notification.FLAG_FOREGROUND_SERVICE)) != 0) {
             return false;
         }
+        if (ProgressSource.takesOrdinary(sbn)) {
+            return false; // it becomes a progress card, not a message popup
+        }
         if ((n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) {
             if (ModuleSettings.experimentalRecovery()) {
                 // Match the alternate One UI 8 build's summary eligibility in recovery mode.
@@ -105,6 +108,11 @@ public final class PeekSource {
                 CharSequence text = n.extras.getCharSequence(Notification.EXTRA_TEXT);
                 if ((title == null || title.length() == 0) && (text == null || text.length() == 0)) return false;
             } else if (!hasReadableContent(n)) return false;
+        }
+        if (!hasContent(n)) {
+            // System UI posts an empty placeholder (channel and group "INSIGNIFICANT", no text and no views) for the
+            // silent section on every unlock; there is nothing to put on a card.
+            return false;
         }
         String category = n.category;
         if (Notification.CATEGORY_CALL.equals(category) || Notification.CATEGORY_ALARM.equals(category)
@@ -126,6 +134,34 @@ public final class PeekSource {
             }
         }
         return true;
+    }
+
+    /**
+     * An upload or a send that is an ordinary notification with a progress bar: the card shows the bar too when the
+     * option is on, so it does not read as a plain message with no idea how far along it is.
+     */
+    static void applyProgress(IslandItem it, Notification n) {
+        if (!ModuleSettings.peekProgress() || n.extras == null) return;
+        if (n.extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE, false)) {
+            it.progressIndeterminate = true;
+            return;
+        }
+        int max = n.extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0);
+        int now = n.extras.getInt(Notification.EXTRA_PROGRESS, 0);
+        if (max > 0 && now >= 0) it.progress = Math.min(1f, now / (float) max);
+    }
+
+    /** True when the notification carries anything a card could show: text, messages, or views of its own. */
+    static boolean hasContent(Notification n) {
+        if (n.contentView != null || n.bigContentView != null || n.headsUpContentView != null) return true;
+        for (String key : new String[]{Notification.EXTRA_TITLE, Notification.EXTRA_TITLE_BIG, Notification.EXTRA_TEXT,
+                Notification.EXTRA_BIG_TEXT, Notification.EXTRA_SUB_TEXT, Notification.EXTRA_SUMMARY_TEXT}) {
+            CharSequence value = n.extras.getCharSequence(key);
+            if (value != null && value.toString().trim().length() > 0) return true;
+        }
+        return n.extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES) != null
+                || n.extras.getParcelableArray(Notification.EXTRA_MESSAGES, Parcelable.class) != null
+                || n.extras.containsKey(Notification.EXTRA_PICTURE) || n.extras.containsKey(Notification.EXTRA_PICTURE_ICON);
     }
 
     private static boolean hasReadableContent(Notification n) {
@@ -229,6 +265,7 @@ public final class PeekSource {
         it.iconIsImage = true;
         it.trailing = IslandItem.Trailing.TEXT;
         it.trailingText = it.title;
+        applyProgress(it, n);
         it.actionType = 1;
         if (n.actions != null) {
             for (Notification.Action a : n.actions) {

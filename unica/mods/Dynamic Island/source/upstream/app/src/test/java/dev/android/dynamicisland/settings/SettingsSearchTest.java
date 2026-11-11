@@ -29,7 +29,12 @@ public class SettingsSearchTest {
             SettingsActivity a=controller.get();SettingsSearchCatalog catalog=new SettingsSearchCatalog(a);
             assertTrue(catalog.rows.size()>65);
             for(String query:new String[]{"블러","blur","ぼかし","毛玻璃","размытие"})
-                assertEquals(R.string.material_style,catalog.rows.get(catalog.engine.search(query,10).get(0).id).title);
+                {   // a blur search finds the card material; the transition blur may share the top spots
+                    var hits=catalog.engine.search(query,10);
+                    var top=new java.util.HashSet<Integer>();
+                    for(int i=0;i<Math.min(2,hits.size());i++)top.add(catalog.rows.get(hits.get(i).id).title);
+                    assertTrue(query,top.contains(R.string.material_style));
+                }
             assertEquals(R.string.low_performance_mode,catalog.rows.get(catalog.engine.search("DÜŞÜK PERFORMANS",10).get(0).id).title);
             assertEquals(R.string.setting_paused_timeout,catalog.rows.get(catalog.engine.search("노래 멈추면",10).get(0).id).title);
             assertFalse(catalog.engine.search("glwo",10).isEmpty());

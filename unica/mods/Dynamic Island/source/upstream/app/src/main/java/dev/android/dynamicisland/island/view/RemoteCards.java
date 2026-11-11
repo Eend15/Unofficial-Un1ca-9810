@@ -13,6 +13,7 @@ import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.card.RemoteBody;
 import dev.android.dynamicisland.xposed.hooks.DarkRemote;
 import dev.android.dynamicisland.settings.ModuleSettings;
+import dev.android.dynamicisland.xposed.Diagnostics;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,6 +38,9 @@ final class RemoteCards {
     private ViewGroup layer;
     private final java.util.List<View> paintOrder = new java.util.ArrayList<>();
     private Context dark;
+    /** Keys of cards already reported as empty, so one broken card is named once; the oldest are forgotten. */
+    private final java.util.ArrayDeque<String> reportedEmpty = new java.util.ArrayDeque<>();
+    private static final int MAX_REPORTED = 16;
 
     RemoteCards(IslandView view, Shapes shapes, Scene scene) {
         this.view = view;
@@ -128,6 +132,9 @@ final class RemoteCards {
                 continue;
             }
             float a = StackPainter.contentAlpha(c, t, shapes.expansion(c)) * alpha * (c.iMode ? IslandView.clamp01(c.iModeOpacity.value()) : 1);
+            if (a > 0.3f) {
+                reportIfEmpty(c, body);
+            }
             if (a > 0.01f) {
                 boolean naturalSize = c.leaving && !c.iMode && !ModuleSettings.legacyAnimation();
                 float scaleX = naturalSize ? 1 : Math.max(.001f, slot.width() / body.w);
@@ -185,6 +192,33 @@ final class RemoteCards {
                 clearEffect(v, false);
             }
         }
+    }
+
+    /**
+     * Why an open card shows nothing: its notification view is not in the island layer, or it measured to no size.
+     * Null when the card is fine. The shape of such a card is right and the inside is blank, so the report has to
+     * name the card for the cause to be found.
+     */
+    static String emptyReason(ViewGroup layer, View content) {
+        if (content.getParent() != layer) {
+            return "its view is not in the island layer";
+        }
+        if (content.getMeasuredWidth() <= 0 || content.getMeasuredHeight() <= 0) {
+            return "its view measured to no size";
+        }
+        return null;
+    }
+
+    private void reportIfEmpty(Card c, RemoteBody body) {
+        String why = emptyReason(layer, body.view);
+        if (why == null || reportedEmpty.contains(c.item.key)) {
+            return;
+        }
+        if (reportedEmpty.size() >= MAX_REPORTED) {
+            reportedEmpty.removeFirst();
+        }
+        reportedEmpty.addLast(c.item.key);
+        Diagnostics.event("card without content: " + c.item.key + " (" + why + ")");
     }
 
     private void clearEffect(View view, boolean remove) {

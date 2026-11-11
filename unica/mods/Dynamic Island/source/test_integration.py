@@ -14,7 +14,11 @@ class IntegrationTest(unittest.TestCase):
         # Shared S22 decoded base exercises all target routing without claiming
         # three physical devices or three complete target builds.
         if not (tree/'system_ext/priv-app/SystemUI/SystemUI.apk').is_dir():
-            tree=REPO/'out/target/star2lte/apktool'
+            for fallback in ('star2lte','crownlte','starlte'):
+                candidate=REPO/'out/target'/fallback/'apktool'
+                if (candidate/'system_ext/priv-app/SystemUI/SystemUI.apk').is_dir():
+                    tree=candidate
+                    break
         systemui=root/'system_ext/priv-app/SystemUI/SystemUI.apk'
         for rel in FILES:
             src=tree/'system_ext/priv-app/SystemUI/SystemUI.apk'/rel
@@ -53,7 +57,7 @@ class IntegrationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='di-sleep-') as tmp:
             root=Path(tmp);ui,_=self.fixture('star2lte',root)
             file=ui/'smali/com/android/keyguard/KeyguardUpdateMonitor.smali'
-            before=file.read_text()
+            before=hooks.strip(file.read_text())
             original={m.group('sig'):m.group('body') for m in hooks.METHOD.finditer(before)}
             mod.apply(root,'star2lte')
             text=file.read_text()

@@ -49,7 +49,7 @@ public final class AudioLevels {
     public AudioLevels() {
         HandlerThread thread = new HandlerThread("DynamicIslandAudio");
         thread.start();
-        bg = new Handler(thread.getLooper());
+        bg = new dev.android.dynamicisland.xposed.GuardedHandler(thread.getLooper());
         for (int i = 0; i < BANDS; i++) {
             bands[i] = new Band();
         }

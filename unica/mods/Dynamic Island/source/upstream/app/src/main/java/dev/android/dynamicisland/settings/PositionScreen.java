@@ -63,7 +63,7 @@ final class PositionScreen {
         slider(where, R.string.pos_shift_x, -ModuleSettings.PILL_X_MAX_DP, ModuleSettings.PILL_X_MAX_DP, ModuleSettings.KEY_PILL_X_DP, 0);
         slider(where, R.string.pos_shift_y, ModuleSettings.PILL_Y_MIN_DP, ModuleSettings.PILL_Y_MAX_DP, ModuleSettings.KEY_PILL_Y_DP, 0);
         ui.actionRow(where, activity.getString(R.string.pos_reset), activity.getString(R.string.ui_reset_position_summary), () -> { resetPosition(); rebuild(); });
-        ui.category(page, activity.getString(R.string.size_title));
+        ui.category(page, activity.getString(R.string.size_title), activity.getString(R.string.desc_size));
         LinearLayout sizing = ui.card(page);
         slider(sizing, R.string.size_height, ModuleSettings.PILL_H_MIN_PCT, ModuleSettings.PILL_H_MAX_PCT, ModuleSettings.KEY_PILL_H_PCT, 0);
         width(sizing, R.string.size_min, ModuleSettings.KEY_PILL_MIN_W_DP, 64, 64);
@@ -74,6 +74,8 @@ final class PositionScreen {
                 });
         ui.actionRow(sizing, activity.getString(R.string.ui_reset_size), activity.getString(R.string.ui_reset_size_summary), () -> { resetSize(); rebuild(); });
         ui.details(page, activity.getString(R.string.ui_details), activity.getString(R.string.size_note));
+        LinearLayout hole = ui.card(page);
+        ui.linkRow(hole, activity.getString(R.string.ui_camera_calibration), activity.getString(R.string.ui_camera_calibration_summary), () -> activity.open(this::calibration));
     }
 
     void calibration() {

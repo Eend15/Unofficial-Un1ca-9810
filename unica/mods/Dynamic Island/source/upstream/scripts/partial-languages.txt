@@ -1,0 +1,7 @@
+# Registered languages that are still being translated.
+#
+# One language tag per line (for example pt-BR). A language listed here may lack strings: Android and SystemUI fall
+# back to English for each missing one, so it can be registered in xml/locales_config.xml before it is finished.
+# Every other check still applies to it: unknown keys, empty values and format placeholders that do not match
+# English are errors. Remove the line when the translation is complete, and the check will then require every string.
+pt-BR

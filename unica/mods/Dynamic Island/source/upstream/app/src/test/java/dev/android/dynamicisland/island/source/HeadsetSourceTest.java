@@ -53,4 +53,47 @@ public class HeadsetSourceTest {
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(10));
         cards.clear(); source.collect(cards); assertTrue(cards.isEmpty());
     }
+
+    @Test public void withTheOptionOnTheCardStaysWhileTheHeadsetIsInAndOffItIsGoneAfterTheAnnouncement() {
+        Application app = RuntimeEnvironment.getApplication();
+        SharedPreferences prefs = ModuleSettings.openStore(app);
+        prefs.edit().putBoolean(ModuleSettings.KEY_EVENT_HEADSET, true).putBoolean(ModuleSettings.KEY_HEADSET_STAY, false).apply();
+        ModuleSettings.configurePreview(prefs);
+        HeadsetSource source = new HeadsetSource(app, new Handler(Looper.getMainLooper()), () -> { });
+        source.syncSettings();
+        AudioDeviceInfo device = AudioDeviceInfoBuilder.newBuilder().setType(AudioDeviceInfo.TYPE_WIRED_HEADSET).build();
+        AudioManager audio = app.getSystemService(AudioManager.class);
+        shadowOf(audio).addOutputDevice(device, true);
+        shadowOf(Looper.getMainLooper()).idle();
+        ArrayList<IslandItem> cards = new ArrayList<>(); source.collect(cards);
+        assertEquals(1, cards.size());
+
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(10));
+        cards.clear(); source.collect(cards);
+        assertTrue("without the option the card goes with its announcement", cards.isEmpty());
+
+        prefs.edit().putBoolean(ModuleSettings.KEY_HEADSET_STAY, true).apply();
+        ModuleSettings.configurePreview(prefs);
+        cards.clear(); source.collect(cards);
+        assertEquals(1, cards.size());
+        IslandItem standing = cards.get(0);
+        assertEquals("event:headset", standing.key);
+        assertEquals(0L, standing.expiresAtUptime);
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMinutes(5));
+        cards.clear(); source.collect(cards);
+        assertEquals("it stays as long as the headset is in", 1, cards.size());
+        assertEquals("and does not look new each time", standing.postTime, cards.get(0).postTime);
+
+        shadowOf(audio).removeOutputDevice(device, true);
+        shadowOf(Looper.getMainLooper()).idle();
+        cards.clear(); source.collect(cards);
+        assertEquals(1, cards.size());
+        assertEquals(2500, cards.get(0).peekMillis);
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(10));
+        cards.clear(); source.collect(cards);
+        assertTrue("unplugged: nothing stays", cards.isEmpty());
+
+        prefs.edit().putBoolean(ModuleSettings.KEY_EVENT_HEADSET, false).putBoolean(ModuleSettings.KEY_HEADSET_STAY, false).apply();
+        ModuleSettings.configurePreview(prefs);
+    }
 }

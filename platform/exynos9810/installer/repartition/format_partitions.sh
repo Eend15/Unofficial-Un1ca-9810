@@ -4,10 +4,12 @@ set -eu
 
 BY_NAME=/dev/block/platform/11120000.ufs/by-name
 
-ui_print()
-{
-    echo "$1"
-}
+if [ -f "$(dirname "$0")/installer_ui.sh" ]; then
+    # shellcheck source=/dev/null
+    . "$(dirname "$0")/installer_ui.sh"
+else
+    ui_print() { echo "$1"; }
+fi
 
 find_mke2fs()
 {
@@ -53,7 +55,8 @@ format_ext4()
     # shellcheck disable=SC2086
     $MKE2FS -t ext4 -F -L "$label" "$block" >/tmp/format_"$label".log 2>&1 || {
         cat /tmp/format_"$label".log || true
-        [ "$required" = "optional" ] && return 0
+        ui_print "E9810: formatting $label failed"
+        [ "$required" = "optional" ] && return 2
         return 1
     }
 }
@@ -84,10 +87,13 @@ case "$mode" in
         format_ext4 preload "$BY_NAME/HIDDEN" /preload
         ;;
     post_install)
-        format_ext4 cache "$BY_NAME/CACHE" /cache optional
-        format_ext4 omr "$BY_NAME/OMR" /omr optional
-        format_ext4 preload "$BY_NAME/HIDDEN" /preload optional
-        format_ext4 data "$BY_NAME/USERDATA" /data optional
+        format_ext4 cache "$BY_NAME/CACHE" /cache optional || true
+        format_ext4 omr "$BY_NAME/OMR" /omr optional || true
+        format_ext4 preload "$BY_NAME/HIDDEN" /preload optional || true
+        # Never format the data partition here: updating to a new ROM version keeps apps,
+        # settings and internal storage. A clean install is the user's choice
+        # (Wipe > Format Data in TWRP); only a repartition recreates data.
+        ui_print "E9810: data kept (for a clean install use Wipe > Format Data in TWRP)"
         ;;
     *)
         ui_print "E9810: unknown format mode: $mode"

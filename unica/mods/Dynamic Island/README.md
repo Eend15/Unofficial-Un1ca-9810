@@ -1,9 +1,9 @@
 # Dynamic Island — built into UN1CA
 
-Dynamic Island **0.1.14**, release commit
-`e2f45e980ffadfaec056ddddbef956d341d91e4d`, MIT licensed by sampple-korea.
+Dynamic Island **0.1.15**, release commit
+`b04f41d21a6121421280613e5b26f1dd54d0af9b`, MIT licensed by sampple-korea.
 `UPSTREAM.json` pins the source. `source/upstream` preserves the original project;
-`source/java` contains the native UN1CA adaptation, merging the v0.1.14 Java/resources while retaining native lifecycle and scheduler guards.
+`source/java` contains the native UN1CA adaptation, merging the v0.1.15 Java/resources while retaining native lifecycle and scheduler guards.
 
 Enabled for Exynos9810 **starlte, star2lte and crownlte**, Android 16 / One UI 8.
 Works with EXT4 and EROFS ROM builds; EXT4 is needed only for convenient live
@@ -50,7 +50,7 @@ ROM platform key. Editing Java/resources without rebuilding deliberately fails
 the fingerprint guard. D8 uses API 34 to emit supported 112-byte DEX 039 headers;
 the manifest still requires Android 16. Do not restore malformed DEX 041 output.
 
-The base static adapters are in the numbered SystemUI patch; source/extend_call_sites.py adds the v0.1.14 adapters transactionally through source/apply.py. Their
+The base static adapters are in the numbered SystemUI patch; source/extend_call_sites.py adds the v0.1.15 adapters transactionally through source/apply.py. Their
 bootstrap Java is also in `source/Bootstrap.java`; `source/weave-report.json`
 records the audited method/constructor coverage. Changes to hook sites require
 updating the patch and coverage together and repeating the ART checks.
@@ -100,18 +100,20 @@ participate in its lease.
 
 The hidden CompositionSamplingListener signature is compiled from upstream tools/framework-stubs as compile-only input, never shipped as an android.* class. Method-hook extras are per invocation, enabling the upstream long-press scope cleanup fix. Original release sources remain unmodified under source/upstream; UN1CA adaptations are under source/java. New framework hooks still require matching static SystemUI callsites; absent callsites remain explicitly unsupported and are not reported as installed. Physical S9/Note9 acceptance and all third-party app combinations remain pending.
 
-## v0.1.14 source update (2026-10-30)
+## v0.1.15 source update (2026-11-04)
 
-Pinned stable upstream v0.1.14; v0.1.15-dev1 is a prerelease and is not selected.
-Includes upstream material/AGSL rendering, settings search and release highlights,
-call/WhatsApp timing, torch controls and sleep-transition changes. The native
-master switch, lifecycle cleanup, scheduler coalescing and cross-classloader
-single-window lease are retained. The exact upstream AGSL shader is generated
-into Java by rebuild.py, matching upstream's Gradle task.
+Pinned stable upstream v0.1.15 (`b04f41d21a6121421280613e5b26f1dd54d0af9b`).
+Includes upstream localization catalog and embedded runtime resources (`EmbeddedResources`),
+live preview, blur governor, shade watch, hotspot and unlock notice sources,
+and `GuardedHandler` protection. The native master switch, lifecycle cleanup,
+scheduler coalescing and cross-classloader single-window lease are retained.
+Both the AGSL shader and localization/rule catalogs are generated into Java/resources
+by `rebuild.py`, matching upstream's Gradle tasks.
 
-Native adapters additionally wrap KeyguardUpdateMonitor's started-sleep,
-finished-sleep and started-wake methods; original bodies remain intact. Shade
-hooks remain capability-gated on the supplied SystemUI version.
+Native adapters additionally wrap `KeyguardUpdateMonitor`'s started-sleep,
+finished-sleep, started-wake and `dispatchStartedWakingUp` methods; original
+bodies remain intact. Shade hooks remain capability-gated on the supplied
+SystemUI version.
 
 The integration matrix uses available decoded target trees, falling back to the
 shared S22 base for routing tests when a target has no decoded output. This is

@@ -46,7 +46,6 @@ system/product/overlay/NotesRoleEnabled
 "
 
 _EXYNOS9810_TARGET_DEBLOAT_NAMES="
-AndroidAutoStub
 AREmoji
 BixbyVisionFramework3.5
 DuoStub

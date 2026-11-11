@@ -141,6 +141,11 @@ def verify_crown_discovery(smali: str) -> None:
             r'.*?->setServiceUuid\(Landroid/os/ParcelUuid;\)'
             r'.*?const/4\s+p4,\s+0x1', scan):
         raise ValueError("Note9 compiled stock service filter/address bypass missing")
+    if not re.search(
+            r'(?s)->setServiceUuid\(Landroid/os/ParcelUuid;\)Landroid/bluetooth/le/ScanFilter\$Builder;'
+            r'\s+invoke-virtual\s+\{p6\},\s+Landroid/bluetooth/le/ScanFilter\$Builder;'
+            r'->semEnablePassiveScan\(\)', scan):
+        raise ValueError("Note9 compiled Crown passive scan filter missing")
     if '->setDeviceAddress(Ljava/lang/String;)' not in scan:
         raise ValueError("Note9 compiled address reconnect path missing")
 

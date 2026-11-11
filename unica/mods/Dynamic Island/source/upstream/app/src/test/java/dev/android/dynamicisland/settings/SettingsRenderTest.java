@@ -33,12 +33,10 @@ public class SettingsRenderTest {
         for (String page : new String[] {"displayPage", "notificationsPage", "eventsPage", "appsPage", "behaviorPage", "advancedPage", "aboutPage", "diagnosticsPage"}) {
             show(activity, activity, page, prefix + page);
         }
-        show(activity, field(activity, "animation"), "open", prefix + "animationPage");
         show(activity, field(activity, "position"), "open", prefix + "positionPage");
         show(activity, field(activity, "position"), "calibration", prefix + "calibrationPage");
         show(activity, field(activity, "appearance"), "open", prefix + "coloursPage");
         show(activity, rules, "advancedPage", prefix + "rulesAdvanced");
-        show(activity, rules, "listPage", prefix + "rulesList");
         show(activity, field(rules, "wizard"), "page", prefix + "ruleWizard");
         show(activity, rules, "testPage", prefix + "rulesTest");
         java.util.List<android.widget.EditText> fields = new java.util.ArrayList<>();
@@ -95,7 +93,7 @@ public class SettingsRenderTest {
         View root = ((ViewGroup) activity.findViewById(android.R.id.content)).getChildAt(0);
         int width = 1080;
         root.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-        View content = ((ViewGroup) root).getChildAt(0);
+        View content = root;
         content.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
         int height = Math.max(content.getMeasuredHeight(), 2200);
         content.layout(0, 0, width, height);
@@ -103,8 +101,10 @@ public class SettingsRenderTest {
         if (!RenderCapture.enabled()) return;
         dev.android.dynamicisland.island.view.IslandView preview = findIsland(content);
         if (preview != null) {
-            dev.android.dynamicisland.island.model.IslandItem sample = org.robolectric.util.ReflectionHelpers.getField(preview.getParent(), "item");
-            preview.peek(sample, 5000);
+            java.util.List<dev.android.dynamicisland.island.model.IslandItem> samples = org.robolectric.util.ReflectionHelpers.getField(preview.getParent(), "samples");
+            preview.setGeometry(width, width / 2f, 108, 60, false);
+            preview.setItems(java.util.Collections.singletonList(samples.get(0)));
+            preview.peek(samples.get(0), 5000);
             for (int frame = 0; frame < 60; frame++) {
                 org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMillis(16));
                 preview.doFrame(android.os.SystemClock.uptimeMillis() * 1_000_000L);

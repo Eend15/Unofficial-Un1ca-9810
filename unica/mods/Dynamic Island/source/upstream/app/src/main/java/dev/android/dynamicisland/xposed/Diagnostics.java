@@ -60,6 +60,8 @@ public final class Diagnostics {
     private static final int MAX_ERRORS = 8;
     private static final int MAX_EVENTS = 60;
     private static final int MAX_CHARS = 12000;
+    /** One fact never takes more than this: a list of attached hooks used to push the recent events out of the report. */
+    private static final int MAX_FACT_CHARS = 400;
     private static final long PUBLISH_INTERVAL_MS = 15_000;
 
     private static final Map<String, String> FACTS = new LinkedHashMap<>();
@@ -76,7 +78,13 @@ public final class Diagnostics {
 
     /** Remembers a fact about the phone or the state of the module ("window", "created 1080x2340"). */
     public static synchronized void fact(String key, String value) {
-        if (!value.equals(FACTS.put(key, value))) {
+        fact(key, value, MAX_FACT_CHARS);
+    }
+
+    /** Like {@link #fact(String, String)}, for the few values that need more room (a crash trace). */
+    public static synchronized void fact(String key, String value, int maxChars) {
+        String shown = value.length() > maxChars ? value.substring(0, maxChars) + "..." : value;
+        if (!shown.equals(FACTS.put(key, shown))) {
             dirty = true;
         }
     }
@@ -132,6 +140,7 @@ public final class Diagnostics {
         for (Map.Entry<String, String> e : FACTS.entrySet()) {
             sb.append(e.getKey()).append(' ').append(e.getValue()).append('\n');
         }
+        int factsEnd = sb.length();
         sb.append("-- stages\n");
         for (Map.Entry<String, String> e : STAGES.entrySet()) {
             sb.append(e.getKey()).append(": ").append(e.getValue()).append('\n');
@@ -148,7 +157,16 @@ public final class Diagnostics {
                 sb.append(line).append('\n');
             }
         }
-        return sb.length() > MAX_CHARS ? sb.substring(0, MAX_CHARS) : sb.toString();
+        if (sb.length() <= MAX_CHARS) {
+            return sb.toString();
+        }
+        // too long: cut the facts, not the stages, errors and recent events at the end, which say what just happened
+        String cut = "\n... (facts cut)\n";
+        int room = MAX_CHARS - (sb.length() - factsEnd) - cut.length();
+        if (room > 200) {
+            return sb.substring(0, room) + cut + sb.substring(factsEnd);
+        }
+        return sb.substring(0, MAX_CHARS);
     }
 
     /** Gives the report to the settings app (at most every few seconds, off the calling thread). */

@@ -7,7 +7,7 @@ case "$TARGET_CODENAME" in starlte|star2lte|crownlte) ;; *) return 0 ;; esac
     return 1
 }
 
-LOG "- Integrating built-in Dynamic Island 0.1.10 for $TARGET_CODENAME"
+LOG "- Integrating built-in Dynamic Island 0.1.15 for $TARGET_CODENAME"
 (cd "$MODPATH" && sha256sum -c SHA256SUMS) || return 1
 python3 "$MODPATH/source/verify_source.py" || return 1
 DECODE_APK system "system/priv-app/SecSettings/SecSettings.apk" || return 1
@@ -24,5 +24,18 @@ mkdir -p "$DI_OUT/system/app/UnicaDynamicIsland"
     "$SRC_DIR/security/${DI_CERT}_platform.pk8" "$MODPATH/payload/UnicaDynamicIsland.apk" \
     "$DI_OUT/system/app/UnicaDynamicIsland/UnicaDynamicIsland.apk" || return 1
 ADD_TO_WORK_DIR "$DI_OUT" system "system/app/UnicaDynamicIsland/UnicaDynamicIsland.apk" \
+    0 0 644 "u:object_r:system_file:s0" || return 1
+
+# The companion sits in the cached LMK band and gets killed in the background,
+# after which the island stays gone until it is toggled. Start it exempt from
+# battery optimisation ("Unrestricted"), which users confirmed keeps it alive.
+mkdir -p "$DI_OUT/system/etc/sysconfig"
+cat > "$DI_OUT/system/etc/sysconfig/unica_dynamicisland.xml" <<'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+    <allow-in-power-save package="io.mesalabs.unica.dynamicisland" />
+</config>
+EOF
+ADD_TO_WORK_DIR "$DI_OUT" system "system/etc/sysconfig/unica_dynamicisland.xml" \
     0 0 644 "u:object_r:system_file:s0" || return 1
 unset DI_CERT DI_OUT

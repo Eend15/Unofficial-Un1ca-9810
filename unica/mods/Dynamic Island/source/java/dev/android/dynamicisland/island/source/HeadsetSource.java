@@ -25,6 +25,8 @@ public final class HeadsetSource {
     private Map<Integer, String> devices = new LinkedHashMap<>();
     private IslandItem announcement;
     private long lastAnnouncement;
+    /** When the headset that is in now was plugged in (the card keeps this time, so it does not look new). */
+    private long connectedSince;
     private final Runnable expire = new Runnable() {
         @Override public void run() { announcement = null; onChange.run(); }
     };
@@ -55,6 +57,7 @@ public final class HeadsetSource {
             audio = ctx.getSystemService(AudioManager.class);
             if (audio == null) return;
             devices = connected();
+            connectedSince = SystemClock.uptimeMillis();
             audio.registerAudioDeviceCallback(callback, main);
             registered = true;
         } catch (RuntimeException error) { XLog.once("HeadsetSource.register", error); }
@@ -88,18 +91,11 @@ public final class HeadsetSource {
                 }
             }
             devices = current;
+            if (added) connectedSince = SystemClock.uptimeMillis();
             if (name == null) return;
             long now = SystemClock.uptimeMillis();
             long ttl = added ? 6_000 : 2_500;
-            IslandItem item = new IslandItem("event:headset");
-            item.kind = IslandItem.Kind.EVENT;
-            item.eventLayout = IslandItem.EventLayout.DEVICE;
-            item.title = IslandText.get(ctx, added ? "island_headset_connected" : "island_headset_disconnected");
-            item.subtitle = name.isBlank() ? IslandText.get(ctx, "island_wired_headset") : name;
-            item.trailing = IslandItem.Trailing.TEXT;
-            item.trailingText = item.subtitle;
-            item.icon = GlyphIcon.of(GlyphIcon.Kind.HEADPHONES);
-            item.accent = 0xFFFFFFFF;
+            IslandItem item = card(added, name);
             item.postTime = lastAnnouncement = Math.max(now, lastAnnouncement + 1);
             item.expiresAtUptime = now + ttl;
             item.peekMillis = Math.min(4_000, ttl);
@@ -110,8 +106,29 @@ public final class HeadsetSource {
         } catch (RuntimeException error) { XLog.once("HeadsetSource.scan", error); }
     }
 
+    /** The card of a headset coming or going; the same key for both, so one card turns into the other in place. */
+    private IslandItem card(boolean connected, String name) {
+        IslandItem item = new IslandItem("event:headset");
+        item.kind = IslandItem.Kind.EVENT;
+        item.eventLayout = IslandItem.EventLayout.DEVICE;
+        item.title = IslandText.get(ctx, connected ? "island_headset_connected" : "island_headset_disconnected");
+        item.subtitle = name == null || name.isBlank() ? IslandText.get(ctx, "island_wired_headset") : name;
+        item.trailing = IslandItem.Trailing.TEXT;
+        item.trailingText = item.subtitle;
+        item.icon = GlyphIcon.of(GlyphIcon.Kind.HEADPHONES);
+        item.accent = 0xFFFFFFFF;
+        return item;
+    }
+
     public void collect(List<IslandItem> out) {
-        if (registered && ModuleSettings.eventHeadset() && announcement != null
-                && announcement.expiresAtUptime > SystemClock.uptimeMillis()) out.add(announcement);
+        if (!registered || !ModuleSettings.eventHeadset()) return;
+        if (announcement != null && announcement.expiresAtUptime > SystemClock.uptimeMillis()) {
+            out.add(announcement);
+        } else if (ModuleSettings.headsetCardStays() && !devices.isEmpty()) {
+            // the announcement is over but the headset is still in: the card stays, without a time limit
+            IslandItem standing = card(true, devices.values().iterator().next());
+            standing.postTime = connectedSince;
+            out.add(standing);
+        }
     }
 }

@@ -60,7 +60,7 @@ public final class HideDuplicated {
     /** Original key to the uptime at which it was last hidden, for the grace period. */
     private static final Map<String, Long> LAST_HIDDEN = new HashMap<>();
     private static final Map<String, String> APP_LABELS = new HashMap<>();
-    private static final Handler MAIN = new Handler(Looper.getMainLooper());
+    private static final Handler MAIN = new dev.android.dynamicisland.xposed.GuardedHandler(Looper.getMainLooper());
     /** Expiry action asks the current filter to rebuild; it stores no old entry snapshots. */
     private static final DeadlineGate GRACE_REBUILD = new DeadlineGate(
             new DeadlineGate.Scheduler() {

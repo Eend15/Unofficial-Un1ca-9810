@@ -1,5 +1,6 @@
 package dev.android.dynamicisland.island;
 
+import android.app.Notification;
 import android.os.SystemClock;
 import android.service.notification.StatusBarNotification;
 import dev.android.dynamicisland.island.detect.OtpDetector;
@@ -32,6 +33,8 @@ final class HeadsUpTakeover {
     private static final long OTP_CLOCK_SKEW_MS = 5000;
     /** The same code arriving again within this time is ignored. */
     private static final long OTP_REPEAT_WINDOW_MS = 120000;
+    /** An app re-posting the same message (Telegram does it on read, sync and edit) is not news for this long. */
+    private static final long REPEAT_QUIET_MS = 180_000;
     /** Bounds of the "already seen" caches; they are simply cleared when exceeded. */
     private static final int MAX_PEEKED = 32;
     private static final int MAX_OTP_CHECKED = 128;
@@ -45,6 +48,8 @@ final class HeadsUpTakeover {
 
     /** Notification key to post time of the posting that already got a card. */
     private final Map<String, Long> peeked = new HashMap<>();
+    /** Notification key to what its last card said and when: a re-post of the same content gets no new card. */
+    private final Map<String, Shown> shown = new HashMap<>();
     private final Set<String> otpChecked = new HashSet<>();
     /** Postings the "all notifications" pass already looked at. */
     private final Set<String> allChecked = new HashSet<>();
@@ -90,8 +95,8 @@ final class HeadsUpTakeover {
                 reject("banner of " + sbn.getPackageName() + ": the app is kept out of the island");
                 return false; // the user keeps this app out of the island: its banner stays stock
             }
-            if (isOnIslandNow(sbn)) {
-                return true; // already on the island: the banner is asked about again on updates
+            if (isOnIslandNow(sbn) || recentlyShown(sbn)) {
+                return true; // already on the island, or the same message just was: the banner stays away
             }
             if (view.isSuppressedNow() || !PeekSource.eligible(sbn)
                     || (!ModuleSettings.experimentalRecovery()
@@ -143,7 +148,7 @@ final class HeadsUpTakeover {
             if (age > ALL_FRESH_MS || age < -OTP_CLOCK_SKEW_MS || !allChecked.add(sbn.getKey() + "@" + sbn.getPostTime())) {
                 continue;
             }
-            if (alreadyHadCard(sbn) || !PeekSource.eligible(sbn) || !ModuleSettings.appAllowed(sbn.getPackageName())
+            if (alreadyHadCard(sbn) || recentlyShown(sbn) || !PeekSource.eligible(sbn) || !ModuleSettings.appAllowed(sbn.getPackageName())
                     || (!ModuleSettings.experimentalRecovery()
                     && (foregroundBlocked(sbn) || !PeekSource.preferred(sbn, snapshot)))) {
                 continue;
@@ -229,6 +234,37 @@ final class HeadsUpTakeover {
         return seen != null && seen == sbn.getPostTime();
     }
 
+    /**
+     * The same notification key re-posted with the same text and no new message in it, shortly after its card: an app
+     * refreshing its own notification. A new message adds to the message list, so it still gets its card.
+     */
+    private boolean recentlyShown(StatusBarNotification sbn) {
+        Shown last = shown.get(sbn.getKey());
+        return last != null && SystemClock.uptimeMillis() - last.at < REPEAT_QUIET_MS && last.content.equals(contentOf(sbn));
+    }
+
+    /** What a card of this notification would say: its texts and how many messages it holds. */
+    static String contentOf(StatusBarNotification sbn) {
+        android.os.Bundle extras = sbn.getNotification().extras;
+        if (extras == null) return "";
+        StringBuilder out = new StringBuilder();
+        for (String key : new String[]{Notification.EXTRA_TITLE, Notification.EXTRA_TEXT, Notification.EXTRA_BIG_TEXT}) {
+            out.append(extras.getCharSequence(key)).append('\u0001');
+        }
+        android.os.Parcelable[] messages = extras.getParcelableArray(Notification.EXTRA_MESSAGES, android.os.Parcelable.class);
+        return out.append(messages == null ? 0 : messages.length).toString();
+    }
+
+    private static final class Shown {
+        final String content;
+        final long at;
+
+        Shown(String content, long at) {
+            this.content = content;
+            this.at = at;
+        }
+    }
+
     /** This very posting is the card on the island right now. */
     private boolean isOnIslandNow(StatusBarNotification sbn) {
         return alreadyHadCard(sbn) && !foregroundBlocked(sbn) && owns(sbn.getKey());
@@ -253,6 +289,10 @@ final class HeadsUpTakeover {
             peeked.clear();
         }
         peeked.put(sbn.getKey(), sbn.getPostTime());
+        if (shown.size() > MAX_PEEKED) {
+            shown.clear();
+        }
+        shown.put(sbn.getKey(), new Shown(contentOf(sbn), SystemClock.uptimeMillis()));
         final String key = sbn.getKey();
         placement.view().postDelayed(() -> HeadsUpHooks.dismissStock(key), STOCK_DISMISS_DELAY_MS);
         if (item.otpCode != null) {

@@ -66,6 +66,16 @@ public class IModeTest {
             long now=SystemClock.uptimeMillis();MotionEvent e=MotionEvent.obtain(now,now,action,x,y,0);
             view.onTouchEvent(e);e.recycle();
         }
+        /** A swipe straight up of {@code distance} px that takes {@code ms} ms, with the timestamps a finger would give. */
+        void swipeUp(float x,float y,float distance,int ms) {
+            long down=SystemClock.uptimeMillis();int steps=8;
+            send(MotionEvent.ACTION_DOWN,down,down,x,y);
+            for(int i=1;i<=steps;i++) send(MotionEvent.ACTION_MOVE,down,down+ms*i/steps,x,y-distance*i/steps);
+            send(MotionEvent.ACTION_UP,down,down+ms+1,x,y-distance);
+        }
+        private void send(int action,long down,long at,float x,float y) {
+            MotionEvent e=MotionEvent.obtain(down,at,action,x,y,0);view.onTouchEvent(e);e.recycle();
+        }
         void tap(RectF r) { event(MotionEvent.ACTION_DOWN,r.centerX(),r.centerY());event(MotionEvent.ACTION_UP,r.centerX(),r.centerY()); }
         Card active() { for(Card c:scene.cards) if(!c.leaving)return c;return null; }
         RectF bounds(Card c) { RectF r=new RectF();view.computeCard(c,r);return r; }
@@ -359,7 +369,14 @@ public class IModeTest {
             f.event(MotionEvent.ACTION_DOWN,card.centerX(),card.centerY());
             f.event(MotionEvent.ACTION_MOVE,card.centerX(),card.centerY()-48);
             f.event(MotionEvent.ACTION_UP,card.centerX(),card.centerY()-48);
-            f.step(16,90);assertTrue("the same gesture hides the expanded presentation too",f.scene.iMode.hiddenByGesture());
+            f.step(16,90);
+            assertFalse("an open card folds back on a swipe up, it does not hide the island",f.scene.iMode.hiddenByGesture());
+            assertEquals(Mode.COMPACT,f.scene.mode);assertEquals(7,f.scene.items.size());
+            f.scene.iMode.mainBounds(main);
+            f.event(MotionEvent.ACTION_DOWN,main.centerX(),main.centerY());
+            f.event(MotionEvent.ACTION_MOVE,main.centerX(),main.centerY()-48);
+            f.event(MotionEvent.ACTION_UP,main.centerX(),main.centerY()-48);
+            f.step(16,90);assertTrue("a swipe up on the small pill hides it",f.scene.iMode.hiddenByGesture());
             assertTrue(f.scene.cards.isEmpty());assertEquals(7,f.scene.items.size());
         }
     }
@@ -637,7 +654,9 @@ public class IModeTest {
                         card.centerY()-(action==MotionEvent.ACTION_DOWN?0:48),0);
                 assertTrue(layer.dispatchTouchEvent(event));event.recycle();
             }
-            f.step(16,90);assertTrue("a native notification's upward swipe hides the group",f.scene.iMode.hiddenByGesture());
+            f.step(16,90);assertFalse("a native notification's upward swipe folds its card, it does not hide the group",f.scene.iMode.hiddenByGesture());
+            assertEquals(Mode.COMPACT,f.scene.mode);
+            f.scene.iMode.hideByGesture();f.step(16,90);assertTrue(f.scene.iMode.hiddenByGesture());
             for(int action:new int[]{MotionEvent.ACTION_DOWN,MotionEvent.ACTION_MOVE,MotionEvent.ACTION_UP}) {
                 long time=SystemClock.uptimeMillis();
                 MotionEvent event=MotionEvent.obtain(time,time,action,220,action==MotionEvent.ACTION_DOWN?30:50,0);
@@ -863,4 +882,40 @@ public class IModeTest {
         }
     }
 
+
+    @Test public void aSwipeUpOnAnOpenCardFoldsItByDistanceAndSpeedAndSlowShortOnesSpringBack() {
+        try(Fixture f=new Fixture(4)) {
+            f.scene.iMode.open("item0",true);f.step(16,80);RectF card=f.bounds(f.active());
+            f.swipeUp(card.centerX(),card.centerY(),20,600);
+            f.step(16,60);
+            assertEquals("a short, slow drag is not enough: the card springs back and stays open",Mode.EXPANDED,f.scene.mode);
+            assertFalse(f.scene.iMode.hiddenByGesture());
+
+            card=f.bounds(f.active());
+            f.swipeUp(card.centerX(),card.centerY(),60,500);
+            f.step(16,90);
+            assertEquals("a long drag folds the card back into the pill",Mode.COMPACT,f.scene.mode);
+            assertFalse("and the island stays",f.scene.iMode.hiddenByGesture());
+
+            f.scene.iMode.open("item0",true);f.step(16,80);card=f.bounds(f.active());
+            f.swipeUp(card.centerX(),card.centerY(),24,24);
+            f.step(16,90);
+            assertEquals("a quick flick folds it after a short move",Mode.COMPACT,f.scene.mode);
+            assertFalse(f.scene.iMode.hiddenByGesture());
+        }
+    }
+
+    @Test public void aSwipeUpOnTheSmallPillHidesItAndAFlickNeedsLessDistance() {
+        try(Fixture f=new Fixture(3)) {
+            RectF main=new RectF();f.scene.iMode.mainBounds(main);
+            f.swipeUp(main.centerX(),main.centerY(),20,500);
+            f.step(16,60);
+            assertFalse("a short slow drag on the pill does nothing",f.scene.iMode.hiddenByGesture());
+
+            f.scene.iMode.mainBounds(main);
+            f.swipeUp(main.centerX(),main.centerY(),24,12);
+            f.step(16,90);
+            assertTrue("a flick hides it after a short move",f.scene.iMode.hiddenByGesture());
+        }
+    }
 }

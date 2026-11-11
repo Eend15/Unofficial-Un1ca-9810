@@ -1,0 +1,24 @@
+{
+ "date": "2026-11-07",
+ "base_provenance": "20261024-kernel-provenance.json",
+ "kernel_source_revision": "0f2d01d2517523c62f648c8e23b76ffca9eb807c",
+ "base_source_sha256_matched": 89,
+ "source_patch": "unica/patches/exynos9810_device_stack/exynos9810_finalization/input/patch_touch_lpm_exit.py",
+ "compiler": "Android clang 20.0.0 r547379 (13174946, llvm b718bcaf8c198c82f3021447d943401e3ab5bd54)",
+ "build": "apollo.sh --erofs-release, enforcing KernelSU profile only, six models",
+ "compiled_sha256": "15dda3b0d54766d94da12e568f6a21dc9d6ef6ff1421236cd5c74c7e76d053db",
+ "baseline_archive_sha256": {
+  "erofs": "87f62131e904b2061f1761cf87587b685b5d6c170e4e3b823283e00b946408cc",
+  "ext4": "e5a366110357a0d7807f12c61d1f71088c4508471df50fbf36deb62c064a1aca"
+ },
+ "archive_sha256": {
+  "erofs": "309ae8c7ee1132199d9519339273254e6df2db4f3b0df8b0c8c5c7925c14489c",
+  "ext4": "6e7323958ca2a26e521be5f7902beea667a3fea65a7a090056a5067ae7590670"
+ },
+ "dtbs": "Unchanged from the October24 filesystem-specific archives",
+ "changes": [
+  "sec_ts and y771 sec_ts: always leave LPM in input_open, keep reset_work in the dt2w scan state while closed, pair dt2w irq wake enable/disable"
+ ],
+ "verification": "Both archives passed tools/verify_release_zip.sh for all six models; test_touch_lpm_exit.py passed on the real drivers",
+ "physical_test": "Not yet performed"
+}

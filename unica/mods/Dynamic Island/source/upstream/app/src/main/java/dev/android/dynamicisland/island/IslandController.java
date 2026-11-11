@@ -57,7 +57,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     private final Context ctx;
     /** All callbacks and UI work run here. */
-    private final Handler main = new Handler(Looper.getMainLooper());
+    private final Handler main = new dev.android.dynamicisland.xposed.GuardedHandler(Looper.getMainLooper());
     private final AudioLevels audio = new AudioLevels();
     private final dev.android.dynamicisland.island.feedback.RecorderInput recordingInput;
     private final Haptics haptics;
@@ -68,6 +68,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     private final HeadsUpTakeover headsUp;
     private final ItemLauncher launcher;
     private final ShadeDragRelay shadeDrag;
+    private final ShadeWatch shadeWatch;
 
     private boolean refreshPosted;
     private final Runnable refreshRunnable = this::refreshNow;
@@ -84,6 +85,14 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         haptics = new Haptics(ctx);
         placement = new IslandPlacement(ctx, main, classLoader, this, this, audio);
         headsUp = new HeadsUpTakeover(sources, placement, this::refreshNow);
+        shadeWatch = new ShadeWatch(main, () -> {
+            IslandView current = placement.view();
+            return current == null ? null : new ShadeWatch.Target() {
+                @Override public boolean needsWatching() { return current.shadeNeedsWatching(); }
+                @Override public void shade(float fraction) { current.setShadeFraction(fraction); }
+            };
+        }, dev.android.dynamicisland.xposed.hooks.SystemUiHooks::shadeFraction);
+        placement.setOnUnlocked(sources.unlock::onUnlocked);
         launcher = new ItemLauncher(ctx, haptics, placement::view);
         shadeDrag = new ShadeDragRelay(ctx, placement::statusBar);
     }
@@ -314,6 +323,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         IslandView view = placement.view();
         if (view != null) {
             view.setShadeFraction(fraction);
+            if (view.shadeNeedsWatching()) shadeWatch.poke();
             // Compact-pill disappearance changes no overlay card coverage. The
             // onIslandFrame coverage token handles real card handoffs, without
             // rebuilding every notification row on each quick-panel open/close.

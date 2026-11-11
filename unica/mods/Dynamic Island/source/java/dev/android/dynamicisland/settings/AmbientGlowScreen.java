@@ -61,7 +61,7 @@ final class AmbientGlowScreen {
                 () -> activity.open(() -> new AppearanceScreen(activity, ui, prefs).open()));
         activity.toggle(settings,R.string.glow_album,R.string.glow_album_summary,ModuleSettings.KEY_GLOW_ALBUM,true);
         if (!followsTheme()) {
-            ui.category(activity.page(),activity.getString(R.string.glow_colour));
+            ui.category(activity.page(),activity.getString(R.string.glow_colour),activity.getString(R.string.desc_glow_colour));
             LinearLayout colours=ui.card(activity.page());
             int[] values={ModuleSettings.DEFAULT_GLOW_COLOUR,0xFF75B6FF,0xFFB8A1FF,0xFFFFA7C5,0xFF87D5B2,0xFFE8EEF5};
             int[] names={R.string.glow_champagne,R.string.accent_blue,R.string.accent_purple,R.string.accent_pink,R.string.accent_green,R.string.glow_pearl};
