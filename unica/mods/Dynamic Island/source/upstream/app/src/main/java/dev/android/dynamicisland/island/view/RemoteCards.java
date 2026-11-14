@@ -32,6 +32,7 @@ final class RemoteCards {
     private final RectF slot = new RectF();
     private final Rect contentClip = new Rect();
     private final Set<View> visible = new HashSet<>();
+    private final Set<String> alive = new HashSet<>();
     private final Map<String, View> inflated = new HashMap<>();
     private final Map<View, ContentBlur> effects = new HashMap<>();
     private final Map<String, RemoteViews> sources = new HashMap<>();
@@ -169,7 +170,7 @@ final class RemoteCards {
             for(int i=0;inOrder && i<paintOrder.size();i++) inOrder=layer.getChildAt(first+i)==paintOrder.get(i);
             if(!inOrder) for(View child:paintOrder) child.bringToFront();
         }
-        Set<String> alive = new HashSet<>();
+        alive.clear();
         for (IslandItem item : scene.items) {
             alive.add(item.key);
         }

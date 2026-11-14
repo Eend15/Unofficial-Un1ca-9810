@@ -3,7 +3,9 @@ package dev.android.dynamicisland.island.view;
 import android.graphics.RectF;
 import android.view.HapticFeedbackConstants;
 import dev.android.dynamicisland.island.feedback.Haptics;
+import dev.android.dynamicisland.island.graphics.Easing;
 import dev.android.dynamicisland.island.graphics.Motion;
+import dev.android.dynamicisland.island.graphics.Spring;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.card.MediaBody;
 import dev.android.dynamicisland.island.view.card.SliderBody;
@@ -172,7 +174,9 @@ final class Director {
             return;
         }
         if (scene.mode == Mode.EXPANDED) {
-            rebuildStack();
+            // An already open notification peek must not conceal short system feedback behind its single card.
+            if (scene.peekOpen && primary.popupPriority() >= 2 && !primary.key.equals(peekKey)) collapse();
+            else rebuildStack();
         } else if (scene.mode == Mode.HIDDEN) {
             appear(primary, hint == IslandView.HINT_FROM_LEFT);
         } else {
@@ -312,9 +316,14 @@ final class Director {
         view.removeCallbacks(fadePillBlob);
         sp.pillBlob.snapTo(1.0f);
         float start = m.restWidth();
-        sp.width.snapTo(start);
-        // starts as a flattened drop so the pill visibly lands and bounces instead of only widening
-        sp.height.snapTo(Math.min(start, m.pillH) * APPEAR_HEIGHT_FROM);
+        // an empty pill that is already on screen grows into the first activity instead of dropping in again
+        boolean fromResting = ModuleSettings.alwaysVisible() && sp.visibility.value() > 0.5f
+                && Math.abs(sp.width.value() - m.idleWidth()) < m.dp(2.0f);
+        if (!fromResting) {
+            sp.width.snapTo(start);
+            // starts as a flattened drop so the pill visibly lands and bounces instead of only widening
+            sp.height.snapTo(Math.min(start, m.pillH) * APPEAR_HEIGHT_FROM);
+        }
         if (m.holeD > 0.0f) {
             sp.visibility.snapTo(1.0f);
         } else {
@@ -342,6 +351,7 @@ final class Director {
         sp.pillBlob.animateTo(1.0f, 0.1f, 1.0f);
         boolean wasExpanded = scene.mode == Mode.EXPANDED;
         if (scene.mode == Mode.HIDDEN) {
+            settleResting();
             return;
         }
         scene.mode = Mode.HIDDEN;
@@ -354,21 +364,35 @@ final class Director {
             scene.bubbleOut = scene.bubbleIn.toOutgoing(t, 0);
         }
         scene.bubbleIn = null;
-        float end = m.restWidth();
-        sp.width.animateTo(end, Motion.PILL_SHRINK);
-        sp.height.animateTo(Math.min(end, m.pillH), Motion.PILL_SHRINK);
+        restingSize();
         sp.split.animateTo(0.0f, Motion.BUBBLE_MERGE);
         if (toLeft) {
             sp.offsetX.impulse(-m.dp(HIDE_TO_LEFT_IMPULSE_DP));
-        }
-        if (m.holeD <= 0.0f) {
-            sp.visibility.animateTo(0.0f, 0.22f, 1.0f);
         }
         view.scheduleFrame();
         if (wasExpanded) {
             host.onExpandedChanged(false);
         }
         view.notifyHost();
+    }
+
+    /** Where the pill ends up with nothing to show: the empty pill if the user wants one, else the hole (and out). */
+    private void restingSize() {
+        boolean empty = scene.restingShown();
+        float end = empty ? m.idleWidth() : m.restWidth();
+        sp.width.animateTo(end, Motion.PILL_SHRINK);
+        sp.height.animateTo(empty ? m.pillH : Math.min(end, m.pillH), Motion.PILL_SHRINK);
+        if (empty) {
+            sp.visibility.animateTo(1.0f, 0.22f, 1.0f);
+        } else if (m.holeD <= 0.0f) {
+            sp.visibility.animateTo(0.0f, 0.22f, 1.0f);
+        }
+    }
+
+    /** Nothing is shown and nothing was: only a change of the "always visible" setting can alter how that looks. */
+    private void settleResting() {
+        restingSize();
+        view.scheduleFrame();
     }
 
     // ---- the card stack ------------------------------------------------------------------------------------------
@@ -410,7 +434,7 @@ final class Director {
         view.scheduleTick();
         if (!wasExpanded) {
             host.onExpandedChanged(true);
-            Haptics.perform(view, HapticFeedbackConstants.CONTEXT_CLICK);
+            if (!quietOpen) Haptics.perform(view, HapticFeedbackConstants.CONTEXT_CLICK);
         }
         view.notifyHost();
     }
@@ -459,6 +483,160 @@ final class Director {
         } else {
             layoutCards(show);
             host.onWindowHeightNeeded(expandedWindowHeight());
+        }
+    }
+
+    // ---- pulling the cards open with the finger ----------------------------------------------------------------------
+    // The feel is tuned by these numbers only.
+
+    /** Finger travel (dp, beyond the touch slop) that opens the cards completely. */
+    static final float PULL_OPEN_DISTANCE_DP = 110.0f;
+    /** Let go past this share of the pull and the cards open the rest of the way; before it they fold back. */
+    static final float PULL_OPEN_COMMIT = 0.38f;
+    /** A downward flick this fast (dp per second) opens the cards even after a short pull. */
+    static final float PULL_OPEN_FLICK_DP_PER_S = 650.0f;
+    /** The smallest pull (dp) a flick may open from. */
+    static final float PULL_OPEN_FLICK_MIN_DP = 12.0f;
+    /** Each lower card starts to open this share of the pull later than the one above it. */
+    static final float PULL_OPEN_STAGGER = 0.12f;
+    /**
+     * The fastest a card may be sent towards its size when the pull is let go, as a multiple of what is left to open
+     * per second. The finger's own speed is much higher than a card should travel: unbounded it threw the cards far
+     * past their size before they settled.
+     */
+    static final float PULL_OPEN_MAX_SPEED_PER_S = 2.5f;
+    /**
+     * The same limit for a pull the system cut short: the cards never followed the finger, so the speed it was going at
+     * is all that shows how quickly the island is wanted open.
+     */
+    static final float PULL_CUT_MAX_SPEED_PER_S = 6.0f;
+    /** How much of a pull beyond the full distance is still followed (the cards stretch a little). */
+    static final float PULL_OPEN_RUBBER = 0.12f;
+    /** The most (as a share of the full size) the cards stretch past their size however far the finger goes on. */
+    static final float PULL_OPEN_MAX_STRETCH = 0.04f;
+
+    private boolean quietOpen;
+    private boolean pullingOpen;
+
+    boolean isPullingOpen() {
+        return pullingOpen;
+    }
+
+    /**
+     * Starts opening the cards under the finger: the stack is opened as usual, then taken off the clock so that
+     * {@link #pullOpen} sets how far it is open. Returns false when there is nothing to open this way (the caller
+     * then opens it at once, as a tap does).
+     */
+    boolean beginPullOpen() {
+        if (scene.iMode != null || scene.mode != Mode.COMPACT) {
+            return false;
+        }
+        List<IslandItem> show = scene.stackItems(MAX_CARDS);
+        if (show.isEmpty()) {
+            return false;
+        }
+        scene.peekOpen = false;
+        peekKey = null;
+        quietOpen = true; // the click comes when the open is decided, not when the finger first moves
+        try {
+            expand(show, 0);
+        } finally {
+            quietOpen = false;
+        }
+        cancelAutoCollapse(); // a slow pull must not fold itself half way
+        view.removeCallbacks(fadePillBlob);
+        long t = IslandView.now();
+        boolean any = false;
+        for (Card c : scene.cards) {
+            if (c.leaving) {
+                continue;
+            }
+            c.launched = true; // no launcher: the finger sets the springs
+            c.startAt = t;
+            c.contentStart = t - 1000; // the content follows how open the card is, not a timer
+            c.pullFromCy = c.cy.value();
+            c.pullFromW = c.w.value();
+            c.pullFromH = c.h.value();
+            any = true;
+        }
+        pullingOpen = any;
+        return any;
+    }
+
+    /** Sets how far the cards are open: 0 = still pill-sized, 1 = fully open, a little more stretches them. */
+    void pullOpen(float progress) {
+        if (!pullingOpen) {
+            return;
+        }
+        float p = progress <= 1.0f ? Math.max(0.0f, progress)
+                : 1.0f + Math.min(PULL_OPEN_MAX_STRETCH, (progress - 1.0f) * PULL_OPEN_RUBBER);
+        for (Card c : scene.cards) {
+            if (c.leaving) {
+                continue;
+            }
+            float own = Math.max(0.0f, (p - PULL_OPEN_STAGGER * c.order) / (1.0f - PULL_OPEN_STAGGER * c.order));
+            c.cy.snapTo(Easing.lerp(c.pullFromCy, c.targetCy, own));
+            c.w.snapTo(Easing.lerp(c.pullFromW, c.targetW, own));
+            c.h.snapTo(Easing.lerp(c.pullFromH, c.targetH, own));
+        }
+        view.scheduleFrame();
+        view.invalidate();
+        view.notifyHost();
+    }
+
+    /**
+     * The finger let go. {@code commit}: the cards open the rest of the way, carrying the finger's speed (a quick pull
+     * opens quickly, a slow one gently); otherwise they fold back into the pill.
+     *
+     * @param downSpeed how fast the finger was moving down, in px per second
+     */
+    void endPullOpen(boolean commit, float downSpeed) {
+        endPullOpen(commit, downSpeed, PULL_OPEN_MAX_SPEED_PER_S);
+    }
+
+    /** As {@link #endPullOpen(boolean, float)}, with the fastest the cards may be sent towards their size. */
+    void endPullOpen(boolean commit, float downSpeed, float maxSpeedPerS) {
+        if (!pullingOpen) {
+            return;
+        }
+        pullingOpen = false;
+        if (!commit) {
+            collapse();
+            return;
+        }
+        float distance = Math.max(1.0f, m.dp(PULL_OPEN_DISTANCE_DP));
+        long t = IslandView.now();
+        for (Card c : scene.cards) {
+            if (c.leaving) {
+                continue;
+            }
+            c.cy.animateTo(c.targetCy, Motion.CARD_DROP);
+            c.w.animateTo(c.targetW, Motion.CARD_WIDEN);
+            c.h.animateTo(c.targetH, Motion.CARD_GROW);
+            // the card travels (target - start) over the finger's PULL_OPEN_DISTANCE: its height and place follow the
+            // finger's speed, but never more than lets them arrive about when a tap-open would; the width, which is
+            // quick anyway, is left to its own spring
+            float speed = Math.min(downSpeed, m.dp(6000.0f)) / distance;
+            kick(c.cy, speed * (c.targetCy - c.pullFromCy), c.targetCy, maxSpeedPerS);
+            kick(c.h, speed * (c.targetH - c.pullFromH), c.targetH, maxSpeedPerS);
+            c.startAt = t;
+        }
+        scheduleAutoCollapse(ModuleSettings.autoCollapseMs());
+        view.removeCallbacks(fadePillBlob);
+        view.postDelayed(fadePillBlob, FADE_PILL_BLOB_DELAY_MS);
+        Haptics.perform(view, HapticFeedbackConstants.CONTEXT_CLICK);
+        view.scheduleFrame();
+        view.scheduleTick();
+        view.notifyHost();
+    }
+
+    /** Gives a spring that is heading for {@code target} a push of at most {@code PULL_OPEN_MAX_SPEED_PER_S} times what is left. */
+    private static void kick(Spring spring, float velocity, float target, float maxSpeedPerS) {
+        float left = target - spring.value();
+        float cap = Math.abs(left) * maxSpeedPerS;
+        float v = Math.min(Math.abs(velocity), cap) * Math.signum(left);
+        if (v != 0.0f) {
+            spring.impulse(v);
         }
     }
 
@@ -730,7 +908,8 @@ final class Director {
     /** True once every card is gone or has folded to (nearly) the pill's shape, so the pill can take over from it. */
     private boolean cardsArrived() {
         long now = IslandView.now();
-        for (Card c : scene.cards) {
+        for (int i = 0, n = scene.cards.size(); i < n; i++) {
+            Card c = scene.cards.get(i);
             if (!c.leaving || !c.launched || Math.abs(c.h.value() - c.targetH) > m.dp(PILL_TAKEOVER_H_DP)
                     || Math.abs(c.w.value() - c.targetW) > m.dp(PILL_TAKEOVER_W_DP)) {
                 return false;

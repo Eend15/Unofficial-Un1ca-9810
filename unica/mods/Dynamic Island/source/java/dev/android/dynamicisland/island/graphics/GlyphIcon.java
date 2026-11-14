@@ -21,7 +21,7 @@ import dev.android.dynamicisland.settings.ModuleSettings;
  */
 public final class GlyphIcon extends Drawable {
     /** Which pictogram to draw. {@code POWER_SAVE} is drawn as a battery with a plus cut out. */
-    public enum Kind { BATTERY, BATTERY_CHARGING, BELL, BELL_OFF, VIBRATE, HEADPHONES, CAMERA, MIC, LOCATION, MOON, PLANE, TORCH, HOTSPOT, ROTATE_LOCK, POWER_SAVE, DOWNLOAD, SPEAKER, FINGERPRINT, FACE, PIN }
+    public enum Kind { BATTERY, BATTERY_CHARGING, BELL, BELL_OFF, VIBRATE, HEADPHONES, CAMERA, MIC, LOCATION, MOON, PLANE, TORCH, HOTSPOT, ROTATE_LOCK, POWER_SAVE, DOWNLOAD, SPEAKER, FINGERPRINT, FACE, PIN, CALL_ANSWER, CALL_END }
 
     private static final int INTRINSIC_SIZE_PX = 96;
     /** An icon drawn again after this long without a draw plays from the start, like a fresh island. */
@@ -68,7 +68,7 @@ public final class GlyphIcon extends Drawable {
 
     /** True while the animation still moves, so the island keeps its frame loop running. */
     public boolean animating() {
-        if (ModuleSettings.lowPerformance()) return false;
+        if (ModuleSettings.stillIcons()) return false;
         LottiePlayer p = player(kind);
         if (p == null || frozen) {
             return false;
@@ -107,7 +107,7 @@ public final class GlyphIcon extends Drawable {
     }
 
     private float elapsedMillis(LottiePlayer p) {
-        if (frozen || ModuleSettings.lowPerformance()) {
+        if (frozen || ModuleSettings.stillIcons()) {
             return p.durationMillis();
         }
         long now = SystemClock.uptimeMillis();
@@ -161,9 +161,13 @@ public final class GlyphIcon extends Drawable {
         return INTRINSIC_SIZE_PX;
     }
 
+    /** Bounds of the drawing in progress; an icon is drawn on one thread, so one rectangle serves every frame. */
+    private final RectF drawBounds = new RectF();
+
     @Override
     public void draw(Canvas c) {
-        RectF bounds = new RectF(getBounds());
+        RectF bounds = drawBounds;
+        bounds.set(getBounds());
         if (bounds.isEmpty()) {
             return;
         }
@@ -237,6 +241,10 @@ public final class GlyphIcon extends Drawable {
                 break;
             case PIN:
                 drawPin(c, cx, cy, s);
+                break;
+            case CALL_ANSWER:
+            case CALL_END:
+                Glyphs.draw(c, kind == Kind.CALL_ANSWER ? Glyphs.ANSWER : Glyphs.HANGUP, cx, cy, s, paint);
                 break;
             default:
                 break;

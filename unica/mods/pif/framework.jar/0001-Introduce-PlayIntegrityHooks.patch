@@ -174,7 +174,7 @@ index 00000000..dc87c586
 +
 +.field private static final blacklist PIF_DEVICE_INITIAL_SDK_INT:Ljava/lang/String; = "null"
 +
-+.field private static final blacklist PIF_FINGERPRINT:Ljava/lang/String; = "google/shiba_beta/shiba:CANARY/ZP11.260717.006/16004061:user/release-keys"
++.field private static final blacklist PIF_FINGERPRINT:Ljava/lang/String; = "google/bluejay_beta/bluejay:CANARY/ZP11.261016.008/16754936:user/release-keys"
 +
 +.field private static final blacklist PIF_ID:Ljava/lang/String; = "null"
 +
@@ -190,7 +190,7 @@ index 00000000..dc87c586
 +
 +.field private static final blacklist PIF_SECURITY_PATCH:Ljava/lang/String; = "null"
 +
-+.field private static final blacklist PIF_VERSION:Ljava/lang/String; = "20260806"
++.field private static final blacklist PIF_VERSION:Ljava/lang/String; = "20261113"
 +
 +.field private static final blacklist TAG:Ljava/lang/String; = "PlayIntegrityHooks"
 +
@@ -1077,7 +1077,7 @@ index 00000000..dc87c586
 +    :cond_7
 +    const-string v0, "persist.sys.pif.fingerprint"
 +
-+    const-string v2, "google/shiba_beta/shiba:CANARY/ZP11.260717.006/16004061:user/release-keys"
++    const-string v2, "google/bluejay_beta/bluejay:CANARY/ZP11.261016.008/16754936:user/release-keys"
 +
 +    invoke-static {v0, v2}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 +

@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <b>English</b> · <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a> · <a href="README.zh.md">中文</a> · <a href="README.ru.md">Русский</a> · <a href="README.tr.md">Türkçe</a> · <a href="#features">Features</a> · <a href="#install">Install</a>
+  <b>English</b> · <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a> · <a href="README.zh.md">中文</a> · <a href="README.ru.md">Русский</a> · <a href="#features">Features</a> · <a href="#install">Install</a>
 </p>
 
 ### Everything the capsule shows, as cards
@@ -66,8 +66,8 @@ This stable release brings optional **iMotion**: one expanded activity, coordina
 - **System events:** Charging, low battery, sound mode, Bluetooth audio with battery, camera / microphone / location in use, and quick-setting feedback (Do Not Disturb, airplane, power saving, torch, hotspot, auto-rotate).
 - **App control:** A blacklist or whitelist of apps for the ordinary-notification features. Live notifications, media, calls and system events are never filtered.
 - **Motion:** Spring-based animations with squash and stretch, a liquid bridge between pill and card, and cards that grow out of the pill.
-- **One UI settings app:** A hub of grouped cards with sub pages, in English, Korean, Japanese, Chinese (Simplified), Russian and Turkish.
-- **Six-language localization:** Settings, module-generated island text and stage labels share English-first Android string resources. Notification text supplied by other apps is unchanged; built-in detection remains Korean and English. See [Translating](docs/TRANSLATING.md) to add a language without editing Java.
+- **One UI settings app:** A hub of grouped cards with sub pages, in English, Korean, Japanese, Chinese (Simplified) and Russian.
+- **Localization:** Settings, module-generated island text and stage labels share English-first Android string resources. English, Korean, Japanese, Chinese and Russian are maintained here; community translations are welcome, and a string a translation lacks is shown in English. Notification text supplied by other apps is unchanged; built-in detection remains Korean and English. See [Translating](docs/TRANSLATING.md) to add a language without editing Java.
 - **Safety:** A crash guard switches the module off after repeated System UI crashes, hook groups are isolated, and a diagnostics page shows what the module did inside System UI.
 
 ## Features in detail
@@ -147,7 +147,7 @@ This stable release brings optional **iMotion**: one expanded activity, coordina
 
 - **Ambient glow (on by default, music sessions only):** all compact pills share the active music session colours and sound response, even when the music pill itself is hidden. Album matching uses the waveform palette. Pausing makes the halo faint; ending the session smoothly fades its last colours out over 1.2 seconds. Choose music-only or all-activity visibility, brightness (default 45%) and dynamic strength (0–100%, default 50%) with a live preview. Theme and separate preset/HSV/HEX colours remain available. Low-performance mode disables the halo.
 - **Low-performance mode (off by default):** replaces content blur with a crossfade and background blur with an opaque black card; keeps static album colours and artwork, static waveforms without audio analysis, and settled icon frames with current battery state. Continuous motion is capped at 30 fps, touch feedback and expansion/collapse at 60 fps. Individual settings are preserved and restored when the mode is turned off; notifications, calls, timers and music controls keep working.
-- Five groups: **Notifications & activities**, **Appearance**, **Behavior**, **Advanced & troubleshooting** and **App info**, with **Restart System UI** and the settings language at the bottom of the home page. English, Korean, Japanese, Simplified Chinese, Russian and Turkish; light and dark themes. Most changes apply within a few seconds without restarting System UI.
+- Five groups: **Notifications & activities**, **Appearance**, **Behavior**, **Advanced & troubleshooting** and **App info**, with **Restart System UI** and the settings language at the bottom of the home page. English, Korean, Japanese, Simplified Chinese and Russian; light and dark themes. Most changes apply within a few seconds without restarting System UI.
 - **Position and size:** live status-bar preview, automatic or custom widths, sliders, numeric input and one-step adjustment. Position, size and camera calibration reset separately. Camera cutout calibration is at the bottom of the position and size page.
 - **Clear choices:** **Notification cards** can be off (stock banners), only for notifications that pop up as a banner, or also for silent ones. Notifications of the app you are using keep the stock banner by default; switch **Notifications from the app you are using** on to get cards for them too. App filters affect ordinary notification cards only; search by name or package, view selected apps and save or cancel changes.
 - **Appearance and behavior:** default/custom accent colour with a cancellable HSV/HEX editor; large event icons by default, optional small icons; charging battery icon hidden by default. Animation uses an actual island-renderer preview and saves immediately. Waveform motion can react to audio or use a demo animation.

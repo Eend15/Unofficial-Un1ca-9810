@@ -57,4 +57,57 @@ public class AppearanceScreenTest {
         assertTrue(prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false));
     }
 
+    private void chooseMode(SettingsActivity activity, int mode) {
+        View label = find(activity.page(), activity.getString(R.string.accent_enabled));
+        ((View) label.getParent().getParent()).performClick();
+        ShadowAlertDialog.getLatestAlertDialog().getListView().performItemClick(null, mode, mode);
+    }
+
+    @Test public void theSystemColourIsAThirdModeThatWinsOverTheCustomOneAndCanBeLeftAgain() {
+        SettingsActivity activity = open();   // starts in the custom mode
+        SharedPreferences prefs = ReflectionHelpers.getField(activity, "prefs");
+        try {
+            prefs.edit().putInt(ModuleSettings.KEY_ACCENT_COLOR, 0xFF123ABC).apply();
+            chooseMode(activity, 2);
+            assertTrue(prefs.getBoolean(ModuleSettings.KEY_ACCENT_SYSTEM, false));
+            assertFalse("the custom switch is off in the system mode", prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, true));
+            assertEquals("the chosen custom colour is kept", 0xFF123ABC, prefs.getInt(ModuleSettings.KEY_ACCENT_COLOR, 0));
+            assertNull("no swatches in the system mode", find(activity.page(), activity.getString(R.string.accent_custom)));
+            assertNotNull(find(activity.page(), activity.getString(R.string.accent_system_note)));
+            try { SettingsRenderTest.render(activity, "settings_accentSystem"); } catch (Exception e) { throw new AssertionError(e); }
+            ModuleSettings.configurePreview(prefs);
+            ReflectionHelpers.setStaticField(ModuleSettings.class, "systemAccent", 0);
+            assertTrue("the first read is a change", ModuleSettings.refreshSystemAccent(activity));
+            assertFalse("the same colour again is not", ModuleSettings.refreshSystemAccent(activity));
+            assertNotEquals("the system colour is read", 0, ModuleSettings.accentOverride());
+            prefs.edit().putBoolean(ModuleSettings.KEY_GLOW_FOLLOW_THEME, true).apply();
+            ModuleSettings.configurePreview(prefs);
+            assertEquals("a glow that follows the theme follows the system colour", ModuleSettings.accentOverride(), ModuleSettings.glowColour());
+            ReflectionHelpers.setStaticField(ModuleSettings.class, "systemAccent", 0);
+            assertEquals("until the colour has been read the default colours stay", 0, ModuleSettings.accentOverride());
+            ModuleSettings.refreshSystemAccent(activity);
+
+            chooseMode(activity, 1);
+            assertFalse(prefs.getBoolean(ModuleSettings.KEY_ACCENT_SYSTEM, true));
+            assertTrue(prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false));
+            ModuleSettings.configurePreview(prefs);
+            assertEquals("back to the custom colour", 0xFF123ABC, ModuleSettings.accentOverride());
+
+            chooseMode(activity, 0);
+            ModuleSettings.configurePreview(prefs);
+            assertEquals("default: no override", 0, ModuleSettings.accentOverride());
+        } finally { prefs.edit().clear().apply(); ModuleSettings.configurePreview(prefs); }
+    }
+
+    @Test public void resettingTheColoursTurnsTheSystemModeOffToo() {
+        SettingsActivity activity = open();
+        SharedPreferences prefs = ReflectionHelpers.getField(activity, "prefs");
+        try {
+            chooseMode(activity, 2);
+            View reset = find(activity.page(), activity.getString(R.string.accent_reset));
+            ((View) reset.getParent().getParent()).performClick();
+            assertFalse(prefs.getBoolean(ModuleSettings.KEY_ACCENT_SYSTEM, true));
+            assertFalse(prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, true));
+        } finally { prefs.edit().clear().apply(); ModuleSettings.configurePreview(prefs); }
+    }
 }

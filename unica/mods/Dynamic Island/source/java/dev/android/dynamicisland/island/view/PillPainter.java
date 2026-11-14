@@ -19,6 +19,8 @@ import dev.android.dynamicisland.settings.ModuleSettings;
  */
 final class PillPainter {
     private static final float LAYER_SLIDE_DP = 18.0f;
+    /** How far the notch body reaches past the top edge of the screen, so no top edge or corner of it is seen. */
+    private static final float NOTCH_OVERREACH_DP = 12.0f;
     /** How strongly the neck bulges while the bubble is still touching the pill. */
     private static final float MAX_NECK_SPREAD = 0.55f;
     /** The bubble's content only shows once the bubble has split off this far, fully at +0.4. */
@@ -48,6 +50,8 @@ final class PillPainter {
     private final RectF bubble = new RectF();
     private final RectF outlineRect = new RectF();
     private final RectF shrunk = new RectF();
+    private final Path notchBody = new Path();
+    private final Path notchRim = new Path();
 
     PillPainter(Metrics m, Paints paints, Scene scene, Shapes shapes, StackPainter stack, CardBridge bridge) {
         this.m = m;
@@ -102,13 +106,21 @@ final class PillPainter {
         }
         LiquidBridge cardBridge = bridge.update(t, pill, r);
         boolean pillVisible = pill.width() > IslandView.MIN_VISIBLE_SIZE && pill.height() > IslandView.MIN_VISIBLE_SIZE;
+        // the notch shape only holds while the pill rests as the pill: while it merges with a bubble, a card or the
+        // shade it is the usual capsule, which those transitions are built on
+        boolean notch = pillVisible && !hasBubble && !hasNeck && cardBridge == null && gate >= 0.999f
+                && (scene.mode == Mode.COMPACT || scene.restingShown()) && ModuleSettings.notchStyle();
+        if (notch) {
+            NotchShape.body(notchBody, pill, r, m.dp(NOTCH_OVERREACH_DP));
+        }
 
         // A returning compact body stays opaque; pillBlob only gates its content until the fold finishes.
         float bodyAlpha = scene.mode == Mode.COMPACT ? 1.0f : clamp01(sp.pillBlob.value());
         if (ModuleSettings.ambientGlow() && bodyAlpha > IslandView.MIN_VISIBLE_ALPHA) {
             int save = canvas.save();
             glowCutout.reset();
-            if (pillVisible) glowCutout.addRoundRect(pill, r, r, Path.Direction.CW);
+            if (notch) glowCutout.addPath(notchBody);
+            else if (pillVisible) glowCutout.addRoundRect(pill, r, r, Path.Direction.CW);
             if (hasBubble) glowCutout.addCircle(bubbleX, bubbleY, bubbleRadius, Path.Direction.CW);
             canvas.clipOutPath(glowCutout);
             if (hasNeck) canvas.clipOutPath(neck);
@@ -119,16 +131,18 @@ final class PillPainter {
             if (hasBubble) bubbleGlow.draw(canvas, bubble, glowMotion, alpha, ModuleSettings.glowStrength());
             canvas.restoreToCount(save);
         }
-        boolean outlinePill = pillVisible && scene.mode == Mode.COMPACT && bodyAlpha > IslandView.MIN_VISIBLE_ALPHA;
+        boolean outlinePill = pillVisible && (scene.mode == Mode.COMPACT || scene.restingShown()) && bodyAlpha > IslandView.MIN_VISIBLE_ALPHA;
         if ((outlinePill || hasBubble) && sp.outlineFade.value() > IslandView.MIN_VISIBLE_ALPHA
                 && scene.pillOutlineOpacity() > IslandView.MIN_VISIBLE_ALPHA) {
-            drawOutline(canvas, pill, r, outlinePill, bodyAlpha, hasBubble, hasNeck, neckAlpha, bubbleX, bubbleY, bubbleRadius);
+            drawOutline(canvas, pill, r, outlinePill, notch, bodyAlpha, hasBubble, hasNeck, neckAlpha, bubbleX, bubbleY, bubbleRadius);
         }
 
         int mainColor = bodyColor(scene.mainIn);
         paints.shape.setColor(mainColor);
         paints.shape.setAlpha(Math.round(bodyAlpha * 255.0f));
-        if (pillVisible) {
+        if (notch) {
+            canvas.drawPath(notchBody, paints.shape);
+        } else if (pillVisible) {
             canvas.drawRoundRect(pill, r, r, paints.shape);
         }
         paints.shape.setColor(Colors.BLACK);
@@ -179,6 +193,8 @@ final class PillPainter {
             return false;
         }
         if (scene.mode != Mode.COMPACT && sp.pillBlob.value() <= IslandView.MIN_VISIBLE_ALPHA) return false;
+        // the empty pill that stays on screen has nothing to glow about
+        if (scene.restingShown() && Math.abs(sp.width.value() - m.idleWidth()) < m.dp(1.0f)) return false;
         IslandItem music = scene.musicForGlow();
         boolean show = music != null || !ModuleSettings.glowMusicOnly();
         glowPresence.set(show ? 1 : 0, now);
@@ -193,11 +209,14 @@ final class PillPainter {
     }
 
     /** Only the outer rim is white. Filling underneath a fading black body produces a grey pill. */
-    private void drawOutline(Canvas canvas, RectF pill, float r, boolean pillVisible, float bodyAlpha, boolean hasBubble, boolean hasNeck,
+    private void drawOutline(Canvas canvas, RectF pill, float r, boolean pillVisible, boolean notch, float bodyAlpha, boolean hasBubble, boolean hasNeck,
                              float neckAlpha, float bubbleX, float bubbleY, float bubbleRadius) {
         int save = canvas.save();
         outlineCutout.reset();
-        if (pillVisible) outlineCutout.addRoundRect(pill, r, r, Path.Direction.CW);
+        if (pillVisible) {
+            if (notch) outlineCutout.addPath(notchBody);
+            else outlineCutout.addRoundRect(pill, r, r, Path.Direction.CW);
+        }
         if (hasBubble) outlineCutout.addCircle(bubbleX, bubbleY, bubbleRadius, Path.Direction.CW);
         canvas.clipOutPath(outlineCutout);
         if (hasNeck) canvas.clipOutPath(neck);
@@ -208,7 +227,12 @@ final class PillPainter {
             paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade * bodyAlpha));
             outlineRect.set(pill);
             outlineRect.inset(-m.outlineW, -m.outlineW);
-            canvas.drawRoundRect(outlineRect, r + m.outlineW, r + m.outlineW, paint);
+            if (notch) {
+                NotchShape.body(notchRim, outlineRect, r + m.outlineW, m.dp(NOTCH_OVERREACH_DP));
+                canvas.drawPath(notchRim, paint);
+            } else {
+                canvas.drawRoundRect(outlineRect, r + m.outlineW, r + m.outlineW, paint);
+            }
         }
         if (hasBubble) {
             paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE, fade));

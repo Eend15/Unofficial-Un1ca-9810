@@ -14,7 +14,7 @@ import java.util.Set;
 
 /** Search metadata and safe page destinations. No page builders run while indexing. */
 final class SettingsSearchCatalog {
-    enum Route { NOTIFICATIONS,EVENTS,APPS,APPEARANCE,BEHAVIOR,ADVANCED,ABOUT,DIAGNOSTICS,
+    enum Route { NOTIFICATIONS,EVENTS,APPS,APPEARANCE,BEHAVIOR,PERFORMANCE,ADVANCED,ABOUT,DIAGNOSTICS,
         POSITION,CALIBRATION,ACCENT,GLOW,RULES,SEARCH,HOME }
     static final class Row {
         final Route route;final int title,fallback;
@@ -73,6 +73,7 @@ final class SettingsSearchCatalog {
             case RULES:root=R.string.ui_notifications;child=R.string.rules_title;break;
             case APPS:root=R.string.ui_notifications;child=R.string.apps_title;break;
             case BEHAVIOR:root=R.string.ui_behavior;break;
+            case PERFORMANCE:root=R.string.ui_performance;break;
             case ADVANCED:root=R.string.ui_advanced;break;
             case CALIBRATION:root=R.string.ui_appearance;child=R.string.pos_title;break;
             case DIAGNOSTICS:root=R.string.ui_advanced;child=R.string.diagnostics_title;break;
@@ -108,7 +109,9 @@ final class SettingsSearchCatalog {
         add(Route.EVENTS,R.string.setting_event_charging,R.string.setting_event_charging_desc,R.string.search_terms_battery,0);
         add(Route.EVENTS,R.string.setting_charging_info,R.string.setting_charging_info_desc,R.string.search_terms_battery,R.string.setting_event_charging);
         add(Route.EVENTS,R.string.setting_charging_stats,R.string.setting_charging_stats_desc,R.string.search_terms_battery,R.string.setting_charging_info);
+        add(Route.EVENTS,R.string.setting_charging_text,R.string.setting_charging_text_desc,R.string.search_terms_battery,R.string.setting_charging_info);
         add(Route.EVENTS,R.string.setting_stock_charging_animation,R.string.setting_stock_charging_animation_desc,R.string.search_terms_charging_effect,0);
+        add(Route.EVENTS,R.string.popup_time,R.string.desc_popup_time,R.string.search_terms_popup,0,R.string.popup_time_3,R.string.popup_time_6);
         add(Route.EVENTS,R.string.setting_event_ringer,R.string.setting_event_ringer_desc,R.string.search_terms_sound,0);
         add(Route.EVENTS,R.string.setting_event_bluetooth,R.string.setting_event_bluetooth_desc,R.string.search_terms_bluetooth,0);
         add(Route.EVENTS,R.string.setting_event_headset,R.string.setting_event_headset_desc,R.string.search_terms_bluetooth,0);
@@ -121,11 +124,20 @@ final class SettingsSearchCatalog {
                 R.string.torch_style_classic,R.string.torch_style_beam);
         add(Route.EVENTS,R.string.setting_privacy,R.string.setting_privacy_desc,R.string.search_terms_privacy,0);
         add(Route.EVENTS,R.string.setting_privacy_location,R.string.setting_privacy_location_desc,R.string.search_terms_location,R.string.setting_privacy);
+        add(Route.EVENTS,R.string.setting_privacy_in_app,R.string.setting_privacy_in_app_desc,R.string.search_terms_privacy,R.string.setting_privacy);
         add(Route.APPS,R.string.apps_mode,R.string.apps_only_listed_desc,R.string.search_terms_apps,0,R.string.apps_blacklist,R.string.apps_whitelist);
         add(Route.APPS,R.string.ui_excluded_apps,R.string.apps_choose_sum,R.string.search_terms_apps,R.string.apps_mode);
         add(Route.APPS,R.string.ui_allowed_apps,R.string.apps_choose_sum,R.string.search_terms_apps,R.string.apps_mode);
+        add(Route.ADVANCED,R.string.reset_all,R.string.reset_all_desc,R.string.search_terms_reset,0);
+        add(Route.BEHAVIOR,R.string.always_visible_island,R.string.always_visible_island_desc,0,0);
+        add(Route.BEHAVIOR,R.string.swipe_up_hides,R.string.swipe_up_hides_desc,0,0);
+        add(Route.BEHAVIOR,R.string.swipe_down_opens,R.string.swipe_down_opens_desc,0,0);
         add(Route.BEHAVIOR,R.string.show_in_fullscreen,R.string.show_in_fullscreen_desc,0,0);
-        add(Route.BEHAVIOR,R.string.low_performance_mode,R.string.low_performance_desc,R.string.search_terms_performance,0);
+        add(Route.PERFORMANCE,R.string.low_performance_mode,R.string.low_performance_desc,R.string.search_terms_performance,0);
+        add(Route.PERFORMANCE,R.string.perf_still_music,R.string.perf_still_music_desc,R.string.search_terms_performance,R.string.low_performance_mode);
+        add(Route.PERFORMANCE,R.string.perf_static_waveform,R.string.perf_static_waveform_desc,R.string.search_terms_performance,R.string.low_performance_mode);
+        add(Route.PERFORMANCE,R.string.perf_limit_frame_rate,R.string.perf_limit_frame_rate_desc,R.string.search_terms_performance,R.string.low_performance_mode);
+        add(Route.PERFORMANCE,R.string.perf_still_icons,R.string.perf_still_icons_desc,R.string.search_terms_performance,R.string.low_performance_mode);
         add(Route.BEHAVIOR,R.string.setting_haptics,R.string.setting_haptics_desc,R.string.search_terms_haptics,0);
         add(Route.BEHAVIOR,R.string.ui_wave_motion,R.string.setting_visualizer_desc,R.string.search_terms_waveform,0,R.string.ui_wave_audio,R.string.ui_wave_demo);
         add(Route.BEHAVIOR,R.string.auto_open_cards,R.string.auto_open_cards_desc,R.string.search_terms_timing,0);
@@ -133,7 +145,7 @@ final class SettingsSearchCatalog {
         add(Route.BEHAVIOR,R.string.setting_auto_collapse,0,R.string.search_terms_timing,0);
         add(Route.BEHAVIOR,R.string.setting_paused_timeout,0,R.string.search_terms_paused,0);
         add(Route.APPEARANCE,R.string.anim_title,R.string.anim_sum,R.string.search_terms_animation,0,R.string.anim_new,R.string.anim_legacy,R.string.imode_title,R.string.imode_desc);
-        add(Route.ACCENT,R.string.accent_enabled,R.string.accent_note,R.string.search_terms_colour,0,R.string.ui_default,R.string.ui_custom);
+        add(Route.ACCENT,R.string.accent_enabled,R.string.accent_note,R.string.search_terms_colour,0,R.string.ui_default,R.string.ui_custom,R.string.accent_system);
         add(Route.ACCENT,R.string.accent_custom,R.string.accent_note,R.string.search_terms_colour,R.string.accent_enabled);
         add(Route.GLOW,R.string.glow_title,R.string.glow_summary,R.string.search_terms_glow,0);
         add(Route.GLOW,R.string.glow_visibility,0,R.string.search_terms_glow,R.string.glow_title,R.string.glow_music_only,R.string.glow_all_activities);

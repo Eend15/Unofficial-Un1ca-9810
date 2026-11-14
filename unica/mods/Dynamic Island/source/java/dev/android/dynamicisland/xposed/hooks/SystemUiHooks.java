@@ -83,6 +83,7 @@ public final class SystemUiHooks {
         runGroup("signals", () -> hookSignals(cl));
         runGroup("wakefulness", () -> WakefulnessHooks.install(cl));
         runGroup("unlock notice", () -> UnlockHooks.install(cl));
+        runGroup("handle input layer", () -> HandleInputLayer.install(cl));
         runGroup("charging animation", () -> {
             try {
                 ChargingAnimation.install(cl);
@@ -103,6 +104,7 @@ public final class SystemUiHooks {
             runGroup("aosp stock chips", () -> AospChips.install(cl, () -> callController != null));
         }
         runGroup("shade performance", () -> ShadePerf.install(cl));
+        runGroup("shade layout callbacks", ShadeLayoutCallbacks::install);
         runGroup("shade live cards", () -> ShadeLiveCards.install(cl));
         runGroup("duplicate originals", () -> HideDuplicated.install(cl));
         // the blurred shade cards and the media player takeover are built on rows that One UI 8 introduced

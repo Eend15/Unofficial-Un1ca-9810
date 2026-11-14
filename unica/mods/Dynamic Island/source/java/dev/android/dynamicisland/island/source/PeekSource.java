@@ -57,6 +57,7 @@ public final class PeekSource {
     /** Puts the card on the island for {@code ms}; a newer card replaces the current one. */
     public void show(IslandItem item, long ms) {
         item.expiresAtUptime = SystemClock.uptimeMillis() + ms;
+        item.transientPopup = true;
         current = item;
         main.removeCallbacks(tick);
         main.postDelayed(tick, ms + 40);

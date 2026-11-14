@@ -477,7 +477,7 @@ final class IslandPlacement {
         window.setShown(true);
         if (!view.shadePulled()) {
             view.getCoverageBounds(scratch);
-            fader.update(scratch, !hidden && view.visibleAlpha() > 0.3f);
+            fader.update(scratch, !hidden && view.visibleAlpha() > 0.3f, view.takesWholeStatusBar());
         }
         audio.setActive(view.needsAudio());
     }

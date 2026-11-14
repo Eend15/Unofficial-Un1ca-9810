@@ -86,6 +86,99 @@ public class ShadeMaterialAppearanceTest {
         }
     }
 
+    @Test public void aLeasedRowsOutlineMayNotBeSwitchedBackOnAndTheStockStateReturnsWithTheLastClient() {
+        Context context=RuntimeEnvironment.getApplication();
+        ExpandableNotificationRow row=new ExpandableNotificationRow(context);row.setClipToOutline(true);
+        FrameLayout content=new FrameLayout(context);row.addView(content);content.setClipToOutline(true);
+        View player=new View(context);content.addView(player);player.setClipToOutline(true);
+        View other=new View(context);content.addView(other);
+        ShadeMaterialAppearance a=new ShadeMaterialAppearance();
+        assertFalse("nothing is leased yet",ShadeMaterialAppearance.keepsOutlineOff(row));
+        a.sync(player,true);
+        assertTrue(ShadeMaterialAppearance.keepsOutlineOff(row));assertTrue(ShadeMaterialAppearance.keepsOutlineOff(content));
+        assertTrue(ShadeMaterialAppearance.keepsOutlineOff(player));
+        assertFalse("views the lease did not touch are left alone",ShadeMaterialAppearance.keepsOutlineOff(other));
+        assertFalse("so is another row",ShadeMaterialAppearance.keepsOutlineOff(new ExpandableNotificationRow(context)));
+        a.clear();
+        assertFalse("the last client gone: the system may clip again",ShadeMaterialAppearance.keepsOutlineOff(row));
+        assertTrue(row.getClipToOutline());assertTrue(content.getClipToOutline());assertTrue(player.getClipToOutline());
+    }
+
+    @Test public void theStockClipAndTheFlagsAboveItAreReportedForDiagnostics() {
+        Context context=RuntimeEnvironment.getApplication();
+        ExpandableNotificationRow row=new ExpandableNotificationRow(context);
+        FrameLayout content=new FrameLayout(context);row.addView(content);
+        View host=new View(context);content.addView(host);
+        row.layout(0,0,360,120);content.layout(0,0,360,120);host.layout(0,0,360,120);
+        ShadeMaterialAppearance a=new ShadeMaterialAppearance();a.sync(host,true);
+        try {
+            Path nativeClip=row.getClipPath(false);
+            java.lang.reflect.Method m=null;
+            for(Class<?> c:ShadeMaterialAppearance.class.getDeclaredClasses()) if(c.getSimpleName().equals("State")) {
+                java.util.Map<?,?> rows=org.robolectric.util.ReflectionHelpers.getStaticField(ShadeMaterialAppearance.class,"ROWS");
+                Object state=rows.get(row);assertNotNull(state);
+                org.robolectric.util.ReflectionHelpers.callInstanceMethod(state,"rectangularClip",
+                        org.robolectric.util.ReflectionHelpers.ClassParameter.from(Path.class,nativeClip));
+            }
+            String line=dev.android.dynamicisland.xposed.Diagnostics.report();
+            assertTrue(line,line.contains("shade material clip stock clip 7,8-353,112, card 0,0-360,120 (row 360x120)"));
+            assertTrue(line,line.contains("; chain [ExpandableNotificationRow"));
+        } finally { a.clear(); }
+    }
+
+    @Test public void theMediaPlayersOwnRoundClipIsOffWhileACardDrawsAndBackAfterwards() {
+        Context context=RuntimeEnvironment.getApplication();
+        ExpandableNotificationRow row=new ExpandableNotificationRow(context);
+        FrameLayout content=new FrameLayout(context);row.addView(content);
+        QSMediaCornerRoundedView player=new QSMediaCornerRoundedView(context);content.addView(player);
+        QSMediaCornerRoundedView other=new QSMediaCornerRoundedView(context);content.addView(other);
+        assertTrue(player.mIsCornerRound);
+        ShadeMaterialAppearance a=new ShadeMaterialAppearance();
+        a.sync(player,true);
+        assertFalse("the clip that cut the card's corners is off",player.mIsCornerRound);
+        assertTrue("a player that is not leased keeps its own look",other.mIsCornerRound);
+        player.mIsCornerRound=true;                 // System UI switches it on again
+        a.sync(player,true);
+        assertFalse("the next frame switches it off again",player.mIsCornerRound);
+        a.clear();
+        assertTrue("without the card the stock round clip returns",player.mIsCornerRound);
+        player.mIsCornerRound=false;                // a player that was square to begin with stays so
+        a.sync(player,true);a.clear();
+        assertFalse("what was off before the lease is not turned on",player.mIsCornerRound);
+    }
+
+    @Test public void nativeOutlineRebuildsCannotRoundOffTheOwnedCardsCornersAndOriginalProvidersReturn() {
+        Context context=RuntimeEnvironment.getApplication();
+        ExpandableNotificationRow row=new ExpandableNotificationRow(context);row.layout(0,0,360,180);
+        FrameLayout content=new FrameLayout(context);row.addView(content);content.layout(0,0,360,180);
+        View host=new View(context);content.addView(host);host.layout(0,0,360,180);
+        View other=new View(context);row.addView(other);
+        android.view.ViewOutlineProvider rounded=new android.view.ViewOutlineProvider() {
+            @Override public void getOutline(View view,android.graphics.Outline outline) { outline.setRoundRect(0,0,360,180,70); }
+        };
+        row.setOutlineProvider(rounded);row.setClipToOutline(true);
+        content.setOutlineProvider(rounded);host.setOutlineProvider(null);
+        android.graphics.Rect heightClip=new android.graphics.Rect(0,4,360,176);content.setClipBounds(heightClip);
+        var untouched=other.getOutlineProvider();ShadeMaterialAppearance lease=new ShadeMaterialAppearance();
+        lease.sync(host,true);
+        try {
+            android.graphics.Outline outline=new android.graphics.Outline();
+            // Even if native rendering enables the outline again, it can only apply a rectangle.
+            row.setClipToOutline(true);row.getOutlineProvider().getOutline(row,outline);
+            assertEquals(0,outline.getRadius(),0);android.graphics.Rect rect=new android.graphics.Rect();
+            assertTrue(outline.getRect(rect));assertEquals(new android.graphics.Rect(0,0,360,180),rect);
+            assertSame(untouched,other.getOutlineProvider());assertEquals(heightClip,content.getClipBounds());
+            content.setOutlineProvider(android.view.ViewOutlineProvider.BOUNDS);lease.sync(host,true);
+        } finally { lease.clear(); }
+        assertSame(rounded,row.getOutlineProvider());assertSame(android.view.ViewOutlineProvider.BOUNDS,content.getOutlineProvider());
+        assertNull(host.getOutlineProvider());assertTrue(row.getClipToOutline());assertEquals(heightClip,content.getClipBounds());
+    }
+
+    static final class QSMediaCornerRoundedView extends FrameLayout {
+        public boolean mIsCornerRound=true;
+        QSMediaCornerRoundedView(Context c){super(c);}
+    }
+
     private static Bitmap paint(Path clip) {
         Bitmap bitmap=Bitmap.createBitmap(360,120,Bitmap.Config.ARGB_8888);
         Canvas canvas=new Canvas(bitmap);canvas.clipPath(clip);

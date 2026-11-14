@@ -44,7 +44,7 @@ if 'SystemUiRestarter.restart(this)' not in sat:
  sat=sat.replace('SystemUiRestarter.restart()','SystemUiRestarter.restart(this)')
  sa.write_text(sat)
 manifest=(UP/'app/src/main/AndroidManifest.xml').read_text()
-manifest=manifest.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android">','<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.mesalabs.unica.dynamicisland" android:versionCode="5" android:versionName="0.1.15-unica-native1">\n<uses-sdk android:minSdkVersion="36" android:targetSdkVersion="36"/>')
+manifest=manifest.replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android">','<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.mesalabs.unica.dynamicisland" android:versionCode="6" android:versionName="0.1.16-unica-native1">\n<uses-sdk android:minSdkVersion="36" android:targetSdkVersion="36"/>')
 manifest=re.sub(r'\s*<provider\s+android:name=".settings.SettingsProvider"[^>]+/>','',manifest)
 manifest=manifest.replace('<application','<application android:forceQueryable="true"',1)
 manifest=manifest.replace('android:name=".settings.SettingsActivity"','android:name="dev.android.dynamicisland.settings.SettingsActivity"')

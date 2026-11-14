@@ -125,6 +125,28 @@ public class IslandLifecycleTest {
     }
 
     @Test
+    public void chargingReplacesAnOpenNotificationPeekAndBlocksLowerPriorityPeeks() {
+        Context ctx = RuntimeEnvironment.getApplication();
+        IslandItem message = item(ctx, "peek:message", IslandItem.Kind.PEEK);
+        message.transientPopup = true;
+        IslandView view = new IslandView(ctx, host);
+        view.setGeometry(1080, 540f, 66f, 90f, false);
+        view.layout(0, 0, 1080, 900);
+        view.setItems(List.of(message));
+        org.junit.Assert.assertTrue(view.peek(message, 4000));
+        IslandItem charging = item(ctx, "event:charging", IslandItem.Kind.EVENT);
+        charging.transientPopup = true;
+        charging.fullWidth = true;
+        view.setItems(List.of(charging, message));
+        assertFalse("charging takes the main pill back from the notification's single-card view", view.isExpanded());
+        Scene scene = org.robolectric.util.ReflectionHelpers.getField(view, "scene");
+        org.junit.Assert.assertSame(charging, scene.mainIn.content.item);
+        assertFalse("a new notification cannot reopen over charging", view.peek(message, 4000));
+        view.setItems(List.of(message));
+        org.junit.Assert.assertTrue("ordinary peeks work again once charging feedback has ended", view.peek(message, 4000));
+    }
+
+    @Test
     public void anOpenPeekCardTakesTheUpdatedContentOfTheSameItem() throws Exception {
         Context ctx = RuntimeEnvironment.getApplication();
         IslandItem before = item(ctx, "peek:otp", IslandItem.Kind.PEEK);

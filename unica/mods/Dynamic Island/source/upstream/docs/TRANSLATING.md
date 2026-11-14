@@ -1,6 +1,6 @@
 # Translating Dynamic Island
 
-English is the source of truth. The app currently supports English (`en`), Korean (`ko`), Japanese (`ja`), Simplified Chinese (`zh`), Russian (`ru`) and Turkish (`tr`).
+English is the source of truth. The maintainers keep English (`en`), Korean (`ko`), Japanese (`ja`), Simplified Chinese (`zh`) and Russian (`ru`) complete. Turkish (`tr`) and Brazilian Portuguese (`pt-BR`) are community translations: they are listed in [`scripts/partial-languages.txt`](../scripts/partial-languages.txt), so a string they lack is shown in English, and the maintainers do not translate new strings into them. Pull requests that translate or update them are welcome.
 
 ## Files translators edit
 

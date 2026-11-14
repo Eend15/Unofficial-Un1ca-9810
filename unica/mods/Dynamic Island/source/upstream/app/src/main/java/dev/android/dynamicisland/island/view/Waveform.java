@@ -51,7 +51,7 @@ final class Waveform {
      * @return true while the display needs more frames
      */
     boolean step(float dt, IslandItem item, AudioLevels audio) {
-        if (ModuleSettings.lowPerformance()) return false;
+        if (ModuleSettings.staticWaveform()) return false;
         boolean live = item.playing && ModuleSettings.visualizer() && audio != null && audio.isLive();
         float k = 1.0f - ((float) Math.exp((-dt) / LEVEL_SMOOTHING_S));
         boolean moving = false;
@@ -100,7 +100,7 @@ final class Waveform {
         float minH = m.dp(MIN_HEIGHT_DP);
         float x = left;
         for (int i = 0; i < BARS; i++) {
-            float value = ModuleSettings.lowPerformance() ? STATIC_LEVELS[i] : bars[i].value();
+            float value = ModuleSettings.staticWaveform() ? STATIC_LEVELS[i] : bars[i].value();
             float h = ((maxH - minH) * clamp01(value)) + minH;
             scratch.set(x, midY - (h / 2.0f), m.waveBarW + x, midY + (h / 2.0f));
             c.drawRoundRect(scratch, m.waveBarW / 2.0f, m.waveBarW / 2.0f, paint);

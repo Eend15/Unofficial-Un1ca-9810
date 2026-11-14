@@ -82,8 +82,13 @@ public final class LiveBody extends CardBody {
         progressTop = -1.0f;
         actionsTop = -1.0f;
         teams = item.hasTeams();
+        boolean blankScore = false;
         if (teams && item.trailing == IslandItem.Trailing.TEXT && item.trailingText != null) {
-            score = item.trailingText.toString();
+            // a lone dash (a match that has not started) is not a score
+            blankScore = !IslandItem.hasContent(item.trailingText);
+            if (!blankScore) {
+                score = item.trailingText.toString();
+            }
         }
         textW = Math.max(1, Math.round((w - (pad * 2.0f)) - (teams || iconSize == 0 ? 0.0f : iconSize + owner.dp(12.0f))));
         int textWidth = Math.round(textW);
@@ -122,7 +127,7 @@ public final class LiveBody extends CardBody {
         subChrono = item.description == null && item.hasChronometer() && item.chronoPosition == 2;
         secIndent = (item.secondaryIcon != null && item.description == null) ? owner.dp(22.0f) : 0.0f;
         CharSequence secondary = item.subtitle;
-        if (item.trailing == IslandItem.Trailing.TEXT && item.trailingText != null && secondary == null && score == null) {
+        if (item.trailing == IslandItem.Trailing.TEXT && item.trailingText != null && secondary == null && score == null && !blankScore) {
             secondary = item.trailingText;
         }
         this.description = item.description == null ? null : IslandView.layout(item.description, owner.bodyPaint, textWidth,

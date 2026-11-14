@@ -45,6 +45,11 @@ public final class ModuleSettings {
     public static final String KEY_HAPTICS = "haptics";
     /** Rendering overrides only; individual preferences are retained. */
     public static final String KEY_LOW_PERFORMANCE = "low_performance_mode";
+    /** Single lighter-effects switches: each does what low-performance mode does for that effect, without the rest. */
+    public static final String KEY_STILL_MUSIC = "perf_still_music";
+    public static final String KEY_STATIC_WAVEFORM = "perf_static_waveform";
+    public static final String KEY_LIMIT_FRAME_RATE = "perf_limit_frame_rate";
+    public static final String KEY_STILL_ICONS = "perf_still_icons";
     public static final String KEY_MATERIAL_STYLE = "material_style";
     public static final int MATERIAL_FROSTED = 0, MATERIAL_CLASSIC = 1;
     /** Keep active content visible when a portrait app hides the status bar. */
@@ -52,6 +57,16 @@ public final class ModuleSettings {
     /** Plays the animations of version 0.1.3 and before instead of the smoothed ones. */
     public static final String KEY_LEGACY_ANIMATION = "legacy_animation";
     public static final String KEY_I_MODE = "i_mode";
+    /** Keeps an empty pill around the camera while nothing is happening (default off). */
+    public static final String KEY_ALWAYS_VISIBLE = "always_visible_island";
+    public static final String KEY_NOTCH_STYLE = "notch_style";
+    public static final String KEY_POPUP_SECONDS = "popup_seconds";
+    public static final int POPUP_SECONDS_DEFAULT = 4;
+    /** The charging details card is shown as lines of text instead of the battery gauge (default off). */
+    public static final String KEY_CHARGING_TEXT = "charging_text_lines";
+    /** A swipe up on the small pill hides it (iMotion). On by default; off keeps the pill where it is. */
+    public static final String KEY_SWIPE_UP_HIDES = "swipe_up_hides";
+    public static final String KEY_SWIPE_DOWN_OPENS = "swipe_down_opens";
     /** Where the island sits: {@link #ANCHOR_AUTO} (on the camera hole), the middle, the left or the right of the status bar. */
     public static final String KEY_PILL_ANCHOR = "pill_anchor";
     /** Outline policy: automatic contrast detection, always visible, or never drawn. */
@@ -117,6 +132,8 @@ public final class ModuleSettings {
     public static final String KEY_HIDE_BATTERY_ICON = "hide_battery_icon";
     public static final String KEY_ACCENT_CUSTOM = "accent_custom";
     public static final String KEY_ACCENT_COLOR = "accent_color";
+    /** The accent follows the system's Material colour (the wallpaper colours), instead of a chosen one. */
+    public static final String KEY_ACCENT_SYSTEM = "accent_system";
     public static final int DEFAULT_ACCENT = 0xFF3E91FF;
     public static final String KEY_AMBIENT_GLOW = "ambient_glow";
     public static final String KEY_GLOW_STRENGTH = "ambient_glow_strength";
@@ -143,6 +160,7 @@ public final class ModuleSettings {
     public static final String KEY_TORCH_STYLE = "torch_style";
     public static final String KEY_PRIVACY = "privacy_indicator";
     public static final String KEY_PRIVACY_LOCATION = "privacy_location";
+    public static final String KEY_PRIVACY_IN_APP = "privacy_in_app";
     public static final String KEY_OTP_CARD = "otp_card";
     public static final String KEY_OTP_AUTO_COPY = "otp_auto_copy";
     public static final String KEY_THIRD_PARTY_CALLS = "third_party_calls";
@@ -154,7 +172,14 @@ public final class ModuleSettings {
     public static final int DEF_PAUSED_TIMEOUT_S = 60;
     public static final int DEF_AUTO_COLLAPSE_S = 6;
 
+    /** How often the settings are read until the first read has found them, or while no change notice can be received. */
     private static final long RELOAD_INTERVAL_MS = 4000;
+    /** The look for a change a notice may have missed, once notices are being received. */
+    private static final long SAFETY_RELOAD_MS = 60_000;
+    /** A burst of changes (a slider being dragged) is read once, this long after the last one. */
+    private static final long CHANGE_COALESCE_MS = 120;
+    /** The settings file is written after the notice; it is read once more this long after the burst. */
+    private static final long CHANGE_SETTLE_MS = 1_000;
     /** Floors for the timeouts, so a bad stored value cannot make the island flicker away at once. */
     private static final int MIN_PAUSED_TIMEOUT_S = 5;
     private static final int MIN_AUTO_COLLAPSE_S = 2;
@@ -184,10 +209,17 @@ public final class ModuleSettings {
     private static volatile boolean eventBluetooth = true;
     private static volatile boolean haptics = true;
     private static volatile boolean lowPerformance;
+    private static volatile boolean stillMusic, staticWaveform, limitFrameRate, stillIcons;
     private static volatile int materialStyle = MATERIAL_CLASSIC;
     private static volatile boolean showInFullscreen;
     private static volatile boolean legacyAnimation;
     private static volatile boolean iMode;
+    private static volatile boolean alwaysVisible;
+    private static volatile boolean notchStyle;
+    private static volatile int popupSeconds = POPUP_SECONDS_DEFAULT;
+    private static volatile boolean chargingText;
+    private static volatile boolean swipeUpHides = true;
+    private static volatile boolean swipeDownOpens = true;
     private static volatile boolean headsUpIsland = true;
     private static volatile boolean allNotifications;
     private static volatile boolean foregroundNotifications;
@@ -198,6 +230,9 @@ public final class ModuleSettings {
     private static volatile boolean compactEventIcons;
     private static volatile boolean accentCustom;
     private static volatile int accentColor = DEFAULT_ACCENT;
+    private static volatile boolean accentSystem;
+    /** The system's accent as last read by {@link #refreshSystemAccent}; 0 until it has been read. */
+    private static volatile int systemAccent;
     private static volatile boolean ambientGlow = true;
     private static volatile boolean glowMusicOnly = true;
     private static volatile boolean glowAlbum = true;
@@ -239,13 +274,14 @@ public final class ModuleSettings {
     private static volatile int torchStyle;
     private static volatile boolean privacyIndicator = true;
     private static volatile boolean privacyLocation = false;
+    private static volatile boolean privacyInApp = false;
     private static volatile boolean otpCard = true;
     private static volatile boolean otpAutoCopy = false;
     private static volatile boolean thirdPartyCalls = true;
     private static volatile AppFilter appFilter = AppFilter.OFF;
 
-    private static boolean started;
-    private static boolean previewProcess;
+    private static volatile boolean started;
+    private static volatile boolean previewProcess;
     private static XSharedPreferences prefs;
     private static boolean loaded;
     /** True while the values come from {@link SettingsProvider} because the preference file was empty or unreadable. */
@@ -284,6 +320,7 @@ public final class ModuleSettings {
         if (listener != null) {
             listener.run();
         }
+        readSoon();
     }
 
     /** True while the settings app is moving the island: it shows a sample item so there is something to move. */
@@ -400,7 +437,14 @@ public final class ModuleSettings {
     }
 
     /** Starts the background reload loop on first use; later calls do nothing. */
-    public static synchronized void ensureStarted() {
+    public static void ensureStarted() {
+        if (started || previewProcess) {
+            return;
+        }
+        start();
+    }
+
+    private static synchronized void start() {
         if (started || previewProcess) {
             return;
         }
@@ -410,15 +454,75 @@ public final class ModuleSettings {
             HandlerThread thread = new HandlerThread("DynamicIslandPrefs", Process.THREAD_PRIORITY_BACKGROUND);
             thread.start();
             final Handler handler = new Handler(thread.getLooper());
-            handler.post(new Runnable() {
+            Runnable loop = new Runnable() {
                 @Override
                 public void run() {
                     refresh();
-                    handler.postDelayed(this, RELOAD_INTERVAL_MS);
+                    watchChanges(handler);
+                    // while the island is being moved its real position is put back by the read after the preview
+                    // ends, so that read is not left to the slow look
+                    slowLoop = observing && loaded && !placementPreviewActive();
+                    handler.postDelayed(this, slowLoop ? SAFETY_RELOAD_MS : RELOAD_INTERVAL_MS);
                 }
-            });
+            };
+            reloadHandler = handler;
+            reloadLoop = loop;
+            handler.post(loop);
         } catch (Throwable ignored) {
             // keep the defaults
+        }
+    }
+
+    /** Whether the module app's change notice is being received (reload thread only). */
+    private static boolean observing;
+    private static volatile Handler reloadHandler;
+    private static volatile Runnable reloadLoop;
+    /** The loop is waiting the long time: it has to be brought forward to see a state that just began. */
+    private static volatile boolean slowLoop;
+
+    /** Brings the next read forward, so the loop sees a state that just began (a placement preview). */
+    private static void readSoon() {
+        Handler handler = reloadHandler;
+        Runnable loop = reloadLoop;
+        if (slowLoop && handler != null && loop != null) {
+            handler.removeCallbacks(loop);
+            handler.post(loop);
+        }
+    }
+
+    /**
+     * Reads the settings again when the module app says it wrote some, instead of looking every few seconds. Retried
+     * by the reload loop until System UI has an application context to register with.
+     */
+    private static void watchChanges(final Handler handler) {
+        if (observing) {
+            return;
+        }
+        try {
+            Object app = Class.forName("android.app.ActivityThread").getMethod("currentApplication").invoke(null);
+            if (!(app instanceof android.content.Context)) {
+                return;
+            }
+            final Runnable settle = ModuleSettings::refresh;
+            final Runnable soon = new Runnable() {
+                @Override
+                public void run() {
+                    refresh();
+                    handler.removeCallbacks(settle);
+                    handler.postDelayed(settle, CHANGE_SETTLE_MS);
+                }
+            };
+            ((android.content.Context) app).getContentResolver().registerContentObserver(SettingsProvider.CHANGED_URI, false,
+                    new android.database.ContentObserver(handler) {
+                        @Override
+                        public void onChange(boolean selfChange) {
+                            handler.removeCallbacks(soon);
+                            handler.postDelayed(soon, CHANGE_COALESCE_MS);
+                        }
+                    });
+            observing = true;
+        } catch (Throwable t) {
+            XLog.once("ModuleSettings.observer", t);
         }
     }
 
@@ -488,11 +592,29 @@ public final class ModuleSettings {
     /** The preference store the settings app writes and the provider reads: world-readable on LSPosed, private otherwise. */
     @SuppressWarnings({"deprecation", "WorldReadableFiles"})
     public static SharedPreferences openStore(android.content.Context ctx) {
+        SharedPreferences store;
         try {
-            return ctx.getSharedPreferences(FILE, android.content.Context.MODE_WORLD_READABLE);
+            store = ctx.getSharedPreferences(FILE, android.content.Context.MODE_WORLD_READABLE);
         } catch (SecurityException e) {
-            return ctx.getSharedPreferences(FILE, android.content.Context.MODE_PRIVATE);
+            store = ctx.getSharedPreferences(FILE, android.content.Context.MODE_PRIVATE);
         }
+        announceWrites(ctx, store);
+        return store;
+    }
+
+    private static final java.util.Map<SharedPreferences, SharedPreferences.OnSharedPreferenceChangeListener> NOTICES =
+            new java.util.WeakHashMap<>();
+
+    /** Whichever store the settings app ends up writing to tells System UI about each write, once per store. */
+    private static synchronized void announceWrites(android.content.Context ctx, SharedPreferences store) {
+        if (NOTICES.containsKey(store)) {
+            return;
+        }
+        final android.content.Context app = ctx.getApplicationContext() != null ? ctx.getApplicationContext() : ctx;
+        SharedPreferences.OnSharedPreferenceChangeListener notice =
+                (preferences, key) -> app.getContentResolver().notifyChange(SettingsProvider.CHANGED_URI, null);
+        NOTICES.put(store, notice);
+        store.registerOnSharedPreferenceChangeListener(notice);
     }
 
     /** Re-reads the preferences when they changed; runs on the reload thread only. */
@@ -514,9 +636,19 @@ public final class ModuleSettings {
             eventBluetooth = source.getBoolean(KEY_EVENT_BLUETOOTH, true);
             haptics = source.getBoolean(KEY_HAPTICS, true);
             lowPerformance = source.getBoolean(KEY_LOW_PERFORMANCE, false);
+            stillMusic = source.getBoolean(KEY_STILL_MUSIC, false);
+            staticWaveform = source.getBoolean(KEY_STATIC_WAVEFORM, false);
+            limitFrameRate = source.getBoolean(KEY_LIMIT_FRAME_RATE, false);
+            stillIcons = source.getBoolean(KEY_STILL_ICONS, false);
             materialStyle = readMaterialStyle(source);
             legacyAnimation = source.getBoolean(KEY_LEGACY_ANIMATION, false);
             iMode = source.getBoolean(KEY_I_MODE, false);
+            alwaysVisible = source.getBoolean(KEY_ALWAYS_VISIBLE, false);
+            notchStyle = source.getBoolean(KEY_NOTCH_STYLE, false);
+            popupSeconds = readPopupSeconds(source);
+            chargingText = source.getBoolean(KEY_CHARGING_TEXT, false);
+            swipeUpHides = source.getBoolean(KEY_SWIPE_UP_HIDES, true);
+            swipeDownOpens = source.getBoolean(KEY_SWIPE_DOWN_OPENS, true);
             pillOutlineMode = readPillOutlineMode(source);
             transitionBlurMode = readTransitionBlurMode(source);
             headsUpIsland = source.getBoolean(KEY_HEADS_UP_ISLAND, true);
@@ -571,12 +703,14 @@ public final class ModuleSettings {
             hideBatteryIcon = source.getBoolean(KEY_HIDE_BATTERY_ICON, true);
             accentCustom = source.getBoolean(KEY_ACCENT_CUSTOM, false);
             accentColor = source.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT) | 0xFF000000;
+            accentSystem = source.getBoolean(KEY_ACCENT_SYSTEM, false);
             readGlow(source);
             eventToggles = source.getBoolean(KEY_EVENT_TOGGLES, true);
             torchPill = source.getBoolean(KEY_TORCH_PILL, true);
             torchStyle = source.getInt(KEY_TORCH_STYLE, 0) == 1 ? 1 : 0;
             privacyIndicator = source.getBoolean(KEY_PRIVACY, true);
             privacyLocation = source.getBoolean(KEY_PRIVACY_LOCATION, false);
+            privacyInApp = source.getBoolean(KEY_PRIVACY_IN_APP, false);
             otpCard = source.getBoolean(KEY_OTP_CARD, true);
             otpAutoCopy = source.getBoolean(KEY_OTP_AUTO_COPY, false);
             thirdPartyCalls = source.getBoolean(KEY_THIRD_PARTY_CALLS, true);
@@ -606,9 +740,19 @@ public final class ModuleSettings {
         previewProcess = true;
         legacyAnimation = settings.getBoolean(KEY_LEGACY_ANIMATION, false);
         iMode = settings.getBoolean(KEY_I_MODE, false);
+        alwaysVisible = settings.getBoolean(KEY_ALWAYS_VISIBLE, false);
+        notchStyle = settings.getBoolean(KEY_NOTCH_STYLE, false);
+        popupSeconds = readPopupSeconds(settings);
+        chargingText = settings.getBoolean(KEY_CHARGING_TEXT, false);
+        swipeUpHides = settings.getBoolean(KEY_SWIPE_UP_HIDES, true);
+        swipeDownOpens = settings.getBoolean(KEY_SWIPE_DOWN_OPENS, true);
         pillOutlineMode = readPillOutlineMode(settings);
         transitionBlurMode = readTransitionBlurMode(settings);
         lowPerformance = settings.getBoolean(KEY_LOW_PERFORMANCE, false);
+        stillMusic = settings.getBoolean(KEY_STILL_MUSIC, false);
+        staticWaveform = settings.getBoolean(KEY_STATIC_WAVEFORM, false);
+        limitFrameRate = settings.getBoolean(KEY_LIMIT_FRAME_RATE, false);
+        stillIcons = settings.getBoolean(KEY_STILL_ICONS, false);
         materialStyle = readMaterialStyle(settings);
         torchStyle = settings.getInt(KEY_TORCH_STYLE, 0) == 1 ? 1 : 0;
         showInFullscreen = settings.getBoolean(KEY_SHOW_IN_FULLSCREEN, false);
@@ -619,6 +763,7 @@ public final class ModuleSettings {
         colorIcons = settings.getBoolean(KEY_COLOR_ICONS, false);
         accentCustom = settings.getBoolean(KEY_ACCENT_CUSTOM, false);
         accentColor = settings.getInt(KEY_ACCENT_COLOR, DEFAULT_ACCENT) | 0xFF000000;
+        accentSystem = settings.getBoolean(KEY_ACCENT_SYSTEM, false);
         compactEventIcons = settings.getBoolean(KEY_COMPACT_EVENT_ICONS, false);
         hideBatteryIcon = settings.getBoolean(KEY_HIDE_BATTERY_ICON, true);
         visualizer = settings.getBoolean(KEY_VISUALIZER, true);
@@ -626,6 +771,7 @@ public final class ModuleSettings {
         autoCollapseS = settings.getInt(KEY_AUTO_COLLAPSE_S, DEF_AUTO_COLLAPSE_S);
         eventToggles = settings.getBoolean(KEY_EVENT_TOGGLES, true);
         torchPill = settings.getBoolean(KEY_TORCH_PILL, true);
+        privacyInApp = settings.getBoolean(KEY_PRIVACY_IN_APP, false);
         readGlow(settings);
     }
 
@@ -645,10 +791,23 @@ public final class ModuleSettings {
     public static int glowStrength() { return glowStrength; }
     public static int glowMotion() { return glowMotion; }
     public static int glowColour() {
-        return glowFollowTheme ? (accentCustom ? accentColor : DEFAULT_ACCENT) : glowColour;
+        int accent = accentOverride();
+        return glowFollowTheme ? (accent != 0 ? accent : DEFAULT_ACCENT) : glowColour;
     }
 
     public static boolean lowPerformance() { ensureStarted(); return lowPerformance; }
+
+    /** Music cards without the animated glow, art flip and moving colours (low-performance mode, or just this). */
+    public static boolean stillMusicEffects() { ensureStarted(); return lowPerformance || stillMusic; }
+
+    /** A waveform that stays still, with no audio analysis for it (low-performance mode, or just this). */
+    public static boolean staticWaveform() { ensureStarted(); return lowPerformance || staticWaveform; }
+
+    /** Ambient animation at up to 30 fps and touch feedback at up to 60 fps (low-performance mode, or just this). */
+    public static boolean limitFrameRate() { ensureStarted(); return lowPerformance || limitFrameRate; }
+
+    /** Animated icons that show their settled frame (low-performance mode, or just this). */
+    public static boolean stillIcons() { ensureStarted(); return lowPerformance || stillIcons; }
     public static int readMaterialStyle(SharedPreferences source) {
         return source.getInt(KEY_MATERIAL_STYLE, MATERIAL_CLASSIC) == MATERIAL_FROSTED ? MATERIAL_FROSTED : MATERIAL_CLASSIC;
     }
@@ -698,15 +857,43 @@ public final class ModuleSettings {
     public static boolean compactEventIcons() { return compactEventIcons; }
     public static boolean hideBatteryIcon() { return hideBatteryIcon; }
     public static boolean accentCustom() { return accentCustom; }
+    public static boolean accentSystem() { return accentSystem; }
+
+    /**
+     * The colour the user wants for progress bars and ordinary buttons, or 0 for the default: the system's Material
+     * colour when that is chosen (and has been read), else the chosen custom colour.
+     */
+    public static int accentOverride() {
+        if (accentSystem) return systemAccent;
+        return accentCustom ? accentColor : 0;
+    }
+
+    /**
+     * Reads the system's accent colour (the one that follows the wallpaper) from {@code context}'s resources.
+     * It is a light tone of the system accent, which reads well on the island's dark surfaces.
+     *
+     * @return true when it changed since the last read, so the island has to be shown again
+     */
+    public static boolean refreshSystemAccent(android.content.Context context) {
+        int colour = 0;
+        try {
+            colour = context.getResources().getColor(android.R.color.system_accent1_200, null) | 0xFF000000;
+        } catch (RuntimeException unavailable) {
+            // no system colours on this build: the default accent stays
+        }
+        boolean changed = colour != systemAccent;
+        systemAccent = colour;
+        return changed;
+    }
     public static int accentColor() { return accentColor; }
 
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + "/torchStyle=" + torchStyle + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
-                + smartRules + privacyIndicator + privacyLocation + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
+        return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + "/light=" + stillMusic + staticWaveform + limitFrameRate + stillIcons + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + "/system=" + accentSystem + systemAccent + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + "/torchStyle=" + torchStyle + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
+                + smartRules + privacyIndicator + privacyLocation + privacyInApp + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
                 + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/" + headsetStay + "/hotspot=" + hotspotCard + "/unlock=" + unlockNotice + "/peekProgress=" + peekProgress + "/progressForeground=" + progressForeground + "/progressAny=" + progressAny + "/stockCharging=" + stockChargingAnimation + "/recordingInput=" + concurrentRecordingInput
-                + "/iMotion=" + iMode + "/material=" + materialStyle + "/roundness=" + customCardRoundness + "/" + cardCornerRadiusDp + "/outline=" + pillOutlineMode + "/blur=" + transitionBlurMode + "/" + appFilter.onlyListed() + appFilter.size();
+                + "/alwaysVisible=" + alwaysVisible + "/notch=" + notchStyle + "/popup=" + popupSeconds + "/chargingText=" + chargingText + "/swipeUpHides=" + swipeUpHides + "/swipeDownOpens=" + swipeDownOpens + "/iMotion=" + iMode + "/material=" + materialStyle + "/roundness=" + customCardRoundness + "/" + cardCornerRadiusDp + "/outline=" + pillOutlineMode + "/blur=" + transitionBlurMode + "/" + appFilter.onlyListed() + appFilter.size();
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
@@ -876,8 +1063,38 @@ public final class ModuleSettings {
         return privacyLocation;
     }
 
+    /** Also announce camera and microphone use by the app that is on screen (default off: it is expected there). */
+    public static boolean privacyInApp() {
+        ensureStarted();
+        return privacyInApp;
+    }
+
     /** The animations of 0.1.3 and before instead of the smoothed ones (default off). */
     public static boolean iMode() { ensureStarted(); return iMode; }
+
+    /** An empty pill stays around the camera while there is nothing to show (default off). */
+    public static boolean alwaysVisible() { ensureStarted(); return alwaysVisible; }
+    /** The compact pill drawn as a notch that hangs from the top edge of the screen (for phones with a notch). */
+    public static boolean notchStyle() { ensureStarted(); return notchStyle; }
+
+    static int readPopupSeconds(SharedPreferences source) {
+        try {
+            return Math.max(3, Math.min(6, source.getInt(KEY_POPUP_SECONDS, POPUP_SECONDS_DEFAULT)));
+        } catch (ClassCastException wrongType) {
+            return POPUP_SECONDS_DEFAULT;
+        }
+    }
+
+    /** The least time a short popup (charging, mode changes, quick settings, an unlock) stays on the island. */
+    public static long popupMillis() { ensureStarted(); return popupSeconds * 1000L; }
+
+    /** The charging details card as lines of text (live reading first, then the statistics) instead of the gauge. */
+    public static boolean chargingTextLines() { ensureStarted(); return chargingText; }
+
+    /** A swipe up on the small pill hides it (default on). */
+    public static boolean swipeUpHides() { ensureStarted(); return swipeUpHides; }
+    /** A swipe down on the small pill opens its cards instead of pulling the notification panel (default on). */
+    public static boolean swipeDownOpens() { ensureStarted(); return swipeDownOpens; }
 
     public static boolean legacyAnimation() {
         ensureStarted();

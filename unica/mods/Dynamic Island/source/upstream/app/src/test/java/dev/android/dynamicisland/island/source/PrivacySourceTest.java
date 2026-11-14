@@ -84,6 +84,25 @@ public class PrivacySourceTest {
         assertEquals(1, out.size());
     }
 
+    @Test
+    public void theAppOnScreenIsAnnouncedOnlyWhenTheOptionIsOn() {
+        android.content.SharedPreferences prefs = RuntimeEnvironment.getApplication().getSharedPreferences("privacy-in-app", 0);
+        try {
+            for (boolean on : new boolean[] {false, true}) {
+                prefs.edit().clear().putBoolean(dev.android.dynamicisland.settings.ModuleSettings.KEY_PRIVACY_IN_APP, on).commit();
+                dev.android.dynamicisland.settings.ModuleSettings.configurePreview(prefs);
+                PrivacySource s = source();
+                List<IslandItem> out = new ArrayList<>();
+                s.record(AppOpsManager.OPSTR_RECORD_AUDIO, 10400, "com.example.video", true);
+                s.collect(out, "com.example.video");
+                assertEquals("option " + (on ? "on" : "off"), on ? 1 : 0, out.size());
+            }
+        } finally {
+            prefs.edit().clear().commit();
+            dev.android.dynamicisland.settings.ModuleSettings.configurePreview(prefs);
+        }
+    }
+
     private void render(String name, IslandItem item) throws Exception {
         Application app = RuntimeEnvironment.getApplication();
         IslandView view = new IslandView(app, null);

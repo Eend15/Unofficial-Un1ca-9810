@@ -16,6 +16,8 @@ import java.util.Set;
 public final class SettingsProvider extends ContentProvider {
     public static final String AUTHORITY = "dev.android.dynamicisland.settings";
     public static final String METHOD_ALL = "all";
+    /** Notified whenever a setting is written, so that System UI reads the settings then and not on a timer. */
+    public static final Uri CHANGED_URI = Uri.parse("content://" + AUTHORITY + "/changed");
 
     @Override
     public boolean onCreate() {

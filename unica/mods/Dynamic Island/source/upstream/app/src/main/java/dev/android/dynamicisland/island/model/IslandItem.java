@@ -16,7 +16,7 @@ import java.util.function.LongConsumer;
  *
  * <p>The sources in {@code island.source} create and fill items (each source only sets the fields
  * that make sense for it, everything else keeps its default), the controller collects them into the
- * list sorted by {@link Kind#priority}, and the views in {@code island.view} only read them.
+ * list sorted by {@link #priority()}, and the views in {@code island.view} only read them.
  * It is a plain data holder with public fields; items are replaced rather than mutated by the views.
  */
 public final class IslandItem {
@@ -150,6 +150,9 @@ public final class IslandItem {
     public boolean chronoCountDown;
     /** Stopwatch: show hundredths of a second. */
     public boolean chronoMillis;
+    /** The clock text last made for this item and the second it was made for, so a frame within that second reuses it. */
+    public long chronoShownSecond = -1L;
+    public String chronoShownText;
     /** 0 none, 1 chronometer replaces the primary line, 2 it replaces the secondary line. */
     public int chronoPosition;
 
@@ -256,6 +259,8 @@ public final class IslandItem {
         public boolean active;
         /** Drawn in the destructive colour (hang up, decline). */
         public final boolean destructive;
+        /** Drawn in the affirmative colour (answer a call). */
+        public boolean affirmative;
         /** One of the {@code Glyphs} ids to draw instead of {@link #icon}; 0 = none. */
         public int glyph;
         public final Drawable icon;
@@ -278,12 +283,46 @@ public final class IslandItem {
         this.key = key;
     }
 
+    /**
+     * A popup that goes away by itself after a few seconds (charging, a mode change, an unlock, a headset, a peek). It
+     * comes before everything else on the island, calls included, and what was on the island returns when it is gone.
+     */
+    public boolean transientPopup;
+
+    /** The pill takes the widest size it may have, e.g. to cover an animation that plays under it (the charging popup). */
+    public boolean fullWidth;
+
     public boolean hasTeams() {
         return leftImage != null && rightImage != null;
     }
 
+    /**
+     * Whether a score text says anything: a lone dash or colon (what a match shows before it starts) is only
+     * a separator, so it has no letter or digit.
+     */
+    public static boolean hasContent(CharSequence text) {
+        if (text == null) {
+            return false;
+        }
+        for (int i = 0; i < text.length(); ) {
+            int cp = Character.codePointAt(text, i);
+            if (Character.isLetterOrDigit(cp)) {
+                return true;
+            }
+            i += Character.charCount(cp);
+        }
+        return false;
+    }
+
+    /** Short feedback has its own tier: charging, other system feedback, notification peeks, ongoing activities. */
+    public int popupPriority() {
+        if (!transientPopup) return 0;
+        if ("event:charging".equals(key)) return 3;
+        return kind == Kind.EVENT ? 2 : 1;
+    }
+
     public int priority() {
-        return kind.priority;
+        return popupPriority() * 1000 + kind.priority;
     }
 
     /** Estimated playback position in ms at {@code nowElapsed}, or -1 when the position is unknown. */
@@ -312,7 +351,7 @@ public final class IslandItem {
 
     /** True when the compact pill would look the same for both items, so it need not animate a swap. */
     public boolean sameCompactLook(IslandItem o) {
-        return o != null && Objects.equals(key, o.key) && trailing == o.trailing && (accent == o.accent || (isMedia && o.isMedia)) && iconIsImage == o.iconIsImage && pulsingDot == o.pulsingDot && pillColor == o.pillColor && customAccent == o.customAccent && hasTeams() == o.hasTeams() && voiceRecording == o.voiceRecording && voiceRecordingPaused == o.voiceRecordingPaused;
+        return o != null && Objects.equals(key, o.key) && trailing == o.trailing && (accent == o.accent || (isMedia && o.isMedia)) && iconIsImage == o.iconIsImage && pulsingDot == o.pulsingDot && pillColor == o.pillColor && customAccent == o.customAccent && hasTeams() == o.hasTeams() && fullWidth == o.fullWidth && voiceRecording == o.voiceRecording && voiceRecordingPaused == o.voiceRecordingPaused;
     }
 
     @Override

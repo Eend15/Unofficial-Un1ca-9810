@@ -148,6 +148,7 @@ public final class SettingsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        ModuleSettings.refreshSystemAccent(this); // the previews can show the system colour
         if (changeFeedback != null) changeFeedback.start();
         if (!stack.isEmpty()) {
             render();
@@ -264,6 +265,7 @@ public final class SettingsActivity extends Activity {
             case EVENTS:builder=this::eventsPage;break;
             case APPS:builder=this::appsPage;break;
             case BEHAVIOR:builder=this::behaviorPage;break;
+            case PERFORMANCE:builder=this::performancePage;break;
             case ADVANCED:builder=this::advancedPage;break;
             case ABOUT:builder=this::aboutPage;break;
             case DIAGNOSTICS:builder=this::diagnosticsPage;break;
@@ -339,6 +341,7 @@ public final class SettingsActivity extends Activity {
         ui.linkRow(main, getString(R.string.ui_notifications), getString(R.string.ui_notifications_summary), () -> open(this::notificationsPage));
         ui.linkRow(main, getString(R.string.ui_appearance), getString(R.string.ui_appearance_summary), () -> open(this::displayPage));
         ui.linkRow(main, getString(R.string.ui_behavior), getString(R.string.ui_behavior_summary), () -> open(this::behaviorPage));
+        ui.linkRow(main, getString(R.string.ui_performance), getString(R.string.ui_performance_summary), () -> open(this::performancePage));
         ui.linkRow(main, getString(R.string.ui_advanced), getString(R.string.ui_advanced_summary), () -> open(this::advancedPage));
         ui.linkRow(main, getString(R.string.ui_about), getString(R.string.ui_about_summary), () -> open(this::aboutPage));
         LinearLayout restart = ui.card(page);
@@ -362,6 +365,8 @@ public final class SettingsActivity extends Activity {
         });
     }
 
+    static final String REPOSITORY_URL = "https://github.com/sampple-korea/dynamicisland";
+
     private void aboutPage() {
         subPage(getString(R.string.ui_about));
         LinearLayout information = ui.card(page);
@@ -370,7 +375,10 @@ public final class SettingsActivity extends Activity {
             recommendations.showAgain();
             while(stack.size()>1) stack.pop();stack.peek().scrollY=0;render();
         });
-        ui.actionRow(information, getString(R.string.hub_author), getString(R.string.hub_author_text), null);
+        ui.actionRow(information, getString(R.string.hub_author), getString(R.string.hub_author_text), () -> {
+            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(REPOSITORY_URL))); }
+            catch (RuntimeException noBrowser) { }
+        });
         ui.details(page, getString(R.string.hub_credits), getString(R.string.hub_credits_text));
     }
 
@@ -459,19 +467,19 @@ public final class SettingsActivity extends Activity {
     private void behaviorPage() {
         subPage(getString(R.string.ui_behavior));
         LinearLayout visibility = ui.card(page);
+        toggle(visibility, R.string.always_visible_island, R.string.always_visible_island_desc,
+                ModuleSettings.KEY_ALWAYS_VISIBLE, false);
+        toggle(visibility, R.string.swipe_up_hides, R.string.swipe_up_hides_desc,
+                ModuleSettings.KEY_SWIPE_UP_HIDES, true);
+        toggle(visibility, R.string.swipe_down_opens, R.string.swipe_down_opens_desc,
+                ModuleSettings.KEY_SWIPE_DOWN_OPENS, true);
         toggle(visibility, R.string.show_in_fullscreen, R.string.show_in_fullscreen_desc,
                 ModuleSettings.KEY_SHOW_IN_FULLSCREEN, false);
-        boolean low = flag(ModuleSettings.KEY_LOW_PERFORMANCE, false);
-        LinearLayout performance = ui.card(page);
-        Switch lowMode = toggle(performance, R.string.low_performance_mode, R.string.low_performance_desc, ModuleSettings.KEY_LOW_PERFORMANCE, false);
-        OneUi.listen(lowMode, on -> refresh());
-        ui.linkRow(performance, getString(R.string.low_performance_details_title), getString(R.string.ui_details), () ->
-                new AlertDialog.Builder(this).setTitle(R.string.low_performance_mode).setMessage(R.string.low_performance_details)
-                        .setPositiveButton(android.R.string.ok, null).show());
+        boolean still = flag(ModuleSettings.KEY_LOW_PERFORMANCE, false) || flag(ModuleSettings.KEY_STATIC_WAVEFORM, false);
         LinearLayout motion = ui.card(page);
         toggle(motion, R.string.setting_haptics, R.string.setting_haptics_desc, ModuleSettings.KEY_HAPTICS, true);
         toggle(motion, R.string.setting_shade_media, R.string.setting_shade_media_desc, ModuleSettings.KEY_SHADE_MEDIA, true);
-        if (low) {
+        if (still) {
             ui.actionRow(motion, getString(R.string.ui_wave_motion), getString(R.string.low_performance_static_wave), null);
         } else {
             choice(motion, R.string.ui_wave_motion, new int[]{R.string.ui_wave_audio, R.string.ui_wave_demo},
@@ -486,6 +494,31 @@ public final class SettingsActivity extends Activity {
         dependent(auto, (View) automatic.getParent().getParent());
         secondsRow(timing, R.string.setting_auto_collapse, ModuleSettings.KEY_AUTO_COLLAPSE_S, ModuleSettings.DEF_AUTO_COLLAPSE_S, AUTO_COLLAPSE_CHOICES);
         secondsRow(timing, R.string.setting_paused_timeout, ModuleSettings.KEY_PAUSED_TIMEOUT_S, ModuleSettings.DEF_PAUSED_TIMEOUT_S, PAUSED_CHOICES);
+    }
+
+    /** Low-performance mode as a whole, and the same savings one effect at a time. */
+    private void performancePage() {
+        subPage(getString(R.string.ui_performance));
+        boolean low = flag(ModuleSettings.KEY_LOW_PERFORMANCE, false);
+        LinearLayout performance = ui.card(page);
+        Switch lowMode = toggle(performance, R.string.low_performance_mode, R.string.low_performance_desc, ModuleSettings.KEY_LOW_PERFORMANCE, false);
+        OneUi.listen(lowMode, on -> refresh());
+        ui.linkRow(performance, getString(R.string.low_performance_details_title), getString(R.string.ui_details), () ->
+                new AlertDialog.Builder(this).setTitle(R.string.low_performance_mode).setMessage(R.string.low_performance_details)
+                        .setPositiveButton(android.R.string.ok, null).show());
+        ui.category(page, getString(R.string.perf_lighter), getString(R.string.perf_lighter_desc));
+        LinearLayout lighter = ui.card(page);
+        if (low) {
+            ui.actionRow(lighter, getString(R.string.perf_lighter), getString(R.string.perf_covered), null);
+        } else {
+            toggle(lighter, R.string.perf_still_music, R.string.perf_still_music_desc, ModuleSettings.KEY_STILL_MUSIC, false);
+            toggle(lighter, R.string.perf_static_waveform, R.string.perf_static_waveform_desc, ModuleSettings.KEY_STATIC_WAVEFORM, false);
+            toggle(lighter, R.string.perf_limit_frame_rate, R.string.perf_limit_frame_rate_desc, ModuleSettings.KEY_LIMIT_FRAME_RATE, false);
+            toggle(lighter, R.string.perf_still_icons, R.string.perf_still_icons_desc, ModuleSettings.KEY_STILL_ICONS, false);
+        }
+        LinearLayout related = ui.card(page);
+        ui.linkRow(related, getString(R.string.glow_title), getString(R.string.perf_glow_link), () -> openSetting(SettingsSearchCatalog.Route.GLOW, R.string.glow_title, 0));
+        ui.linkRow(related, getString(R.string.material_style), getString(R.string.perf_material_link), () -> open(this::displayPage));
     }
 
     private void notificationsPage() {
@@ -520,14 +553,18 @@ public final class SettingsActivity extends Activity {
 
     private void eventsPage() {
         subPage(getString(R.string.hub_events));
+        radios(R.string.popup_time, R.string.desc_popup_time, new int[]{R.string.popup_time_3, R.string.popup_time_4, R.string.popup_time_5, R.string.popup_time_6},
+                new int[]{0, OneUi.TAG_DEFAULT, 0, 0}, prefs.getInt(ModuleSettings.KEY_POPUP_SECONDS, ModuleSettings.POPUP_SECONDS_DEFAULT) - 3, LivePreview.RING,
+                selected -> prefs.edit().putInt(ModuleSettings.KEY_POPUP_SECONDS, selected + 3).apply());
         ui.category(page, getString(R.string.group_events_power), getString(R.string.desc_events_power));
         LinearLayout device = ui.card(page);
         Switch charging = toggle(device, R.string.setting_event_charging, R.string.setting_event_charging_desc, ModuleSettings.KEY_EVENT_CHARGING, true);
         Switch chargingInfo = toggle(device, R.string.setting_charging_info, R.string.setting_charging_info_desc, ModuleSettings.KEY_CHARGING_INFO, false);
         Switch chargingStats = toggle(device, R.string.setting_charging_stats, R.string.setting_charging_stats_desc, ModuleSettings.KEY_CHARGING_STATS, false);
+        Switch chargingText = toggle(device, R.string.setting_charging_text, R.string.setting_charging_text_desc, ModuleSettings.KEY_CHARGING_TEXT, false);
         Runnable chargingDependencies = () -> {
             OneUi.setDependentsEnabled(charging.isChecked(), OneUi.rowOf(chargingInfo));
-            OneUi.setDependentsEnabled(charging.isChecked() && chargingInfo.isChecked(), OneUi.rowOf(chargingStats));
+            OneUi.setDependentsEnabled(charging.isChecked() && chargingInfo.isChecked(), OneUi.rowOf(chargingStats), OneUi.rowOf(chargingText));
         };
         OneUi.listen(charging, on -> chargingDependencies.run());
         OneUi.listen(chargingInfo, on -> chargingDependencies.run());
@@ -551,7 +588,9 @@ public final class SettingsActivity extends Activity {
         LinearLayout privacy = ui.card(page);
         Switch indicator = toggle(privacy, R.string.setting_privacy, R.string.setting_privacy_desc, ModuleSettings.KEY_PRIVACY, true);
         Switch location = toggle(privacy, R.string.setting_privacy_location, R.string.setting_privacy_location_desc, ModuleSettings.KEY_PRIVACY_LOCATION, false);
+        Switch inApp = toggle(privacy, R.string.setting_privacy_in_app, R.string.setting_privacy_in_app_desc, ModuleSettings.KEY_PRIVACY_IN_APP, false);
         dependent(indicator, OneUi.rowOf(location));
+        dependent(indicator, OneUi.rowOf(inApp));
     }
 
     private void advancedPage() {
@@ -562,6 +601,28 @@ public final class SettingsActivity extends Activity {
         ui.category(page, getString(R.string.hub_tools), getString(R.string.desc_tools));
         LinearLayout tools = ui.card(page);
         ui.linkRow(tools, getString(R.string.diagnostics_title), getString(R.string.diagnostics_sum), () -> open(this::diagnosticsPage));
+        ui.actionRow(tools, getString(R.string.reset_all), getString(R.string.reset_all_desc), this::confirmReset);
+    }
+
+    /**
+     * Every setting lives in the one preference store this app writes (options, colours, position, app lists and the
+     * rules you made), so emptying it returns all of them to their original values. The module reads the empty store
+     * the same way it reads any change. Clearing the app's data does not do this on LSPosed: the store is not in it.
+     */
+    private void confirmReset() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.reset_all)
+                .setMessage(R.string.reset_all_confirm)
+                .setPositiveButton(R.string.reset_all_button, (dialog, which) -> resetAllSettings())
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    void resetAllSettings() {
+        prefs.edit().clear().apply();
+        ModuleSettings.configurePreview(prefs);
+        Toast.makeText(this, R.string.reset_all_done, Toast.LENGTH_LONG).show();
+        refresh();
     }
 
     // ---------------------------------------------------------------- timing choices

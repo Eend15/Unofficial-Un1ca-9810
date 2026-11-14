@@ -1820,7 +1820,12 @@ _EXYNOS9810_PATCH_DEBLOATED_FLOATING_FEATURES()
         _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_LCD_SUPPORT_EXTRA_BRIGHTNESS" "TRUE"
         _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_AVATAR" "FALSE"
         _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_CAMERA_SUPPORT_DOWNLOAD_EFFECT" "FALSE"
-        _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_QRCODE_INTERVAL" "500"
+        _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_QRCODE_INTERVAL" "250"
+        _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_PERSONALIZATION" "NaturalBright"
+        _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_LLHDR_PROCESSING_TIMEOUT" "2000"
+        _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_MEMORY_USAGE_LEVEL" "3"
+        _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_GALLERY_CONFIG_COLOR_ENGINE_VERSION" "V2"
+        _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_GALLERY_SUPPORT_LOG_CORRECT_COLOR" "TRUE"
         # Smart Suggestions reads this; the S22 source and the earlier
         # Exynos9810 port both ship TRUE.
         _EXYNOS9810_SET_FLOATING_FEATURE "$FILE" "SEC_FLOATING_FEATURE_FRAMEWORK_SUPPORT_SMART_SUGGESTIONS_WIDGET" "TRUE"
@@ -4151,7 +4156,9 @@ _EXYNOS9810_PATCH_EXYNOS9810_INIT_FS()
 
     LOG "- Patching Exynos9810 init fs flow"
 
-    if [ "${EXYNOS9810_ENABLE_METADATA_BIND:-false}" = "true" ] && ! grep -q "UN1CA Exynos9810 metadata bind" "$INIT_RC"; then
+    # apexd (Google Play system updates), vold and bootstat need a writable /metadata;
+    # the DS-ACK kernel supports f2fs checkpoint=disable. Verified on S9+ (November13).
+    if [ "${EXYNOS9810_ENABLE_METADATA_BIND:-true}" = "true" ] && ! grep -q "UN1CA Exynos9810 metadata bind" "$INIT_RC"; then
         sed -i '/mount_all \/vendor\/etc\/fstab\.${ro.hardware} --early/a\
 \
     # UN1CA Exynos9810 metadata bind mount for devices without a metadata partition.\
@@ -4482,6 +4489,11 @@ _EXYNOS9810_COPY_ODM "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/odm"
 _EXYNOS9810_COPY_PRODUCT "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/product"
 
 _EXYNOS9810_COPY_SYSTEM "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$EXYNOS9810_DEVICE/system"
+if [ -f "$SRC_DIR/target/$EXYNOS9810_DEVICE/camera/camera-feature.xml" ]; then
+    _EXYNOS9810_COPY_FILE "$SRC_DIR/target/$EXYNOS9810_DEVICE/camera/camera-feature.xml" \
+        "$WORK_DIR/system/system/cameradata/camera-feature.xml" \
+        "system" "system/cameradata/camera-feature.xml" "/system/cameradata/camera-feature.xml" "u:object_r:system_file:s0"
+fi
 _EXYNOS9810_COPY_VENDOR "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$EXYNOS9810_DEVICE/vendor"
 _EXYNOS9810_COPY_PRODUCT "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$EXYNOS9810_DEVICE/product"
 _EXYNOS9810_CLEAN_PRODUCT_LAYOUT

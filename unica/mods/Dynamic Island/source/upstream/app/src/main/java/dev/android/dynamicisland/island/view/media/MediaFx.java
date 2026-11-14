@@ -153,7 +153,7 @@ public final class MediaFx {
      * both directions. Returns null when the art is missing or cannot be processed.
      */
     private Drawable makeBlur(Bitmap art) {
-        if (art == null || ModuleSettings.lowPerformance()) {
+        if (art == null || ModuleSettings.stillMusicEffects()) {
             return null;
         }
         try {
@@ -214,13 +214,13 @@ public final class MediaFx {
 
     /** The glow accent, cross-fading to the item's latest accent colour. */
     public int accent(long now) {
-        if (ModuleSettings.lowPerformance()) return accentTo;
+        if (ModuleSettings.stillMusicEffects()) return accentTo;
         return Colors.blend(accentFrom, accentTo, IslandView.easeInOut((now - accentStart) / ACCENT_FADE_MS));
     }
 
     /** Current waveform colour at a clamped horizontal position (0..1), without allocating a palette. */
     public int waveformColorAt(float position, long now) {
-        return waveformPalette.colorAt(position, ModuleSettings.lowPerformance() ? now + IslandView.FX_COLOR_MS : now);
+        return waveformPalette.colorAt(position, ModuleSettings.stillMusicEffects() ? now + IslandView.FX_COLOR_MS : now);
     }
 
     /**
@@ -234,7 +234,7 @@ public final class MediaFx {
 
     /** Whether something is still easing, so the view must keep redrawing. */
     public boolean animating(long now) {
-        if (ModuleSettings.lowPerformance()) return false;
+        if (ModuleSettings.stillMusicEffects()) return false;
         return speed.running(now) || glow.running(now) || waveformPalette.running(now)
                 || now - accentStart < IslandView.FX_COLOR_MS || now - flipStart < IslandView.FLIP_MS;
     }
@@ -248,7 +248,7 @@ public final class MediaFx {
         lastFrameNanos = frame;
         lastAdvance = now;
         lastDt = dt;
-        if (ModuleSettings.lowPerformance()) return;
+        if (ModuleSettings.stillMusicEffects()) return;
         float speedFactor = speed.value(now);
         for (int i = 0; i < 3; i++) {
             phase[i] = phase[i] + (IslandView.GLOW_RATE[i] * dt * speedFactor);
@@ -264,7 +264,7 @@ public final class MediaFx {
 
     /** Draws the glow into the card rectangle at ({@code x}, {@code y}) of size {@code w} x {@code h}. */
     public void drawGlow(Canvas c, float x, float y, float w, float h, float alpha, long now) {
-        if (ModuleSettings.lowPerformance()) {
+        if (ModuleSettings.stillMusicEffects()) {
             basePaint.setShader(null);
             basePaint.setColor(Colors.withAlpha(accentTo, alpha * .16f));
             c.drawRect(x, y, x + w, y + h, basePaint);
@@ -354,7 +354,7 @@ public final class MediaFx {
      * the vertical axis and is replaced halfway by the new one, each with its blurred ghost fading in and out.
      */
     public void drawArt(Canvas c, float left, float top, float size, float alpha, float corner, long now) {
-        if (ModuleSettings.lowPerformance()) {
+        if (ModuleSettings.stillMusicEffects()) {
             if (artCur != null) owner.drawDrawable(c, artCur, true, 0, left, top, size, alpha, corner);
             return;
         }

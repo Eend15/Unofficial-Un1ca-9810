@@ -87,6 +87,12 @@ public final class OaSource {
 
     /** Shares the same foreground snapshot as the media and ordinary-notification sources. */
     public void collect(List<IslandItem> out, Set<String> hiddenByForeground, Collection<String> packages, String foreground) {
+        collect(out, hiddenByForeground, packages, foreground, false);
+    }
+
+    /** {@code foregroundConfirmed}: the foreground package comes from a fresh task snapshot, not the vendor's cache. */
+    public void collect(List<IslandItem> out, Set<String> hiddenByForeground, Collection<String> packages, String foreground,
+            boolean foregroundConfirmed) {
         if (!reader.available()) {
             return;
         }
@@ -95,7 +101,7 @@ public final class OaSource {
         for (Object data : reader.activities()) {
             order = collectOne(data, order, out, foreground, pip, hiddenByForeground, packages);
         }
-        calls.collect(callController, out, packages, hiddenByForeground);
+        calls.collect(callController, out, packages, hiddenByForeground, foreground, foregroundConfirmed);
         cards.pruneStopwatches(out);
     }
 

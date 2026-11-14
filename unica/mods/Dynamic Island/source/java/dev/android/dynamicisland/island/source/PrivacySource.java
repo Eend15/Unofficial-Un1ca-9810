@@ -195,8 +195,8 @@ public final class PrivacySource {
             if (isLocation && !location) {
                 continue;
             }
-            // sensor use by the app on screen is expected: only surface what happens elsewhere
-            if (use.pkg.equals(foregroundPackage)) {
+            // sensor use by the app on screen is expected: only surface what happens elsewhere (unless asked to)
+            if (use.pkg.equals(foregroundPackage) && !ModuleSettings.privacyInApp()) {
                 continue;
             }
             cam |= AppOpsManager.OPSTR_CAMERA.equals(use.op);

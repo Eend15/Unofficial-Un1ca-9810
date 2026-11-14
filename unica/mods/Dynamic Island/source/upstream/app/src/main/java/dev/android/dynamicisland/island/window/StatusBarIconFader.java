@@ -61,6 +61,15 @@ public final class StatusBarIconFader {
     /** View whose layout passes drive the fader: the bar's contents container if there is one. */
     private View watched;
     private boolean islandActive;
+    /** The island fills the whole status bar: hide every icon in its row, push nothing. */
+    private boolean takesWholeBar;
+    /**
+     * The bar's contents container while the island fills the bar: it is faded as one, so that whatever System UI
+     * draws in it (the battery with its own charging effect included) goes with the icons we know by name.
+     */
+    private View contentsView;
+    private IconAlphaFade contentsFade;
+    private boolean contentsHidden;
     private boolean mobileLogged;
     /** The candidate list must be rebuilt before the next {@link #apply()}. */
     private boolean dirty = true;
@@ -84,6 +93,9 @@ public final class StatusBarIconFader {
         mobileLogged = false;
         View contents = find(phoneStatusBarView, "status_bar_contents");
         watched = contents != null ? contents : phoneStatusBarView;
+        contentsView = contents;
+        dev.android.dynamicisland.xposed.Diagnostics.fact("status bar contents container", contents != null
+                ? "found " + contents.getClass().getSimpleName() : "missing: a wide popup cannot hide the status bar");
         watched.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
         dirty = true;
     }
@@ -109,9 +121,18 @@ public final class StatusBarIconFader {
      * @param active   whether the island is currently shown (inactive = restore all icons)
      */
     public void update(RectF coverage, boolean active) {
-        if (!active && !islandActive && !dirty) {
+        update(coverage, active, false);
+    }
+
+    /**
+     * Same, with {@code wholeBar}: the island fills the status bar (a full-width popup), so every icon in its row is
+     * hidden and none is pushed aside.
+     */
+    public void update(RectF coverage, boolean active, boolean wholeBar) {
+        if (!active && !islandActive && !dirty && !takesWholeBar) {
             return;
         }
+        takesWholeBar = active && wholeBar;
         islandActive = active;
         if (active) {
             island.set(coverage);
@@ -122,6 +143,13 @@ public final class StatusBarIconFader {
     /** Cancels every running fade and shows all icons again. */
     void resetAll() {
         restoreRow();
+        if (contentsFade != null) {
+            contentsFade.cancel();
+            contentsFade = null;
+        }
+        if (contentsView != null) {
+            contentsView.setTransitionAlpha(1.0f);
+        }
         for (Map.Entry<View, IconAlphaFade> entry : fades.entrySet()) {
             entry.getValue().cancel();
             entry.getKey().setTransitionAlpha(1.0f);
@@ -159,9 +187,30 @@ public final class StatusBarIconFader {
             for (View candidate : candidates) {
                 updateCandidate(candidate);
             }
+            updateContents();
         } catch (Throwable t) {
             // runs from a global layout listener: an exception here would take System UI down
             XLog.once("StatusBarIconFader.apply", t);
+        }
+    }
+
+    /** While the island fills the bar the whole contents container fades out, and comes back with it. */
+    private void updateContents() {
+        View contents = contentsView;
+        if (contents == null || !contents.isAttachedToWindow()) {
+            return;
+        }
+        boolean hide = islandActive && takesWholeBar;
+        if (contentsFade == null) {
+            if (!hide) {
+                return; // never hidden by us: its alpha is System UI's own
+            }
+            contentsFade = new IconAlphaFade(contents);
+        }
+        contentsFade.animateTo(hide ? 0.0f : 1.0f);
+        if (hide != contentsHidden) {
+            contentsHidden = hide;
+            dev.android.dynamicisland.xposed.Diagnostics.event(hide ? "status bar contents hidden for a wide popup" : "status bar contents restored");
         }
     }
 
@@ -183,7 +232,7 @@ public final class StatusBarIconFader {
         float baseRight = baseLeft + contentWidth(row);
         float target = 0.0f;
         boolean sharesRows = islandActive && screenPos[1] < island.bottom && screenPos[1] + row.getHeight() > island.top;
-        if (sharesRows && island.right + margin > baseLeft && island.left - margin < baseRight && baseRight > baseLeft) {
+        if (!takesWholeBar && sharesRows && island.right + margin > baseLeft && island.left - margin < baseRight && baseRight > baseLeft) {
             target = island.right + margin - baseLeft;
         }
         if (target != pushTarget) {
@@ -238,7 +287,9 @@ public final class StatusBarIconFader {
             boolean inPushedRow = icon.getParent() == pushedRow;
             boolean sharesRows = iconBounds.bottom > island.top && iconBounds.top < island.bottom;
             dateX = dateStart(icon);
-            if (dateX > 0.0f) {
+            if (takesWholeBar && sharesRows) {
+                covered = true; // a full-width popup: the whole row is hidden, clock and date included
+            } else if (dateX > 0.0f) {
                 // clock with a date: either the date part is covered, or the island sits over the time part
                 float splitScreenX = iconBounds.left + icon.getScaleX() * dateX;
                 ClockDateEraser eraser = dateErasers.get(icon);

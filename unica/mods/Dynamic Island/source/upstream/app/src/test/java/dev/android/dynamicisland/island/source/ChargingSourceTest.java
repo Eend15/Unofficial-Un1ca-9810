@@ -85,10 +85,111 @@ public class ChargingSourceTest {
         cards.clear(); source.collect(cards); assertTrue(cards.isEmpty());
     }
 
+    @Test public void aPhoneThatReportsZeroCurrentWhileChargingGetsItFromTheChargeCounter() {
+        Application app = RuntimeEnvironment.getApplication();
+        SharedPreferences prefs = ModuleSettings.openStore(app);
+        prefs.edit().putBoolean(ModuleSettings.KEY_CHARGING_INFO, true).apply();
+        ModuleSettings.configurePreview(prefs);
+        shadowOf(app.getSystemService(PowerManager.class)).setIsInteractive(true);
+        org.robolectric.shadows.ShadowBatteryManager manager = shadowOf(app.getSystemService(BatteryManager.class));
+        manager.setIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW, 0);
+        long counter = 1_000_000;
+        manager.setLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER, counter);
+        ChargingSource source = new ChargingSource(app, new Handler(Looper.getMainLooper()), () -> { });
+        source.syncSettings();
+        app.sendBroadcast(battery(1));
+        shadowOf(Looper.getMainLooper()).idle();
+        ArrayList<IslandItem> cards = new ArrayList<>();
+        source.collect(cards);
+        assertEquals("nothing is known yet: no made-up 0 W", "50%", cards.get(0).trailingText.toString());
+        assertFalse(cards.get(0).subtitle.toString().contains("0 mA"));
+
+        for (int i = 0; i < 4; i++) { // 1.2 A, read every five seconds
+            counter += 1_667;
+            manager.setLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER, counter);
+            shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(5));
+        }
+        cards.clear();
+        source.collect(cards);
+        assertEquals("4.0 V at about 1.2 A", "5W", cards.get(0).trailingText.toString());
+        assertTrue(cards.get(0).subtitle.toString(), cards.get(0).subtitle.toString().matches("(?s).*1[12]\\d\\d mA.*"));
+
+        manager.setIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW, -900_000);
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(5));
+        cards.clear();
+        source.collect(cards);
+        assertEquals("a real reading wins: 0.9 A at 4.0 V", "4W", cards.get(0).trailingText.toString());
+    }
+
+    private ArrayList<IslandItem> collect(SharedPreferences prefs, boolean stats, boolean text, int currentMicro) {
+        Application app = RuntimeEnvironment.getApplication();
+        prefs.edit().clear().putBoolean(ModuleSettings.KEY_CHARGING_INFO, true).putBoolean(ModuleSettings.KEY_CHARGING_STATS, stats)
+                .putBoolean(ModuleSettings.KEY_CHARGING_TEXT, text).apply();
+        ModuleSettings.configurePreview(prefs);
+        shadowOf(app.getSystemService(PowerManager.class)).setIsInteractive(true);
+        org.robolectric.shadows.ShadowBatteryManager manager = shadowOf(app.getSystemService(BatteryManager.class));
+        manager.setIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW, currentMicro);
+        manager.setLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER, 1_000_000);
+        ChargingSource source = new ChargingSource(app, new Handler(Looper.getMainLooper()), () -> { });
+        source.syncSettings();
+        app.sendBroadcast(battery(1));
+        shadowOf(Looper.getMainLooper()).idle();
+        ArrayList<IslandItem> cards = new ArrayList<>();
+        source.collect(cards);
+        return cards;
+    }
+
+    @Test public void theChargingCardCanBeLinesOfTextInsteadOfTheGauge() {
+        SharedPreferences prefs = ModuleSettings.openStore(RuntimeEnvironment.getApplication());
+        try {
+            IslandItem gauge = collect(prefs, true, false, 1_000_000).get(0);
+            assertEquals("the gauge is the default", IslandItem.EventLayout.BATTERY, gauge.eventLayout);
+            assertEquals(50, gauge.batteryPercent);
+            assertNotNull(gauge.subtitle);
+            assertFalse(gauge.subtitle.toString().startsWith("Now"));
+
+            IslandItem lines = collect(prefs, true, true, 1_000_000).get(0);
+            assertEquals(IslandItem.EventLayout.DEFAULT, lines.eventLayout);
+            assertNull("the live reading moves into the text block", lines.subtitle);
+            String block = lines.description.toString();
+            assertTrue(block, block.startsWith("Now: 1000 mA (4.0 W) \u2022 31.0\u00b0\n"));
+            String[] rows = block.split("\n");
+            assertEquals(block, 3, rows.length);
+            assertTrue(rows[1], rows[1].matches("Screen On: \\d+s \u2022 (\\d+%|\u2014) \\(\\d+ mAh\\)"));
+            assertTrue(rows[2], rows[2].matches("Screen Off: \\d+s \u2022 (\\d+%|\u2014) \\(\\d+ mAh\\)"));
+            assertTrue("the gauge card keeps its own wording", gauge.description.toString().startsWith("Screen on: "));
+            assertEquals("the pill shows the same power as before", gauge.trailingText.toString(), lines.trailingText.toString());
+            assertEquals(gauge.title.toString(), lines.title.toString());
+
+            IslandItem noStats = collect(prefs, false, true, 1_000_000).get(0);
+            assertEquals("without statistics the reading is the subtitle", "Now: 1000 mA (4.0 W) \u2022 31.0\u00b0", noStats.subtitle.toString());
+            assertNull(noStats.description);
+        } finally { prefs.edit().clear().apply(); ModuleSettings.configurePreview(prefs); }
+    }
+
+    @Test public void theTextLinesNeverMakeUpAZeroCurrent() {
+        SharedPreferences prefs = ModuleSettings.openStore(RuntimeEnvironment.getApplication());
+        try {
+            IslandItem unknown = collect(prefs, false, true, 0).get(0);
+            assertEquals("no reading yet: a dash and no power", "Now: \u2014 \u2022 31.0\u00b0", unknown.subtitle.toString());
+            assertFalse(unknown.subtitle.toString().contains("0 mA"));
+        } finally { prefs.edit().clear().apply(); ModuleSettings.configurePreview(prefs); }
+    }
+
     private Intent battery(int plug) {
         return new Intent(Intent.ACTION_BATTERY_CHANGED).putExtra(BatteryManager.EXTRA_PLUGGED, plug)
                 .putExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_CHARGING)
                 .putExtra(BatteryManager.EXTRA_LEVEL, 50).putExtra(BatteryManager.EXTRA_SCALE, 100)
                 .putExtra(BatteryManager.EXTRA_VOLTAGE, 4000).putExtra(BatteryManager.EXTRA_TEMPERATURE, 310);
+    }
+
+    @Test public void theTextLinesWriteTimesTheShortWay() {
+        assertEquals("0s", ChargingSource.shortDuration(0));
+        assertEquals("10s", ChargingSource.shortDuration(10_999));
+        assertEquals("59s", ChargingSource.shortDuration(59_000));
+        assertEquals("1m 5s", ChargingSource.shortDuration(65_000));
+        assertEquals("59m 59s", ChargingSource.shortDuration(3_599_000));
+        assertEquals("1h 5m", ChargingSource.shortDuration(3_900_000));
+        assertEquals("26h 3m", ChargingSource.shortDuration(93_800_000));
     }
 }

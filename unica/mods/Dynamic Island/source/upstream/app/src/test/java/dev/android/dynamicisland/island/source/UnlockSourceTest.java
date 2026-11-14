@@ -33,6 +33,25 @@ public class UnlockSourceTest {
         public boolean getUserHasTrust(int user) { return trust; }
     }
 
+    @org.junit.Before public void noBiometricYet() {
+        UnlockSource.forgetBiometric();
+    }
+
+    @Test public void aBiometricAcceptedJustBeforeTheKeyguardWentAwayIsTheMethodEvenWhenSystemUiForgotIt() {
+        FakeMonitor forgotten = new FakeMonitor(); // System UI clears its record before the keyguard has gone
+        long now = android.os.SystemClock.uptimeMillis();
+        assertEquals(UnlockSource.Method.PIN, UnlockSource.decide(forgotten, 0, now));
+
+        UnlockSource.biometricAuthenticated(false);
+        assertEquals("a fingerprint was accepted a moment ago", UnlockSource.Method.FINGERPRINT, UnlockSource.decide(forgotten, 0, now + 1500));
+        UnlockSource.biometricAuthenticated(true);
+        assertEquals(UnlockSource.Method.FACE, UnlockSource.decide(forgotten, 0, android.os.SystemClock.uptimeMillis() + 800));
+        assertEquals("an old one is not the way this unlock happened", UnlockSource.Method.PIN,
+                UnlockSource.decide(forgotten, 0, android.os.SystemClock.uptimeMillis() + 60_000));
+        forgotten.trust = true;
+        assertEquals(UnlockSource.Method.TRUSTED, UnlockSource.decide(forgotten, 0, android.os.SystemClock.uptimeMillis() + 60_000));
+    }
+
     @Test public void theMethodIsWhatTheKeyguardMonitorReportsAndPinWhenItReportsNothing() {
         FakeMonitor monitor = new FakeMonitor();
         assertEquals(UnlockSource.Method.PIN, UnlockSource.read(monitor, 0));
@@ -72,6 +91,9 @@ public class UnlockSourceTest {
         source.collect(cards);
         assertEquals(1, cards.size());
         assertEquals("event:unlock", cards.get(0).key);
+        assertEquals("the right half of the pill says how", IslandItem.Trailing.TEXT, cards.get(0).trailing);
+        assertEquals(app.getString(app.getResources().getIdentifier("island_unlock_label_face", "string", app.getPackageName())),
+                cards.get(0).trailingText.toString());
         assertEquals(app.getString(app.getResources().getIdentifier("island_unlocked_face", "string", app.getPackageName())),
                 cards.get(0).title.toString());
 
@@ -94,5 +116,17 @@ public class UnlockSourceTest {
             for (int y = 0; y < 96; y++) for (int x = 0; x < 96; x++) if ((bitmap.getPixel(x, y) >>> 24) > 0) lit++;
             assertTrue(kind + " draws something but not a filled square", lit > 150 && lit < 96 * 96 / 2);
         }
+    }
+
+    @Test public void theKindOfBiometricComesFromTheNameOfTheEnumConstantInTheArguments() throws Exception {
+        Class<?> hooks = Class.forName("dev.android.dynamicisland.xposed.hooks.UnlockHooks");
+        java.lang.reflect.Method kind = hooks.getDeclaredMethod("faceOrFingerprint", Object[].class);
+        kind.setAccessible(true);
+        enum Source { FACE, FINGERPRINT, IRIS }
+        assertEquals(Boolean.TRUE, kind.invoke(null, (Object) new Object[] {0, Source.FACE, true}));
+        assertEquals(Boolean.FALSE, kind.invoke(null, (Object) new Object[] {0, Source.FINGERPRINT, true}));
+        assertEquals(Boolean.FALSE, kind.invoke(null, (Object) new Object[] {0, Source.IRIS, true}));
+        assertNull(kind.invoke(null, (Object) new Object[] {0, "something else", true}));
+        assertNull(kind.invoke(null, (Object) null));
     }
 }

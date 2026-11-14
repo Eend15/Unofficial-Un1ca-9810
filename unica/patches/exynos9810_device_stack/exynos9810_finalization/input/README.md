@@ -60,3 +60,12 @@ Wake-feedback default: native init writes only android_touch/vib_strength=0
 after boot, suppressing the extra wake-gesture pulse while preserving ordinary
 Android haptic settings. The S9+ retained zero after reboot. This setting is
 provided by the platform source writer and checked by the boot contract.
+
+Tap reliability (November11): `patch_dt2w_tap_coords.py` removes the
+screen-off +5000 X offset only from MOVE reports, so clean PRESS+RELEASE taps
+count. `patch_dt2w_tap_window.py` widens the pairing window from 500 ms /
+150 units on both axes to 800 ms / ~1 cm per axis (600 units across, 300
+down; the 4096x4096 grid covers 68x140 mm, so 150 units was only ~2.5 mm
+sideways). Two recorded S9+ sessions had screen-off double taps 666/734 ms
+apart and up to 321 units of sideways drift. `test_dt2w_tap_window.py`
+compiles the real detect_doubletap2wake() and replays those recorded taps.

@@ -7,7 +7,7 @@ case "$TARGET_CODENAME" in starlte|star2lte|crownlte) ;; *) return 0 ;; esac
     return 1
 }
 
-LOG "- Integrating built-in Dynamic Island 0.1.15 for $TARGET_CODENAME"
+LOG "- Integrating built-in Dynamic Island 0.1.16 for $TARGET_CODENAME"
 (cd "$MODPATH" && sha256sum -c SHA256SUMS) || return 1
 python3 "$MODPATH/source/verify_source.py" || return 1
 DECODE_APK system "system/priv-app/SecSettings/SecSettings.apk" || return 1

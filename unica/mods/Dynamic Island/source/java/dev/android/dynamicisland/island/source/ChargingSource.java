@@ -28,6 +28,8 @@ public final class ChargingSource {
     private double volts = Double.NaN, temperature = Double.NaN, currentMa = Double.NaN;
     private long connectedAt;
     private ChargingSession session;
+    /** Current worked out from the charge counter, for phones that report 0 mA while they charge. */
+    private final ChargeRate rate = new ChargeRate();
     private SharedPreferences store;
     private long lastSaved;
 
@@ -112,6 +114,7 @@ public final class ChargingSource {
         if (plug == 0) {
             session = null;
             currentMa = Double.NaN;
+            rate.clear();
             clearCheckpoint();
         } else sample();
         if (before != plug) save(true);
@@ -127,11 +130,17 @@ public final class ChargingSource {
             BatteryManager manager = ctx.getSystemService(BatteryManager.class);
             if (manager != null) {
                 int current = manager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW);
-                if (current != Integer.MIN_VALUE && status == BatteryManager.BATTERY_STATUS_CHARGING) {
+                boolean charging = status == BatteryManager.BATTERY_STATUS_CHARGING;
+                double reported = Double.NaN;
+                if (current != Integer.MIN_VALUE && charging) {
                     double magnitude = Math.abs((double) current) / 1000;
-                    if (magnitude <= 50_000) currentMa = magnitude;
+                    if (magnitude <= 50_000) reported = magnitude;
                 }
-                if (statistics) counter = manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER);
+                long reading = manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER);
+                if (statistics) counter = reading;
+                if (charging) rate.add(SystemClock.elapsedRealtime(), reading); else rate.clear();
+                // Some phones keep the current at 0 while they charge: the rise of the charge counter says more.
+                currentMa = reported >= 1.0 ? reported : charging ? rate.estimateMa(SystemClock.elapsedRealtime()) : reported;
             }
         } catch (RuntimeException error) { XLog.once("ChargingSource.sample", error); }
         if (statistics) {
@@ -193,9 +202,12 @@ public final class ChargingSource {
         if (!isOffering()) return;
         IslandItem item = new IslandItem("charging:info");
         item.kind = IslandItem.Kind.EVENT; // Same priority as the charging popup and the reviewed version.
-        item.eventLayout = IslandItem.EventLayout.BATTERY;
-        item.batteryPercent = level;
-        item.batteryCharging = status == BatteryManager.BATTERY_STATUS_CHARGING;
+        boolean textLines = ModuleSettings.chargingTextLines();
+        if (!textLines) {
+            item.eventLayout = IslandItem.EventLayout.BATTERY;
+            item.batteryPercent = level;
+            item.batteryCharging = status == BatteryManager.BATTERY_STATUS_CHARGING;
+        }
         item.title = text(status == BatteryManager.BATTERY_STATUS_FULL ? "island_charge_full"
                 : status == BatteryManager.BATTERY_STATUS_CHARGING ? "island_charging" : "island_charge_connected");
         item.icon = ModuleSettings.hideBatteryIcon() || level < 0 ? null : BatteryIcon.load(ctx, level, true);
@@ -205,15 +217,46 @@ public final class ChargingSource {
         if (power > 300) power = Double.NaN;
         item.trailingText = Double.isFinite(power) ? number(power, 0) + "W" : level >= 0 ? percent(level) : null;
         if (Double.isFinite(power) && level >= 0) item.compactLabel = item.trailingText;
-        item.subtitle = text("island_charge_live", value(currentMa, "mA"), value(power, "W"), value(temperature, "°C"));
+        String live = textLines ? nowLine(power) : text("island_charge_live", value(currentMa, "mA"), value(power, "W"), value(temperature, "°C"));
+        item.subtitle = live;
         if (statistics && session != null) {
             item.descriptionMaxLines = 8;
             session.advance(SystemClock.elapsedRealtime());
-            item.description = text("island_charge_screen_on", duration(session.onMs), gains(session.onPercent, session.onUah))
-                    + "\n" + text("island_charge_screen_off", duration(session.offMs), gains(session.offPercent, session.offUah));
+            if (textLines) {
+                // as lines of text the live reading leads the block, the way the card was laid out before the gauge
+                item.description = live
+                        + "\n" + textGainLine("island_charge_text_on", session.onMs, session.onPercent, session.onUah)
+                        + "\n" + textGainLine("island_charge_text_off", session.offMs, session.offPercent, session.offUah);
+                item.subtitle = null;
+            } else {
+                item.description = text("island_charge_screen_on", duration(session.onMs), gains(session.onPercent, session.onUah))
+                        + "\n" + text("island_charge_screen_off", duration(session.offMs), gains(session.offPercent, session.offUah));
+            }
         }
         item.postTime = connectedAt;
         out.add(item);
+    }
+
+    /** "Now: 1552 mA (6.2 W) • 34.1°"; what is not known yet is left out, the current shows "—". */
+    private String nowLine(double power) {
+        StringBuilder reading = new StringBuilder(value(currentMa, "mA"));
+        if (Double.isFinite(power)) reading.append(" (").append(value(power, "W")).append(')');
+        if (Double.isFinite(temperature)) reading.append(" • ").append(number(temperature, 1)).append('°');
+        return text("island_charge_now", reading.toString());
+    }
+
+    /** "Screen On: 10s • 0% (5 mAh)": the time, the share of the charge in whole percent, the mAh behind it. */
+    private String textGainLine(String key, long ms, double percent, double uah) {
+        String line = text(key, shortDuration(ms), session.lastLevel >= 0 ? number(Math.round(percent), 0) + "%" : "—");
+        return session.hasCounter ? line + " (" + number(Math.round(uah / 1000), 0) + " mAh)" : line;
+    }
+
+    /** "10s", "1m 5s", "1h 5m". */
+    static String shortDuration(long ms) {
+        long seconds = ms / 1000;
+        if (seconds < 60) return seconds + "s";
+        if (seconds < 3600) return (seconds / 60) + "m " + (seconds % 60) + "s";
+        return (seconds / 3600) + "h " + ((seconds / 60) % 60) + "m";
     }
 
     private String gains(double percent, double uah) {

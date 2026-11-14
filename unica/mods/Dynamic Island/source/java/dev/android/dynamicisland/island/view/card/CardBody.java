@@ -7,6 +7,7 @@ import android.graphics.RectF;
 import android.text.TextUtils;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.graphics.Glyphs;
+import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.settings.ModuleSettings;
@@ -64,7 +65,13 @@ public abstract class CardBody {
     public final float density() { return owner.dp(1); }
 
     public MediaFx materialMusic() { return null; }
-    public boolean animating(long now) { return false; }
+    public boolean animating(long now) {
+        for (int i = 0; i < buttons.size(); i++) {
+            android.graphics.drawable.Drawable icon = buttons.get(i).icon;
+            if (icon instanceof GlyphIcon && ((GlyphIcon) icon).animating()) return true;
+        }
+        return false;
+    }
 
     /** The button under ({@code lx}, {@code ly}) in body coordinates, or null. */
     public Btn hit(float lx, float ly) {

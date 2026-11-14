@@ -35,4 +35,27 @@
     <string name="group_calls">Chamadas</string>
     <string name="imode_title">iMotion</string>
     <string name="imode_desc">Abra uma atividade por vez com desfoque e movimento coordenados. Deslize para os lados para alternar entre as atividades. Deslize para cima para ocultar as cápsulas e puxe para baixo perto da câmera para exibi-las novamente.</string>
+    <string name="recommend16_pull_title">Puxe para baixo para abrir</string>
+    <string name="recommend16_pull">Deslize a cápsula pequena para baixo para abrir os cartões. No modo de pilha, eles acompanham seu dedo.</string>
+    <string name="recommend16_popups_title">Mais tempo para ler os avisos</string>
+    <string name="recommend16_popups">Escolha de 3 a 6 segundos para os avisos curtos. Se o painel rápido estiver aberto, eles aguardam até ele fechar.</string>
+    <string name="recommend16_charging_title">Carga em cápsula larga</string>
+    <string name="recommend16_charging">Com o efeito de carga da bateria Samsung desativado, a carga aparece em uma cápsula larga com porcentagem e ícone de bateria.</string>
+    <string name="recommend16_charging_text_title">Carga em texto</string>
+    <string name="recommend16_charging_text">Com os detalhes de carga ativos, veja leituras em texto e, se quiser, estatísticas da tela ligada e desligada.</string>
+    <string name="recommend16_privacy_title">Câmera e microfone do app em uso</string>
+    <string name="recommend16_privacy">Você pode mostrar a atividade da câmera e do microfone até do app em uso. Primeiro, ative os indicadores de privacidade.</string>
+    <string name="recommend16_hide">No iMotion, mantenha a cápsula pequena pressionada para ocultá-la. Você também pode desativar o gesto de deslizar para cima.</string>
+    <string name="recommend16_idle_title">Sempre uma ilha</string>
+    <string name="recommend16_idle">Mantenha uma cápsula vazia ao redor da câmera mesmo sem atividades. A primeira atividade surge a partir dela.</string>
+    <string name="recommend16_hide_title">Oculte do seu jeito</string>
+    <string name="recommend16_perf_title">Reduza um efeito por vez</string>
+    <string name="recommend16_perf">Na nova página Desempenho, desative o brilho da música, o movimento da onda e a animação dos ícones separadamente.</string>
+    <string name="recommend16_colour_title">As cores do seu papel de parede</string>
+    <string name="recommend16_colour">Barras de progresso e botões acompanham a cor Material do papel de parede e mudam junto com ele.</string>
+    <string name="recommend_label">Novidades desta atualização</string>
+    <string name="recommend_open">Explorar</string>
+    <string name="recommend_next">Próxima</string>
+    <string name="recommend_dismiss">Ocultar sugestões desta versão</string>
+    <string name="recommend_about">Novidades</string>
 </resources>

@@ -52,6 +52,8 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     /** Never re-run a deferred refresh sooner than one frame. */
     private static final long MIN_DEFERRED_REFRESH_MS = 16L;
+    /** From this much of the shade pulled down, the island is under it. */
+    private static final float SHADE_OPEN_FRACTION = 0.02f;
 
     private static IslandController instance;
 
@@ -66,6 +68,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     private final ItemLedger ledger = new ItemLedger();
     private final IslandPlacement placement;
     private final HeadsUpTakeover headsUp;
+    private final SamsungCallPopupTakeover callPopup;
     private final ItemLauncher launcher;
     private final ShadeDragRelay shadeDrag;
     private final ShadeWatch shadeWatch;
@@ -88,16 +91,22 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
         haptics = new Haptics(ctx);
         placement = new IslandPlacement(ctx, main, classLoader, this, this, audio);
         headsUp = new HeadsUpTakeover(sources, placement, this::refreshNow);
+        callPopup = new SamsungCallPopupTakeover(ctx, main);
         shadeWatch = new ShadeWatch(main, () -> {
             IslandView current = placement.view();
             return current == null ? null : new ShadeWatch.Target() {
                 @Override public boolean needsWatching() { return current.shadeNeedsWatching(); }
-                @Override public void shade(float fraction) { current.setShadeFraction(fraction); }
+                @Override public void shade(float fraction) {
+                    current.setShadeFraction(fraction);
+                    sources.events.setShadeOpen(fraction > SHADE_OPEN_FRACTION); // a missed closing report must not hold the popups back for good
+                }
             };
         }, dev.android.dynamicisland.xposed.hooks.SystemUiHooks::shadeFraction);
         placement.setOnUnlocked(sources.unlock::onUnlocked);
         launcher = new ItemLauncher(ctx, haptics, placement::view);
         shadeDrag = new ShadeDragRelay(ctx, placement::statusBar);
+        Diagnostics.live("system ui memory",
+                new dev.android.dynamicisland.xposed.MemoryReport(dev.android.dynamicisland.island.window.IslandWindow::materialBufferStats)::line);
     }
 
     /** Creates the controller on first call (from the System UI hook) and returns it. */
@@ -128,6 +137,12 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     }
 
     // ---- public API used by the hooks ----------------------------------------------------------
+
+    /** Whether a touch at this screen point lands on the island (false while nothing of it takes touches). */
+    public boolean isOnIsland(float screenX, float screenY) {
+        IslandView view = placement.view();
+        return view != null && view.containsScreenPoint(screenX, screenY);
+    }
 
     public IslandItem itemForKey(String notificationKey) {
         return sources.oa.itemForKey(notificationKey);
@@ -262,6 +277,13 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     /** Fed by the notification list hook: progress notifications become cards. */
     public void onNotificationsSnapshot(List<StatusBarNotification> all) {
         lastNotifications = new ArrayList<>(all);
+        if (Looper.myLooper() == main.getLooper()) {
+            callPopup.setNotifications(lastNotifications);
+        }
+        else {
+            List<StatusBarNotification> calls = lastNotifications;
+            main.post(() -> callPopup.setNotifications(calls));
+        }
         List<StatusBarNotification> allowed = new ArrayList<>(all.size());
         for (StatusBarNotification sbn : all) {
             if (sbn != null && ModuleSettings.appAllowed(sbn.getPackageName())) {
@@ -343,6 +365,8 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     }
 
     public void setShadeExpansion(float fraction) {
+        if (Looper.myLooper() != main.getLooper()) { main.post(() -> setShadeExpansion(fraction)); return; }
+        sources.events.setShadeOpen(fraction > SHADE_OPEN_FRACTION);
         IslandView view = placement.view();
         if (view != null) {
             view.setShadeFraction(fraction);
@@ -517,6 +541,10 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     @Override
     public void onWindowConfigurationChanged() {
         main.post(placement::updateGeometry);
+        // the wallpaper colours reach the island as a configuration change: the system accent may have moved
+        main.post(() -> {
+            if (ModuleSettings.accentSystem() && ModuleSettings.refreshSystemAccent(ctx)) requestRefresh();
+        });
     }
 
     @Override

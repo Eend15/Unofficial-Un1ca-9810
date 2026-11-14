@@ -43,6 +43,8 @@ final class ItemLedger {
     private Set<String> hiddenLastTime = new HashSet<>();
     private Set<String> shownKeys = new HashSet<>();
     private List<String> shownOrder = new ArrayList<>();
+    /** The keys the user can cycle through: what is shown, without the popups that are on top for a moment. */
+    private List<String> cycleOrder = new ArrayList<>();
     /** Key to uptime until which the item stays out of the list. */
     private final Map<String, Long> deferredUntil = new HashMap<>();
     /** Key to uptime at which the item was promoted to the front; the newest boost sorts first. */
@@ -94,14 +96,22 @@ final class ItemLedger {
         }
         hiddenLastTime = hiddenByForeground;
         kept.sort(this::byBoostThenRank);
-        List<IslandItem> shown = rotateToPinned(kept);
+        // a popup comes first whatever the user cycled to; what was cycled to returns when the popup is gone
+        List<IslandItem> popups = new ArrayList<>();
+        List<IslandItem> resting = new ArrayList<>(kept.size());
+        for (IslandItem item : kept) (item.transientPopup ? popups : resting).add(item);
+        List<IslandItem> shown = new ArrayList<>(kept.size());
+        shown.addAll(popups);
+        shown.addAll(rotateToPinned(resting));
 
         boolean wasVisible = !shownKeys.isEmpty();
         shownKeys = new HashSet<>();
         shownOrder = new ArrayList<>(shown.size());
+        cycleOrder = new ArrayList<>(shown.size());
         for (IslandItem item : shown) {
             shownKeys.add(item.key);
             shownOrder.add(item.key);
+            if (!item.transientPopup) cycleOrder.add(item.key);
         }
         List<IslandItem> bubbledInOrder = new ArrayList<>();
         for (String key : bubble) {
@@ -115,8 +125,11 @@ final class ItemLedger {
         return new Arrangement(shown, bubbledInOrder, hint, flyIn && wasVisible, nextDeferred);
     }
 
-    /** Boosted items first (newest boost first), then by priority, then newest post time. */
+    /** Popup tiers cannot be overridden by boosts; within a tier, keep boosts, kind and recency. */
     private int byBoostThenRank(IslandItem a, IslandItem b) {
+        if (a.popupPriority() != b.popupPriority()) {
+            return Integer.compare(b.popupPriority(), a.popupPriority());
+        }
         Long boostA = boostedAt.get(a.key);
         Long boostB = boostedAt.get(b.key);
         if (boostA != null || boostB != null) {
@@ -164,14 +177,14 @@ final class ItemLedger {
 
     /** @return false when there is nothing to cycle through */
     boolean cycle(int direction) {
-        if (shownOrder.size() < 2) {
+        if (cycleOrder.size() < 2) {
             return false;
         }
         if (pinnedKey == null) {
             ring.clear();
-            ring.addAll(shownOrder);
+            ring.addAll(cycleOrder);
         }
-        int current = ring.indexOf(shownOrder.get(0));
+        int current = ring.indexOf(cycleOrder.get(0));
         pinnedKey = ring.get(Math.floorMod(current + direction, ring.size()));
         pendingHint = direction > 0 ? IslandView.HINT_TO_LEFT : IslandView.HINT_FROM_LEFT;
         return true;

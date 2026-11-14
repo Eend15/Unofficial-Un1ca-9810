@@ -23,10 +23,10 @@ final class SourcePeekRequests {
             return null; // Enabling never opens the backlog.
         }
         int highestPriority = Integer.MIN_VALUE;
-        for (IslandItem item : sorted) if (item != null && item.kind != null) highestPriority = Math.max(highestPriority, item.kind.priority);
+        for (IslandItem item : sorted) if (item != null && item.kind != null) highestPriority = Math.max(highestPriority, item.priority());
         for (IslandItem item : sorted) {
             if (!eligible(item)
-                    || item.kind.priority < highestPriority
+                    || item.priority() < highestPriority
                     || item.expiresAtUptime > 0 && item.expiresAtUptime <= now) continue;
             Long previous = opened.get(item.key);
             if (previous == null && opened.size() >= 32) continue;

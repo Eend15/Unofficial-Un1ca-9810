@@ -36,6 +36,7 @@ public class IModeTest {
         final Scene scene;
         final List<IslandItem> items=new ArrayList<>();
         final List<String> closed=new ArrayList<>();
+        final List<String> shadePulls=new ArrayList<>();
         Fixture(int count) {
             ShadowChoreographer.setFrameDelay(Duration.ofMillis(16));
             ShadowChoreographer.setPaused(true);
@@ -45,6 +46,7 @@ public class IModeTest {
             IslandHost host=(IslandHost)java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(),
                     new Class<?>[]{IslandHost.class},(proxy,method,args)->switch(method.getName()) {
                         case "onPeekClosed" -> { closed.add((String)args[0]); yield null; }
+                        case "onShadeDragStart" -> { shadePulls.add("start"); yield null; }
                         case "hasMinimized", "onShadeFade" -> false;
                         default -> null;
                     });
@@ -916,6 +918,240 @@ public class IModeTest {
             f.swipeUp(main.centerX(),main.centerY(),24,12);
             f.step(16,90);
             assertTrue("a flick hides it after a short move",f.scene.iMode.hiddenByGesture());
+        }
+    }
+
+    @Test public void theSwipeUpToHideCanBeTurnedOffAndFoldingStillWorks() {
+        try(Fixture f=new Fixture(4)) {
+            f.prefs.edit().putBoolean(ModuleSettings.KEY_SWIPE_UP_HIDES,false).commit();
+            ModuleSettings.configurePreview(f.prefs);
+            RectF main=new RectF();f.scene.iMode.mainBounds(main);
+            f.swipeUp(main.centerX(),main.centerY(),80,60);
+            f.step(16,90);
+            assertFalse("switched off: even a long fast swipe leaves the pill alone",f.scene.iMode.hiddenByGesture());
+            assertEquals(Mode.COMPACT,f.scene.mode);
+
+            f.scene.iMode.open("item0",true);f.step(16,80);
+            assertEquals(Mode.EXPANDED,f.scene.mode);
+            RectF card=f.bounds(f.active());
+            f.swipeUp(card.centerX(),card.centerY(),60,500);f.step(16,90);
+            assertEquals("folding an open card is not part of the switch",Mode.COMPACT,f.scene.mode);
+
+            f.prefs.edit().putBoolean(ModuleSettings.KEY_SWIPE_UP_HIDES,true).commit();
+            ModuleSettings.configurePreview(f.prefs);
+            f.scene.iMode.mainBounds(main);
+            f.swipeUp(main.centerX(),main.centerY(),24,12);f.step(16,90);
+            assertTrue("switched on again: it hides",f.scene.iMode.hiddenByGesture());
+        }
+    }
+
+    @Test public void holdingTheSmallPillHidesItButATapOrADragDoesNot() {
+        try(Fixture f=new Fixture(3)) {
+            long timeout=android.view.ViewConfiguration.getLongPressTimeout();
+            RectF main=new RectF();f.scene.iMode.mainBounds(main);
+            // a short press is a tap: it opens the card instead
+            f.event(MotionEvent.ACTION_DOWN,main.centerX(),main.centerY());
+            org.robolectric.shadows.ShadowLooper.idleMainLooper(timeout/3,java.util.concurrent.TimeUnit.MILLISECONDS);
+            f.event(MotionEvent.ACTION_UP,main.centerX(),main.centerY());
+            org.robolectric.shadows.ShadowLooper.idleMainLooper(timeout*2,java.util.concurrent.TimeUnit.MILLISECONDS);
+            f.step(16,90);
+            assertFalse("a tap does not hide",f.scene.iMode.hiddenByGesture());
+            assertEquals(Mode.EXPANDED,f.scene.mode);
+            f.scene.iMode.collapse();f.step(16,90);
+            assertEquals(Mode.COMPACT,f.scene.mode);
+
+            // a drag past the touch slop cancels the hold
+            f.scene.iMode.mainBounds(main);
+            f.event(MotionEvent.ACTION_DOWN,main.centerX(),main.centerY());
+            f.event(MotionEvent.ACTION_MOVE,main.centerX()+60,main.centerY());
+            org.robolectric.shadows.ShadowLooper.idleMainLooper(timeout*2,java.util.concurrent.TimeUnit.MILLISECONDS);
+            f.event(MotionEvent.ACTION_UP,main.centerX()+60,main.centerY());
+            f.step(16,90);
+            assertFalse("a drag does not hide",f.scene.iMode.hiddenByGesture());
+
+            // holding still hides it, and lifting the finger afterwards does not open anything
+            f.scene.iMode.mainBounds(main);
+            f.event(MotionEvent.ACTION_DOWN,main.centerX(),main.centerY());
+            org.robolectric.shadows.ShadowLooper.idleMainLooper(timeout+100,java.util.concurrent.TimeUnit.MILLISECONDS);
+            assertTrue("held: hidden",f.scene.iMode.hiddenByGesture());
+            f.event(MotionEvent.ACTION_UP,main.centerX(),main.centerY());
+            f.step(16,90);
+            assertEquals(Mode.HIDDEN,f.scene.mode);
+
+            // and it stays available when the swipe up is switched off
+            f.scene.iMode.restoreByGesture();f.step(16,90);
+            f.prefs.edit().putBoolean(ModuleSettings.KEY_SWIPE_UP_HIDES,false).commit();
+            ModuleSettings.configurePreview(f.prefs);
+            f.scene.iMode.mainBounds(main);
+            f.event(MotionEvent.ACTION_DOWN,main.centerX(),main.centerY());
+            org.robolectric.shadows.ShadowLooper.idleMainLooper(timeout+100,java.util.concurrent.TimeUnit.MILLISECONDS);
+            assertTrue("held with the swipe switched off: still hidden",f.scene.iMode.hiddenByGesture());
+            f.event(MotionEvent.ACTION_UP,main.centerX(),main.centerY());
+        }
+    }
+
+    @Test public void aPullDownThatBeganWithASidewaysWobbleStillReachesTheShade() {
+        try(Fixture f=new Fixture(3)) {
+            f.prefs.edit().putBoolean(ModuleSettings.KEY_SWIPE_DOWN_OPENS,false).commit();ModuleSettings.configurePreview(f.prefs);
+            RectF main=new RectF();f.scene.iMode.mainBounds(main);
+            float x=main.centerX(),y=main.centerY();
+            f.event(MotionEvent.ACTION_DOWN,x,y);
+            f.event(MotionEvent.ACTION_MOVE,x+24,y+2);   // the first move is mostly sideways: the pill starts to page
+            assertTrue("the pill began to page",f.scene.iMode.hasCompactDrag());
+            f.event(MotionEvent.ACTION_MOVE,x+30,y+48);  // then the finger goes clearly down
+            assertEquals("the pull is handed to the shade",1,f.shadePulls.size());
+            assertFalse(f.scene.iMode.hasCompactDrag());
+            f.event(MotionEvent.ACTION_UP,x+30,y+120);
+            f.step(16,60);
+            assertEquals(Mode.COMPACT,f.scene.mode);
+        }
+    }
+
+    @Test public void aPullDownOnThePillOpensItsCardsByDefaultAndGoesToTheShadeWhenTheOptionIsOff() {
+        try(Fixture f=new Fixture(3)) {
+            RectF main=new RectF();f.scene.iMode.mainBounds(main);
+            float x=main.centerX(),y=main.centerY();
+            f.event(MotionEvent.ACTION_DOWN,x,y);
+            f.event(MotionEvent.ACTION_MOVE,x,y+48);
+            f.event(MotionEvent.ACTION_UP,x,y+120);
+            f.step(16,80);
+            assertEquals("by default nothing goes to the shade",0,f.shadePulls.size());
+            assertEquals("the cards opened",Mode.EXPANDED,f.scene.mode);
+            assertFalse(f.scene.cards.isEmpty());
+        }
+        try(Fixture f=new Fixture(3)) {
+            f.prefs.edit().putBoolean(ModuleSettings.KEY_SWIPE_DOWN_OPENS,false).commit();
+            ModuleSettings.configurePreview(f.prefs);
+            RectF main=new RectF();f.scene.iMode.mainBounds(main);
+            float x=main.centerX(),y=main.centerY();
+            f.event(MotionEvent.ACTION_DOWN,x,y);
+            f.event(MotionEvent.ACTION_MOVE,x,y+48);
+            f.event(MotionEvent.ACTION_UP,x,y+120);
+            assertEquals("with the option off the pull goes to the shade",1,f.shadePulls.size());
+            f.step(16,60);
+            assertEquals(Mode.COMPACT,f.scene.mode);
+        }
+    }
+
+    @Test public void aShortPopupIsTheMainPillEvenWhenTheRowWasPagedToAnotherOne() {
+        try(Fixture f=new Fixture(3)) {
+            RectF main=new RectF();
+            f.scene.iMode.next(1);f.step(16,80);f.scene.iMode.mainBounds(main);
+            String paged=f.scene.iMode.hit(main.centerX(),main.centerY(),0);
+            assertEquals("the row was paged to the next pill","item1",paged);
+            IslandItem popup=new IslandItem("event:toggle:dnd");
+            popup.kind=IslandItem.Kind.EVENT;popup.title="Do Not Disturb on";popup.transientPopup=true;
+            popup.icon=GlyphIcon.of(GlyphIcon.Kind.BELL);
+            popup.trailing=IslandItem.Trailing.TEXT;popup.trailingText="On";
+            List<IslandItem> items=new ArrayList<>();
+            items.add(popup);items.addAll(f.items);
+            f.view.setItems(items);f.step(16,80);f.scene.iMode.mainBounds(main);
+            assertEquals("the popup is the main pill, not a sub pill waiting behind",popup.key,f.scene.iMode.hit(main.centerX(),main.centerY(),0));
+            f.view.setItems(f.items);f.step(16,80);f.scene.iMode.mainBounds(main);
+            assertEquals("when it is over the row is back where it was",paged,f.scene.iMode.hit(main.centerX(),main.centerY(),0));
+        }
+    }
+
+    @Test public void chargingPreemptsAPageAndSurvivesLowerPriorityArrivalsAndUpdates() {
+        try(Fixture f=new Fixture(3)) {
+            f.scene.iMode.next(1);f.step(16,80);
+            IslandItem system=item("event:toggle:dnd",0);
+            system.kind=IslandItem.Kind.EVENT;system.transientPopup=true;
+            List<IslandItem> items=new ArrayList<>(f.items);items.add(0,system);
+            f.view.setItems(items);f.step(16,40);
+            assertMain(f,system.key);
+
+            // A high-priority arrival during an unfinished swipe used to be ignored forever.
+            assertTrue(f.scene.iMode.dragCompact(-30));
+            IslandItem charging=item("event:charging",0);
+            charging.kind=IslandItem.Kind.EVENT;charging.transientPopup=true;charging.fullWidth=true;
+            items.add(0,charging);f.view.setItems(items);f.step(16,40);
+            assertMain(f,charging.key);
+            IslandItem message=item("peek:message",0);
+            message.kind=IslandItem.Kind.PEEK;message.transientPopup=true;
+            items.add(2,message);f.view.setItems(items);f.step(16,40);
+            assertMain(f,charging.key);
+            assertFalse("a message cannot open over charging",f.view.peek(message,4000));
+            f.view.setItems(items);f.step(16,40);assertMain(f,charging.key);
+
+            items.remove(charging);f.view.setItems(items);f.step(16,40);assertMain(f,system.key);
+            // An expanded ongoing card must not keep a new system popup in the sub-pill either.
+            f.scene.iMode.open("item0",true);f.step(16,40);
+            IslandItem headset=item("event:bt:headset",0);
+            headset.kind=IslandItem.Kind.EVENT;headset.transientPopup=true;headset.postTime=100;
+            items.add(0,headset);f.view.setItems(items);f.step(16,40);assertMain(f,headset.key);
+            f.scene.iMode.collapse();f.view.setItems(f.items);f.step(16,80);
+            assertMain(f,"item1");
+        }
+    }
+
+    private static void assertMain(Fixture f,String key) {
+        RectF main=new RectF();f.scene.iMode.mainBounds(main);
+        assertEquals(key,f.scene.iMode.hit(main.centerX(),main.centerY(),0));
+    }
+
+    @Test public void aPullDownOnASubPillOpensThatActivity() {
+        try(Fixture f=new Fixture(3)) {
+            RectF sub=new RectF();f.scene.iMode.bubbleBounds(sub);
+            assertTrue("there is a sub pill",sub.width()>0);
+            String key=f.scene.iMode.hit(sub.centerX(),sub.centerY(),0);
+            assertTrue("the sub pill is a different activity than the first",key!=null);
+            f.event(MotionEvent.ACTION_DOWN,sub.centerX(),sub.centerY());
+            f.event(MotionEvent.ACTION_MOVE,sub.centerX(),sub.centerY()+48);
+            f.event(MotionEvent.ACTION_UP,sub.centerX(),sub.centerY()+120);
+            f.step(16,80);
+            assertEquals(0,f.shadePulls.size());
+            assertEquals(Mode.EXPANDED,f.scene.mode);
+            assertEquals("the pulled pill's activity is the one that opened",key,f.scene.iMode.selectedKey());
+        }
+    }
+
+    @Test public void aPullDownThatBeganWithASidewaysWobbleOpensTheCardsWhenSwipeDownOpensIsOn() {
+        try(Fixture f=new Fixture(3)) {
+            f.prefs.edit().putBoolean(ModuleSettings.KEY_SWIPE_DOWN_OPENS,true).commit();
+            ModuleSettings.configurePreview(f.prefs);
+            RectF main=new RectF();f.scene.iMode.mainBounds(main);
+            float x=main.centerX(),y=main.centerY();
+            f.event(MotionEvent.ACTION_DOWN,x,y);
+            f.event(MotionEvent.ACTION_MOVE,x+24,y+2);
+            assertTrue(f.scene.iMode.hasCompactDrag());
+            f.event(MotionEvent.ACTION_MOVE,x+30,y+48);
+            assertFalse("the half-made page swipe is dropped",f.scene.iMode.hasCompactDrag());
+            f.event(MotionEvent.ACTION_UP,x+30,y+120);
+            f.step(16,80);
+            assertEquals(0,f.shadePulls.size());
+            assertEquals(Mode.EXPANDED,f.scene.mode);
+        }
+    }
+
+    @Test public void aSidewaysDragStillPagesAndANearlyHorizontalOneIsNotAPullDown() {
+        try(Fixture f=new Fixture(3)) {
+            RectF main=new RectF();f.scene.iMode.mainBounds(main);
+            float x=main.centerX(),y=main.centerY();
+            f.event(MotionEvent.ACTION_DOWN,x,y);
+            f.event(MotionEvent.ACTION_MOVE,x+24,y+2);
+            f.event(MotionEvent.ACTION_MOVE,x+70,y+30);
+            assertTrue(f.scene.iMode.hasCompactDrag());
+            assertEquals(0,f.shadePulls.size());
+            f.event(MotionEvent.ACTION_UP,x+70,y+30);
+        }
+    }
+
+    @Test public void theIslandAsksForAHighFrameRateOnlyWhileItMoves() {
+        try(Fixture f=new Fixture(1)) {
+            f.step(16,240);
+            assertEquals("still: the default",View.REQUESTED_FRAME_RATE_CATEGORY_DEFAULT,f.view.getRequestedFrameRate(),0f);
+            f.view.setItems(Collections.emptyList());   // the pill leaves: it animates
+            f.step(16,4);
+            assertEquals(View.REQUESTED_FRAME_RATE_CATEGORY_HIGH,f.view.getRequestedFrameRate(),0f);
+            f.step(16,240);
+            assertEquals("still again: back to the default",View.REQUESTED_FRAME_RATE_CATEGORY_DEFAULT,f.view.getRequestedFrameRate(),0f);
+
+            f.prefs.edit().putBoolean(ModuleSettings.KEY_LOW_PERFORMANCE,true).commit();
+            ModuleSettings.configurePreview(f.prefs);
+            f.view.setItems(f.items);
+            f.step(16,4);
+            assertEquals("low-performance mode never asks for more",View.REQUESTED_FRAME_RATE_CATEGORY_DEFAULT,f.view.getRequestedFrameRate(),0f);
         }
     }
 }

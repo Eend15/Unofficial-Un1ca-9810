@@ -1,9 +1,9 @@
 # Dynamic Island — built into UN1CA
 
-Dynamic Island **0.1.15**, release commit
-`b04f41d21a6121421280613e5b26f1dd54d0af9b`, MIT licensed by sampple-korea.
+Dynamic Island **0.1.16**, release commit
+`439f68116d910004505cea2dba65e58e3b1d1b0f`, MIT licensed by sampple-korea.
 `UPSTREAM.json` pins the source. `source/upstream` preserves the original project;
-`source/java` contains the native UN1CA adaptation, merging the v0.1.15 Java/resources while retaining native lifecycle and scheduler guards.
+`source/java` contains the native UN1CA adaptation, merging the v0.1.16 Java/resources while retaining native lifecycle and scheduler guards.
 
 Enabled for Exynos9810 **starlte, star2lte and crownlte**, Android 16 / One UI 8.
 Works with EXT4 and EROFS ROM builds; EXT4 is needed only for convenient live
@@ -50,7 +50,7 @@ ROM platform key. Editing Java/resources without rebuilding deliberately fails
 the fingerprint guard. D8 uses API 34 to emit supported 112-byte DEX 039 headers;
 the manifest still requires Android 16. Do not restore malformed DEX 041 output.
 
-The base static adapters are in the numbered SystemUI patch; source/extend_call_sites.py adds the v0.1.15 adapters transactionally through source/apply.py. Their
+The base static adapters are in the numbered SystemUI patch; source/extend_call_sites.py adds the v0.1.16 adapters transactionally through source/apply.py. Their
 bootstrap Java is also in `source/Bootstrap.java`; `source/weave-report.json`
 records the audited method/constructor coverage. Changes to hook sites require
 updating the patch and coverage together and repeating the ART checks.
@@ -99,6 +99,21 @@ participate in its lease.
 ## v0.1.14 native compatibility
 
 The hidden CompositionSamplingListener signature is compiled from upstream tools/framework-stubs as compile-only input, never shipped as an android.* class. Method-hook extras are per invocation, enabling the upstream long-press scope cleanup fix. Original release sources remain unmodified under source/upstream; UN1CA adaptations are under source/java. New framework hooks still require matching static SystemUI callsites; absent callsites remain explicitly unsupported and are not reported as installed. Physical S9/Note9 acceptance and all third-party app combinations remain pending.
+
+## v0.1.16 source update (2026-11-11)
+
+Pinned stable upstream v0.1.16 (`439f68116d910004505cea2dba65e58e3b1d1b0f`).
+Upstream improvements:
+- Blur processing performance increased by up to 950%.
+- Clock time rendering performance increased up to 2,100%, with up to 93% memory reduction via caching and buffer reuse.
+- High refresh rate requested during island animation, automatically released when stopped.
+- BatteryBar rate estimation from battery charge counter on supported devices.
+- Single popup per earphone group (prevents duplicate Galaxy Buds3 Pro popups).
+- Samsung call popup takeover: request closing Samsung mini call window without killing call; round Lottie call action icons.
+- Notification card frosted glass corner clip calculations and shader precision adjustments for bright backgrounds.
+- Behavior toggles: always visible island, swipe up hides, swipe down opens.
+- Dedicated Performance settings page with fine-grained animation and rendering toggles.
+The native master switch, lifecycle cleanup, scheduler coalescing (DeadlineGate) and cross-classloader single-window lease (SingleWindowOwner) are retained.
 
 ## v0.1.15 source update (2026-11-04)
 

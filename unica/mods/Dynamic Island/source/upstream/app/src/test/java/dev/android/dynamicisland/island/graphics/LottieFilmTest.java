@@ -20,7 +20,7 @@ import org.robolectric.annotation.GraphicsMode;
 @Config(sdk = 35)
 public class LottieFilmTest {
     private static final String[] NAMES = {"battery", "battery_charging", "power_save", "bell", "bell_off", "vibrate", "headphones", "camera",
-        "mic", "location", "moon", "plane", "torch", "hotspot", "rotate_lock", "download", "speaker"};
+        "mic", "location", "moon", "plane", "torch", "hotspot", "rotate_lock", "download", "speaker", "call_answer", "call_end"};
     private static final float[] FRACTIONS = {0f, 0.2f, 0.4f, 0.6f, 0.8f, 1f};
 
     @Test

@@ -78,13 +78,16 @@ final class SecondTicker {
         if (scene.mode == Mode.HIDDEN || view.isFullyHidden() || !view.isAttachedToWindow() || !view.isShown() || view.getWindowVisibility() != android.view.View.VISIBLE) {
             return false;
         }
-        if (scene.iMode!=null) for(IslandItem item:scene.iMode.visibleItems())
-            if(item.trailing==IslandItem.Trailing.CHRONOMETER) return true;
+        if (scene.iMode!=null) {
+            java.util.List<IslandItem> shown=scene.iMode.visibleItems();
+            for(int i=0,n=shown.size();i<n;i++)
+                if(shown.get(i).trailing==IslandItem.Trailing.CHRONOMETER) return true;
+        }
         if (scene.mainIn != null && scene.mainIn.content.item.trailing == IslandItem.Trailing.CHRONOMETER) {
             return true;
         }
-        for (Card c : scene.cards) {
-            IslandItem item = c.item;
+        for (int i = 0, n = scene.cards.size(); i < n; i++) {
+            IslandItem item = scene.cards.get(i).item;
             boolean ticking = item.trailing == IslandItem.Trailing.CHRONOMETER
                     || (item.hasChronometer() && item.chronoPosition != 0)
                     || (item.isMedia && item.playing);

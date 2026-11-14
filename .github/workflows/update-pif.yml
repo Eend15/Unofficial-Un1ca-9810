@@ -1,0 +1,39 @@
+name: Auto-update Play Integrity (PIF) Canary
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Every day at 03:00 UTC
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  update-pif:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: Android-16
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run PIF Canary updater
+        id: run_updater
+        run: |
+          python3 scripts/update_pif_canary.py
+          if git diff --quiet unica/mods/pif/pif.json; then
+            echo "changed=0" >> $GITHUB_OUTPUT
+          else
+            echo "changed=1" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.run_updater.outputs.changed == '1'
+        run: |
+          git config user.name "Eend15"
+          git config user.email "Eend15@users.noreply.github.com"
+          git add unica/mods/pif/pif.json
+          git commit -m "[PIF] Auto-update Pixel Canary fingerprint"
+          git push origin Android-16

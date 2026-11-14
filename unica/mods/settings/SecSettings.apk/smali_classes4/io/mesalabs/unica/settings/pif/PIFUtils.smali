@@ -18,7 +18,7 @@
 
 .field private static final TAG:Ljava/lang/String; = "PIFUtils"
 
-.field private static final URL:Ljava/lang/String; = "https://raw.githubusercontent.com/UN1CA/static_resources/refs/heads/sixteen/pif/pif.json"
+.field private static final URL:Ljava/lang/String; = "https://raw.githubusercontent.com/Eend15/Unofficial-Un1ca-9810/refs/heads/Android-16/unica/mods/pif/pif.json"
 
 
 # direct methods
@@ -35,7 +35,7 @@
 
     const-string v0, "persist.sys.pif.version"
 
-    const-string v1, "20260806"
+    const-string v1, "20261113"
 
     invoke-static {v0, v1}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 
@@ -140,7 +140,7 @@
     :try_start_0
     const-string v1, "persist.sys.pif.version"
 
-    const-string v2, "20260806"
+    const-string v2, "20261113"
 
     invoke-static {v1, v2}, Landroid/os/SemSystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 
@@ -241,7 +241,7 @@
     :try_start_0
     new-instance v0, Ljava/net/URL;
 
-    const-string v1, "https://raw.githubusercontent.com/UN1CA/static_resources/refs/heads/sixteen/pif/pif.json"
+    const-string v1, "https://raw.githubusercontent.com/Eend15/Unofficial-Un1ca-9810/refs/heads/Android-16/unica/mods/pif/pif.json"
 
     invoke-direct {v0, v1}, Ljava/net/URL;-><init>(Ljava/lang/String;)V
 

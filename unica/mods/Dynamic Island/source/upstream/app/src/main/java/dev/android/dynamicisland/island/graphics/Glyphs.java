@@ -27,6 +27,7 @@ public final class Glyphs {
     public static final int COPY = 11;
     public static final int CHECK = 12;
     public static final int POWER = 13;
+    public static final int ANSWER = 14;
 
     private static final Path PATH = new Path();
     private static final RectF R = new RectF();
@@ -86,6 +87,9 @@ public final class Glyphs {
                 break;
             case POWER:
                 power(canvas, cx, cy, size, paint);
+                break;
+            case ANSWER:
+                answer(canvas, cx, cy, size, paint);
                 break;
             default:
                 break;
@@ -177,18 +181,34 @@ public final class Glyphs {
         paint.setStrokeCap(Paint.Cap.BUTT);
     }
 
-    /** Handset seen from above: a wide arc with a short thick earpiece at each end. */
+    /** Static fallback for call_end.json: one filled outline with rounded receiver ends. */
     private static void hangup(Canvas canvas, float cx, float cy, float size, Paint paint) {
-        strokeRound(paint, size * 0.17f);
-        R.set(cx - (size * 0.42f), cy - (size * 0.16f), cx + (size * 0.42f), cy + (size * 0.5f));
-        canvas.drawArc(R, 200.0f, 140.0f, false, paint);
-        paint.setStrokeWidth(size * 0.2f);
-        float earpieceY = cy + (size * 0.1f);
-        for (float side = -1.0f; side <= 1.0f; side += 2.0f) {
-            canvas.drawLine(cx + (side * size * 0.4f), earpieceY - (size * 0.02f),
-                    cx + (side * size * 0.36f), earpieceY + (size * 0.1f), paint);
-        }
-        paint.setStrokeCap(Paint.Cap.BUTT);
+        PATH.moveTo(6, 37);PATH.cubicTo(6, 33, 9, 30, 13, 27);
+        PATH.cubicTo(26, 17, 46, 17, 59, 27);PATH.cubicTo(63, 30, 66, 33, 66, 37);
+        PATH.lineTo(66, 44);PATH.cubicTo(66, 48, 64, 50, 60, 50);
+        PATH.lineTo(54, 50);PATH.cubicTo(51, 50, 49, 48, 49, 45);
+        PATH.lineTo(49, 37);PATH.cubicTo(41, 33, 31, 33, 23, 37);
+        PATH.lineTo(23, 45);PATH.cubicTo(23, 48, 21, 50, 18, 50);
+        PATH.lineTo(12, 50);PATH.cubicTo(8, 50, 6, 48, 6, 44);PATH.close();
+        fillHandset(canvas, cx, cy, size, paint);
+    }
+
+    /** Static fallback for call_answer.json, with a curved bridge and widened earpieces. */
+    private static void answer(Canvas canvas, float cx, float cy, float size, Paint paint) {
+        PATH.moveTo(16, 8);PATH.cubicTo(12, 8, 9, 11, 9, 15);
+        PATH.cubicTo(10, 40, 32, 62, 57, 63);PATH.cubicTo(61, 63, 64, 60, 64, 56);
+        PATH.lineTo(64, 49);PATH.cubicTo(64, 46, 62.5f, 44.5f, 60, 44);
+        PATH.lineTo(51, 42);PATH.cubicTo(49, 41.5f, 47.5f, 42.2f, 46, 43.8f);
+        PATH.lineTo(42, 48);PATH.cubicTo(33.5f, 44.3f, 27.7f, 38.5f, 24, 30);
+        PATH.lineTo(28.2f, 26);PATH.cubicTo(29.8f, 24.5f, 30.5f, 23, 30, 21);
+        PATH.lineTo(28, 12);PATH.cubicTo(27.5f, 9.5f, 26, 8, 23, 8);PATH.close();
+        fillHandset(canvas, cx, cy, size, paint);
+    }
+
+    private static void fillHandset(Canvas canvas, float cx, float cy, float size, Paint paint) {
+        int save = canvas.save();
+        canvas.translate(cx - size / 2, cy - size / 2);canvas.scale(size / 72, size / 72);
+        paint.setStyle(Paint.Style.FILL);canvas.drawPath(PATH, paint);canvas.restoreToCount(save);
     }
 
     /** Speaker cone with two sound-wave arcs. */

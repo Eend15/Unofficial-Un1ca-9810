@@ -29,8 +29,14 @@ final class AmbientGlowScreen {
     }
     private boolean followsTheme() { return prefs.getBoolean(ModuleSettings.KEY_GLOW_FOLLOW_THEME, false); }
     private int colour() {
-        if (followsTheme()) return prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false)
-                ? prefs.getInt(ModuleSettings.KEY_ACCENT_COLOR, ModuleSettings.DEFAULT_ACCENT) : ModuleSettings.DEFAULT_ACCENT;
+        if (followsTheme()) {
+            if (prefs.getBoolean(ModuleSettings.KEY_ACCENT_SYSTEM, false)) {
+                try { return activity.getResources().getColor(android.R.color.system_accent1_200, activity.getTheme()) | 0xFF000000; }
+                catch (RuntimeException unavailable) { return ModuleSettings.DEFAULT_ACCENT; }
+            }
+            return prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false)
+                    ? prefs.getInt(ModuleSettings.KEY_ACCENT_COLOR, ModuleSettings.DEFAULT_ACCENT) : ModuleSettings.DEFAULT_ACCENT;
+        }
         return prefs.getInt(ModuleSettings.KEY_GLOW_COLOUR, ModuleSettings.DEFAULT_GLOW_COLOUR);
     }
     private int strength() {return Math.max(0,Math.min(100,prefs.getInt(ModuleSettings.KEY_GLOW_STRENGTH,ModuleSettings.DEFAULT_GLOW_STRENGTH)));}

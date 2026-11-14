@@ -61,6 +61,8 @@ public final class MediaBody extends CardBody {
     final float tile;
     final StaticLayout title;
     private final RectF glowRect;
+    private long clockSecond=Long.MIN_VALUE,durationSecond=Long.MIN_VALUE;
+    private String clockText,durationText;
 
     public MediaBody(IslandView owner, IslandItem item, float w) {
         super(owner, item, w);
@@ -224,8 +226,11 @@ public final class MediaBody extends CardBody {
      */
     private void drawSeekRow(Canvas c, float x, float centerY, float alpha, MediaFx fx, long now) {
         long position = fx.shownPosition(item, SystemClock.elapsedRealtime());
-        String current = IslandView.formatTimePadded(Math.max(0L, position));
-        String total = item.mediaDuration > 0 ? IslandView.formatTimePadded(item.mediaDuration) : NO_DURATION;
+        long second=Math.max(0L,position)/1000;
+        if(clockText==null||clockSecond!=second){clockSecond=second;clockText=IslandView.formatTimePadded(Math.max(0L,position));}
+        long duration=item.mediaDuration>0 ? item.mediaDuration/1000 : -1;
+        if(durationText==null||durationSecond!=duration){durationSecond=duration;durationText=item.mediaDuration>0 ? IslandView.formatTimePadded(item.mediaDuration) : NO_DURATION;}
+        String current=clockText,total=durationText;
         owner.smallPaint.setColor(Colors.withAlpha(Colors.TEXT_SECONDARY, alpha));
         Paint.FontMetrics fm = owner.smallPaint.getFontMetrics();
         float baseline = centerY - ((fm.ascent + fm.descent) / 2.0f);

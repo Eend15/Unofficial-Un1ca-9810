@@ -36,10 +36,20 @@ final class LottiePlayer {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mattePaint = new Paint();
     private final Path combined = new Path();
+    // Everything one frame needs is taken from these and handed back at the start of the next: a frame of an
+    // animated icon used to make dozens of paths, lists and arrays, each one garbage a few milliseconds later.
+    private final List<Path> spareShapes = new ArrayList<>();
+    private int shapesTaken;
+    private final List<List<Path>> spareLists = new ArrayList<>();
+    private int listsTaken;
+    private final PathMeasure measure = new PathMeasure();
+    private CornerPathEffect cornerEffect;
+    private float cornerEffectRadius = -1.0f;
     /** True while drawing a layer named "cut": it removes what is below instead of adding to it. */
     private boolean erasing;
     private final Matrix scratch = new Matrix();
     private final RectF clip = new RectF();
+    private final RectF oval = new RectF();
     private int color;
     /** Charge shown by layers named "level", 0..1; negative leaves them alone. */
     private float level = -1.0f;
@@ -79,7 +89,36 @@ final class LottiePlayer {
     }
 
     /** Draws the composition at {@code elapsedMillis} into {@code dst}, every shape in {@code tint}. */
+    private Path takeShape() {
+        Path path;
+        if (shapesTaken < spareShapes.size()) {
+            path = spareShapes.get(shapesTaken);
+            path.rewind();
+            path.setFillType(Path.FillType.WINDING);
+        } else {
+            path = new Path();
+            spareShapes.add(path);
+        }
+        shapesTaken++;
+        return path;
+    }
+
+    private List<Path> takeList() {
+        List<Path> list;
+        if (listsTaken < spareLists.size()) {
+            list = spareLists.get(listsTaken);
+            list.clear();
+        } else {
+            list = new ArrayList<>();
+            spareLists.add(list);
+        }
+        listsTaken++;
+        return list;
+    }
+
     void draw(Canvas c, RectF dst, float elapsedMillis, int tint) {
+        shapesTaken = 0;
+        listsTaken = 0;
         float frame = Math.min(outFrame - 0.01f, inFrame + (elapsedMillis * frameRate / 1000.0f));
         color = tint;
         int save = c.save();
@@ -347,7 +386,7 @@ final class LottiePlayer {
     }
 
     private void drawShapes(Canvas c, List<Shape> items, float frame, float alpha) {
-        List<Path> geoms = new ArrayList<>();
+        List<Path> geoms = takeList();
         float corner = 0.0f;
         for (Shape s : items) {
             switch (s.type) {
@@ -406,7 +445,11 @@ final class LottiePlayer {
             paint.setXfermode(MATTE_OUT);
         }
         if (corner > 0.0f) {
-            paint.setPathEffect(new CornerPathEffect(corner));
+            if (cornerEffect == null || cornerEffectRadius != corner) {
+                cornerEffect = new CornerPathEffect(corner);
+                cornerEffectRadius = corner;
+            }
+            paint.setPathEffect(cornerEffect);
         }
         if (s.type.equals("st")) {
             paint.setStyle(Paint.Style.STROKE);
@@ -432,34 +475,35 @@ final class LottiePlayer {
         paint.reset();
     }
 
-    private static Path rect(Shape s, float frame) {
+    private Path rect(Shape s, float frame) {
         float[] p = s.a.at(frame);
         float[] size = s.b.at(frame);
         float r = s.c == null ? 0 : Math.min(s.c.at(frame)[0], Math.min(size[0], size[1]) / 2.0f);
-        Path path = new Path();
+        Path path = takeShape();
         path.addRoundRect(p[0] - size[0] / 2, p[1] - size[1] / 2, p[0] + size[0] / 2, p[1] + size[1] / 2, r, r, Path.Direction.CW);
         return path;
     }
 
     /** Starts at the top and runs clockwise, like Lottie's ellipse, so trims line up. */
-    private static Path ellipse(Shape s, float frame) {
+    private Path ellipse(Shape s, float frame) {
         float[] p = s.a.at(frame);
         float[] size = s.b.at(frame);
-        RectF r = new RectF(p[0] - size[0] / 2, p[1] - size[1] / 2, p[0] + size[0] / 2, p[1] + size[1] / 2);
-        Path path = new Path();
+        RectF r = oval;
+        r.set(p[0] - size[0] / 2, p[1] - size[1] / 2, p[0] + size[0] / 2, p[1] + size[1] / 2);
+        Path path = takeShape();
         path.arcTo(r, -90.0f, 180.0f, true);
         path.arcTo(r, 90.0f, 180.0f, false);
         path.close();
         return path;
     }
 
-    private static List<Path> trim(List<Path> geoms, Shape s, float frame) {
+    private List<Path> trim(List<Path> geoms, Shape s, float frame) {
         float start = s.a.at(frame)[0] / 100.0f;
         float end = s.b.at(frame)[0] / 100.0f;
         float offset = s.c == null ? 0.0f : s.c.at(frame)[0] / 360.0f;
         float lo = Math.min(start, end) + offset;
         float hi = Math.max(start, end) + offset;
-        List<Path> out = new ArrayList<>();
+        List<Path> out = takeList();
         for (Path p : geoms) {
             if (hi - lo >= 0.9999f) {
                 out.add(p);
@@ -470,7 +514,7 @@ final class LottiePlayer {
             }
             float a = lo - (float) Math.floor(lo);
             float b = a + (hi - lo);
-            Path t = new Path();
+            Path t = takeShape();
             segment(p, a, Math.min(b, 1.0f), t);
             if (b > 1.0f) {
                 segment(p, 0.0f, b - 1.0f, t);
@@ -480,8 +524,9 @@ final class LottiePlayer {
         return out;
     }
 
-    private static void segment(Path src, float from, float to, Path dst) {
-        PathMeasure m = new PathMeasure(src, false);
+    private void segment(Path src, float from, float to, Path dst) {
+        PathMeasure m = measure;
+        m.setPath(src, false);
         float total = 0.0f;
         do {
             total += m.getLength();
@@ -499,16 +544,17 @@ final class LottiePlayer {
         } while (m.nextContour());
     }
 
-    private static List<Path> merge(List<Path> geoms, int mode) {
+    private List<Path> merge(List<Path> geoms, int mode) {
         if (geoms.size() < 2) {
             return geoms;
         }
-        Path acc = new Path(geoms.get(0));
+        Path acc = takeShape();
+        acc.set(geoms.get(0));
         Path.Op op = mode == 3 ? Path.Op.DIFFERENCE : mode == 4 ? Path.Op.INTERSECT : mode == 5 ? Path.Op.XOR : Path.Op.UNION;
         for (int i = 1; i < geoms.size(); i++) {
             acc.op(geoms.get(i), op);
         }
-        List<Path> out = new ArrayList<>();
+        List<Path> out = takeList();
         out.add(acc);
         return out;
     }
@@ -523,6 +569,7 @@ final class LottiePlayer {
         float[][] to;
         float[][][] ease;
         boolean[] hold;
+        private float[] blend;
 
         static Prop parse(JSONObject o) throws JSONException {
             if (o == null) {
@@ -603,7 +650,11 @@ final class LottiePlayer {
                 return a;
             }
             float f = (frame - times[i]) / (times[i + 1] - times[i]);
-            float[] out = new float[a.length];
+            // read by the caller before it asks this property again, so one array serves every frame
+            float[] out = blend;
+            if (out == null || out.length != a.length) {
+                out = blend = new float[a.length];
+            }
             for (int d = 0; d < out.length; d++) {
                 float e = f;
                 if (ease[i] != null) {
@@ -649,6 +700,8 @@ final class LottiePlayer {
         private float[][][] ease;
         private boolean[] closed;
         private final Path out = new Path();
+        /** Interpolated outline (vertices, in tangents, out tangents), reused for every frame. */
+        private final float[][] blended = new float[3][];
 
         static PathProp parse(JSONObject o) throws JSONException {
             if (o == null) {
@@ -715,6 +768,7 @@ final class LottiePlayer {
         Path at(float frame) {
             float[][] shape;
             boolean isClosed;
+            int count = 0;
             if (times == null || frame <= times[0]) {
                 shape = verts[0];
                 isClosed = closed[0];
@@ -730,25 +784,33 @@ final class LottiePlayer {
                 float e = ease[i] == null ? f : Prop.bezier(f, ease[i][0][0], ease[i][1][0], ease[i][2][0], ease[i][3][0]);
                 float[][] a = verts[i];
                 float[][] b = verts[i + 1];
-                shape = new float[3][];
+                shape = blended;
                 for (int row = 0; row < 3; row++) {
                     int len = Math.min(a[row].length, b[row].length);
-                    shape[row] = new float[len];
+                    if (shape[row] == null || shape[row].length < len) {
+                        shape[row] = new float[len];
+                    }
                     for (int j = 0; j < len; j++) {
                         shape[row][j] = a[row][j] + ((b[row][j] - a[row][j]) * e);
                     }
+                    if (row == 0) {
+                        count = len / 2;
+                    }
                 }
                 isClosed = closed[i];
+                return build(shape, count, isClosed);
             }
-            return build(shape, isClosed);
+            return build(shape, shape[0].length / 2, isClosed);
         }
 
-        private static Path build(float[][] s, boolean closed) {
+        /** The path of the {@code n} vertices at the start of each row of {@code s}; it is this property's own path. */
+        private Path build(float[][] s, int n, boolean closed) {
             float[] v = s[0];
             float[] in = s[1];
             float[] out = s[2];
-            int n = v.length / 2;
-            Path path = new Path();
+            Path path = this.out;
+            path.rewind();
+            path.setFillType(Path.FillType.WINDING);
             if (n == 0) {
                 return path;
             }

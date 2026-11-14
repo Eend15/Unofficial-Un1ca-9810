@@ -46,12 +46,41 @@ Settings include [ranked offline search](SETTINGS-SEARCH.md), with translated na
 
 The expanded island defaults to Classic, with the existing fill, native blur, rim and media glow. Appearance → Card material can opt into the [frosted material](FROSTED-MATERIAL.md). Existing explicit selections are preserved. Foreground icons/buttons are shared unchanged by both materials.
 
-- The module code runs inside System UI. Settings are read there through `XSharedPreferences` on a background thread every few seconds (`ModuleSettings`); every getter falls back to its default when the file is unreadable.
+- The module code runs inside System UI. Settings are read there through `XSharedPreferences` on a background thread when the settings app says it wrote one, and otherwise once a minute (`ModuleSettings`); every getter falls back to its default when the file is unreadable.
 - Settings show a transient message after a saved value changes, with next-event timing for charging, connections and card timeouts. A fresh diagnostics ping checks the SystemUI connection only; it does not prove the value was applied. If no response arrives, the message offers the existing confirmed restart action. No individual preference is marked as always requiring a restart.
 - Each hook group is installed on its own (`SystemUiHooks.install`), so one that cannot attach does not take the others down. Hook bodies run through `SafeHook`, and each island source is collected inside its own try/catch.
 - `CrashGuard` counts unstable System UI starts and module-involved crashes in device-protected storage and keeps the module off after repeated failures. The state resets when the module version or the system build fingerprint changes, and an "off" verdict expires after 12 hours.
 - `Diagnostics` keeps a report (stages, facts, errors) and publishes it to the global setting `dynamicisland_report`, which the settings app reads.
 - The island window is created when the status bar view attaches, or by a 15 second fallback timer.
+
+### Samsung incoming-call mini window
+
+Samsung InCallUI owns the mini incoming-call window; it is not a SystemUI heads-up
+notification. InCallUI 18.1.00.75 registers an exported dynamic receiver for
+`com.samsung.rcs.intent.action.ACTION_HIDE_MINI_MODE_CALL_VIEW`, whose handler
+finishes the popup rather than answering or ending the call.
+
+`SamsungCallPopupTakeover` sends this command from SystemUI, explicitly targeting
+`com.samsung.android.incallui` and the matching notification's user. No additional
+LSPosed scope is required. Every new or updated Samsung call notification starts a
+short hide-request burst immediately, independently of island visibility, expanded
+controls, app filtering or audio mode. This also applies to call waiting and ongoing
+calls. Multiple call notifications share one burst per user. Unchanged snapshots do
+not restart it; removed or replaced postings cancel their queued requests.
+
+Four attempts over one second cover popup receiver registration timing without
+continuous polling. The command closes whichever mini call window is present for
+that user; it has no call identifier or acknowledgement. This is best effort and
+cannot guarantee the popup is never briefly visible or dismiss a later recreation
+without a new call-notification update. No notifications, ringtones or phone
+preferences are changed. A device test confirmed prompt dismissal; other InCallUI
+builds and call-waiting scenarios still need verification.
+
+Answer and decline/end buttons use rounded Lottie handsets with a brief entrance
+animation and matching static fallbacks. Button colours, hit bounds and call actions
+stay unchanged. The animations respect still-icons/low-performance mode and stop
+requesting frames once settled. Regenerate them with `tools/lottie/calls.py`, then
+`tools/lottie/embed.py`.
 
 ## Rules
 
@@ -106,13 +135,15 @@ One-time setup (Settings → Secrets and variables → Actions → New repositor
 
 To release: raise `versionCode` / `versionName` in `app/build.gradle` and `CrashGuard.BUILD`, commit, then `git tag v<version> && git push origin v<version>`. The workflow can also be started by hand (Actions → Release → Run workflow, branch `main`): it then creates the tag `v<versionName>` itself. The release text is `docs/release-notes/<versionName>.md` (English and Korean) when that file exists, otherwise it is generated from the commits; running the workflow again for an existing version updates the assets and the text. `ci.yml` runs the tests on every push and pull request.
 
+For release preparation without publishing, run `gh workflow run release.yml --ref main -f draft=true` after committing and pushing the version and notes. This builds and signs with the same repository key but saves a draft release. It refuses to overwrite a published release in draft mode. Inspect the draft, APK metadata, checksum and certificate before publishing. A normal tag push or manual run with the default `draft=false` retains the publishing behaviour above.
+
 ## Tests
 
 ```bash
 ./gradlew testReleaseUnitTest
 ```
 
-The default suite runs behavior, lifecycle, pixel and layout regressions. It checks every settings page once and compares the Android resources with the System UI catalog in all six languages. It does not export PNGs or repeat the entire settings layout for every language.
+The default suite runs behavior, lifecycle, pixel and layout regressions. It checks every settings page once and compares the Android resources with the System UI catalog in every registered language. It does not export PNGs or repeat the entire settings layout for every language.
 
 ```bash
 ./gradlew testReleaseUnitTest -Prender        # also run visual captures and export PNGs

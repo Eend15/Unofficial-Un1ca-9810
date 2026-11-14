@@ -1,33 +1,152 @@
-name: Label new issues for triage
+name: Issue management and protection
 
 on:
   issues:
-    types: [opened]
+    types: [opened, reopened, closed, edited]
 
 permissions:
   issues: write
 
 jobs:
-  add-triage-label:
+  manage-issue:
     runs-on: ubuntu-latest
     steps:
-      - name: Add needs triage label when no status is set
+      - name: Process issue state and protection
         uses: actions/github-script@v7
         with:
           script: |
+            const { action, issue, changes } = context.payload;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = issue.number;
             const statusLabels = ['needs triage', 'needs info', 'planned', 'in progress', 'in testing'];
-            const { data: issue } = await github.rest.issues.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number
-            });
-            if (issue.labels.some(label => statusLabels.includes(label.name))) {
-              core.info('Issue already has a status label; skipping.');
-              return;
+
+            // 1. When an issue is closed: remove active triage labels & lock conversation
+            if (action === 'closed') {
+              const activeLabels = ['needs triage', 'in progress'];
+              for (const name of activeLabels) {
+                if (issue.labels.some(l => l.name === name)) {
+                  try {
+                    await github.rest.issues.removeLabel({
+                      owner,
+                      repo,
+                      issue_number,
+                      name
+                    });
+                    core.info(`Removed '${name}' from closed issue #${issue_number}`);
+                  } catch (err) {
+                    core.warning(`Failed to remove label '${name}': ${err.message}`);
+                  }
+                }
+              }
+
+              // Lock conversation if not already locked
+              if (!issue.locked) {
+                try {
+                  await github.rest.issues.lock({
+                    owner,
+                    repo,
+                    issue_number,
+                    lock_reason: 'resolved'
+                  });
+                  core.info(`Locked closed issue #${issue_number}`);
+                } catch (err) {
+                  core.warning(`Failed to lock issue #${issue_number}: ${err.message}`);
+                }
+              }
             }
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              labels: ['needs triage']
-            });
+
+            // 2. When an issue is opened or reopened: assign 'needs triage' if no status exists
+            else if (action === 'opened' || action === 'reopened') {
+              const { data: freshIssue } = await github.rest.issues.get({
+                owner,
+                repo,
+                issue_number
+              });
+              if (freshIssue.labels.some(label => statusLabels.includes(label.name))) {
+                core.info('Issue already has a status label; skipping.');
+                return;
+              }
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number,
+                labels: ['needs triage']
+              });
+              core.info(`Added 'needs triage' to issue #${issue_number}`);
+            }
+
+            // 3. When an issue is edited: guard against title vandalism and content wiping with auto-restore
+            else if (action === 'edited') {
+              const title = (issue.title || '').trim();
+              const body = (issue.body || '').trim();
+
+              const isTitleDefaced = title.length <= 2;
+              const isBodyEmpty = body.length === 0;
+
+              if (isTitleDefaced || isBodyEmpty) {
+                core.warning(`Vandalism detected on issue #${issue_number}. Defaced title: "${title}", empty body: ${isBodyEmpty}`);
+
+                const restoreUpdates = {};
+                if (isTitleDefaced && changes && changes.title && changes.title.from) {
+                  restoreUpdates.title = changes.title.from;
+                }
+                if (isBodyEmpty && changes && changes.body && changes.body.from) {
+                  restoreUpdates.body = changes.body.from;
+                }
+
+                // If we need to restore title or body
+                if (Object.keys(restoreUpdates).length > 0) {
+                  try {
+                    await github.rest.issues.update({
+                      owner,
+                      repo,
+                      issue_number,
+                      ...restoreUpdates
+                    });
+                    core.info(`Restored vandalized fields on issue #${issue_number}: ${Object.keys(restoreUpdates).join(', ')}`);
+                  } catch (err) {
+                    core.warning(`Failed to restore issue #${issue_number}: ${err.message}`);
+                  }
+                }
+
+                // Add spam and invalid labels
+                try {
+                  await github.rest.issues.addLabels({
+                    owner,
+                    repo,
+                    issue_number,
+                    labels: ['spam', 'invalid']
+                  });
+                } catch (err) {
+                  core.warning(`Failed to add spam labels to issue #${issue_number}: ${err.message}`);
+                }
+
+                // Lock issue
+                if (!issue.locked) {
+                  try {
+                    await github.rest.issues.lock({
+                      owner,
+                      repo,
+                      issue_number,
+                      lock_reason: 'spam'
+                    });
+                    core.info(`Locked vandalized issue #${issue_number}`);
+                  } catch (err) {
+                    core.warning(`Failed to lock issue #${issue_number}: ${err.message}`);
+                  }
+                }
+
+                // Post warning comment
+                try {
+                  await github.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number,
+                    body: 'Content removal or title defacement was detected on this issue. The original content has been restored and the conversation has been locked.'
+                  });
+                } catch (err) {
+                  core.warning(`Failed to comment on issue #${issue_number}: ${err.message}`);
+                }
+              }
+            }

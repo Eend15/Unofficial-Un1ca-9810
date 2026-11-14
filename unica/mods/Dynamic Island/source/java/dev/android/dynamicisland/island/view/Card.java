@@ -35,6 +35,8 @@ public final class Card {
     /** Size the card had when it started to leave; its content fades by how far the fold has got. */
     float leaveFromH;
     float leaveFromW;
+    /** Where the card started when the cards are pulled open by the finger (the pill's size), see {@link Director#beginPullOpen}. */
+    float pullFromCy, pullFromW, pullFromH;
     float targetCy;
     float targetH;
     float targetW;

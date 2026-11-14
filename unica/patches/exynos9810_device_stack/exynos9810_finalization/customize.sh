@@ -1933,6 +1933,30 @@ _EXYNOS9810_FINAL_RESTORE_TARGET_CAMERA_STACK()
         _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$REL" \
             0 0 644 "u:object_r:vendor_file:s0"
     done
+
+    if [ -s "$SRC_DIR/target/$TARGET_CODENAME/camera/camera-feature.xml" ]; then
+        cp -af "$SRC_DIR/target/$TARGET_CODENAME/camera/camera-feature.xml" \
+            "$WORK_DIR/system/system/cameradata/camera-feature.xml" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "system" "system/cameradata/camera-feature.xml" \
+            0 0 644 "u:object_r:system_file:s0"
+    fi
+
+    if [ -s "$GLOBAL/etc/media_profiles_V1_0.xml" ]; then
+        cp -af "$GLOBAL/etc/media_profiles_V1_0.xml" \
+            "$WORK_DIR/vendor/etc/media_profiles_V1_0.xml" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/etc/media_profiles_V1_0.xml" \
+            0 0 644 "u:object_r:vendor_configs_file:s0"
+    fi
+
+    if [ -s "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/system/cameradata/portrait_data/single_bokeh_feature.json" ]; then
+        mkdir -p "$WORK_DIR/vendor/etc/portrait_data"
+        cp -af "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/system/cameradata/portrait_data/single_bokeh_feature.json" \
+            "$WORK_DIR/vendor/etc/portrait_data/single_bokeh_feature.json" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/etc/portrait_data" \
+            0 2000 755 "u:object_r:vendor_configs_file:s0"
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/etc/portrait_data/single_bokeh_feature.json" \
+            0 0 644 "u:object_r:vendor_configs_file:s0"
+    fi
 }
 
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES()
@@ -2049,12 +2073,15 @@ _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT()
     # /system/app is ignored, leaving the manager without its KernelSU fd and
     # showing "v2 signature not found in kernel" after every clean boot.
     #
+    # The manager and its ksud must match the kernel UAPI: DS-ACK V1.14 builds
+    # KernelSU-Next v3.4.0-legacy (UAPI 4). A newer ksud (v3.4.2, UAPI 5) skips
+    # post-fs-data/services/boot-completed, so modules never install.
     # Keep the official, upstream-signed release outside PackageManager's
     # system-app scan paths and install it normally after PackageManager is
     # ready. packages.list then changes, the kernel scanner sees base.apk and
     # crowns the manager immediately, exactly like a manual adb/package-
     # installer install.
-    local EXPECTED_SHA256="774a5511f7034a4930e881114e202319cbdc34c5aaaa5c7c6b6d2902364e4c58"
+    local EXPECTED_SHA256="50339a93c0f812b8a72c1a387a1b441891e3df0f20b2d9daf80fd798d04b3de8"
     local PAYLOAD_DIR="$WORK_DIR/system/system/etc/unica/ksunext"
     local PAYLOAD="$PAYLOAD_DIR/KernelSUNext.apk"
     local SCRIPT="$WORK_DIR/system/system/bin/unica_ksunext_installer.sh"
@@ -2072,7 +2099,7 @@ _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT()
     fi
 
     if [ "$(sha256sum "$EXYNOS9810_KERNELSU_NEXT_APK" | cut -d ' ' -f 1)" != "$EXPECTED_SHA256" ]; then
-        LOGE "Unexpected KernelSU Next v3.4.2 (33355) payload hash"
+        LOGE "Unexpected KernelSU Next v3.4.0 (33294, uapi 4) payload hash"
         return 1
     fi
 
@@ -3398,10 +3425,12 @@ _EXYNOS9810_FINAL_PATCH_CAMERA_LLS_SINGLE_FRAME()
     # saved and no FLITE/PIPE_3AA starvation (reprocessing recovery and flush
     # recovery now cover that path). Keep stock multi-frame low-light/HDR there;
     # S9 and Note9 keep the safeguard until their own HALs are tested.
-    if [ "$TARGET_CODENAME" = "star2lte" ]; then
-        LOG "- Keeping stock multi-frame low-light capture on $TARGET_CODENAME"
-        return 0
-    fi
+    case "$TARGET_CODENAME" in
+        star2lte|starlte|crownlte)
+            LOG "- Keeping stock multi-frame low-light capture on $TARGET_CODENAME"
+            return 0
+            ;;
+    esac
 
     # checkLDCaptureMode() is built at a different address for every device
     # HAL, which changes both branch and BL encodings even though the source

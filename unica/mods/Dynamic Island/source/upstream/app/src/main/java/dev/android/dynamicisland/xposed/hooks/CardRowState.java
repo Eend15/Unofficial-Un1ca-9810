@@ -106,6 +106,32 @@ final class CardRowState {
         return restored;
     }
 
+    /** Samsung's content limits include padding/margins; measureChildWithMargins subtracts them from the child. */
+    private int verticalInsets() {
+        int insets = layout.getPaddingTop() + layout.getPaddingBottom();
+        ViewGroup.LayoutParams params = card.getLayoutParams();
+        if (params instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) params;
+            insets += margins.topMargin + margins.bottomMargin;
+        }
+        return Math.max(0, insets);
+    }
+
+    /** Use this measure's child size, not its previous laid-out height during a content change. */
+    int minimumHeight() {
+        int height = card.getMeasuredHeight();
+        return (height > 0 ? height : card.desiredHeight()) + verticalInsets();
+    }
+
+    /** The stock content view reports its child height without adding its own vertical insets. */
+    void fitMeasuredHeight(int heightSpec) {
+        if (verticalInsets() == 0 || card.getMeasuredHeight() <= 0) return;
+        int required = View.resolveSize(minimumHeight(), heightSpec);
+        if (required > layout.getMeasuredHeight()) {
+            Refl.call(layout, "setMeasuredDimension", layout.getMeasuredWidthAndState(), required);
+        }
+    }
+
     /** Reuse only while every slot is still ours; native reinflation may change the originals. */
     boolean canReuse(String notificationKey) {
         return !restored && !restoreQueued && key.equals(notificationKey)
@@ -207,7 +233,7 @@ final class CardRowState {
         boolean pushed = false;
         try {
             int inner = Math.max(1, width - layout.getPaddingLeft() - layout.getPaddingRight());
-            int height = card.heightFor(inner);
+            int height = card.heightFor(inner) + verticalInsets();
             int[] saved = new int[LIMITS.length];
             for (int i = 0; i < LIMITS.length; i++) {
                 saved[i] = Refl.getInt(layout, LIMITS[i], 0);

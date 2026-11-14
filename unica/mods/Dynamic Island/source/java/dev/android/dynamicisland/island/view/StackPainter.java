@@ -208,7 +208,8 @@ final class StackPainter {
     void drawGoo(Canvas canvas) {
         if(scene.iMode!=null) return;
         Card previous = null;
-        for (Card c : scene.cards) {
+        for (int i = 0, n = scene.cards.size(); i < n; i++) {
+            Card c = scene.cards.get(i);
             if (!c.leaving) {
                 continue;
             }

@@ -94,11 +94,12 @@ public final class HeadsetSource {
             if (added) connectedSince = SystemClock.uptimeMillis();
             if (name == null) return;
             long now = SystemClock.uptimeMillis();
-            long ttl = added ? 6_000 : 2_500;
+            long ttl = Math.max(added ? 6_000 : 2_500, ModuleSettings.popupMillis());
             IslandItem item = card(added, name);
             item.postTime = lastAnnouncement = Math.max(now, lastAnnouncement + 1);
             item.expiresAtUptime = now + ttl;
-            item.peekMillis = Math.min(4_000, ttl);
+            item.transientPopup = true;
+            item.peekMillis = Math.min(Math.max(4_000, ModuleSettings.popupMillis()), ttl);
             announcement = item;
             main.removeCallbacks(expire);
             main.postDelayed(expire, ttl);

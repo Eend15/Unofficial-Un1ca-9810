@@ -89,16 +89,17 @@ chmod 0755 "$TMP_DIR/exynos9810/sgdisk"
 # ext4 package carries the non-EROFS DTBs; the EROFS package remains the
 # repository's EROFS-specific payload.
 DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Enforcing-KernelSU-Next-v3.4.2-SuSFS}"
-DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-07.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-SuSFS-erofs-dtb.zip"
-DS_ACK_EROFS_PREBUILT_SHA256="309ae8c7ee1132199d9519339273254e6df2db4f3b0df8b0c8c5c7925c14489c"
-DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.12-07.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-SuSFS-ext4-dtb.zip"
-# These November7 archives add the sec_ts LPM-exit touch freeze fix to the
-# October24 Linux4.9 persistence/cache fixes, maximum compiled legacy SuSFS
-# features and the complete six-model family.
+DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.13-11.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-dt2wtap-SuSFS-erofs-dtb.zip"
+DS_ACK_EROFS_PREBUILT_SHA256="f435acac36257efd19faa74e85ff601da71698e3423cd05ee238010a79e707d7"
+DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.13-11.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-dt2wtap-SuSFS-ext4-dtb.zip"
+# These November11 V1.13 archives add the double-tap-to-wake tap coordinate fix
+# to the November7 sec_ts LPM-exit touch freeze fix, the October24 Linux4.9
+# persistence/cache fixes, maximum compiled legacy SuSFS features and the
+# complete six-model family.
 # Filesystem-specific DTBs/tools/installer remain from their proven baselines.
 # A missing package must fail, not silently fall back to
 # the older OneUI7 kernel or a differently signed same-name archive.
-DS_ACK_EXT4_PREBUILT_SHA256="6e7323958ca2a26e521be5f7902beea667a3fea65a7a090056a5067ae7590670"
+DS_ACK_EXT4_PREBUILT_SHA256="10311fba99ad8e17df61c7f63b446730f02a1e5e9386faeabccbf46eb0a2f6a0"
 case "${TARGET_OS_FILE_SYSTEM_TYPE:-}" in
     ext4)
         DS_ACK_PREBUILT_ZIP="$DS_ACK_EXT4_PREBUILT_ZIP"

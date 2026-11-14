@@ -9,16 +9,16 @@ import android.graphics.Paint;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /** Draws time strings such as "12:34" whose changing digits roll vertically (downwards for countdowns). */
 final class DigitClock {
     /** Roll state older than this is dropped once more than {@link #CACHE_SIZE} entries exist. */
     private static final long STALE_MS = 5000;
     private static final int CACHE_SIZE = 12;
-    private static final Pattern TIME_TEXT = Pattern.compile("-?\\d{1,2}(:\\d{2}){1,2}(\\.\\d{2})?");
+    private static final String DIGITS = "0123456789";
 
     private final IslandView view;
+    private final Paint.FontMetrics metrics = new Paint.FontMetrics();
     private final Map<String, DigitRoll> rolls = new HashMap<>();
     private long rollingUntil;
 
@@ -32,19 +32,63 @@ final class DigitClock {
      */
     private static float digitCell(Paint paint) {
         float widest = 0.0f;
-        for (char d = '0'; d <= '9'; d++) {
-            widest = Math.max(widest, paint.measureText(String.valueOf(d)));
+        for (int d = 0; d < DIGITS.length(); d++) {
+            widest = Math.max(widest, paint.measureText(DIGITS, d, d + 1));
         }
         return widest;
     }
 
-    private static float cellOf(Paint paint, char ch, float digitCell) {
-        return (ch >= '0' && ch <= '9') ? digitCell : paint.measureText(String.valueOf(ch));
+    /** The cell of the character at {@code index}; measured in place, so no string is made for it. */
+    private static float cellOf(Paint paint, String text, int index, float digitCell) {
+        char ch = text.charAt(index);
+        return (ch >= '0' && ch <= '9') ? digitCell : paint.measureText(text, index, index + 1);
     }
 
     /** Whether {@code text} is a clock string that {@link #draw} lays out cell by cell. */
     static boolean isClock(String text) {
-        return text != null && TIME_TEXT.matcher(text).matches();
+        return text != null && matchesTime(text);
+    }
+
+    /**
+     * {@code -?\d{1,2}(:\d{2}){1,2}(\.\d{2})?} without a matcher: this runs for every clock on every frame. The
+     * pieces cannot be read two ways (a colon or a dot always starts the next piece), so one pass decides.
+     */
+    static boolean matchesTime(String text) {
+        int n = text.length();
+        int i = 0;
+        if (i < n && text.charAt(i) == '-') {
+            i++;
+        }
+        int digits = 0;
+        while (i < n && digits < 2 && isDigit(text.charAt(i))) {
+            i++;
+            digits++;
+        }
+        if (digits == 0) {
+            return false;
+        }
+        int groups = 0;
+        while (groups < 2 && i < n && text.charAt(i) == ':') {
+            if (i + 3 > n || !isDigit(text.charAt(i + 1)) || !isDigit(text.charAt(i + 2))) {
+                return false;
+            }
+            i += 3;
+            groups++;
+        }
+        if (groups == 0) {
+            return false;
+        }
+        if (i < n && text.charAt(i) == '.') {
+            if (i + 3 > n || !isDigit(text.charAt(i + 1)) || !isDigit(text.charAt(i + 2))) {
+                return false;
+            }
+            i += 3;
+        }
+        return i == n;
+    }
+
+    private static boolean isDigit(char ch) {
+        return ch >= '0' && ch <= '9';
     }
 
     /**
@@ -61,7 +105,7 @@ final class DigitClock {
         float digit = digitCell(paint);
         float w = 0.0f;
         for (int i = 0; i < text.length(); i++) {
-            w += cellOf(paint, text.charAt(i), digit);
+            w += cellOf(paint, text, i, digit);
         }
         return w;
     }
@@ -87,7 +131,8 @@ final class DigitClock {
             rollingUntil = until;
             view.scheduleFrame();
         }
-        Paint.FontMetrics fm = paint.getFontMetrics();
+        Paint.FontMetrics fm = metrics;
+        paint.getFontMetrics(fm);
         float travel = (fm.descent - fm.ascent) * 0.8f;
         float dir = countDown ? -1.0f : 1.0f;
         int baseAlpha = paint.getAlpha();
@@ -95,7 +140,7 @@ final class DigitClock {
         float x = left;
         for (int i = 0; i < text.length(); i++) {
             char ch = text.charAt(i);
-            float cell = cellOf(paint, ch, digit);
+            float cell = cellOf(paint, text, i, digit);
             // glyphs are centred in their cell, so narrow ones ("1", ":") do not crowd the next digit
             float gx = x + ((cell - paint.measureText(text, i, i + 1)) / 2.0f);
             x += cell;

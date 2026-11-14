@@ -1,0 +1,40 @@
+{
+ "date": "2026-11-11",
+ "version": "DS-ACK V1.13",
+ "base_provenance": "20261107-kernel-provenance.json",
+ "kernel_source_revision": "0f2d01d2517523c62f648c8e23b76ffca9eb807c",
+ "source_patches": [
+  "unica/patches/exynos9810_device_stack/exynos9810_finalization/input/patch_touch_lpm_exit.py",
+  "unica/patches/exynos9810_device_stack/exynos9810_finalization/input/patch_dt2w_tap_coords.py"
+ ],
+ "upstream_reference": {
+  "repository": "https://github.com/duhansysl/exynos9810-kernel",
+  "tag": "V1.13",
+  "commit": "54989c75d7435742f9c9b06ddac4df694d55f76b",
+  "taken": ["54989c75d743 apollo: uprev to V1.13 (CR_VERSION=V1.13)"],
+  "not_taken": [
+   "b921b31980d7 / c189f6dee084 BIG minimum/maximum core sysfs controls: unused by this ROM",
+   "aa274f23b57a cpuidle UCC userspace boost control: unused by this ROM",
+   "37f7205a19bf drivers: duhanrom dynamic AIDL/legacy brightness scaling: DuhanROM brightness path; this ROM's brightness already works",
+   "fc0578ae251d KernelSU-Next tracked in-tree: repository change; this tree carries its own KernelSU Next v3.4.2 runtime49/SuSFS"
+  ]
+ },
+ "compiler": "Android clang 20.0.0 r547379 (13174946, llvm b718bcaf8c198c82f3021447d943401e3ab5bd54)",
+ "build": "apollo-un1ca.sh --erofs-release (enforcing KernelSU profile only), six models, DS_ACK_BUILD_DATE=11.11.2026",
+ "packaging": "Each November7 filesystem-specific archive with the six floyd/*-kernel images and the installer update-binary (V1.13 banner) taken from the new build; DTBs and tools unchanged",
+ "baseline_archive_sha256": {
+  "erofs": "309ae8c7ee1132199d9519339273254e6df2db4f3b0df8b0c8c5c7925c14489c",
+  "ext4": "6e7323958ca2a26e521be5f7902beea667a3fea65a7a090056a5067ae7590670"
+ },
+ "archive_sha256": {
+  "erofs": "f435acac36257efd19faa74e85ff601da71698e3423cd05ee238010a79e707d7",
+  "ext4": "10311fba99ad8e17df61c7f63b446730f02a1e5e9386faeabccbf46eb0a2f6a0"
+ },
+ "dtbs": "Unchanged from the November7 (October24) filesystem-specific archives",
+ "changes": [
+  "wake_gestures: undo the screen-off X offset only where sec_ts added it (MOVE reports), so clean PRESS+RELEASE taps count for double-tap wake",
+  "Version DS-ACK V1.13"
+ ],
+ "verification": "Both archives passed tools/verify_release_zip.sh for all six models; test_dt2w_tap_coords.py passed on the real wake_gestures.c and both sec_ts drivers",
+ "physical_test": "Not yet performed"
+}

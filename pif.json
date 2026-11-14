@@ -1,0 +1,14 @@
+{
+  "VERSION": "20261113",
+  "PRODUCT": "bluejay_beta",
+  "DEVICE": "bluejay",
+  "MANUFACTURER": "Google",
+  "BRAND": "google",
+  "MODEL": "Pixel 6a",
+  "FINGERPRINT": "google/bluejay_beta/bluejay:CANARY/ZP11.261016.008/16754936:user/release-keys",
+  "SECURITY_PATCH": "2026-11-05",
+  "DEVICE_INITIAL_SDK_INT": "32",
+  "ID": "ZP11.261016.008",
+  "INCREMENTAL": "16754936",
+  "RELEASE": "17"
+}

@@ -56,6 +56,15 @@ final class MaterialCapture {
     private int[] lastPixels;
     private Rect lastBounds;
     private MaterialFrame lastFrame;
+    // Worker-only buffers kept between captures: the arrays of one filter are dead a moment later, and made fresh
+    // every time they kept System UI in the garbage collector (tens of MB per capture).
+    private final MaterialPixels.Scratch scratch=new MaterialPixels.Scratch();
+    private int[] spareScan,argbBuffer;
+    private int unchangedRun,lastWidth,lastHeight;
+    /** After this many captures in a row that found the backdrop unchanged, the buffers are let go. */
+    private static final int IDLE_CAPTURES_BEFORE_RELEASE=8;
+    /** What the buffers saved, for the diagnostics report (read on the main thread, written by the worker). */
+    private static volatile long freshBytes,reusedBytes,filterCount;
 
     MaterialCapture(View host,Consumer<MaterialFrame> receiver) {
         this.host=host;this.receiver=receiver;
@@ -107,7 +116,7 @@ final class MaterialCapture {
         if(!active)return;
         active=false;epoch++;main.removeCallbacks(tick);receiver.accept(null);lastPublishedAt=0;
         // Drop caches on the worker after any in-flight readback. Never recycle a displayed bitmap.
-        worker.execute(() -> {lastPixels=null;lastFrame=null;lastBounds=null;});
+        worker.execute(() -> {lastPixels=null;lastFrame=null;lastBounds=null;spareScan=null;argbBuffer=null;scratch.clear();});
     }
     void destroy() { stop();destroyed=true;worker.shutdown(); }
     private SurfaceControl surface() throws Exception {
@@ -142,14 +151,25 @@ final class MaterialCapture {
             if(api==null)api=new DisplayCaptureApi(host.getContext());
             Bitmap raw=api.read(crop,scale,exclusion,windowType);
             if(raw!=null) {
-                int w=raw.getWidth(),h=raw.getHeight();int[] pixels=new int[w*h];raw.getPixels(pixels,0,w,0,0,w,h);
+                int w=raw.getWidth(),h=raw.getHeight();
+                if(w!=lastWidth||h!=lastHeight){scratch.clear();argbBuffer=null;spareScan=null;lastWidth=w;lastHeight=h;}
+                int[] pixels=spareScan!=null&&spareScan.length==w*h ? spareScan : new int[w*h];
+                spareScan=null;
+                raw.getPixels(pixels,0,w,0,0,w,h);
                 raw.recycle(); // This private CPU copy was never handed to a Canvas or RenderNode.
-                if(lastFrame!=null&&crop.equals(lastBounds)&&Arrays.equals(lastPixels,pixels))result=lastFrame;
-                else {
-                    MaterialPixels filtered=MaterialPixels.fromArgb(pixels,w,h).blur();
-                    Bitmap texture=Bitmap.createBitmap(filtered.argb(),w,h,Bitmap.Config.ARGB_8888);texture.setHasAlpha(false);
+                if(lastFrame!=null&&crop.equals(lastBounds)&&Arrays.equals(lastPixels,pixels)) {
+                    result=lastFrame;spareScan=pixels;
+                    if(++unchangedRun==IDLE_CAPTURES_BEFORE_RELEASE){scratch.clear();argbBuffer=null;spareScan=null;}
+                } else {
+                    unchangedRun=0;
+                    MaterialPixels source=MaterialPixels.fromArgb(pixels,w,h,scratch);
+                    MaterialPixels filtered=source.blur(scratch);
+                    source.release(scratch);
+                    if(argbBuffer==null||argbBuffer.length!=w*h)argbBuffer=new int[w*h];
+                    Bitmap texture=Bitmap.createBitmap(filtered.argb(argbBuffer),w,h,Bitmap.Config.ARGB_8888);texture.setHasAlpha(false);
                     result=new MaterialFrame(texture,filtered,crop,displayWidth);
-                    lastFrame=result;lastPixels=pixels;lastBounds=new Rect(crop);
+                    spareScan=lastPixels;lastFrame=result;lastPixels=pixels;lastBounds=new Rect(crop);
+                    freshBytes=scratch.freshBytes();reusedBytes=scratch.reusedBytes();filterCount=scratch.filters();
                 }
             }
         }catch(Throwable t){error=t;}
@@ -179,6 +199,13 @@ final class MaterialCapture {
                 }
             }
         });
+    }
+    /** For the diagnostics report: how much the reused buffers saved. */
+    static String bufferStats() {
+        long total=freshBytes+reusedBytes;
+        if(filterCount==0)return "no backdrop filtered yet";
+        return filterCount+" filters, "+(freshBytes>>20)+" MB of arrays allocated, "+(reusedBytes>>20)+" MB reused ("
+                +(total==0?0:100*reusedBytes/total)+"%)";
     }
     /** The capture scale for a crop: 420 px wide at most, and at most 480 rows so a full-display crop stays cheap. */
     static float sampleScale(int width,int height) {

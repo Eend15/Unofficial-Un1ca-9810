@@ -11,9 +11,11 @@ import android.graphics.drawable.Icon;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.telecom.TelecomManager;
+import android.telephony.TelephonyManager;
 import android.widget.ImageView;
 import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.graphics.Colors;
+import dev.android.dynamicisland.island.graphics.Glyphs;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.XLog;
@@ -22,6 +24,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /**
  * The in-call card, made from System UI's ongoing-call controller ({@code callNotificationInfo}) and,
@@ -48,6 +51,8 @@ final class CallCardBuilder {
     private final WhatsAppCallClock callClock;
     /** Run after the speaker was toggled, once the audio route has had time to settle. */
     private final Runnable afterSpeakerToggle;
+    /** Whether the phone is ringing with a call nobody has answered yet. */
+    private BooleanSupplier phoneRinging = this::telephonyRinging;
 
     CallCardBuilder(Context ctx, IconLoader icons, OaReader reader, Runnable afterSpeakerToggle, WhatsAppCallClock callClock) {
         this.ctx = ctx;
@@ -59,6 +64,12 @@ final class CallCardBuilder {
 
     /** Adds the card of the ongoing call, if any; {@code controller} is System UI's call controller (may be null). */
     void collect(Object controller, List<IslandItem> out, Collection<String> packages, Set<String> hiddenByForeground) {
+        collect(controller, out, packages, hiddenByForeground, null, false);
+    }
+
+    /** {@code foreground}: the app on screen, used only when {@code foregroundConfirmed} (a fresh task snapshot). */
+    void collect(Object controller, List<IslandItem> out, Collection<String> packages, Set<String> hiddenByForeground,
+            String foreground, boolean foregroundConfirmed) {
         Object info = controller == null ? null : Refl.get(controller, "callNotificationInfo");
         String key = info == null ? null : (String) Refl.get(info, "key");
         if (key == null) {
@@ -71,7 +82,7 @@ final class CallCardBuilder {
         if (pkg != null) {
             packages.add(pkg);
         }
-        switch (chipState(controller, info)) {
+        switch (chipState(controller, info, pkg, foregroundConfirmed ? foreground : null)) {
             case NONE:
                 return;
             case APP_VISIBLE:
@@ -82,11 +93,59 @@ final class CallCardBuilder {
         }
     }
 
-    private static Chip chipState(Object controller, Object info) {
+    /**
+     * System UI keeps the call chip away while the call app counts as visible. That comes from a process-state
+     * change which arrives a second or two after the call screen was closed, but the task stack says so at once:
+     * when the app on screen is not the call app, the card does not have to wait.
+     */
+    private static Chip chipState(Object controller, Object info, String callPkg, String confirmedForeground) {
         if (!Refl.getBool(info, "isOngoing", false)) {
             return Chip.NONE;
         }
-        return Boolean.TRUE.equals(Refl.call(controller, "hasOngoingCall", new Object[0])) ? Chip.SHOWN : Chip.APP_VISIBLE;
+        if (Boolean.TRUE.equals(Refl.call(controller, "hasOngoingCall", new Object[0]))) {
+            return Chip.SHOWN;
+        }
+        return confirmedForeground != null && !isCallApp(callPkg, confirmedForeground) ? Chip.SHOWN : Chip.APP_VISIBLE;
+    }
+
+    /** Whether {@code foreground} is the app of the call; the phone app's own packages count as one app. */
+    static boolean isCallApp(String callPkg, String foreground) {
+        if (callPkg == null || foreground.equals(callPkg)) {
+            return true;
+        }
+        return TELECOM_PACKAGES.contains(callPkg) && TELECOM_PACKAGES.contains(foreground);
+    }
+
+    /** Replaces the check for a ringing phone; tests only. */
+    void setPhoneRinging(BooleanSupplier probe) {
+        phoneRinging = probe;
+    }
+
+    /** The telephony call state, or the ringtone audio mode when the state cannot be read. */
+    private boolean telephonyRinging() {
+        try {
+            TelephonyManager telephony = ctx.getSystemService(TelephonyManager.class);
+            if (telephony != null && telephony.getCallState() == TelephonyManager.CALL_STATE_RINGING) {
+                return true;
+            }
+        } catch (Throwable t) {
+            // no permission to read it: the audio mode below still tells
+        }
+        try {
+            AudioManager audio = ctx.getSystemService(AudioManager.class);
+            return audio != null && audio.getMode() == AudioManager.MODE_RINGTONE;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** A call of the phone app that still rings: the call has no start time and the phone reports ringing. */
+    private boolean isRinging(Object info, String pkg) {
+        if (pkg != null && !TELECOM_PACKAGES.contains(pkg)) {
+            return false;
+        }
+        Object start = Refl.get(info, "callStartTime");
+        return !(start instanceof Long && (Long) start > 0) && phoneRinging.getAsBoolean();
     }
 
     private IslandItem card(Object info, String key, String pkg) {
@@ -119,8 +178,15 @@ final class CallCardBuilder {
                 it.cardImage = photo;
             }
         }
-        addButtons(it, nowBar, pkg);
-        startClock(it, info, key);
+        boolean ringing = isRinging(info, pkg);
+        addButtons(it, nowBar, pkg, ringing);
+        if (ringing) {
+            // nobody has answered: say so instead of a clock, and offer answer / decline instead of speaker / end
+            it.trailing = IslandItem.Trailing.TEXT;
+            it.trailingText = IslandText.get(ctx, "island_incoming_call");
+        } else {
+            startClock(it, info, key);
+        }
         it.postTime = Long.MAX_VALUE;
         return it;
     }
@@ -158,7 +224,7 @@ final class CallCardBuilder {
     }
 
     /** Speaker toggle, at most one extra app button and the end-call button. */
-    private void addButtons(IslandItem it, Object nowBar, String pkg) {
+    private void addButtons(IslandItem it, Object nowBar, String pkg, boolean ringing) {
         PendingIntent hangUp = null;
         Drawable hangUpIcon = null;
         PendingIntent speaker = null;
@@ -186,6 +252,10 @@ final class CallCardBuilder {
         }
 
         boolean telecom = pkg == null || TELECOM_PACKAGES.contains(pkg);
+        if (ringing) {
+            addRingingButtons(it, telecom, hangUp, extra == null ? null : extra.actionIntent);
+            return;
+        }
         AudioManager audio = ctx.getSystemService(AudioManager.class);
         if (audio != null && (telecom || speaker != null)) {
             PendingIntent viaAction = speaker;
@@ -204,6 +274,56 @@ final class CallCardBuilder {
                 end.glyph = GLYPH_END_CALL;
             }
             it.actions.add(end);
+        }
+    }
+
+    /** Answer and decline: a call that has not been answered has no speaker to switch and nothing to end yet. */
+    private void addRingingButtons(IslandItem it, boolean telecom, PendingIntent decline, PendingIntent answerAction) {
+        if (telecom || answerAction != null) {
+            IslandItem.Action answer = new IslandItem.Action(IslandText.get(ctx, "island_answer_call"), null, null,
+                    () -> {
+                        answerCall(telecom, answerAction);
+                        afterSpeakerToggle.run();
+                    }, false);
+            answer.glyph = Glyphs.ANSWER;
+            answer.affirmative = true;
+            it.actions.add(answer);
+        }
+        if (telecom || decline != null) {
+            IslandItem.Action reject = new IslandItem.Action(IslandText.get(ctx, "island_decline_call"), null, null,
+                    () -> {
+                        endCall(telecom, decline);
+                        afterSpeakerToggle.run();
+                    }, true);
+            reject.glyph = GLYPH_END_CALL;
+            it.actions.add(reject);
+        }
+    }
+
+    /** Answers the ringing call through Telecom when allowed, otherwise fires the notification's answer action. */
+    // Runs inside SystemUI; Telecom enforces its host permissions and failure uses the action fallback.
+    @android.annotation.SuppressLint("MissingPermission")
+    private void answerCall(boolean telecom, PendingIntent answer) {
+        if (telecom) {
+            try {
+                TelecomManager telecomManager = ctx.getSystemService(TelecomManager.class);
+                if (telecomManager != null) {
+                    telecomManager.acceptRingingCall();
+                    XLog.i("call answered via telecom");
+                    return;
+                }
+            } catch (Throwable t) {
+                XLog.e("telecom acceptRingingCall failed", t);
+            }
+        }
+        if (answer == null) {
+            return;
+        }
+        try {
+            sendFromBackground(answer);
+            XLog.i("call answer intent sent");
+        } catch (Throwable t) {
+            XLog.e("answer intent failed", t);
         }
     }
 

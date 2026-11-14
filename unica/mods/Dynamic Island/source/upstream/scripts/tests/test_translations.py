@@ -66,9 +66,9 @@ class TranslationChecks(unittest.TestCase):
             module.RES = module.ROOT / 'app/src/main/res'
             module.PARTIAL = module.ROOT / 'scripts/partial-languages.txt'
             module.PARTIAL.parent.mkdir(parents=True)
-            # the repository's own unfinished language is left out: this test builds its own
+            # the repository's own unfinished languages are left out: this test builds its own
             for path in original.glob('values*/strings.xml'):
-                if path.parent.name == 'values-pt-rBR':
+                if path.parent.name in ('values-pt-rBR', 'values-tr'):
                     continue
                 target = module.RES / path.relative_to(original)
                 target.parent.mkdir(parents=True, exist_ok=True)
@@ -77,7 +77,7 @@ class TranslationChecks(unittest.TestCase):
             config.parent.mkdir(parents=True)
             tree = ET.parse(original / 'xml/locales_config.xml')
             for locale in list(tree.getroot()):
-                if locale.get(module.ANDROID + 'name') == 'pt-BR':
+                if locale.get(module.ANDROID + 'name') in ('pt-BR', 'tr'):
                     tree.getroot().remove(locale)
             tree.write(config, encoding='utf-8')
             quiet = (contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()))

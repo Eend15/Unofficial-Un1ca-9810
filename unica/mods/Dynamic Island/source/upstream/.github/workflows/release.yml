@@ -8,6 +8,11 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      draft:
+        description: Prepare a signed draft without publishing
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -61,25 +66,33 @@ jobs:
           scripts/sign.sh release-keys/release.jks "${KEYSTORE_ALIAS:-dynamicisland}"
           rm -f release-keys/release.jks
 
-      - name: Publish the release
+      - name: Prepare or publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRAFT_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.draft || false }}
         run: |
           apk="release/DynamicIsland-${VERSION}.apk"
-          sha256sum "$apk" | tee "$apk.sha256"
+          (cd release && sha256sum "DynamicIsland-${VERSION}.apk") | tee "$apk.sha256"
           # notes come from docs/release-notes/<version>.md when it exists, else they are generated from the commits
           notes_file="docs/release-notes/${VERSION}.md"
           # a version with a suffix (0.1.6-dev2) is published as a pre-release
           pre=""
           case "$VERSION" in *-*) pre="--prerelease" ;; esac
+          draft=""
+          if [ "$DRAFT_REQUESTED" = "true" ]; then draft="--draft"; fi
           if gh release view "$TAG" > /dev/null 2>&1; then
+            # Preparing a draft must never replace or unpublish an already public release.
+            if [ "$DRAFT_REQUESTED" = "true" ] && [ "$(gh release view "$TAG" --json isDraft --jq '.isDraft')" != "true" ]; then
+              echo "Refusing to replace the published release $TAG with a draft" >&2
+              exit 1
+            fi
             gh release upload "$TAG" "$apk" "$apk.sha256" --clobber
-            gh release edit "$TAG" --title "Dynamic Island ${VERSION}" $pre
+            gh release edit "$TAG" --title "Dynamic Island ${VERSION}" --target "$GITHUB_SHA" --draft="$DRAFT_REQUESTED" $pre
             if [ -f "$notes_file" ]; then
               gh release edit "$TAG" --notes-file "$notes_file"
             fi
           elif [ -f "$notes_file" ]; then
-            gh release create "$TAG" "$apk" "$apk.sha256" --target "$GITHUB_SHA" --title "Dynamic Island ${VERSION}" --notes-file "$notes_file" $pre
+            gh release create "$TAG" "$apk" "$apk.sha256" --target "$GITHUB_SHA" --title "Dynamic Island ${VERSION}" --notes-file "$notes_file" $pre $draft
           else
-            gh release create "$TAG" "$apk" "$apk.sha256" --target "$GITHUB_SHA" --title "Dynamic Island ${VERSION}" --generate-notes $pre
+            gh release create "$TAG" "$apk" "$apk.sha256" --target "$GITHUB_SHA" --title "Dynamic Island ${VERSION}" --generate-notes $pre $draft
           fi

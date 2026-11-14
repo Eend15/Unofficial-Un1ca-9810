@@ -131,7 +131,7 @@ final class IslandSources {
         ForegroundApp.State state = foregroundApp.read();
         final String foreground = state.packageName;
         try {
-            oa.collect(items, out.hiddenByForeground, out.packages, foreground);
+            oa.collect(items, out.hiddenByForeground, out.packages, foreground, state.confirmed);
         } catch (Throwable t) {
             XLog.once("collect live notifications", t);
         }
@@ -147,7 +147,11 @@ final class IslandSources {
         guarded("headset", () -> headset.collect(items));
         guarded("hotspot", () -> hotspot.collect(items));
         guarded("unlock notice", () -> unlock.collect(items));
-        if (charging.isOffering()) items.removeIf(item -> "event:charging".equals(item.key));
+        // the wide charging popup comes first even with the details card on, and the card follows it; with Samsung's
+        // own effect shown the card replaces the popup, as before
+        if (charging.isOffering() && ModuleSettings.stockChargingAnimation()) {
+            items.removeIf(item -> "event:charging".equals(item.key));
+        }
         guarded("torch", () -> torch.collect(items));
         if (ModuleSettings.placementPreviewActive()) {
             items.add(placementSample());
@@ -164,9 +168,11 @@ final class IslandSources {
             // System UI's own "flashlight in use" notification would show next to the brightness card
             items.removeIf(TorchSource::isStockItem);
         }
+        if (ModuleSettings.accentSystem()) ModuleSettings.refreshSystemAccent(ctx);
+        int accent = ModuleSettings.accentOverride();
         for (IslandItem item : items) {
-            item.customAccent = ModuleSettings.accentCustom() && !item.isMedia
-                    ? dev.android.dynamicisland.island.graphics.Colors.readableOnBlack(ModuleSettings.accentColor()) : 0;
+            item.customAccent = accent != 0 && !item.isMedia
+                    ? dev.android.dynamicisland.island.graphics.Colors.readableOnBlack(accent) : 0;
         }
         SwitchGate.apply(items);
         ItemDedupe.apply(items, HideDuplicated::copyKeysOf);

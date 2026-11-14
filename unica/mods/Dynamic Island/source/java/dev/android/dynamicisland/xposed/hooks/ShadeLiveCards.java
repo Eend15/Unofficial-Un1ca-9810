@@ -50,7 +50,7 @@ public final class ShadeLiveCards {
             if (Refl.hookAll(cl, CONTENT_BINDER + "$Companion", "access$apply", new ReapplyHook()) == 0) {
                 return;
             }
-            int measure = Refl.hookAll(cl, CONTENT_VIEW, "onMeasure", new MeasureHook());
+            int measure = ContentMeasureHooks.add(cl, new MeasureHook());
             int minHeight = Refl.hookAll(cl, CONTENT_VIEW, "getMinHeight",
                     SafeHook.after("shade card min height", ShadeLiveCards::reportCardHeightAsMinHeight));
             if (measure == 0 || minHeight == 0) {
@@ -149,19 +149,22 @@ public final class ShadeLiveCards {
         protected void after(XC_MethodHook.MethodHookParam p) {
             CardRowState state = CardRowState.installedIn(p.thisObject);
             if (state != null) {
-                state.endMeasure();
+                try {
+                    if (!p.hasThrowable()) state.fitMeasuredHeight((Integer) p.args[1]);
+                } finally {
+                    state.endMeasure();
+                }
             }
         }
     }
 
-    /** After {@code NotificationContentView.getMinHeight}: a card row is exactly as tall as its card. */
+    /** After {@code NotificationContentView.getMinHeight}: include the current child measure and content insets. */
     private static void reportCardHeightAsMinHeight(XC_MethodHook.MethodHookParam p) {
         CardRowState state = CardRowState.installedIn(p.thisObject);
         if (state == null || p.hasThrowable()) {
             return;
         }
-        LiveCardView card = state.card;
-        p.setResult(card.getHeight() > 0 ? card.getHeight() : card.desiredHeight());
+        p.setResult(state.minimumHeight());
     }
 
     /** Before {@code NotificationViewWrapper.needsInversion}: the card is already dark, never invert its colours. */

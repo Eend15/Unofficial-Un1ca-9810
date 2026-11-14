@@ -36,8 +36,8 @@ final class Footprint {
         }
         float rowTop = m.cy - (m.pillH / 2.0f);
         float rowBottom = m.cy + (m.pillH / 2.0f);
-        for (Card c : scene.cards) {
-            shapes.card(c, other);
+        for (int i = 0, n = scene.cards.size(); i < n; i++) {
+            shapes.card(scene.cards.get(i), other);
             if (other.top < rowBottom && other.bottom > rowTop) {
                 out.union(other);
             }
@@ -82,7 +82,8 @@ final class Footprint {
             shapes.bubble(pill, other);
             add(out, other, pad);
         }
-        for (Card c : scene.cards) {
+        for (int i = 0, n = scene.cards.size(); i < n; i++) {
+            Card c = scene.cards.get(i);
             if (!c.leaving) {
                 shapes.card(c, other);
                 add(out, other, pad);

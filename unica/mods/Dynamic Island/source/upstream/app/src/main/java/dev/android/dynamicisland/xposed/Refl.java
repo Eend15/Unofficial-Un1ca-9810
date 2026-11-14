@@ -20,8 +20,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * rather than the whole module. Safe to call from any thread.
  */
 public final class Refl {
-    private static final Map<String, Field> FIELD_CACHE = new ConcurrentHashMap<>();
-    private static final Map<String, Method> METHOD_CACHE = new ConcurrentHashMap<>();
+    /**
+     * Found members by class and name; a name that is not there is remembered too (as {@link #ABSENT}): looking
+     * for it again walks the whole class hierarchy and throws a {@link NoSuchFieldException} each time, which is
+     * costly when the caller asks on every frame. Keyed by class, not by a built string, so a lookup that hits
+     * allocates nothing.
+     */
+    private static final Map<Class<?>, Map<String, Object>> FIELD_CACHE = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, ConcurrentHashMap<String, Object>> METHOD_CACHE = new ConcurrentHashMap<>();
+    private static final Object ABSENT = new Object();
+    /** Methods are cached by name, then by parameter count up to this many; more are looked up the slow way. */
+    private static final int CACHED_PARAMS = 8;
     /** Lookups that already failed and were logged, so a hot path does not repeat the log line. */
     private static final Set<String> LOGGED_MISSES = ConcurrentHashMap.newKeySet();
     private static final Set<String> UNATTACHED = ConcurrentHashMap.newKeySet();
@@ -99,10 +108,10 @@ public final class Refl {
 
     /** The field of that name declared by {@code cls} or any superclass, made accessible; null if none. */
     public static Field field(Class<?> cls, String name) {
-        String key = cls.getName() + "#" + name;
-        Field known = FIELD_CACHE.get(key);
+        Map<String, Object> byName = FIELD_CACHE.computeIfAbsent(cls, c -> new ConcurrentHashMap<>());
+        Object known = byName.get(name);
         if (known != null) {
-            return known;
+            return known == ABSENT ? null : (Field) known;
         }
         String[] all = alternatives(name);
         for (int i = 0; i < all.length; i++) {
@@ -111,7 +120,7 @@ public final class Refl {
                 try {
                     Field found = level.getDeclaredField(all[i]);
                     found.setAccessible(true);
-                    FIELD_CACHE.put(key, found);
+                    byName.put(name, found);
                     noteFallback(name, i);
                     return found;
                 } catch (NoSuchFieldException notHere) {
@@ -119,7 +128,8 @@ public final class Refl {
                 }
             }
         }
-        noteMiss("field:" + key, "field not found: " + key);
+        byName.put(name, ABSENT);
+        noteMiss("field:" + cls.getName() + "#" + name, "field not found: " + cls.getName() + "#" + name);
         return null;
     }
 
@@ -183,10 +193,22 @@ public final class Refl {
      * then its superclasses; overloads of equal arity are not told apart.
      */
     public static Method method(Class<?> cls, String name, int paramCount) {
-        String key = cls.getName() + "#" + name + "/" + paramCount;
-        Method known = METHOD_CACHE.get(key);
-        if (known != null) {
-            return known;
+        Object[] slots = null;
+        if (paramCount >= 0 && paramCount < CACHED_PARAMS) {
+            ConcurrentHashMap<String, Object> byName = METHOD_CACHE.computeIfAbsent(cls, c -> new ConcurrentHashMap<>());
+            Object entry = byName.get(name);
+            if (entry == null) {
+                entry = new Object[CACHED_PARAMS];
+                Object raced = byName.putIfAbsent(name, entry);
+                if (raced != null) {
+                    entry = raced;
+                }
+            }
+            slots = (Object[]) entry;
+            Object known = slots[paramCount];
+            if (known != null) {
+                return known == ABSENT ? null : (Method) known;
+            }
         }
         String[] all = alternatives(name);
         for (int i = 0; i < all.length; i++) {
@@ -194,13 +216,19 @@ public final class Refl {
                 for (Method candidate : level.getDeclaredMethods()) {
                     if (candidate.getParameterCount() == paramCount && candidate.getName().equals(all[i])) {
                         candidate.setAccessible(true);
-                        METHOD_CACHE.put(key, candidate);
+                        if (slots != null) {
+                            slots[paramCount] = candidate;
+                        }
                         noteFallback(name, i);
                         return candidate;
                     }
                 }
             }
         }
+        if (slots != null) {
+            slots[paramCount] = ABSENT;
+        }
+        String key = cls.getName() + "#" + name + "/" + paramCount;
         noteMiss("method:" + key, "method not found: " + key);
         return null;
     }

@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import org.robolectric.annotation.Config;
 import org.robolectric.annotation.GraphicsMode;
 import org.robolectric.shadows.ShadowSystemClock;
@@ -92,6 +93,8 @@ public class EventSourceTest {
         out.clear();
         s.collect(out);
         assertEquals("55%", out.get(0).trailingText.toString());
+        assertTrue("battery updates must retain popup priority", out.get(0).transientPopup);
+        assertEquals("updates do not restart its lifetime", it.expiresAtUptime, out.get(0).expiresAtUptime);
 
         ShadowSystemClock.advanceBy(Duration.ofSeconds(5));
         out.clear();
@@ -135,7 +138,7 @@ public class EventSourceTest {
 
         out.clear();
         s.onToggle("dnd", true);                // same state again: ignored (same item stays, not re-added)
-        ShadowSystemClock.advanceBy(Duration.ofSeconds(3));
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(5)); // longer than the 4 s popup time
         s.collect(out);
         assertTrue(out.isEmpty());
 
@@ -160,4 +163,90 @@ public class EventSourceTest {
         }
     }
 
+    @Test
+    public void theChargingPopupTakesTheFullWidthWhileSamsungsOwnEffectIsOff() throws Exception {
+        android.content.SharedPreferences prefs = RuntimeEnvironment.getApplication().getSharedPreferences("charging-width", 0);
+        try {
+            for (boolean stock : new boolean[] {false, true}) {
+                prefs.edit().clear().putBoolean(ModuleSettings.KEY_STOCK_CHARGING_ANIMATION, stock).commit();
+                ModuleSettings.configurePreview(prefs);
+                EventSource s = source(new int[1]);
+                List<IslandItem> out = new ArrayList<>();
+                s.onBattery(battery(54, 0));
+                s.onBattery(battery(54, BatteryManager.BATTERY_PLUGGED_AC));
+                s.collect(out);
+                assertEquals(1, out.size());
+                assertEquals("Samsung's effect " + (stock ? "on" : "off"), !stock, out.get(0).fullWidth);
+                assertEquals("the word goes on the left of the wide pill only", !stock, out.get(0).compactLabel != null);
+            }
+        } finally {
+            prefs.edit().clear().commit();
+            ModuleSettings.configurePreview(prefs);
+        }
+    }
+
+    @Test
+    public void popupsThatComeWhileTheShadeIsOpenWaitForItToClose() throws Exception {
+        EventSource s = source(new int[1]);
+        List<IslandItem> out = new ArrayList<>();
+        s.onBattery(battery(54, 0));
+        s.setShadeOpen(true);
+        s.onBattery(battery(54, BatteryManager.BATTERY_PLUGGED_AC));
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(10)); // far longer than the popup lasts
+        s.collect(out);
+        assertTrue("nothing is shown under the shade", out.isEmpty());
+
+        s.setShadeOpen(false);
+        s.collect(out);
+        assertEquals("it shows when the shade is closed", 1, out.size());
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(3));
+        out.clear();
+        s.collect(out);
+        assertEquals("and for its full time", 1, out.size());
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(2));
+        out.clear();
+        s.collect(out);
+        assertTrue(out.isEmpty());
+    }
+
+    @Test
+    public void aQuickSettingSwitchedInTheShadeIsNotAnnounced() throws Exception {
+        EventSource s = source(new int[1]);
+        List<IslandItem> out = new ArrayList<>();
+        s.onToggle("dnd", false);
+        s.setShadeOpen(true);
+        s.onToggle("dnd", true);
+        s.setShadeOpen(false);
+        s.collect(out);
+        assertTrue("the tile already shows it", out.isEmpty());
+        s.onToggle("dnd", false);
+        s.collect(out);
+        assertEquals("outside the shade it is announced as before", 1, out.size());
+    }
+
+    @Test
+    public void aPopupThatWaitedTooLongIsDropped() throws Exception {
+        EventSource s = source(new int[1]);
+        List<IslandItem> out = new ArrayList<>();
+        s.onBattery(battery(54, 0));
+        s.setShadeOpen(true);
+        s.onBattery(battery(54, BatteryManager.BATTERY_PLUGGED_AC));
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(40));
+        s.setShadeOpen(false);
+        s.collect(out);
+        assertTrue("news from 40 seconds ago is not shown", out.isEmpty());
+    }
+
+    @Test
+    public void aPopupThatWasAlreadyOverWhenTheShadeOpenedDoesNotComeBack() throws Exception {
+        EventSource s = source(new int[1]);
+        List<IslandItem> out = new ArrayList<>();
+        s.onBattery(battery(54, 0));
+        s.onBattery(battery(54, BatteryManager.BATTERY_PLUGGED_AC));
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(6));
+        s.setShadeOpen(true);
+        s.setShadeOpen(false);
+        s.collect(out);
+        assertTrue(out.isEmpty());
+    }
 }

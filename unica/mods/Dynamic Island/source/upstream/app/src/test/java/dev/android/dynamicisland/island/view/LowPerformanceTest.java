@@ -20,8 +20,9 @@ import org.robolectric.util.ReflectionHelpers;
 @Config(sdk = 35)
 public class LowPerformanceTest {
     @Before public void prepare() { ModuleSettings.ensureStarted(); low(false); }
-    @After public void restore() { low(false); }
+    @After public void restore() { low(false);lighter("stillMusic",false);lighter("staticWaveform",false);lighter("limitFrameRate",false);lighter("stillIcons",false);lighter("ambientGlow",true); }
     private void low(boolean enabled) { ReflectionHelpers.setStaticField(ModuleSettings.class,"lowPerformance",enabled); }
+    private void lighter(String name,boolean enabled) { ReflectionHelpers.setStaticField(ModuleSettings.class,name,enabled); }
     private IslandItem music() {
         IslandItem item=new IslandItem("music");item.isMedia=true;item.kind=IslandItem.Kind.MEDIA;
         item.playing=true;item.trailing=IslandItem.Trailing.WAVEFORM;item.title="Music";item.accent=0xFF3E91FF;
@@ -59,4 +60,58 @@ public class LowPerformanceTest {
         low(true);assertFalse(view.needsAudio());low(false);assertTrue(view.needsAudio());
     }
 
+    @Test public void eachLighterSwitchDoesItsOwnJobAndLowPerformanceDoesThemAll() {
+        assertFalse(ModuleSettings.stillMusicEffects());assertFalse(ModuleSettings.staticWaveform());
+        assertFalse(ModuleSettings.limitFrameRate());assertFalse(ModuleSettings.stillIcons());
+        lighter("stillMusic",true);
+        assertTrue(ModuleSettings.stillMusicEffects());assertFalse(ModuleSettings.staticWaveform());
+        assertFalse(ModuleSettings.limitFrameRate());assertFalse(ModuleSettings.stillIcons());
+        lighter("stillMusic",false);lighter("staticWaveform",true);
+        assertTrue(ModuleSettings.staticWaveform());assertFalse(ModuleSettings.stillMusicEffects());
+        lighter("staticWaveform",false);lighter("limitFrameRate",true);
+        assertTrue(ModuleSettings.limitFrameRate());assertFalse(ModuleSettings.stillIcons());
+        lighter("limitFrameRate",false);lighter("stillIcons",true);
+        assertTrue(ModuleSettings.stillIcons());assertFalse(ModuleSettings.limitFrameRate());
+        lighter("stillIcons",false);low(true);
+        assertTrue(ModuleSettings.stillMusicEffects());assertTrue(ModuleSettings.staticWaveform());
+        assertTrue(ModuleSettings.limitFrameRate());assertTrue(ModuleSettings.stillIcons());
+    }
+
+    @Test public void aStaticWaveformStopsTheAudioAnalysisForItButAStillMusicCardKeepsTheWaveform() {
+        android.app.Activity activity=Robolectric.buildActivity(android.app.Activity.class).setup().get();
+        IslandView view=view(music());activity.setContentView(view);settle(view);
+        lighter("ambientGlow",false);   // only the waveform could need the audio
+        assertTrue(view.needsAudio());
+        lighter("stillMusic",true);
+        assertTrue("still music cards keep a live waveform",view.needsAudio());
+        lighter("stillMusic",false);lighter("staticWaveform",true);
+        assertFalse("a static waveform needs no audio",view.needsAudio());
+        lighter("ambientGlow",true);    // the glow's own motion still wants it ...
+        assertTrue(view.needsAudio());
+        lighter("stillMusic",true);     // ... unless the music effects are still too
+        assertFalse(view.needsAudio());
+    }
+
+    @Test public void stillMusicEffectsStopTheShadeMusicAnimationAndWaveformsKeepGoingOtherwise() {
+        IslandItem item=music();IslandView view=view(item);
+        assertTrue(view.shadeMediaAnimating(item));
+        lighter("stillMusic",true);assertFalse(view.shadeMediaAnimating(item));
+        lighter("stillMusic",false);lighter("staticWaveform",true);assertTrue(view.shadeMediaAnimating(item));
+    }
+
+    @Test public void limitingTheFrameRateStopsTheHighRefreshRequestToo() {
+        IslandItem item=music();IslandView view=view(item);view.peek(item,60000);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(16));view.doFrame(SystemClock.uptimeMillis()*1_000_000L);
+        assertEquals(View.REQUESTED_FRAME_RATE_CATEGORY_HIGH,view.getRequestedFrameRate(),0f);
+        settle(view);
+        lighter("limitFrameRate",true);view.collapse();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(40));view.doFrame(SystemClock.uptimeMillis()*1_000_000L);
+        assertEquals(View.REQUESTED_FRAME_RATE_CATEGORY_DEFAULT,view.getRequestedFrameRate(),0f);
+    }
+
+    @Test public void stillIconsStopTheirAnimationOnTheirOwn() {
+        dev.android.dynamicisland.island.graphics.GlyphIcon icon=dev.android.dynamicisland.island.graphics.GlyphIcon.of(dev.android.dynamicisland.island.graphics.GlyphIcon.Kind.BELL);
+        lighter("stillIcons",true);
+        assertFalse(icon.animating());
+    }
 }

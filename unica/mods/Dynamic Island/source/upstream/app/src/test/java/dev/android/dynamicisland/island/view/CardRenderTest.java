@@ -184,6 +184,25 @@ public class CardRenderTest {
     }
 
     @Test
+    public void ringingCallOffersAnswerAndDecline() throws Exception {
+        Context ctx = RuntimeEnvironment.getApplication();
+        IslandItem it = base(ctx, "ringing");
+        it.kind = IslandItem.Kind.CALL;
+        it.title = "Khune";
+        it.subtitle = "Phone";
+        it.trailing = IslandItem.Trailing.TEXT;
+        it.trailingText = "Incoming call";
+        IslandItem.Action answer = new IslandItem.Action("Answer", null, null, () -> { }, false);
+        answer.glyph = dev.android.dynamicisland.island.graphics.Glyphs.ANSWER;
+        answer.affirmative = true;
+        IslandItem.Action decline = new IslandItem.Action("Decline", null, null, () -> { }, true);
+        decline.glyph = dev.android.dynamicisland.island.graphics.Glyphs.HANGUP;
+        it.actions.add(answer);
+        it.actions.add(decline);
+        render("call_ringing", it);
+    }
+
+    @Test
     public void teams() throws Exception {
         Context ctx = RuntimeEnvironment.getApplication();
         IslandItem it = base(ctx, "teams");

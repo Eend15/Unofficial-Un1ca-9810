@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Lint can only judge every language alike. English, Korean, Japanese, Chinese and Russian must be complete
+         and Turkish and Brazilian Portuguese (community translations) may lack strings, so that is checked by
+         scripts/translations.py check, which the release workflow runs, instead. -->
+    <issue id="MissingTranslation" severity="ignore" />
+</lint>

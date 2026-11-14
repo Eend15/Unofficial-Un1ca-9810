@@ -19,6 +19,6 @@ public abstract class XC_MethodHook {
  public class Unhook { public void unhook(){} }
  protected void beforeHookedMethod(MethodHookParam p) throws Throwable{}
  protected void afterHookedMethod(MethodHookParam p) throws Throwable{}
- public final void runBefore(MethodHookParam p)throws Throwable{beforeHookedMethod(p);}
- public final void runAfter(MethodHookParam p)throws Throwable{afterHookedMethod(p);}
+ public void runBefore(MethodHookParam p)throws Throwable{beforeHookedMethod(p);}
+ public void runAfter(MethodHookParam p)throws Throwable{afterHookedMethod(p);}
 }

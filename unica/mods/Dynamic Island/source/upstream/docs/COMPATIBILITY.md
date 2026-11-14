@@ -27,6 +27,25 @@ The module hooks Samsung's System UI by name, so each One UI version has to be c
 
 Names are matched by name only (any class), so a hit from the script is a hint, not a proof; view ids are not in the dex and are checked with `aapt2 dump resources`, as the script prints.
 
+## Frosted notification corners
+
+The GPU card owns its G2 perimeter. While it paints, `ShadeMaterialAppearance`
+leases rectangular outline providers on its host and parents up to the notification
+row, as well as disabling outline clipping. This prevents a native outline rebuild
+from reinstating Samsung's circular mask over the card's edge lighting. The native
+providers return when the last card releases the row; stock scroll, swipe and height
+clip bounds remain in force. Saved providers are retained by the view's leased
+provider, not strongly by the static weak-row registry.
+
+Live-card measurement also includes content padding and child margins before
+Samsung's `measureChildWithMargins` subtracts them. The content view's measured
+height and minimum-height report include these insets and use the fresh child
+measure rather than its previous layout height. Diagnostics records
+`shade live card geometry` even if the optional custom clip-path hook is not called.
+Controlled native-Skia renders reproduce both rounded-mask corner loss and an
+under-measured bottom edge; verification of this correction on a physical device
+is pending.
+
 ## Status bar battery charging effect
 
 Checked against the supplied Android 17 System UI v17 (37) APK and the video in issue #15. The effect is the status bar battery expanding into a coloured charging chip. It is separate from `power.feature.charginganimation`, which controls charging overlays/Now Bar presentations. The battery effect is handled at its own presentation entry points below.
@@ -35,6 +54,12 @@ Checked against the supplied Android 17 System UI v17 (37) APK and the video in 
 - **View-based scheduler:** `SystemStatusAnimationSchedulerImpl.onStatusEvent(StatusEvent)` rejects only `BatteryEvent` while the option is off, before it changes the scheduler, creates a chip or hides icons. Other events, including camera/microphone privacy events, continue normally.
 
 The option is independent of island charging alerts. Charging sounds, warnings, the ordinary battery percentage/charging indicator and other power UI are not intercepted. Changes affect subsequent charging transitions after preferences reload; reconnect the charger to test a new transition. Unsupported builds retain their original behaviour. Diagnostics report `stock charging animation` with attached Compose/event hook counts; both targets exist in the supplied APK. The maintainer confirmed that the corrected test APK suppresses the battery effect on their phone. Other devices and firmware still need device testing, including wired/wireless charging and normal battery/status/privacy icon visibility.
+
+## Multitasking handle input layer
+
+Checked against the supplied Android 17 System UI v17 (37) APK. While an app is in front, WM Shell adds a window titled "Handle Input Layer of task N" over the handle's bounds at the top centre of the status bar (`MultiTaskingHandleViewHolder` and `AppHandleViewHolder`, `createStatusBarInputLayer`). It is a trusted overlay with `inputFeatures = INPUT_FEATURE_SPY`, so it sees the touches that land on windows above it. Its touch listeners (`MultiTaskingHandleViewHolder$createStatusBarInputLayer$2` and `$4`, `AppHandleViewHolder$createStatusBarInputLayer$2`) call `InputManager.pilferPointers` on the first finger down, which cancels the touch of every other window, the island included. That is why a pull down on the island in the default and classic styles was cancelled inside an app and worked on the home screen, where that window does not exist.
+
+`HandleInputLayer` hooks `onTouch` of those three listeners. A gesture whose first touch lands on the island (its touchable region, in screen coordinates) is skipped by them for the whole gesture, so nothing is pilfered and the handle does not start; any other gesture reaches them unchanged. A missing class is skipped, and the diagnostics report shows `handle input layer` with the number of listeners hooked. `scripts/check_systemui.py` only looks for `com.android.systemui` and `com.samsung` names, so these `com.android.wm.shell` names are checked by hand against the dex.
 
 ## One UI 7 specifics
 
@@ -59,7 +84,7 @@ Android 16 System UI without any Samsung class (checked against a Nothing OS bui
 
 ## How the settings reach System UI
 
-`ModuleSettings` reads the shared preference file through `XSharedPreferences`. When that file is empty or unreadable from System UI (the framework did not apply module scope or file mode), it asks the module app's read-only `SettingsProvider` (`content://dev.android.dynamicisland.settings`, call `all`) instead, every 4 seconds like the file. The diagnostics line `settings source` says which one is in use and how many keys arrived; a switch that has no effect while it says `0 keys` or is missing means neither route works.
+`ModuleSettings` reads the shared preference file through `XSharedPreferences`. When that file is empty or unreadable from System UI (the framework did not apply module scope or file mode), it asks the module app's read-only `SettingsProvider` (`content://dev.android.dynamicisland.settings`, call `all`) instead. Either way the settings are read again when the settings app writes one (it notifies `content://dev.android.dynamicisland.settings/changed`, which System UI watches with a content observer), and otherwise once a minute, or every 4 seconds until the first read has found them and while the position page is previewing. The diagnostics line `settings source` says which one is in use and how many keys arrived; a switch that has no effect while it says `0 keys` or is missing means neither route works.
 
 ## Name alternatives
 

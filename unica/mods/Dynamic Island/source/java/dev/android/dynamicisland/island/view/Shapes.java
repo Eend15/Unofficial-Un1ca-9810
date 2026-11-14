@@ -127,7 +127,8 @@ final class Shapes {
     /** The card that is furthest up, i.e. the one the liquid bridge hangs from. */
     Card topmostCard() {
         Card best = null;
-        for (Card c : scene.cards) {
+        for (int i = 0, n = scene.cards.size(); i < n; i++) {
+            Card c = scene.cards.get(i);
             if (best == null || c.cy.value() < best.cy.value()) {
                 best = c;
             }

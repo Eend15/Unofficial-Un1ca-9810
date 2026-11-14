@@ -63,9 +63,12 @@ public final class Diagnostics {
     /** One fact never takes more than this: a list of attached hooks used to push the recent events out of the report. */
     private static final int MAX_FACT_CHARS = 400;
     private static final long PUBLISH_INTERVAL_MS = 15_000;
+    private static final long LIVE_REPUBLISH_MS = 60_000;
 
     private static final Map<String, String> FACTS = new LinkedHashMap<>();
     private static final Map<String, String> STAGES = new LinkedHashMap<>();
+    /** Facts that are read when the report is made, because they change while nothing else does (memory). */
+    private static final Map<String, java.util.function.Supplier<String>> LIVE = new LinkedHashMap<>();
     private static final ArrayDeque<String> ERRORS = new ArrayDeque<>();
     private static final ArrayDeque<String> EVENTS = new ArrayDeque<>();
     private static final SimpleDateFormat EVENT_TIME = new SimpleDateFormat("HH:mm:ss", Locale.US);
@@ -87,6 +90,12 @@ public final class Diagnostics {
         if (!shown.equals(FACTS.put(key, shown))) {
             dirty = true;
         }
+    }
+
+    /** A fact whose value is asked for each time the report is made. */
+    public static synchronized void live(String key, java.util.function.Supplier<String> value) {
+        LIVE.put(key, value);
+        dirty = true;
     }
 
     /** Records how a start-up stage went; {@code error} may be null. */
@@ -140,6 +149,15 @@ public final class Diagnostics {
         for (Map.Entry<String, String> e : FACTS.entrySet()) {
             sb.append(e.getKey()).append(' ').append(e.getValue()).append('\n');
         }
+        for (Map.Entry<String, java.util.function.Supplier<String>> e : LIVE.entrySet()) {
+            String value;
+            try {
+                value = e.getValue().get();
+            } catch (RuntimeException failure) {
+                value = "unavailable (" + failure.getClass().getSimpleName() + ")";
+            }
+            sb.append(e.getKey()).append(' ').append(value == null ? "" : value).append('\n');
+        }
         int factsEnd = sb.length();
         sb.append("-- stages\n");
         for (Map.Entry<String, String> e : STAGES.entrySet()) {
@@ -175,6 +193,10 @@ public final class Diagnostics {
             context = ctx.getApplicationContext() != null ? ctx.getApplicationContext() : ctx;
         }
         long now = SystemClock.uptimeMillis();
+        // a live fact (memory) changes by itself: let the report be refreshed now and then even when nothing else moved
+        if (!dirty && !LIVE.isEmpty() && now - lastPublish >= LIVE_REPUBLISH_MS) {
+            dirty = true;
+        }
         if (context == null || !dirty || now - lastPublish < PUBLISH_INTERVAL_MS) {
             return;
         }

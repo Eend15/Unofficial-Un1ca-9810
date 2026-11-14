@@ -47,7 +47,7 @@ public class HeadsetSourceTest {
         shadowOf(Looper.getMainLooper()).idle();
         cards.clear(); source.collect(cards); assertEquals(1, cards.size());
         assertTrue(cards.get(0).postTime > announced);
-        assertEquals(2500, cards.get(0).peekMillis);
+        assertEquals("a removal stays for the popup time", 4000, cards.get(0).peekMillis);
         prefs.edit().putBoolean(ModuleSettings.KEY_EVENT_HEADSET, false).apply();
         ModuleSettings.configurePreview(prefs); source.syncSettings();
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(10));
@@ -88,7 +88,7 @@ public class HeadsetSourceTest {
         shadowOf(Looper.getMainLooper()).idle();
         cards.clear(); source.collect(cards);
         assertEquals(1, cards.size());
-        assertEquals(2500, cards.get(0).peekMillis);
+        assertEquals("a removal stays for the popup time", 4000, cards.get(0).peekMillis);
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(10));
         cards.clear(); source.collect(cards);
         assertTrue("unplugged: nothing stays", cards.isEmpty());

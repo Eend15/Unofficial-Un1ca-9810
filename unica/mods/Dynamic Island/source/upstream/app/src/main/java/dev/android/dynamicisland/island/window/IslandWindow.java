@@ -301,6 +301,11 @@ public final class IslandWindow {
      *
      * @return false if the surface transaction is unavailable (the caller should fade another way)
      */
+    /** For the diagnostics report: how much the frosted-glass backdrop filter reused its arrays. */
+    public static String materialBufferStats() {
+        return "backdrop filter: " + MaterialCapture.bufferStats();
+    }
+
     public boolean setSurfaceFade(float alpha, float scale, float px, float py) {
         if (surfaceFader.set(alpha, scale, px, py)) {
             applySurfaceFade();

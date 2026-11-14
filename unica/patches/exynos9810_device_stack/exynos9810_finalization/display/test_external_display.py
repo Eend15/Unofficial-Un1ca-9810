@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 import unittest
 
-from patch_external_display import patch, PATCHED_SHA256, OFFSET
+from patch_external_display import patch, PATCHED_SHA256, OFFSET_HOOK, OFFSET_TRAMPOLINE
 
 ROOT = Path(__file__).resolve().parents[5]
 FINAL = Path(__file__).resolve().parents[1] / 'customize.sh'
@@ -40,9 +40,13 @@ _EXYNOS9810_FINAL_PATCH_EXTERNAL_DISPLAY || exit 1
                 self.assertEqual(hashlib.sha256(output).hexdigest(), PATCHED_SHA256)
                 self.assertEqual((work / 'metadata').read_text().strip(),
                                  'system system/bin/surfaceflinger 0 2000 755 u:object_r:surfaceflinger_exec:s0')
+                clean_stock = bytearray(original)
+                if hashlib.sha256(original).hexdigest() == '2f2b358c7c84bae33b7042397c4d6d1b770e8e0015079ec28eca7404ab2cd630':
+                    clean_stock[0x45264c:0x45264c + 4] = bytes.fromhex("80020036")
                 self.assertEqual(len(output), len(original))
-                self.assertEqual(output[:OFFSET], original[:OFFSET])
-                self.assertEqual(output[OFFSET + 4:], original[OFFSET + 4:])
+                self.assertEqual(output[:OFFSET_HOOK], clean_stock[:OFFSET_HOOK])
+                self.assertEqual(output[OFFSET_HOOK + 4:OFFSET_TRAMPOLINE], clean_stock[OFFSET_HOOK + 4:OFFSET_TRAMPOLINE])
+                self.assertEqual(output[OFFSET_TRAMPOLINE + 12:], clean_stock[OFFSET_TRAMPOLINE + 12:])
                 self.assertEqual(patch(output, verify_only=True), output)
                 damaged = bytearray(output)
                 damaged[-1] ^= 1

@@ -21,6 +21,7 @@ import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Refl;
+import dev.android.dynamicisland.xposed.Diagnostics;
 import dev.android.dynamicisland.xposed.XLog;
 
 /**
@@ -46,6 +47,7 @@ final class LiveCardView extends FrameLayout {
     private final RectF materialLocal=new RectF(),materialScreen=new RectF();
     private final Path remoteClip=new Path();
     private boolean remoteFrosted;
+    private long geometryReportedAt = -5_000;
 
     /** Touch gesture: the item and position at ACTION_DOWN, whether it left the slop, whether we own it. */
     private IslandItem downItem;
@@ -192,12 +194,45 @@ final class LiveCardView extends FrameLayout {
                 }
                 materialAppearance.sync(this,renderer.drawShadeCard(canvas,current,getWidth(),frame,materialScreen));
             }
+            reportGeometry();
             setContentDescription(describe(current));
             scheduleRedraw();
         } catch (Throwable t) {
             owner.fail(t);
         }
     }
+
+    /** Geometry survives in diagnostics even when Samsung never invokes the optional custom-corner hook. */
+    private void reportGeometry() {
+        if (!FrostedSurface.requested()) return;
+        long now = SystemClock.uptimeMillis();
+        if (now - geometryReportedAt < 5_000) return;
+        geometryReportedAt = now;
+        try {
+            StringBuilder line = new StringBuilder("draw ").append(getWidth()).append('x').append(desiredHeight)
+                    .append("; measured ").append(getMeasuredWidth()).append('x').append(getMeasuredHeight());
+            int levels = 0;
+            for (View node = this; node != null && levels < 6; levels++) {
+                line.append(" [").append(node.getClass().getSimpleName()).append(' ')
+                        .append(node.getWidth()).append('x').append(node.getHeight())
+                        .append(" y=").append(node.getY()).append(" pad=").append(node.getPaddingTop()).append(',').append(node.getPaddingBottom());
+                if (node.getClipToOutline()) line.append(" outline");
+                if (node instanceof ViewGroup && ((ViewGroup) node).getClipChildren()) line.append(" clipChildren");
+                android.graphics.Rect clip = node.getClipBounds();
+                if (clip != null) line.append(" clip=").append(clip.toShortString());
+                for (String field : GEOMETRY_FIELDS) if (Refl.field(node.getClass(), field) != null)
+                    line.append(' ').append(field).append('=').append(Refl.get(node, field));
+                line.append(']');
+                android.view.ViewParent parent = node.getParent();
+                node = parent instanceof View ? (View) parent : null;
+            }
+            Diagnostics.fact("shade live card geometry", line.toString());
+        } catch (RuntimeException ignored) {
+            // A diagnostic must not interfere with notification drawing.
+        }
+    }
+
+    private static final String[] GEOMETRY_FIELDS = {"mActualHeight", "mUnrestrictedContentHeight", "mClipTopAmount", "mClipBottomAmount"};
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
@@ -247,7 +282,7 @@ final class LiveCardView extends FrameLayout {
                 || item.kind == IslandItem.Kind.RECORDING
                 || (item.hasChronometer() && item.chronoPosition != 0);
         if (everyFrame) {
-            postOnAnimationDelayed(redraw, framePacer.delayMillis(ModuleSettings.lowPerformance(), tracking || renderer.shadeButtonAnimating(), System.nanoTime()));
+            postOnAnimationDelayed(redraw, framePacer.delayMillis(ModuleSettings.limitFrameRate(), tracking || renderer.shadeButtonAnimating(), System.nanoTime()));
         } else if (everySecond) {
             postDelayed(redraw, SECOND_MS - (SystemClock.uptimeMillis() % SECOND_MS));
         }

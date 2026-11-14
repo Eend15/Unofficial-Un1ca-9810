@@ -1,13 +1,23 @@
 # Exynos9810 kernel prebuilt
 
-The ROM defaults to the enforcing KernelSU-Next DS-ACK V1.12 release in this
+The ROM defaults to the enforcing KernelSU-Next DS-ACK V1.13 release in this
 directory:
 - EROFS builds (`TARGET_OS_FILE_SYSTEM_TYPE=erofs`, default):
-  `DS-ACK-V1.12-07.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-SuSFS-erofs-dtb.zip`
-  Expected SHA-256: `309ae8c7ee1132199d9519339273254e6df2db4f3b0df8b0c8c5c7925c14489c`
+  `DS-ACK-V1.13-11.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-dt2wtap-SuSFS-erofs-dtb.zip`
+  Expected SHA-256: `f435acac36257efd19faa74e85ff601da71698e3423cd05ee238010a79e707d7`
 - EXT4 builds (`TARGET_OS_FILE_SYSTEM_TYPE=ext4`):
-  `DS-ACK-V1.12-07.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-SuSFS-ext4-dtb.zip`
-  Expected SHA-256: `6e7323958ca2a26e521be5f7902beea667a3fea65a7a090056a5067ae7590670`
+  `DS-ACK-V1.13-11.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-dt2wtap-SuSFS-ext4-dtb.zip`
+  Expected SHA-256: `10311fba99ad8e17df61c7f63b446730f02a1e5e9386faeabccbf46eb0a2f6a0`
+
+November11 V1.13: the November7 family plus
+`exynos9810_finalization/input/patch_dt2w_tap_coords.py` in wake_gestures.c.
+While the screen is off sec_ts adds 5000 to X only on MOVE reports, but the
+wake backend subtracted it from every X, so a clean tap (PRESS + RELEASE) got a
+negative X and was ignored: double-tap wake needed several taps. The offset is
+now removed only where it was added. Built from 0f2d01d plus both touch
+patches with Google Clang 20 r547379; DTBs/tools unchanged from the
+November7/October24 archives. Archive-verified for six models; not yet
+physically accepted. The November7 V1.12 archives are retained.
 
 November7 touch freeze fix: the October24 family plus
 `exynos9810_finalization/input/patch_touch_lpm_exit.py` in both sec_ts drivers.

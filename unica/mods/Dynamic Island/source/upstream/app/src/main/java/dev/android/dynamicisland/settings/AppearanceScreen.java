@@ -31,9 +31,13 @@ final class AppearanceScreen {
         LinearLayout page = activity.page();
         activity.subPage(activity.getString(R.string.accent_page));
         LinearLayout mode = ui.card(page);
-        boolean enabled = prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false);
-        activity.choice(mode, R.string.accent_enabled, new int[]{R.string.ui_default, R.string.ui_custom}, enabled ? 1 : 0,
-                selected -> prefs.edit().putBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, selected == 1).apply());
+        boolean system = prefs.getBoolean(ModuleSettings.KEY_ACCENT_SYSTEM, false);
+        boolean enabled = !system && prefs.getBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false);
+        activity.choice(mode, R.string.accent_enabled, new int[]{R.string.ui_default, R.string.ui_custom, R.string.accent_system},
+                system ? 2 : enabled ? 1 : 0,
+                selected -> prefs.edit().putBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, selected == 1)
+                        .putBoolean(ModuleSettings.KEY_ACCENT_SYSTEM, selected == 2).apply());
+        if (system) ui.note(page, activity.getString(R.string.accent_system_note));
         if (enabled) {
             ui.category(page, activity.getString(R.string.accent_presets), activity.getString(R.string.desc_presets));
             LinearLayout choices = ui.card(page);
@@ -65,14 +69,23 @@ final class AppearanceScreen {
             ui.valueRow(choices, activity.getString(R.string.accent_custom), hex(selected()), this::edit);
         }
         LinearLayout example = ui.card(page);
-        example.addView(new Preview(enabled ? selected() : ModuleSettings.DEFAULT_ACCENT), new LinearLayout.LayoutParams(-1, ui.dp(164)));
+        example.addView(new Preview(system ? systemColour() : enabled ? selected() : ModuleSettings.DEFAULT_ACCENT), new LinearLayout.LayoutParams(-1, ui.dp(164)));
         ui.note(page, activity.getString(R.string.accent_note));
         LinearLayout reset = ui.card(page);
         ui.actionRow(reset, activity.getString(R.string.accent_reset), activity.getString(R.string.accent_reset_desc), () -> {
-            prefs.edit().putBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false)
+            prefs.edit().putBoolean(ModuleSettings.KEY_ACCENT_CUSTOM, false).putBoolean(ModuleSettings.KEY_ACCENT_SYSTEM, false)
                     .remove(ModuleSettings.KEY_ACCENT_COLOR).apply();
             activity.refresh();
         });
+    }
+
+    /** The system's Material colour as the island uses it: a light tone of the wallpaper accent. */
+    private int systemColour() {
+        try {
+            return activity.getResources().getColor(android.R.color.system_accent1_200, activity.getTheme()) | 0xFF000000;
+        } catch (RuntimeException unavailable) {
+            return ModuleSettings.DEFAULT_ACCENT;
+        }
     }
 
     private void save(int colour) {

@@ -37,6 +37,16 @@ public abstract class SafeHook extends XC_MethodHook {
         }
     }
 
+    /** Runs this hook's before phase on behalf of a dispatcher that hooks the method once for several hooks. */
+    public final void runBefore(XC_MethodHook.MethodHookParam param) {
+        beforeHookedMethod(param);
+    }
+
+    /** Runs this hook's after phase on behalf of a dispatcher that hooks the method once for several hooks. */
+    public final void runAfter(XC_MethodHook.MethodHookParam param) {
+        afterHookedMethod(param);
+    }
+
     protected void before(XC_MethodHook.MethodHookParam param) throws Throwable {
     }
 

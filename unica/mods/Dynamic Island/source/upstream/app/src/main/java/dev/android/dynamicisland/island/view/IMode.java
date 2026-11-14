@@ -31,6 +31,7 @@ final class IMode {
     private final BodyFactory bodies;
     private final Director director;
     private final Map<String, Node> nodes = new LinkedHashMap<>();
+    private final RectF compactNatural = new RectF();
     private final List<IslandItem> activities = new ArrayList<>();
     private final RectF rect = new RectF(), source = new RectF();
     private final Path clip = new Path();
@@ -43,6 +44,10 @@ final class IMode {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private String selected;
     private String rowAnchor;
+    /** A short popup that arrived is the first of the row (it must not wait behind the pill the row was paged to). */
+    private String popupAnchor;
+    /** Where the row began before that popup, so it goes back there when the popup is over. */
+    private String anchorBeforePopup;
     private boolean initialized;
     private int rowCount;
     private final List<IslandItem> visible = new ArrayList<>(2);
@@ -144,20 +149,43 @@ final class IMode {
         outline.snapTo(scene.pillOutlineTarget());
     }
 
+    /** The empty pill drawn while there is nothing to show (the "always visible" setting). */
+    private void idleBounds(RectF out) {
+        float width = m.idleWidth();
+        out.set(m.cx - width / 2, m.cy - m.pillH / 2, m.cx + width / 2, m.cy + m.pillH / 2);
+    }
+
+    /** True when the empty pill should stay: nothing is shown, the user wants it, and they did not hide the island. */
+    private boolean keepsIdle() {
+        return ModuleSettings.alwaysVisible() && !gestureHidden;
+    }
+
     void update() {
         syncOutlineTarget();
+        boolean wasIdle = scene.restingShown() && scene.springs.visibility.value() > .5f;
         activities.clear();
         for (Node node : nodes.values()) node.removed=true;
         for (IslandItem item : scene.stackItems(Integer.MAX_VALUE)) {
             Node node=nodes.get(item.key);
             if (node!=null && !node.removed) continue; // a minimized source must not duplicate a live one
             activities.add(item);
-            if (node==null) { node=new Node(view,item); seed(node); nodes.put(item.key,node); }
+            if (node==null) {
+                node=new Node(view,item); seed(node);
+                if (wasIdle && activities.size()==1) {
+                    // the first activity grows out of the empty pill that is already there
+                    idleBounds(rect);
+                    node.x.snapTo(rect.centerX()); node.y.snapTo(rect.centerY());
+                    node.w.snapTo(rect.width()); node.h.snapTo(rect.height());
+                    node.alpha.snapTo(1); node.presence.snapTo(1); node.iconOnly.snapTo(0);
+                }
+                nodes.put(item.key,node);
+            }
             else node.refresh(view,item);
             node.removed=false;
         }
         if(compactPage!=null && (compactPage.from.stream().anyMatch(n->n.removed)
                 || compactPage.to.stream().anyMatch(n->n.removed))) finishCompactInteraction();
+        followPopup();
         if (scene.items.isEmpty()) {
             if(scene.mode==Mode.EXPANDED) collapse();
             selected=null;
@@ -165,7 +193,7 @@ final class IMode {
             director.cancelAutoCollapse();
             closeCards();
             layout();
-            scene.springs.visibility.animateTo(0,.36f,1);
+            scene.springs.visibility.animateTo(keepsIdle() ? 1 : 0,.36f,1);
         } else {
             if (scene.mode==Mode.HIDDEN && !gestureHidden) scene.mode=Mode.COMPACT;
             scene.springs.visibility.animateTo(gestureHidden ? 0 : 1,.30f,1);
@@ -186,6 +214,37 @@ final class IMode {
         initialized=true;
         resizeWindow();
         changed();
+    }
+
+    private boolean listed(String key) {
+        Node node=key==null ? null : nodes.get(key);
+        return node!=null && !node.removed;
+    }
+
+    /**
+     * A short popup (do not disturb, a headset, an unlock, ...) goes away by itself after a few seconds, so it has to
+     * be seen as the main pill the moment it comes: when the row had been paged to another pill the popup used to
+     * wait as the first sub pill and was gone before anyone saw it. When it is over the row goes back to where it was.
+     */
+    private void followPopup() {
+        IslandItem winner=null;
+        for(IslandItem item:activities) {
+            if(!item.transientPopup) continue;
+            if(winner==null || item.priority()>winner.priority()
+                    || item.priority()==winner.priority() && item.postTime>winner.postTime) winner=item;
+        }
+        if(winner==null) {
+            if(popupAnchor==null) return;
+            finishCompactInteraction();
+            if(rowAnchor!=null && rowAnchor.equals(popupAnchor)) rowAnchor=listed(anchorBeforePopup) ? anchorBeforePopup : null;
+            popupAnchor=null;anchorBeforePopup=null;
+            return;
+        }
+        if(winner.key.equals(popupAnchor)) return;
+        finishCompactInteraction();
+        if(popupAnchor==null) anchorBeforePopup=rowAnchor;
+        popupAnchor=winner.key;
+        rowAnchor=winner.key;
     }
 
     private void refreshCard(Node node) {
@@ -263,9 +322,13 @@ final class IMode {
             if(n.slot>=0 && !n.removed && !gestureHidden) visible.add(n.item);
             float visible=n.slot>=0 && !n.removed && scene.mode!=Mode.HIDDEN ? 1 : 0;
             if(n.removed) {
-                // Depart from the last position, rather than flying across the row to its bubble slot.
-                n.target.set(n.x.value()-n.w.value()/2,n.y.value()-n.h.value()/2,
-                        n.x.value()+n.w.value()/2,n.y.value()+n.h.value()/2);
+                if(scene.items.isEmpty() && keepsIdle()) {
+                    idleBounds(n.target); // the last activity folds into the empty pill
+                } else {
+                    // Depart from the last position, rather than flying across the row to its bubble slot.
+                    n.target.set(n.x.value()-n.w.value()/2,n.y.value()-n.h.value()/2,
+                            n.x.value()+n.w.value()/2,n.y.value()+n.h.value()/2);
+                }
             } else if(gestureHidden) {
                 float diameter=Math.max(m.dp(8),m.holeD);
                 n.target.set(m.cx-diameter/2,m.cy-diameter/2,m.cx+diameter/2,m.cy+diameter/2);
@@ -470,7 +533,7 @@ final class IMode {
         syncOutlineTarget();
         gestureHidden=false;selected=null;
         scene.mode=scene.items.isEmpty() ? Mode.HIDDEN : Mode.COMPACT;
-        layout(true);scene.springs.visibility.animateTo(scene.items.isEmpty() ? 0 : 1,.30f,1);
+        layout(true);scene.springs.visibility.animateTo(scene.items.isEmpty() && !keepsIdle() ? 0 : 1,.30f,1);
         resizeWindow();Haptics.perform(view,HapticFeedbackConstants.CONTEXT_CLICK);changed();
     }
 
@@ -760,7 +823,23 @@ final class IMode {
         return card!=null && !card.iModePreview && !card.iModePaging;
     }
 
+    /** The empty pill: a plain black capsule around the camera, outlined like the rest. */
+    private void drawIdle(Canvas canvas) {
+        idleBounds(rect);
+        shadeBounds(rect,rect);
+        float radius=rect.height()/2;
+        paint.setStyle(Paint.Style.FILL); paint.setColor(Colors.BLACK);
+        canvas.drawRoundRect(rect,radius,radius,paint);
+        if(scene.pillOutlineOpacity()>.01f) {
+            paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(m.outlineW);
+            paint.setColor(Colors.withAlpha(Colors.PILL_OUTLINE,scene.pillOutlineOpacity()));
+            canvas.drawRoundRect(rect,radius,radius,paint);
+            paint.setStyle(Paint.Style.FILL);
+        }
+    }
+
     void draw(Canvas canvas,long time) {
+        if(scene.restingShown()) drawIdle(canvas);
         drawMovingGlows(canvas);
         drawMovingOutlines(canvas);
         if(activities.size()>3 && scene.mode==Mode.EXPANDED && selected!=null) {
@@ -889,7 +968,8 @@ final class IMode {
         float contrast=outlineOpacity();
         if(contrast<.002f || scene.cards.isEmpty()) return;
         outlineOcclusion.reset();
-        for(Card card:scene.cards) {
+        for(int i=0,n=scene.cards.size();i<n;i++) {
+            Card card=scene.cards.get(i);
             view.computeCard(card,outlineBounds);
             float opacity=IslandView.clamp01(card.iModeOpacity.value());
             if(!card.iMode || opacity<.003f) continue;
@@ -919,7 +999,8 @@ final class IMode {
             // the artwork, glyphs, digits or waveform. Only shrink uniformly while returning to a bubble.
             float scale=Math.max(.001f,Math.min(1,Math.min(r.height()/m.pillH,r.width()/n.compact.desiredWidth())));
             float width=r.width()/scale;
-            RectF natural=new RectF(r.centerX()-width/2,r.centerY()-m.pillH/2,r.centerX()+width/2,r.centerY()+m.pillH/2);
+            RectF natural=compactNatural;
+            natural.set(r.centerX()-width/2,r.centerY()-m.pillH/2,r.centerX()+width/2,r.centerY()+m.pillH/2);
             int save=canvas.save();canvas.scale(scale,scale,r.centerX(),r.centerY());
             n.compact.draw(canvas,natural,alpha*(1-iconOnly),1000);canvas.restoreToCount(save);
         }

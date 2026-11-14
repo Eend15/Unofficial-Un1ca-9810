@@ -28,7 +28,6 @@ import java.util.WeakHashMap;
  */
 public final class ShadeMediaPlayer {
     private static final String QS_PACKAGE = "com.android.systemui.qs.";
-    private static final String CONTENT_VIEW = "com.android.systemui.statusbar.notification.row.NotificationContentView";
     private static final String MEDIA_PANEL = "com.android.systemui.media.SecMediaControlPanel";
     /** The panel type of the player in the notification shade. */
     private static final String SHADE_PANEL_TYPE = "ENR";
@@ -44,6 +43,8 @@ public final class ShadeMediaPlayer {
 
     static void install(ClassLoader cl) {
         XLog.i("shade media hooks installing v1");
+        dev.android.dynamicisland.xposed.Diagnostics.live("shade media player", HeldCard::summary);
+        dev.android.dynamicisland.xposed.Diagnostics.live("shade music glass", () -> MediaPlayerBinding.TRACE.summary(android.os.SystemClock.uptimeMillis()));
         MediaRowBackground.install(cl);
         // the base picker declares getMediaPlayerExpandHeight abstract (nothing to hook there); the concrete
         // pickers implement it, and which of them exist differs between System UI builds
@@ -51,7 +52,7 @@ public final class ShadeMediaPlayer {
         for (String picker : pickers) {
             Refl.hookAll(cl, QS_PACKAGE + picker, "getMediaPlayerExpandHeight", SafeHook.after("notification media height", MediaMeasure::useCardHeight));
         }
-        Refl.hookAll(cl, CONTENT_VIEW, "onMeasure", new MediaMeasure.ContentMeasureHook());
+        ContentMeasureHooks.add(cl, new MediaMeasure.ContentMeasureHook());
         Refl.hookAll(cl, MEDIA_PANEL, "bind", SafeHook.after("shade media bind", ShadeMediaPlayer::takeOverAfterBind));
     }
 

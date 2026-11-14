@@ -16,9 +16,10 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 /**
- * Optional "unlocked with ..." card. Nothing is hooked to learn the method: when the keyguard goes away, System UI's
- * own {@code KeyguardUpdateMonitor} is asked who unlocked (face, any biometric, a trusted device); what is left is
- * the PIN, pattern or password. The monitor is only remembered by a hook on a method System UI calls anyway.
+ * Optional "unlocked with ..." card. Two passive hooks on System UI's {@code KeyguardUpdateMonitor} note when a face or
+ * a fingerprint was accepted (System UI forgets that before the keyguard has gone, so it cannot be asked afterwards),
+ * and remember the monitor itself. When the keyguard goes away the card says the recent biometric, else what the
+ * monitor still reports (a trusted device), and otherwise it was the PIN, pattern or password.
  */
 public final class UnlockSource {
     public enum Method { FINGERPRINT, FACE, TRUSTED, PIN }
@@ -26,7 +27,11 @@ public final class UnlockSource {
     /** The card lasts this long, plus the moment the island needs to come back after the unlock. */
     private static final long SHOW_MS = 2_600;
     private static final long REVEAL_SLACK_MS = 400;
+    /** A biometric accepted this recently counts as the way the phone was unlocked. */
+    private static final long BIOMETRIC_RECENT_MS = 20_000;
     private static volatile WeakReference<Object> monitor = new WeakReference<>(null);
+    private static volatile long biometricAt;
+    private static volatile boolean biometricWasFace;
 
     private final Context ctx;
     private final Handler main;
@@ -47,11 +52,25 @@ public final class UnlockSource {
         if (instance != null && monitor.get() != instance) monitor = new WeakReference<>(instance);
     }
 
+    /** Called by the hooks when System UI accepts a face or a fingerprint. */
+    public static void biometricAuthenticated(boolean face) {
+        biometricWasFace = face;
+        biometricAt = SystemClock.uptimeMillis();
+        Diagnostics.event("unlock: " + (face ? "face" : "fingerprint") + " accepted");
+    }
+
+    /** For tests: no biometric has been accepted. */
+    static void forgetBiometric() {
+        biometricAt = 0;
+    }
+
     /** The keyguard just went away (the lock screen was dismissed). */
     public void onUnlocked() {
         if (!ModuleSettings.unlockNotice() || !secure()) return;
         try {
-            Method method = read(monitor.get(), currentUser());
+            Method method = decide(monitor.get(), currentUser(), SystemClock.uptimeMillis());
+            biometricAt = 0;
+            Diagnostics.event("unlock notice: " + method);
             show(method);
         } catch (RuntimeException error) {
             XLog.once("UnlockSource.onUnlocked", error);
@@ -71,6 +90,17 @@ public final class UnlockSource {
         } catch (RuntimeException error) {
             return false;
         }
+    }
+
+    /** The recent biometric if there was one, else what the monitor reports. */
+    static Method decide(Object keyguardMonitor, int user, long now) {
+        long at = biometricAt;
+        boolean recent = at > 0 && now - at <= BIOMETRIC_RECENT_MS;
+        if (recent) {
+            Diagnostics.fact("unlock notice read", (biometricWasFace ? "face" : "fingerprint") + " accepted " + (now - at) + " ms before");
+            return biometricWasFace ? Method.FACE : Method.FINGERPRINT;
+        }
+        return read(keyguardMonitor, user);
     }
 
     /** Which way the phone was unlocked; PIN when System UI reports none of the others (or cannot be asked). */
@@ -100,16 +130,29 @@ public final class UnlockSource {
         item.kind = IslandItem.Kind.EVENT;
         item.eventLayout = IslandItem.EventLayout.STATUS;
         item.title = IslandText.get(ctx, titleKey(method));
+        item.trailing = IslandItem.Trailing.TEXT; // the right half of the pill says how
+        item.trailingText = IslandText.get(ctx, labelKey(method));
         item.icon = GlyphIcon.of(method == Method.FACE ? GlyphIcon.Kind.FACE
                 : method == Method.FINGERPRINT ? GlyphIcon.Kind.FINGERPRINT : GlyphIcon.Kind.PIN);
         item.accent = 0xFF30D158;
         long now = SystemClock.uptimeMillis();
         item.postTime = now;
-        item.expiresAtUptime = now + REVEAL_SLACK_MS + SHOW_MS;
+        long shown = Math.max(SHOW_MS, ModuleSettings.popupMillis());
+        item.expiresAtUptime = now + REVEAL_SLACK_MS + shown;
+        item.transientPopup = true;
         card = item;
         main.removeCallbacks(expire);
-        main.postDelayed(expire, REVEAL_SLACK_MS + SHOW_MS);
+        main.postDelayed(expire, REVEAL_SLACK_MS + shown);
         onChange.run();
+    }
+
+    static String labelKey(Method method) {
+        switch (method) {
+            case FACE: return "island_unlock_label_face";
+            case FINGERPRINT: return "island_unlock_label_fingerprint";
+            case TRUSTED: return "island_unlock_label_trusted";
+            default: return "island_unlock_label_pin";
+        }
     }
 
     static String titleKey(Method method) {
