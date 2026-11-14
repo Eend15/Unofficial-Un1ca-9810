@@ -28,18 +28,37 @@ fi
 # Disable VaultKeeper support
 # Before: [tbnz w8, #0, #0xXXXXXX]
 # After: [b #0xXXXXXX]
-if xxd -p -c 0 "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" | grep -q "2897773948050037"; then
-    HEX_PATCH "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" \
-        "2897773948050037" "289777392a000014"
-elif xxd -p -c 0 "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" | grep -q "2897663948050037"; then
-    HEX_PATCH "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" \
-        "2897663948050037" "289766392a000014"
-elif xxd -p -c 0 "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" | grep -q "28f7773948050037"; then
-    HEX_PATCH "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" \
-        "28f7773948050037" "28f777392a000014"
-else
-    LOGW "No known VaultKeeper support branch found in libbluetooth_jni.so"
+# The legacy VaultKeeper vendor services are disabled on Exynos9810, so the
+# stack cannot read back its stored config checksum and drops every bonded
+# device on the next boot. Official UN1CA (sixteen) patches the same
+# BP2A.250605.031.A3 branch, 28f7773948050037, inside the APEX. This port
+# loads the /system/lib64 copy, so that copy is patched instead.
+_BT_JNI="$WORK_DIR/system/system/lib64/libbluetooth_jni.so"
+_BT_VK_DONE=false
+for _BT_VK in 28f77739 28977739 28976639; do
+    if xxd -p -c 0 "$_BT_JNI" | grep -q "${_BT_VK}2a000014"; then
+        LOG "- VaultKeeper support branch already patched in libbluetooth_jni.so"
+        _BT_VK_DONE=true
+        break
+    fi
+    if xxd -p -c 0 "$_BT_JNI" | grep -q "${_BT_VK}48050037"; then
+        HEX_PATCH "$_BT_JNI" "${_BT_VK}48050037" "${_BT_VK}2a000014" || return 1
+        _BT_VK_DONE=true
+        break
+    fi
+done
+if ! $_BT_VK_DONE; then
+    # Without this patch Bluetooth pairings are lost after every reboot.
+    LOGE "No known VaultKeeper support branch found in libbluetooth_jni.so"
+    return 1
 fi
+for _BT_VK in 28f7773948050037 2897773948050037 2897663948050037; do
+    if xxd -p -c 0 "$_BT_JNI" | grep -q "$_BT_VK"; then
+        LOGE "Unpatched VaultKeeper branch $_BT_VK remains in libbluetooth_jni.so"
+        return 1
+    fi
+done
+unset _BT_JNI _BT_VK _BT_VK_DONE
 
 # Android 16 Bluetooth aborts on Exynos9810 when the legacy kernel/cgroup setup
 # cannot grant SCHED_FIFO to bt_main_thread. Report success from the shared

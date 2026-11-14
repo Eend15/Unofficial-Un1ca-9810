@@ -18,3 +18,11 @@ approximately 15-second restart cycle with SELinux enforcing. End-to-end
 send/receive still requires a second paired device. Shared final cleanup and
 JNI patching apply to starlte, star2lte and crownlte; the latter two other
 hardware variants have not been physically tested in this session.
+
+VaultKeeper: the legacy VaultKeeper vendor services are disabled on Exynos9810,
+so an unpatched stack cannot read back its stored config checksum and forgets
+every bonded device after a reboot. The patcher applies the same
+BP2A.250605.031.A3 branch patch as official UN1CA (28f7773948050037 to
+28f777392a000014) to the /system/lib64 copy that this port loads. It accepts an
+already patched lib, and the build fails if the branch is missing or any
+unpatched copy remains, so a ROM can no longer ship without it.
