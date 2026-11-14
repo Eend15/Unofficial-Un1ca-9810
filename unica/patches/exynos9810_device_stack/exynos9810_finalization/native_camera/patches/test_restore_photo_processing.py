@@ -1,7 +1,10 @@
 import unittest
 from restore_photo_processing import (
     ASSIGN, PHOTO, QR, SHUTTER_HOOK, DUPLICATE_PHOTO_SHUTTER,
-    QR_REPEATING_ORIGINAL, QR_REPEATING_PATCHED, restore
+    QR_REPEATING_ORIGINAL, QR_REPEATING_PATCHED,
+    QR_PREVIEW_RESULT_ORIGINAL, QR_PREVIEW_RESULT_PATCHED,
+    SAIV_QR_HEADER_ORIGINAL, SAIV_QR_FIELD_ORIGINAL,
+    restore, patch_saiv_qr_node
 )
 
 class PhotoRoutingTests(unittest.TestCase):
@@ -23,8 +26,6 @@ class PhotoRoutingTests(unittest.TestCase):
         self.assertEqual(photo, 'already clean\n')
 
     def test_photo_capture_available_does_not_send_second_shutter(self):
-        # The real camera already receives its first shutter from Camera2
-        # onCaptureStarted before the 4032x3024 JPEG arrives.
         method = ('.method public sendCaptureAvailable(ILjava/lang/Long;)V\n'
                   '    .locals 3\n\n' + DUPLICATE_PHOTO_SHUTTER +
                   '    invoke-static {v0, v1, p1, p2, p0}, '
@@ -40,10 +41,16 @@ class PhotoRoutingTests(unittest.TestCase):
         self.assertNotIn(':cond_0', patched)
         self.assertEqual(restore(QR + ASSIGN, patched)[1], patched)
 
-        # Unknown layouts should fail closed instead of shipping a duplicate.
         unexpected = method.replace('instance-of v0, p0', 'instance-of v1, p0')
         with self.assertRaises(ValueError):
             restore(ASSIGN, unexpected)
+
+    def test_saiv_qr_node_patched(self):
+        raw = SAIV_QR_HEADER_ORIGINAL + '\n' + SAIV_QR_FIELD_ORIGINAL + '\n.end class\n'
+        patched = patch_saiv_qr_node(raw)
+        self.assertIn('implements Landroid/view/PixelCopy$OnPixelCopyFinishedListener;', patched)
+        self.assertIn('processPreviewSurface', patched)
+        self.assertEqual(patch_saiv_qr_node(patched), patched)
 
     def test_unexpected_layout_rejected(self):
         for maker in ('', ASSIGN * 2, QR + PHOTO * 2 + ASSIGN):
