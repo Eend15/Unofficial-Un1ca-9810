@@ -1,13 +1,21 @@
 # Exynos9810 kernel prebuilt
 
-The ROM defaults to the enforcing KernelSU-Next DS-ACK V1.13 release in this
+The ROM defaults to the enforcing KernelSU-Next DS-ACK V1.14 release in this
 directory:
 - EROFS builds (`TARGET_OS_FILE_SYSTEM_TYPE=erofs`, default):
-  `DS-ACK-V1.13-11.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-dt2wtap-SuSFS-erofs-dtb.zip`
-  Expected SHA-256: `f435acac36257efd19faa74e85ff601da71698e3423cd05ee238010a79e707d7`
+  `DS-ACK-V1.14-14.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-erofs-dtb.zip`
+  Expected SHA-256: `768981b1bc670bf22f8fa8555aad2b2a7a684a5b572099a63bbbb22ba9972acc`
 - EXT4 builds (`TARGET_OS_FILE_SYSTEM_TYPE=ext4`):
-  `DS-ACK-V1.13-11.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-dt2wtap-SuSFS-ext4-dtb.zip`
-  Expected SHA-256: `10311fba99ad8e17df61c7f63b446730f02a1e5e9386faeabccbf46eb0a2f6a0`
+  `DS-ACK-V1.14-14.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-ext4-dtb.zip`
+  Expected SHA-256: `f5c1227a4681f85cada0b37b1db2fc6f8600e1d01712b5b663b405aba4854782`
+
+November14 V1.14: rebuilt on KernelSU-Next v3.4.0-legacy (UAPI 4) so the
+kernel matches the bundled v3.4.0 manager and ksud, with SuSFS v1.5.5, EROFS,
+the double-tap-to-wake tap window fix and a panel brightness fix: brightness
+values above 420 no longer turn the panel black, the maximum now follows the
+panel's real ceiling. Built with Google Clang 20 r547379 for six models. Both
+archives carry the same kernels; only the DTB fstab type (system, vendor, odm)
+differs. The November11 V1.13 archives are retained.
 
 November11 V1.13: the November7 family plus
 `exynos9810_finalization/input/patch_dt2w_tap_coords.py` in wake_gestures.c.
