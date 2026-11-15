@@ -6094,6 +6094,29 @@ _EXYNOS9810_FINAL_FIX_NOTE9_CHARGE_SETTLE()
         "$APK_DIR/smali/j3/a.smali" "$APK_DIR/smali/androidx/activity/d.smali" || return 1
 }
 
+_EXYNOS9810_FINAL_PATCH_NOTE9_IME_CLICK_TOOL_TYPE()
+{
+    # One UI 8 reports TOOL_TYPE_STYLUS to the keyboard whenever the last
+    # used input device supports stylus input. On the Note9 that can be the
+    # Wacom digitizer even for a finger tap, so with "S Pen to text" on,
+    # Samsung Keyboard never opens for finger taps. Prefer the tool type of
+    # the real click that the app passes to showSoftInput().
+    [[ "$TARGET_CODENAME" == "crownlte" ]] || return 0
+
+    local JAR_DIR="$APKTOOL_DIR/system/framework/services.jar"
+    local SERVICE
+
+    DECODE_APK "system" "system/framework/services.jar" || return 1
+    SERVICE="$(find "$JAR_DIR" -path '*/com/android/server/inputmethod/InputMethodManagerService.smali' | head -n 1)"
+    [ -f "$SERVICE" ] || {
+        LOGE "InputMethodManagerService.smali not found; cannot fix the Note9 keyboard tool type"
+        return 1
+    }
+
+    LOG "- Reporting the real click tool type to the keyboard on the Note9"
+    python3 "$MODPATH/input/patch_ime_click_tool_type.py" "$SERVICE" || return 1
+}
+
 _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_SYSFS_BRIDGE()
 {
     # One UI 8 routes BLE charging commands through SemInputDeviceManager and
@@ -8267,6 +8290,7 @@ if [ "$TARGET_CODENAME" = "crownlte" ]; then
 fi
 _EXYNOS9810_FINAL_PATCH_AIRCOMMAND_BLE_CONTROLLER_NULL || return 1
 _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_SYSFS_BRIDGE || return 1
+_EXYNOS9810_FINAL_PATCH_NOTE9_IME_CLICK_TOOL_TYPE || return 1
 _EXYNOS9810_FINAL_PATCH_NOTE9_SPEN_BLE_PROTOCOL || return 1
 _EXYNOS9810_FINAL_STAGE_SMARTCAPTURE_SPEN_ENGINE || return 1
 _EXYNOS9810_FINAL_FIX_NOTE9_CHARGE_SETTLE || return 1
