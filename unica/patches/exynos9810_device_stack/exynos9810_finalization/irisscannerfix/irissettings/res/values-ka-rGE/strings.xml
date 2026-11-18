@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">როდესაც განბლოკავთ Intelligent Scan-ით, ეკრანი დაბლოკილი დარჩეს თითის გადასმამდე.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Intelligent Scan ავტომატურად გამოირთვება, სახისა და ირისის ამოცნობის გამორთვის დროს.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">სახისა და თვალის ირისის ამოცნობა ავტომატურად გამოირთვება, როდესაც Intelligent Scan გამოირთვება.</string>
+    <string name="iris_backup_lock_type_helptext_2">თვალის ირისების დარეგისტრირებამდე უნდა დააყენოთ ეკრანის უსაფრთხო დაბლოკვა (ნიმუში, PIN ან პაროლი).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">სახის ან თვალის ირისების დარეგისტრირებამდე უნდა დააყენოთ ეკრანის უსაფრთხო დაბლოკვა (ნიმუში, PIN ან პაროლი).</string>
 </resources>

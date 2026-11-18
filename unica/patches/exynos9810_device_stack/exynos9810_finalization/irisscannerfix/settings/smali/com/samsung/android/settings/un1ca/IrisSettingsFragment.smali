@@ -122,7 +122,7 @@
 .method private adoptHandle(Landroid/content/Intent;)V
     .registers 6
 
-    .line 355
+    .line 357
     const-wide/16 v0, 0x0
 
     if-eqz p1, :cond_b
@@ -138,7 +138,7 @@
     :cond_b
     move-wide v2, v0
 
-    .line 356
+    .line 358
     :goto_c
     cmp-long p1, v2, v0
 
@@ -152,22 +152,22 @@
 
     goto :goto_20
 
-    .line 357
+    .line 359
     :cond_17
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->releaseHandle()V
 
-    .line 358
+    .line 360
     iput-wide v2, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mGkHandle:J
 
-    .line 359
+    .line 361
     const/4 p1, 0x0
 
     iput-boolean p1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mBorrowedHandle:Z
 
-    .line 360
+    .line 362
     return-void
 
-    .line 356
+    .line 358
     :cond_20
     :goto_20
     return-void
@@ -211,41 +211,41 @@
 
     move-result-object v4
 
-    .line 329
+    .line 331
     const-string v5, "request_gk_pw_handle"
 
     const/4 v6, 0x1
 
     invoke-virtual {v4, v5, v6}, Landroid/content/Intent;->putExtra(Ljava/lang/String;Z)Landroid/content/Intent;
 
-    .line 330
+    .line 332
     const-string v5, "hide_insecure_options"
 
     invoke-virtual {v4, v5, v6}, Landroid/content/Intent;->putExtra(Ljava/lang/String;Z)Landroid/content/Intent;
 
-    .line 331
-    const-string v5, "for_biometrics"
-
-    invoke-virtual {v4, v5, v6}, Landroid/content/Intent;->putExtra(Ljava/lang/String;Z)Landroid/content/Intent;
-
-    .line 332
+    .line 333
     const-string v5, "set_biometric_lock"
 
     invoke-virtual {v4, v5, v6}, Landroid/content/Intent;->putExtra(Ljava/lang/String;Z)Landroid/content/Intent;
 
-    .line 333
+    .line 334
+    const-string v5, "un1ca_for_iris"
+
+    invoke-virtual {v4, v5, v6}, Landroid/content/Intent;->putExtra(Ljava/lang/String;Z)Landroid/content/Intent;
+
+    .line 335
     const-string v5, "requested_min_complexity"
 
     invoke-virtual {v4, v5, v1}, Landroid/content/Intent;->putExtra(Ljava/lang/String;I)Landroid/content/Intent;
 
-    .line 334
+    .line 336
     const-string v5, "android.intent.extra.USER_ID"
 
     iget v7, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mUserId:I
 
     invoke-virtual {v4, v5, v7}, Landroid/content/Intent;->putExtra(Ljava/lang/String;I)Landroid/content/Intent;
 
-    .line 336
+    .line 338
     const/4 v5, 0x4
 
     :try_start_40
@@ -253,14 +253,14 @@
     :try_end_43
     .catchall {:try_start_40 .. :try_end_43} :catchall_44
 
-    .line 337
+    .line 339
     return v6
 
-    .line 338
+    .line 340
     :catchall_44
     move-exception v4
 
-    .line 339
+    .line 341
     new-instance v5, Ljava/lang/StringBuilder;
 
     invoke-direct {v5}, Ljava/lang/StringBuilder;-><init>()V
@@ -288,7 +288,7 @@
 
     goto :goto_a
 
-    .line 342
+    .line 344
     :cond_60
     return v1
 .end method
@@ -426,12 +426,12 @@
 .method private confirmRemove()V
     .registers 5
 
-    .line 556
+    .line 562
     iget-boolean v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIntelligentScan:Z
 
     if-eqz v0, :cond_f
 
-    .line 557
+    .line 563
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
     const-string v1, "sec_intelligentscan_remove_intelligentscan_dialog_title"
@@ -444,7 +444,7 @@
 
     goto :goto_19
 
-    .line 559
+    .line 565
     :cond_f
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
@@ -456,13 +456,13 @@
 
     move-result-object v0
 
-    .line 560
+    .line 566
     :goto_19
     iget-boolean v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIntelligentScan:Z
 
     if-eqz v1, :cond_28
 
-    .line 561
+    .line 567
     iget-object v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
     const-string v2, "sec_intelligentscan_remove_intelligentscan_dialog_body_for_feature"
@@ -475,7 +475,7 @@
 
     goto :goto_32
 
-    .line 563
+    .line 569
     :cond_28
     iget-object v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
@@ -487,7 +487,7 @@
 
     move-result-object v1
 
-    .line 565
+    .line 571
     :goto_32
     new-instance v2, Landroid/app/AlertDialog$Builder;
 
@@ -497,17 +497,17 @@
 
     invoke-direct {v2, v3}, Landroid/app/AlertDialog$Builder;-><init>(Landroid/content/Context;)V
 
-    .line 566
+    .line 572
     invoke-virtual {v2, v0}, Landroid/app/AlertDialog$Builder;->setTitle(Ljava/lang/CharSequence;)Landroid/app/AlertDialog$Builder;
 
     move-result-object v0
 
-    .line 567
+    .line 573
     invoke-virtual {v0, v1}, Landroid/app/AlertDialog$Builder;->setMessage(Ljava/lang/CharSequence;)Landroid/app/AlertDialog$Builder;
 
     move-result-object v0
 
-    .line 568
+    .line 574
     const/high16 v1, 0x1040000
 
     const/4 v2, 0x0
@@ -518,7 +518,7 @@
 
     iget-object v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
-    .line 569
+    .line 575
     const-string v2, "common_remove"
 
     const-string v3, "Remove"
@@ -535,17 +535,17 @@
 
     move-result-object v0
 
-    .line 570
+    .line 576
     invoke-virtual {v0}, Landroid/app/AlertDialog$Builder;->show()Landroid/app/AlertDialog;
 
-    .line 571
+    .line 577
     return-void
 .end method
 
 .method private enableIntelligentScanDefaults()V
     .registers 5
 
-    .line 452
+    .line 458
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->enrolled()Ljava/util/List;
 
     move-result-object v0
@@ -562,12 +562,12 @@
 
     if-eqz v0, :cond_37
 
-    .line 453
+    .line 459
     const/4 v0, 0x1
 
     invoke-direct {p0, v0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->setFaceUnlockEnabled(Z)V
 
-    .line 454
+    .line 460
     iget-object v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
     invoke-virtual {v1}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
@@ -578,7 +578,7 @@
 
     invoke-static {v1, v2, v0}, Landroid/provider/Settings$Secure;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
 
-    .line 455
+    .line 461
     iget-object v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
     invoke-virtual {v1}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
@@ -595,7 +595,7 @@
 
     if-ne v1, v3, :cond_37
 
-    .line 456
+    .line 462
     iget-object v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
     invoke-virtual {v1}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
@@ -604,7 +604,7 @@
 
     invoke-static {v1, v2, v0}, Landroid/provider/Settings$Secure;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
 
-    .line 459
+    .line 465
     :cond_37
     return-void
 .end method
@@ -620,7 +620,7 @@
         }
     .end annotation
 
-    .line 613
+    .line 619
     :try_start_0
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIris:Lcom/samsung/android/camera/iris/SemIrisManager;
 
@@ -632,27 +632,27 @@
     :try_end_8
     .catchall {:try_start_0 .. :try_end_8} :catchall_c
 
-    .line 614
+    .line 620
     if-eqz v0, :cond_b
 
     return-object v0
 
-    .line 617
+    .line 623
     :cond_b
     goto :goto_14
 
-    .line 615
+    .line 621
     :catchall_c
     move-exception v0
 
-    .line 616
+    .line 622
     const-string v1, "UN1CA-IrisSettings"
 
     const-string v2, "getEnrolledIrises"
 
     invoke-static {v1, v2, v0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 618
+    .line 624
     :goto_14
     invoke-static {}, Ljava/util/Collections;->emptyList()Ljava/util/List;
 
@@ -682,7 +682,7 @@
 .method private hasEnrolledFace()Z
     .registers 6
 
-    .line 623
+    .line 629
     const/4 v0, 0x0
 
     :try_start_1
@@ -694,12 +694,12 @@
 
     move-result-object v1
 
-    .line 624
+    .line 630
     if-nez v1, :cond_c
 
     return v0
 
-    .line 625
+    .line 631
     :cond_c
     invoke-virtual {v1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
@@ -741,18 +741,18 @@
 
     return v0
 
-    .line 626
+    .line 632
     :catchall_31
     move-exception v1
 
-    .line 627
+    .line 633
     return v0
 .end method
 
 .method private static invokeInt(Ljava/lang/Object;Ljava/lang/String;II)I
     .registers 6
 
-    .line 683
+    .line 689
     :try_start_0
     invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
@@ -780,7 +780,7 @@
 
     move-result-object p0
 
-    .line 684
+    .line 690
     if-nez p0, :cond_1d
 
     :goto_1c
@@ -800,11 +800,11 @@
     :goto_24
     return p3
 
-    .line 685
+    .line 691
     :catchall_25
     move-exception p0
 
-    .line 686
+    .line 692
     new-instance p2, Ljava/lang/StringBuilder;
 
     invoke-direct {p2}, Ljava/lang/StringBuilder;-><init>()V
@@ -827,14 +827,14 @@
 
     invoke-static {p2, p1, p0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 687
+    .line 693
     return p3
 .end method
 
 .method private isFaceUnlockEnabled()Z
     .registers 6
 
-    .line 633
+    .line 639
     const/4 v0, 0x0
 
     :try_start_1
@@ -860,7 +860,7 @@
 
     iget-object v2, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mLockUtils:Ljava/lang/Object;
 
-    .line 634
+    .line 640
     const/16 v3, 0x100
 
     invoke-static {v3}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -883,14 +883,14 @@
 
     check-cast v1, Ljava/lang/Integer;
 
-    .line 633
+    .line 639
     invoke-virtual {v1}, Ljava/lang/Integer;->intValue()I
 
     move-result v1
     :try_end_31
     .catchall {:try_start_1 .. :try_end_31} :catchall_36
 
-    .line 635
+    .line 641
     const/4 v2, 0x1
 
     if-ne v1, v2, :cond_35
@@ -900,18 +900,18 @@
     :cond_35
     return v0
 
-    .line 636
+    .line 642
     :catchall_36
     move-exception v1
 
-    .line 637
+    .line 643
     return v0
 .end method
 
 .method private isSecure()Z
     .registers 4
 
-    .line 347
+    .line 349
     :try_start_0
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mLockUtils:Ljava/lang/Object;
 
@@ -957,11 +957,11 @@
 
     return v0
 
-    .line 348
+    .line 350
     :catchall_29
     move-exception v0
 
-    .line 349
+    .line 351
     const/4 v0, 0x0
 
     return v0
@@ -970,12 +970,12 @@
 .method private leaveIfNothingEnrolled()V
     .registers 2
 
-    .line 484
+    .line 490
     iget-boolean v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIntelligentScan:Z
 
     if-eqz v0, :cond_18
 
-    .line 485
+    .line 491
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->enrolled()Ljava/util/List;
 
     move-result-object v0
@@ -1001,7 +1001,7 @@
 
     goto :goto_20
 
-    .line 486
+    .line 492
     :cond_18
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->enrolled()Ljava/util/List;
 
@@ -1011,7 +1011,7 @@
 
     move-result v0
 
-    .line 487
+    .line 493
     :goto_20
     if-eqz v0, :cond_29
 
@@ -1021,7 +1021,7 @@
 
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->finish()V
 
-    .line 488
+    .line 494
     :cond_29
     return-void
 .end method
@@ -1029,7 +1029,7 @@
 .method private static myUserId()I
     .registers 4
 
-    .line 702
+    .line 708
     const/4 v0, 0x0
 
     :try_start_1
@@ -1061,40 +1061,45 @@
 
     return v0
 
-    .line 703
+    .line 709
     :catchall_19
     move-exception v1
 
-    .line 704
+    .line 710
     return v0
 .end method
 
 .method private onFaceEnrollResult(Landroid/content/Intent;)V
-    .registers 2
+    .registers 3
 
-    .line 406
+    .line 411
+    const/4 v0, 0x0
+
+    invoke-static {v0}, Lcom/samsung/android/settings/un1ca/IrisLockMenu;->markIntelligentChooser(Z)V
+
+    .line 412
     invoke-direct {p0, p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->adoptHandle(Landroid/content/Intent;)V
 
-    .line 407
+    .line 413
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->hasEnrolledFace()Z
 
     move-result p1
 
-    if-nez p1, :cond_d
+    if-nez p1, :cond_11
 
-    .line 408
+    .line 414
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->leaveIfNothingEnrolled()V
 
-    .line 409
+    .line 415
     return-void
 
-    .line 411
-    :cond_d
+    .line 417
+    :cond_11
     const/4 p1, 0x1
 
     invoke-direct {p0, p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->setFaceUnlockEnabled(Z)V
 
-    .line 412
+    .line 418
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->enrolled()Ljava/util/List;
 
     move-result-object p1
@@ -1103,28 +1108,26 @@
 
     move-result p1
 
-    if-eqz p1, :cond_20
+    if-eqz p1, :cond_23
 
-    .line 413
-    const/4 p1, 0x0
+    .line 419
+    invoke-direct {p0, v0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startEnroll(Z)V
 
-    invoke-direct {p0, p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startEnroll(Z)V
+    goto :goto_26
 
-    goto :goto_23
-
-    .line 415
-    :cond_20
+    .line 421
+    :cond_23
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->enableIntelligentScanDefaults()V
 
-    .line 417
-    :goto_23
+    .line 423
+    :goto_26
     return-void
 .end method
 
 .method private onRemoved()V
     .registers 3
 
-    .line 599
+    .line 605
     new-instance v0, Landroid/os/Handler;
 
     invoke-static {}, Landroid/os/Looper;->getMainLooper()Landroid/os/Looper;
@@ -1139,19 +1142,19 @@
 
     invoke-virtual {v0, v1}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 608
+    .line 614
     return-void
 .end method
 
 .method private pageTitle(Landroid/content/Context;)Ljava/lang/String;
     .registers 4
 
-    .line 709
+    .line 715
     iget-boolean v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIntelligentScan:Z
 
     if-eqz v0, :cond_d
 
-    .line 710
+    .line 716
     const-string v0, "bio_intelligentscan_title"
 
     const-string v1, "Intelligent Scan"
@@ -1162,13 +1165,13 @@
 
     goto :goto_11
 
-    .line 711
+    .line 717
     :cond_d
     invoke-static {p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->title(Landroid/content/Context;)Ljava/lang/String;
 
     move-result-object p1
 
-    .line 709
+    .line 715
     :goto_11
     return-object p1
 .end method
@@ -1505,7 +1508,7 @@
 .method private releaseHandle()V
     .registers 7
 
-    .line 363
+    .line 365
     iget-wide v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mGkHandle:J
 
     const-wide/16 v2, 0x0
@@ -1516,13 +1519,13 @@
 
     return-void
 
-    .line 364
+    .line 366
     :cond_9
     iget-boolean v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mBorrowedHandle:Z
 
     if-nez v0, :cond_31
 
-    .line 366
+    .line 368
     :try_start_d
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mLockUtils:Ljava/lang/Object;
 
@@ -1546,7 +1549,7 @@
 
     iget-wide v4, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mGkHandle:J
 
-    .line 367
+    .line 369
     invoke-static {v4, v5}, Ljava/lang/Long;->valueOf(J)Ljava/lang/Long;
 
     move-result-object v4
@@ -1561,62 +1564,62 @@
 
     goto :goto_30
 
-    .line 368
+    .line 370
     :catchall_2f
     move-exception v0
 
     :goto_30
     nop
 
-    .line 370
+    .line 372
     :cond_31
     iput-wide v2, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mGkHandle:J
 
-    .line 371
+    .line 373
     const/4 v0, 0x0
 
     iput-boolean v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mBorrowedHandle:Z
 
-    .line 372
+    .line 374
     return-void
 .end method
 
 .method private removeAll()V
     .registers 6
 
-    .line 574
+    .line 580
     iget-boolean v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIntelligentScan:Z
 
     if-eqz v0, :cond_b
 
-    .line 575
+    .line 581
     const/4 v0, 0x0
 
     invoke-direct {p0, v0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->setFaceUnlockEnabled(Z)V
 
-    .line 576
+    .line 582
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->removeFaceTemplates()V
 
-    .line 578
+    .line 584
     :cond_b
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->enrolled()Ljava/util/List;
 
     move-result-object v0
 
-    .line 579
+    .line 585
     invoke-interface {v0}, Ljava/util/List;->isEmpty()Z
 
     move-result v1
 
     if-eqz v1, :cond_19
 
-    .line 580
+    .line 586
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->onRemoved()V
 
-    .line 581
+    .line 587
     return-void
 
-    .line 583
+    .line 589
     :cond_19
     invoke-interface {v0}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
@@ -1633,7 +1636,7 @@
 
     move-result-object v1
 
-    .line 585
+    .line 591
     :try_start_27
     iget-object v2, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIris:Lcom/samsung/android/camera/iris/SemIrisManager;
 
@@ -1649,25 +1652,25 @@
     :try_end_35
     .catchall {:try_start_27 .. :try_end_35} :catchall_36
 
-    .line 594
+    .line 600
     goto :goto_3e
 
-    .line 592
+    .line 598
     :catchall_36
     move-exception v1
 
-    .line 593
+    .line 599
     const-string v2, "UN1CA-IrisSettings"
 
     const-string v3, "remove failed"
 
     invoke-static {v2, v3, v1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 595
+    .line 601
     :goto_3e
     goto :goto_1d
 
-    .line 596
+    .line 602
     :cond_3f
     return-void
 .end method
@@ -1675,7 +1678,7 @@
 .method private removeFaceTemplates()V
     .registers 12
 
-    .line 652
+    .line 658
     const-string v0, "android.hardware.face.FaceManager$RemovalCallback"
 
     const-string v1, "android.hardware.face.Face"
@@ -1691,23 +1694,23 @@
 
     move-result-object v4
 
-    .line 653
+    .line 659
     if-nez v4, :cond_10
 
     return-void
 
-    .line 654
+    .line 660
     :cond_10
     invoke-static {v1}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
     move-result-object v5
 
-    .line 655
+    .line 661
     invoke-static {v0}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
     move-result-object v6
 
-    .line 656
+    .line 662
     const-class v7, Ljava/lang/CharSequence;
 
     sget-object v8, Ljava/lang/Integer;->TYPE:Ljava/lang/Class;
@@ -1724,7 +1727,7 @@
 
     const-string v7, ""
 
-    .line 657
+    .line 663
     const/4 v8, 0x0
 
     invoke-static {v8}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -1743,7 +1746,7 @@
 
     invoke-virtual {v5, v7}, Ljava/lang/reflect/Constructor;->newInstance([Ljava/lang/Object;)Ljava/lang/Object;
 
-    .line 658
+    .line 664
     invoke-virtual {v4}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
     move-result-object v5
@@ -1774,14 +1777,14 @@
     :try_end_57
     .catchall {:try_start_7 .. :try_end_57} :catchall_58
 
-    .line 676
+    .line 682
     goto :goto_c0
 
-    .line 659
+    .line 665
     :catchall_58
     move-exception v4
 
-    .line 661
+    .line 667
     :try_start_59
     iget-object v4, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
@@ -1789,10 +1792,10 @@
 
     move-result-object v2
 
-    .line 662
+    .line 668
     if-eqz v2, :cond_b7
 
-    .line 663
+    .line 669
     invoke-virtual {v2}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
     move-result-object v4
@@ -1825,20 +1828,20 @@
 
     check-cast v4, Ljava/util/List;
 
-    .line 664
+    .line 670
     invoke-static {v1}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
     move-result-object v1
 
-    .line 665
+    .line 671
     invoke-static {v0}, Ljava/lang/Class;->forName(Ljava/lang/String;)Ljava/lang/Class;
 
     move-result-object v0
 
-    .line 666
+    .line 672
     if-eqz v4, :cond_b7
 
-    .line 667
+    .line 673
     invoke-interface {v4}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
     move-result-object v4
@@ -1854,7 +1857,7 @@
 
     move-result-object v5
 
-    .line 668
+    .line 674
     invoke-virtual {v2}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
     move-result-object v6
@@ -1873,7 +1876,7 @@
 
     iget v7, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mUserId:I
 
-    .line 669
+    .line 675
     invoke-static {v7}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
 
     move-result-object v7
@@ -1886,25 +1889,25 @@
     :try_end_b6
     .catchall {:try_start_59 .. :try_end_b6} :catchall_b8
 
-    .line 670
+    .line 676
     goto :goto_8f
 
-    .line 675
+    .line 681
     :cond_b7
     goto :goto_c0
 
-    .line 673
+    .line 679
     :catchall_b8
     move-exception v0
 
-    .line 674
+    .line 680
     const-string v1, "UN1CA-IrisSettings"
 
     const-string v2, "removeFaceTemplates failed"
 
     invoke-static {v1, v2, v0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 677
+    .line 683
     :goto_c0
     return-void
 .end method
@@ -1912,7 +1915,7 @@
 .method private setFaceUnlockEnabled(Z)V
     .registers 7
 
-    .line 643
+    .line 649
     :try_start_0
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mLockUtils:Ljava/lang/Object;
 
@@ -1938,7 +1941,7 @@
 
     iget-object v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mLockUtils:Ljava/lang/Object;
 
-    .line 644
+    .line 650
     const/16 v2, 0x100
 
     invoke-static {v2}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -1973,21 +1976,21 @@
     :try_end_34
     .catchall {:try_start_0 .. :try_end_34} :catchall_35
 
-    .line 647
+    .line 653
     goto :goto_3d
 
-    .line 645
+    .line 651
     :catchall_35
     move-exception p1
 
-    .line 646
+    .line 652
     const-string v0, "UN1CA-IrisSettings"
 
     const-string v1, "setBiometricState failed"
 
     invoke-static {v0, v1, p1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 648
+    .line 654
     :goto_3d
     return-void
 .end method
@@ -1995,7 +1998,7 @@
 .method private static setSystemProperty(Ljava/lang/String;Ljava/lang/String;)V
     .registers 6
 
-    .line 693
+    .line 699
     :try_start_0
     const-string v0, "android.os.SystemProperties"
 
@@ -2021,21 +2024,21 @@
 
     move-result-object p1
 
-    .line 694
+    .line 700
     const/4 v1, 0x0
 
     invoke-virtual {v0, v1, p1}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
     :try_end_1c
     .catchall {:try_start_0 .. :try_end_1c} :catchall_1d
 
-    .line 697
+    .line 703
     goto :goto_36
 
-    .line 695
+    .line 701
     :catchall_1d
     move-exception p1
 
-    .line 696
+    .line 702
     new-instance v0, Ljava/lang/StringBuilder;
 
     invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
@@ -2058,7 +2061,7 @@
 
     invoke-static {v0, p0, p1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 698
+    .line 704
     :goto_36
     return-void
 .end method
@@ -2066,23 +2069,23 @@
 .method private showEnrollError(I)Z
     .registers 6
 
-    .line 464
+    .line 470
     nop
 
-    .line 465
+    .line 471
     const-string v0, "iris_sensor_not_working_popup_title"
 
     const-string v1, "iris_failed_to_register"
 
     packed-switch p1, :pswitch_data_64
 
-    .line 470
+    .line 476
     :pswitch_8
     const/4 p1, 0x0
 
     return p1
 
-    .line 467
+    .line 473
     :pswitch_a
     const-string p1, "iris_proximity_restriction_popop_message"
 
@@ -2090,25 +2093,25 @@
 
     goto :goto_17
 
-    .line 468
+    .line 474
     :pswitch_e
     const-string p1, "iris_sensor_not_working_msg"
 
     goto :goto_17
 
-    .line 469
+    .line 475
     :pswitch_11
     const-string p1, "iris_hw_problem_msg"
 
     goto :goto_17
 
-    .line 466
+    .line 472
     :pswitch_14
     const-string p1, "iris_eye_safety_msg"
 
     move-object v0, v1
 
-    .line 472
+    .line 478
     :goto_17
     new-instance v1, Landroid/app/AlertDialog$Builder;
 
@@ -2120,7 +2123,7 @@
 
     iget-object v2, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
-    .line 473
+    .line 479
     const-string v3, "Couldn\'t register irises"
 
     invoke-static {v2, v0, v3}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->text(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
@@ -2133,7 +2136,7 @@
 
     iget-object v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
-    .line 474
+    .line 480
     const-string v2, ""
 
     invoke-static {v1, p1, v2}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->text(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
@@ -2146,7 +2149,7 @@
 
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
-    .line 475
+    .line 481
     const-string v1, "lockpattern_retry_button_text"
 
     const-string v2, "Retry"
@@ -2167,7 +2170,7 @@
 
     invoke-direct {v0, p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment$$ExternalSyntheticLambda2;-><init>(Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;)V
 
-    .line 477
+    .line 483
     const/high16 v1, 0x1040000
 
     invoke-virtual {p1, v1, v0}, Landroid/app/AlertDialog$Builder;->setNegativeButton(ILandroid/content/DialogInterface$OnClickListener;)Landroid/app/AlertDialog$Builder;
@@ -2178,15 +2181,15 @@
 
     invoke-direct {v0, p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment$$ExternalSyntheticLambda3;-><init>(Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;)V
 
-    .line 478
+    .line 484
     invoke-virtual {p1, v0}, Landroid/app/AlertDialog$Builder;->setOnCancelListener(Landroid/content/DialogInterface$OnCancelListener;)Landroid/app/AlertDialog$Builder;
 
     move-result-object p1
 
-    .line 479
+    .line 485
     invoke-virtual {p1}, Landroid/app/AlertDialog$Builder;->show()Landroid/app/AlertDialog;
 
-    .line 480
+    .line 486
     const/4 p1, 0x1
 
     return p1
@@ -2207,7 +2210,7 @@
 .method private startEnroll(Z)V
     .registers 10
 
-    .line 420
+    .line 426
     iget-wide v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mGkHandle:J
 
     const-wide/16 v2, 0x0
@@ -2218,20 +2221,20 @@
 
     if-nez v0, :cond_f
 
-    .line 421
+    .line 427
     iput-boolean v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mEnrollAfterConfirm:Z
 
-    .line 422
+    .line 428
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->confirmCredential()Z
 
-    .line 423
+    .line 429
     return-void
 
-    .line 425
+    .line 431
     :cond_f
     nop
 
-    .line 427
+    .line 433
     :try_start_10
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIris:Lcom/samsung/android/camera/iris/SemIrisManager;
 
@@ -2239,7 +2242,7 @@
 
     move-result-wide v2
 
-    .line 428
+    .line 434
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mLockUtils:Ljava/lang/Object;
 
     invoke-virtual {v0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
@@ -2258,7 +2261,7 @@
 
     move-result-object v5
 
-    .line 429
+    .line 435
     invoke-virtual {v0, v4, v5}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object v0
@@ -2267,7 +2270,7 @@
 
     iget-wide v5, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mGkHandle:J
 
-    .line 430
+    .line 436
     invoke-static {v5, v6}, Ljava/lang/Long;->valueOf(J)Ljava/lang/Long;
 
     move-result-object v5
@@ -2290,7 +2293,7 @@
 
     move-result-object v0
 
-    .line 431
+    .line 437
     invoke-virtual {v0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
 
     move-result-object v2
@@ -2315,14 +2318,14 @@
     :try_end_5b
     .catchall {:try_start_10 .. :try_end_5b} :catchall_5c
 
-    .line 434
+    .line 440
     goto :goto_65
 
-    .line 432
+    .line 438
     :catchall_5c
     move-exception v0
 
-    .line 433
+    .line 439
     const-string v2, "UN1CA-IrisSettings"
 
     const-string v3, "auth token"
@@ -2331,27 +2334,27 @@
 
     const/4 v0, 0x0
 
-    .line 435
+    .line 441
     :goto_65
     if-nez v0, :cond_70
 
-    .line 437
+    .line 443
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->releaseHandle()V
 
-    .line 438
+    .line 444
     iput-boolean v1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mEnrollAfterConfirm:Z
 
-    .line 439
+    .line 445
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->confirmCredential()Z
 
-    .line 440
+    .line 446
     return-void
 
-    .line 442
+    .line 448
     :cond_70
     nop
 
-    .line 443
+    .line 449
     new-instance v2, Landroid/content/Intent;
 
     invoke-direct {v2}, Landroid/content/Intent;-><init>()V
@@ -2368,39 +2371,39 @@
 
     move-result-object v2
 
-    .line 444
+    .line 450
     const-string v3, "hw_auth_token"
 
     invoke-virtual {v2, v3, v0}, Landroid/content/Intent;->putExtra(Ljava/lang/String;[B)Landroid/content/Intent;
 
-    .line 445
+    .line 451
     const-string v0, "android.intent.extra.USER_ID"
 
     iget v3, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mUserId:I
 
     invoke-virtual {v2, v0, v3}, Landroid/content/Intent;->putExtra(Ljava/lang/String;I)Landroid/content/Intent;
 
-    .line 447
+    .line 453
     if-eqz p1, :cond_96
 
     const-string p1, "iris_enroll_retry"
 
     invoke-virtual {v2, p1, v1}, Landroid/content/Intent;->putExtra(Ljava/lang/String;Z)Landroid/content/Intent;
 
-    .line 448
+    .line 454
     :cond_96
     const/4 p1, 0x2
 
     invoke-virtual {p0, v2, p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startActivityForResult(Landroid/content/Intent;I)V
 
-    .line 449
+    .line 455
     return-void
 .end method
 
 .method private startFaceEnroll()V
     .registers 7
 
-    .line 393
+    .line 395
     const/4 v0, 0x0
 
     :try_start_1
@@ -2420,26 +2423,26 @@
 
     move-result-object v1
 
-    .line 394
+    .line 396
     const-string v2, "previousStage"
 
     const-string v3, "lock_screen_face"
 
     invoke-virtual {v1, v2, v3}, Landroid/content/Intent;->putExtra(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;
 
-    .line 395
+    .line 397
     const-string v2, "android.intent.extra.USER_ID"
 
     iget v3, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mUserId:I
 
     invoke-virtual {v1, v2, v3}, Landroid/content/Intent;->putExtra(Ljava/lang/String;I)Landroid/content/Intent;
 
-    .line 396
+    .line 398
     const-string v2, "requested_min_complexity"
 
     invoke-virtual {v1, v2, v0}, Landroid/content/Intent;->putExtra(Ljava/lang/String;I)Landroid/content/Intent;
 
-    .line 397
+    .line 399
     iget-wide v2, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mGkHandle:J
 
     const-wide/16 v4, 0x0
@@ -2454,40 +2457,53 @@
 
     invoke-virtual {v1, v2, v3, v4}, Landroid/content/Intent;->putExtra(Ljava/lang/String;J)Landroid/content/Intent;
 
-    .line 398
+    .line 401
     :cond_34
+    iget-boolean v2, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIntelligentScan:Z
+
+    if-eqz v2, :cond_3c
+
+    const/4 v2, 0x1
+
+    invoke-static {v2}, Lcom/samsung/android/settings/un1ca/IrisLockMenu;->markIntelligentChooser(Z)V
+
+    .line 402
+    :cond_3c
     const/4 v2, 0x3
 
     invoke-virtual {p0, v1, v2}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startActivityForResult(Landroid/content/Intent;I)V
-    :try_end_38
-    .catchall {:try_start_1 .. :try_end_38} :catchall_39
+    :try_end_40
+    .catchall {:try_start_1 .. :try_end_40} :catchall_41
 
-    .line 402
-    goto :goto_44
+    .line 407
+    goto :goto_4f
 
-    .line 399
-    :catchall_39
+    .line 403
+    :catchall_41
     move-exception v1
 
-    .line 400
+    .line 404
+    invoke-static {v0}, Lcom/samsung/android/settings/un1ca/IrisLockMenu;->markIntelligentChooser(Z)V
+
+    .line 405
     const-string v2, "UN1CA-IrisSettings"
 
     const-string v3, "cannot launch face enrollment"
 
     invoke-static {v2, v3, v1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 401
+    .line 406
     invoke-direct {p0, v0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startEnroll(Z)V
 
-    .line 403
-    :goto_44
+    .line 408
+    :goto_4f
     return-void
 .end method
 
 .method private startRequestedEnroll(Z)V
     .registers 3
 
-    .line 377
+    .line 379
     iget-boolean v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIntelligentScan:Z
 
     if-eqz v0, :cond_e
@@ -2498,16 +2514,16 @@
 
     if-nez v0, :cond_e
 
-    .line 378
+    .line 380
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startFaceEnroll()V
 
     goto :goto_11
 
-    .line 380
+    .line 382
     :cond_e
     invoke-direct {p0, p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startEnroll(Z)V
 
-    .line 382
+    .line 384
     :goto_11
     return-void
 .end method
@@ -2515,7 +2531,7 @@
 .method static text(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
     .registers 8
 
-    .line 723
+    .line 729
     const-string v0, "com.samsung.android.irissettings"
 
     invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
@@ -2535,7 +2551,7 @@
 
     aget-object v2, v0, v1
 
-    .line 725
+    .line 731
     :try_start_10
     invoke-virtual {p0}, Landroid/content/Context;->getPackageName()Ljava/lang/String;
 
@@ -2553,7 +2569,7 @@
 
     goto :goto_27
 
-    .line 726
+    .line 732
     :cond_1f
     invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
 
@@ -2563,7 +2579,7 @@
 
     move-result-object v3
 
-    .line 727
+    .line 733
     :goto_27
     const-string v4, "string"
 
@@ -2571,7 +2587,7 @@
 
     move-result v2
 
-    .line 728
+    .line 734
     if-eqz v2, :cond_35
 
     invoke-virtual {v3, v2}, Landroid/content/res/Resources;->getString(I)Ljava/lang/String;
@@ -2582,19 +2598,19 @@
 
     return-object p0
 
-    .line 729
+    .line 735
     :catchall_34
     move-exception v2
 
     :cond_35
     nop
 
-    .line 723
+    .line 729
     add-int/lit8 v1, v1, 0x1
 
     goto :goto_b
 
-    .line 731
+    .line 737
     :cond_39
     return-object p2
 .end method
@@ -2602,7 +2618,7 @@
 .method static title(Landroid/content/Context;)Ljava/lang/String;
     .registers 3
 
-    .line 715
+    .line 721
     const-string v0, "bio_iris_scanner_title"
 
     const-string v1, "Irises"
@@ -2688,7 +2704,7 @@
 .method synthetic lambda$confirmRemove$8$com-samsung-android-settings-un1ca-IrisSettingsFragment(Landroid/content/DialogInterface;I)V
     .registers 3
 
-    .line 569
+    .line 575
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->removeAll()V
 
     return-void
@@ -2852,7 +2868,7 @@
 .method synthetic lambda$onRemoved$9$com-samsung-android-settings-un1ca-IrisSettingsFragment()V
     .registers 4
 
-    .line 600
+    .line 606
     invoke-virtual {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->isAdded()Z
 
     move-result v0
@@ -2861,7 +2877,7 @@
 
     return-void
 
-    .line 601
+    .line 607
     :cond_7
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->enrolled()Ljava/util/List;
 
@@ -2873,7 +2889,7 @@
 
     if-eqz v0, :cond_21
 
-    .line 602
+    .line 608
     iget-object v0, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
     invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
@@ -2886,16 +2902,16 @@
 
     invoke-static {v0, v1, v2}, Landroid/provider/Settings$Secure;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
 
-    .line 603
+    .line 609
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->finish()V
 
     goto :goto_24
 
-    .line 605
+    .line 611
     :cond_21
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->refresh()V
 
-    .line 607
+    .line 613
     :goto_24
     return-void
 .end method
@@ -2903,7 +2919,7 @@
 .method synthetic lambda$showEnrollError$5$com-samsung-android-settings-un1ca-IrisSettingsFragment(Landroid/content/DialogInterface;I)V
     .registers 3
 
-    .line 476
+    .line 482
     const/4 p1, 0x1
 
     invoke-direct {p0, p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startEnroll(Z)V
@@ -2914,7 +2930,7 @@
 .method synthetic lambda$showEnrollError$6$com-samsung-android-settings-un1ca-IrisSettingsFragment(Landroid/content/DialogInterface;I)V
     .registers 3
 
-    .line 477
+    .line 483
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->leaveIfNothingEnrolled()V
 
     return-void
@@ -2923,7 +2939,7 @@
 .method synthetic lambda$showEnrollError$7$com-samsung-android-settings-un1ca-IrisSettingsFragment(Landroid/content/DialogInterface;)V
     .registers 2
 
-    .line 478
+    .line 484
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->leaveIfNothingEnrolled()V
 
     return-void
@@ -3048,10 +3064,10 @@
 .method public onActivityResult(IILandroid/content/Intent;)V
     .registers 11
 
-    .line 491
+    .line 497
     invoke-super {p0, p1, p2, p3}, Lcom/android/settings/SettingsPreferenceFragment;->onActivityResult(IILandroid/content/Intent;)V
 
-    .line 492
+    .line 498
     const-string v0, ")"
 
     const-wide/16 v1, 0x0
@@ -3064,7 +3080,7 @@
 
     if-ne p1, v5, :cond_4f
 
-    .line 493
+    .line 499
     const/4 p1, -0x1
 
     if-ne p2, p1, :cond_31
@@ -3083,31 +3099,31 @@
 
     goto :goto_31
 
-    .line 498
+    .line 504
     :cond_1d
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->releaseHandle()V
 
-    .line 499
+    .line 505
     invoke-virtual {p3, p1, v1, v2}, Landroid/content/Intent;->getLongExtra(Ljava/lang/String;J)J
 
     move-result-wide p1
 
     iput-wide p1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mGkHandle:J
 
-    .line 500
+    .line 506
     iget-boolean p1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mEnrollAfterConfirm:Z
 
     if-eqz p1, :cond_118
 
-    .line 501
+    .line 507
     iput-boolean v3, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mEnrollAfterConfirm:Z
 
-    .line 502
+    .line 508
     invoke-direct {p0, v3}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startRequestedEnroll(Z)V
 
     goto/16 :goto_118
 
-    .line 494
+    .line 500
     :cond_31
     :goto_31
     new-instance p1, Ljava/lang/StringBuilder;
@@ -3134,42 +3150,42 @@
 
     invoke-static {v4, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 495
+    .line 501
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->finish()V
 
-    .line 496
+    .line 502
     return-void
 
-    .line 504
+    .line 510
     :cond_4f
     const/4 v6, 0x4
 
     if-ne p1, v6, :cond_95
 
-    .line 505
+    .line 511
     invoke-direct {p0, p3}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->adoptHandle(Landroid/content/Intent;)V
 
-    .line 506
+    .line 512
     iget-wide v5, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mGkHandle:J
 
     cmp-long p1, v5, v1
 
     if-eqz p1, :cond_66
 
-    .line 507
+    .line 513
     iget-boolean p1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mEnrollAfterConfirm:Z
 
     if-eqz p1, :cond_118
 
-    .line 508
+    .line 514
     iput-boolean v3, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mEnrollAfterConfirm:Z
 
-    .line 509
+    .line 515
     invoke-direct {p0, v3}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startRequestedEnroll(Z)V
 
     goto/16 :goto_118
 
-    .line 511
+    .line 517
     :cond_66
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->isSecure()Z
 
@@ -3177,7 +3193,7 @@
 
     if-eqz p1, :cond_77
 
-    .line 513
+    .line 519
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->confirmCredential()Z
 
     move-result p1
@@ -3188,7 +3204,7 @@
 
     goto/16 :goto_118
 
-    .line 515
+    .line 521
     :cond_77
     new-instance p1, Ljava/lang/StringBuilder;
 
@@ -3214,19 +3230,19 @@
 
     invoke-static {v4, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 516
+    .line 522
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->finish()V
 
-    .line 517
+    .line 523
     return-void
 
-    .line 519
+    .line 525
     :cond_95
     const/4 v0, 0x3
 
     if-ne p1, v0, :cond_b2
 
-    .line 520
+    .line 526
     new-instance p1, Ljava/lang/StringBuilder;
 
     invoke-direct {p1}, Ljava/lang/StringBuilder;-><init>()V
@@ -3247,18 +3263,18 @@
 
     invoke-static {v4, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 521
+    .line 527
     invoke-direct {p0, p3}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->onFaceEnrollResult(Landroid/content/Intent;)V
 
     goto :goto_118
 
-    .line 522
+    .line 528
     :cond_b2
     const/4 p3, 0x2
 
     if-ne p1, p3, :cond_118
 
-    .line 523
+    .line 529
     new-instance p1, Ljava/lang/StringBuilder;
 
     invoke-direct {p1}, Ljava/lang/StringBuilder;-><init>()V
@@ -3279,14 +3295,14 @@
 
     invoke-static {v4, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 524
+    .line 530
     const-string p1, "sys.un1ca.iris_boost"
 
     const-string p3, "0"
 
     invoke-static {p1, p3}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->setSystemProperty(Ljava/lang/String;Ljava/lang/String;)V
 
-    .line 526
+    .line 532
     :try_start_d2
     iget-object p1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIris:Lcom/samsung/android/camera/iris/SemIrisManager;
 
@@ -3294,19 +3310,19 @@
     :try_end_d7
     .catchall {:try_start_d2 .. :try_end_d7} :catchall_d8
 
-    .line 529
+    .line 535
     goto :goto_de
 
-    .line 527
+    .line 533
     :catchall_d8
     move-exception p1
 
-    .line 528
+    .line 534
     const-string p3, "postEnroll"
 
     invoke-static {v4, p3, p1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 532
+    .line 538
     :goto_de
     const/4 p1, -0x4
 
@@ -3316,25 +3332,25 @@
 
     if-nez p1, :cond_f0
 
-    .line 533
+    .line 539
     iput-boolean v5, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mRetriedStaleToken:Z
 
-    .line 534
+    .line 540
     const-string p1, "sensor error, retrying once with a new token"
 
     invoke-static {v4, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 535
+    .line 541
     invoke-direct {p0, v5}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->startEnroll(Z)V
 
-    .line 536
+    .line 542
     return-void
 
-    .line 538
+    .line 544
     :cond_f0
     iput-boolean v3, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mRetriedStaleToken:Z
 
-    .line 539
+    .line 545
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->enrolled()Ljava/util/List;
 
     move-result-object p1
@@ -3345,17 +3361,17 @@
 
     if-nez p1, :cond_10f
 
-    .line 540
+    .line 546
     iget-boolean p1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mIntelligentScan:Z
 
     if-eqz p1, :cond_104
 
-    .line 541
+    .line 547
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->enableIntelligentScanDefaults()V
 
     goto :goto_10f
 
-    .line 545
+    .line 551
     :cond_104
     iget-object p1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->mContext:Landroid/content/Context;
 
@@ -3367,7 +3383,7 @@
 
     invoke-static {p1, p3, v5}, Landroid/provider/Settings$Secure;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
 
-    .line 548
+    .line 554
     :cond_10f
     :goto_10f
     invoke-direct {p0, p2}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->showEnrollError(I)Z
@@ -3378,12 +3394,12 @@
 
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->leaveIfNothingEnrolled()V
 
-    .line 550
+    .line 556
     :cond_118
     :goto_118
     invoke-direct {p0}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->refresh()V
 
-    .line 551
+    .line 557
     return-void
 .end method
 

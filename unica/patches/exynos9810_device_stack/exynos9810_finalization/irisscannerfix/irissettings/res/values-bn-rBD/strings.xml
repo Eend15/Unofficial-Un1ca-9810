@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">আপনি ইন্টেলিজেন্ট স্ক্যানের মাধ্যমে আনলক করার সময়, সোয়াইপ না করা পর্যন্ত লক স্ক্রিনে থাকুন৷</string>
     <string name="sec_intelligentscan_turn_off_toast_message">মুখ ও চোখের মণি উভয়টি বন্ধ করলে ইন্টেলিজেন্ট স্ক্যান স্বয়ংক্রিয়ভাবে বন্ধ হয়ে যায়।</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ইন্টেলিজেন্ট স্ক্যান বন্ধ করা হলে মুখ ও চোখের মণি স্বয়ংক্রিয়ভাবে বন্ধ হয়ে যায়।</string>
+    <string name="iris_backup_lock_type_helptext_2">আপনার চোখের মণি নিবন্ধন করতে পারার আগে, আপনাকে একটি নিরাপদ স্ক্রিন লক (প্যাটার্ন, PIN, বা পাসওয়ার্ড) সেট করতে হবে৷</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">আপনার মুখ ও চোখের মণি নিবন্ধন করতে পারার আগে, আপনাকে একটি নিরাপদ স্ক্রিন লক (প্যাটার্ন, PIN, বা পাসওয়ার্ড) সেট করতে হবে৷</string>
 </resources>

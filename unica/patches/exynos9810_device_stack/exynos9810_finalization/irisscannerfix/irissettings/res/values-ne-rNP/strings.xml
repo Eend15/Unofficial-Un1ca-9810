@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">इन्टेलिजेन्ट स्क्यान प्रयोग गरी अनलक गर्दा तपाईले स्वाइप नगर्दासम्म लक स्क्रीनमै रहने बनाउनुहोस्।</string>
     <string name="sec_intelligentscan_turn_off_toast_message">आइरिस र अनुहार दुवैलाई अफ गरिँदा इन्टेलिजेन्ट स्क्यान स्वचालित रूपमा अफ हुनेछ।</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">इन्टेलिजेन्ट स्क्यानलाई अफ गरिँदा अनुहार र आइरिस सुविधा स्वचालित रूपमा अफ हुनेछ।</string>
+    <string name="iris_backup_lock_type_helptext_2">कुनै सुरक्षित स्क्रीन लक (ढाँचा, PIN वा पासवर्ड) सेट गरेपछि मात्र तपाई आफ्ना आइरिसहरू दर्ता गर्न सक्नुहुन्छ।</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">कुनै सुरक्षित स्क्रीन लक (ढाँचा, PIN वा पासवर्ड) सेट गरेपछि मात्र तपाई आफ्नो अनुहार वा आइरिसहरू दर्ता गर्न सक्नुहुन्छ।</string>
 </resources>

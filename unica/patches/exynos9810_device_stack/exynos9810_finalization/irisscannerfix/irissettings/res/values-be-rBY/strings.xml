@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Калі вы разблакіруеце з дапамогай Intelligent Scan, заставайцеся на экране блакіроўкі, пакуль не праведзяце.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Intelligent Scan аўтаматычна выключана, калі выключаны даныя твару і вясёлкавых абалонак.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Твар і вясёлкавыя абалонкі аўтаматычна выключаны пры выключэнні Intelligent Scan.</string>
+    <string name="iris_backup_lock_type_helptext_2">Перш чым зарэгістраваць вясёлкавыя абалонкі, трэба задаць тып бяспечнай блакіроўкі экрана (узор, PIN-код ці пароль).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Перш чым зарэгістраваць твар і вясёлкавыя абалонкі, трэба задаць тып бяспечнай блакіроўкі экрана (узор, PIN-код ці пароль).</string>
 </resources>

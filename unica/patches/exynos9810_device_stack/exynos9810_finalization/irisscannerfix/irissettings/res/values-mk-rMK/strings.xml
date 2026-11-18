@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Кога ќе отклучите со Интелигентно скенирање, останете на Екранот за заклучување сѐ додека не поминете.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Интелигентното скенирање се исклучува автоматски кога се исклучуваат и Лицето и Зениците.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Лицето и Зениците се исклучени автоматски кога е исклучено Интелигентно скенирање.</string>
+    <string name="iris_backup_lock_type_helptext_2">Пред да можете да ги регистрирате Вашите зеници, треба да поставите безбедно заклучување на екран (шара, PIN или лозинка).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Пред да можете да ги регистрирате Вашето лице и зениците, треба да поставите безбедно заклучување на екран (шара, PIN или лозинка).</string>
 </resources>

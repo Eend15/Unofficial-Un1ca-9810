@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Вақте ки дастгоҳро бо Intelligent Scan озод мекунед, то экранро молидан дар экрани Бандкунӣ мемонед.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Вақте ки ҳам Чеҳра ва ҳам Инабия хомӯш карда мешаванд, Intelligent Scan ба таври худкор хомӯш карда мешавад.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Чеҳра ва Инабия ҳангоми хомӯш карда шудани Intelligent Scan ба таври худкор хомӯш карда шуданд.</string>
+    <string name="iris_backup_lock_type_helptext_2">Барои он, ки шумо инабияҳои худро қайд кунед, шумо бояд банди эмини экран (расм, PIN ё парол) танзим кунед.</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Барои он, ки шумо чеҳра ва инабияҳои худро қайд кунед, шумо бояд банди эмини экран (расм, PIN ё парол) танзим кунед.</string>
 </resources>

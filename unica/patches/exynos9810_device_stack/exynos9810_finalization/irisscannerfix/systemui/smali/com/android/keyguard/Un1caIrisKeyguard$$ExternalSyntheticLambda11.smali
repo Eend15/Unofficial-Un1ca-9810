@@ -17,12 +17,10 @@
 
 .field public final synthetic f$4:Landroid/view/View;
 
-.field public final synthetic f$5:J
-
 
 # direct methods
-.method public synthetic constructor <init>(Lcom/android/keyguard/Un1caIrisKeyguard;Landroid/os/CancellationSignal;Lcom/samsung/android/camera/iris/SemIrisManager;ILandroid/view/View;J)V
-    .registers 8
+.method public synthetic constructor <init>(Lcom/android/keyguard/Un1caIrisKeyguard;Landroid/os/CancellationSignal;Lcom/samsung/android/camera/iris/SemIrisManager;ILandroid/view/View;)V
+    .registers 6
 
     .line 0
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
@@ -37,15 +35,13 @@
 
     iput-object p5, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda11;->f$4:Landroid/view/View;
 
-    iput-wide p6, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda11;->f$5:J
-
     return-void
 .end method
 
 
 # virtual methods
 .method public final run()V
-    .registers 8
+    .registers 6
 
     .line 0
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda11;->f$0:Lcom/android/keyguard/Un1caIrisKeyguard;
@@ -58,9 +54,7 @@
 
     iget-object v4, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda11;->f$4:Landroid/view/View;
 
-    iget-wide v5, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda11;->f$5:J
-
-    invoke-virtual/range {v0 .. v6}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$start$9$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;Lcom/samsung/android/camera/iris/SemIrisManager;ILandroid/view/View;J)V
+    invoke-virtual {v0, v1, v2, v3, v4}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$start$8$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;Lcom/samsung/android/camera/iris/SemIrisManager;ILandroid/view/View;)V
 
     return-void
 .end method

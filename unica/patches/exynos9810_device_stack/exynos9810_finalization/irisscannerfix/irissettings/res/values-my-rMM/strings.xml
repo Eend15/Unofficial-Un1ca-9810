@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">အသိဉာဏ်ရှိရှိ စကန်ဖတ်ခြင်းဖြင့် သော့ဖွင့်သည့်အခါ သင်ပွတ်မဆွဲရသေးခင်အထိ သော့ပိတ် ဖန်သားပြင်ကို ဖွင့်ထားပါ။</string>
     <string name="sec_intelligentscan_turn_off_toast_message">မျက်နှာနှင့် မျက်ဝန်း နှစ်ခုလုံးကို ပိတ်ထားသည့်အခါ အထူး စကန်ဖတ်ခြင်းကို အလိုအလျောက် ပိတ်ပါသည်။</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">အထူး စကန်ဖတ်ခြင်းကို ပိတ်ထားသည့်အခါ မျက်နှာနှင့် မျက်ဝန်းကို အလိုအလျောက် ပိတ်ပါသည်။</string>
+    <string name="iris_backup_lock_type_helptext_2">သင့်မျက်ဝန်းများကို မှတ်ပုံမတင်နိုင်မီ လုံခြုံသော ဖန်သားပြင်သော့ (ပက်တန်၊ PIN (သို့) စကားဝှက်) ကို သတ်မှတ်ရန် လိုသည်။</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">သင့်မျက်နှာနှင့် မျက်ဝန်းများကို မှတ်ပုံမတင်နိုင်မီ လုံခြုံသော ဖန်သားပြင်သော့ (ပက်တန်၊ PIN (သို့) စကားဝှက်) ကို သတ်မှတ်ရန် လိုသည်။</string>
 </resources>

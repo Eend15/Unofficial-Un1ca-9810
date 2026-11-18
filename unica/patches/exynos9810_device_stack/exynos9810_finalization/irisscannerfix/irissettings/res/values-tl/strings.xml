@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kapag nag-unlock ka gamit ang Intelligent Scan, manatili sa Lock screen hanggang sa mag-swipe ka.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Awtomatikong ino-off ang Intelligent Scan kapag kapwa ini-off ang Face at Iris.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Awtomatikong ini-off ang Face at Iris kapag ini-off ang Intelligent Scan.</string>
+    <string name="iris_backup_lock_type_helptext_2">Bago ka makakarehistro ng mga iris mo, kailangan mong mag-set ng isang secure na screen lock (pattern, PIN o password).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Bago ka makakarehistro ng mukha at mga iris mo, kailangan mong mag-set ng isang secure na screen lock (pattern, PIN o password).</string>
 </resources>

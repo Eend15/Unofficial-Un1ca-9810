@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kai atrakinama naudojant „Intelligent Scan“, likti užrakinimo ekrane, kol perbraukiama.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">„Intelligent Scan“ automatiškai išjungiamas, kai išjungiamas veido ir rainelės skenavimas.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Veido ir rainelės skenavimai automatiškai išjungiami, kai išjungiamas „Intelligent Scan“.</string>
+    <string name="iris_backup_lock_type_helptext_2">Kad galėtumėte užregistruoti raineles, būtina nustatyti saugų ekrano užraktą (šabloną, PIN arba slaptažodį).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Kad galėtumėte užregistruoti veidą ir raineles, būtina nustatyti saugų ekrano užraktą (šabloną, PIN arba slaptažodį).</string>
 </resources>

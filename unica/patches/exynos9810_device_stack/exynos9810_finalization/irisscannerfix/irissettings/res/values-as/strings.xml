@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">আপুনি ইণ্টেলিজেণ্ট স্কেনৰ সৈতে আনলক কৰাৰ সময়ত, আপুনি নঘহোৱা লৈকে লক স্ক্ৰীণত থাকক।</string>
     <string name="sec_intelligentscan_turn_off_toast_message">মুখ আৰু আইৰিচ দুয়োটাই অফ হোৱাৰ পিছত ইণ্টেলিজেণ্ট স্কেন স্বয়ংক্ৰিয়ভাৱে অফ হয়।</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ইণ্টেলিজেণ্ট স্কেন অফ কৰাৰ পিছত মুখ আৰু আইৰিচ স্বয়ংক্ৰিয়ভাৱে অফ হয়।</string>
+    <string name="iris_backup_lock_type_helptext_2">আপুনি আপোনাৰ আইৰিচ পঞ্জীয়ন কৰিব পৰাৰ পূৰ্বে, আপুনি এটা সুৰক্ষিত স্ক্ৰীণ লক ছেট কৰিব লাগে (আৰ্হি, PIN বা পাছৱৰ্ড)।</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">আপুনি আপোনাৰ মুখ আৰু আইৰিচ পঞ্জীয়ন কৰিব পৰাৰ পূৰ্বে, আপুনি এটা সুৰক্ষিত স্ক্ৰীণ লক ছেট কৰিব লাগে (আৰ্হি, PIN বা পাছৱৰ্ড)।</string>
 </resources>

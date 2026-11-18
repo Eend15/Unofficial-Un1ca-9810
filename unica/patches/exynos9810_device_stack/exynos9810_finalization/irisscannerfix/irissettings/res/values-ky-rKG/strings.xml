@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Сиз Intelligent Scan менен кулпуну ачканда, жылдырганга чейин Кулпу экранда күтүңүз.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Жүз жана Карек өчүрүлгөндө Intelligent Scan автоматтуу түрдө өчүрүлөт.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan өчүрүлгөндө Жүз жана Карек автоматтуу түрдө өчүрүлөт.</string>
+    <string name="iris_backup_lock_type_helptext_2">Каректериңизди каттаганга чейин, сиз коопсуз экранынын кулпулоо түрүн (сүрөт, ПИН код же сырсөз) орнотушуңуз керек.</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Жүзүңүздү жана каректериңизди каттаганга чейин, сиз коопсуз экранынын кулпулоо түрүн (сүрөт, ПИН код же сырсөз) орнотушуңуз керек.</string>
 </resources>

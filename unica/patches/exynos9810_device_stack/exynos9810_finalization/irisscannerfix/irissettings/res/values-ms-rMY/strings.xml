@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Apabila anda membuka kunci dengan Imbas Pintar, kekal pada Skrin kunci sehingga anda menyapu.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Imbas Pintar dimatikan secara automatik apabila kedua-dua Muka dan Iris dimatikan.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Muka dan Iris dimatikan secara automatik apabila Imbas Pintar dimatikan.</string>
+    <string name="iris_backup_lock_type_helptext_2">Sebelum anda boleh mendaftarkan iris, anda perlu menetapkan kunci skrin selamat (corak, PIN atau kata laluan).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Sebelum anda boleh mendaftarkan muka dan iris anda, anda perlu menetapkan kunci skrin selamat (corak, PIN atau kata laluan).</string>
 </resources>

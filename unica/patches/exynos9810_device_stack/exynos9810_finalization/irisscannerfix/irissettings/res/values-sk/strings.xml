@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Po odomknutí pomocou funkcie Inteligentné skenovanie zostane až do potiahnutia prstom zobrazená zamknutá obrazovka.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Funkcia Inteligentné skenovanie sa pri vypnutí oboch funkcií Tvár aj Dúhovka automaticky vypne.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Funkcie Tvár a Dúhovka sa pri vypnutí funkcie Inteligentné skenovanie automaticky vypnú.</string>
+    <string name="iris_backup_lock_type_helptext_2">Pred zaregistrovaním dúhoviek musíte nastaviť bezpečný zámok obrazovky (vzor, kód PIN alebo heslo).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Pred zaregistrovaním tváre a dúhoviek musíte nastaviť bezpečný zámok obrazovky (vzor, kód PIN alebo heslo).</string>
 </resources>

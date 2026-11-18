@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">جب آپ انٹیلیجنٹ اسکین کے ذریعہ انلاک کرتے ہیں، تو لاک اسکرین پر تب تک رہیں جب تک آپ سوائپ نہ کرلیں۔</string>
     <string name="sec_intelligentscan_turn_off_toast_message">چہرہ اور آئریس دونوں آف کیے جانے پر انٹیلیجنٹ اسکین خودکار طورپر آف ہوجاتا ہے۔</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">انٹیلیجنٹ اسکین آف ہونے پر چہرہ اور آئریس خودکار طورپر آف ہوجاتے ہیں۔</string>
+    <string name="iris_backup_lock_type_helptext_2">آپ کا اپنا آئریسز رجسٹر کرنے سے قبل، آپ کو ایک محفوظ اسکرین لاک (نمونہ، پن، یا پاس ورڈ) سیٹ کرنا ہوگا۔</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">آپ کا اپنا چہرہ اور آئریسز رجسٹر کرنے سے قبل، آپ کو ایک محفوظ اسکرین لاک (نمونہ، پن، یا پاس ورڈ) سیٹ کرنا ہوگا۔</string>
 </resources>

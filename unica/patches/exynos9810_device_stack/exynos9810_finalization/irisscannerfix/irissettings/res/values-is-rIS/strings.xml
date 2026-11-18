@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Vera áfram á lásskjá þangað til strokið er yfir skjáinn, eftir að tekið er úr lás með snjallri skönnun.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Slökkt er sjálfkrafa á snjallri skönnun þegar slökkt er á bæði andlitsgreiningu og augnskanna.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Slökkt er sjálfkrafa á andlitsgreiningu og augnskanna þegar slökkt er á snjallri skönnun.</string>
+    <string name="iris_backup_lock_type_helptext_2">Veldu öruggan skjálás (mynstur, PIN-númer eða lykilorð) áður en þú skráir lithimnur.</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Veldu öruggan skjálás (mynstur, PIN-númer eða lykilorð) áður en þú skráir andlit eða lithimnur.</string>
 </resources>

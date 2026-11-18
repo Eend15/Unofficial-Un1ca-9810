@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">ഇന്‍റലിജന്‍റ് സ്കാൻ ഉപയോഗിച്ച് നിങ്ങൾ അൺലോക്ക് ചെയ്യുമ്പോൾ, നിങ്ങൾ സ്വൈപ് ചെയ്യുന്നത് വരെ ലോക്ക് സ്ക്രീനിൽ തുടരുക.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">മുഖം, മിഴിപടലം എന്നിവ രണ്ടും ഓഫ് ചെയ്യപ്പെടുമ്പോൾ ഇന്‍റലിജന്‍റ് സ്കാൻ ഓട്ടോമാറ്റിക്കായി ഓഫ് ചെയ്യപ്പെടുന്നു.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ഇന്‍റലിജന്‍റ് സ്കാൻ ഓഫ് ചെയ്തപ്പോൾ മുഖവും മിഴിപടലവും ഓട്ടോമാറ്റിക്കായി ഓഫ് ചെയ്തു.</string>
+    <string name="iris_backup_lock_type_helptext_2">നിങ്ങളുടെ മിഴിപടലങ്ങൾ രജിസ്റ്റർ ചെയ്യുന്നതിന് മുമ്പ്, നിങ്ങൾ ഒരു സുരക്ഷിത സ്ക്രീൻ ലോക്ക് (പാറ്റേൺ, PIN അല്ലെങ്കിൽ പാസ്‌വേഡ്) സജ്ജമാക്കേണ്ടതുണ്ട്.</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">നിങ്ങളുടെ മുഖവും മിഴിപടലങ്ങളും രജിസ്റ്റർ ചെയ്യുന്നതിന് മുമ്പ്, നിങ്ങൾ ഒരു സുരക്ഷിത സ്ക്രീൻ ലോക്ക് (പാറ്റേൺ, PIN അല്ലെങ്കിൽ പാസ്‌വേഡ്) സജ്ജമാക്കേണ്ടതുണ്ട്.</string>
 </resources>

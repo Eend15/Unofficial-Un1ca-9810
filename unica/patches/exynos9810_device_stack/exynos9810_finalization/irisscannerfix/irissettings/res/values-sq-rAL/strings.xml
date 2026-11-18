@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kur të zhbllokosh përmes Skanimit inteligjent, rri në Ekranin e bllokimit derisa të rrëshqasësh.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Skanimi inteligjent fiket automatikisht kur fiken edhe Fytyra edhe Irisi.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Fytyra dhe Irisi u fikën automatikisht, kur u fik Skanimi inteligjent.</string>
+    <string name="iris_backup_lock_type_helptext_2">Para se të mund të regjistrosh iriset, duhet të cilësosh një bllokim ekrani të sigurt (motiv, PIN ose fjalëkalim).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Para se të mund të regjistrosh fytyrën dhe iriset, duhet të cilësosh një bllokim ekrani të sigurt (motiv, PIN ose fjalëkalim).</string>
 </resources>

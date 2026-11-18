@@ -64,6 +64,15 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
     private Handler mAuthHandler;
     private final Runnable mFaceFallbackDoneRunnable = () -> onFaceFallbackTimeout();
     private SemIrisManager mIris;
+    // SemIrisManager.hasEnrolledIrises() blocks in ensureServiceConnected()/waitForService()
+    // (~1 s of Thread.sleep) while SecIrisService is not connected, e.g. after a reboot until
+    // the user is unlocked. shouldListenForFace() runs on the main thread many times per
+    // wake, so the lock screen froze for a second per call. Ask on the auth thread and cache.
+    private static final long ENROLLED_CACHE_MS = 10_000;
+    private volatile int mEnrolledUser = -10000;
+    private volatile boolean mEnrolled;
+    private volatile long mEnrolledAt;
+    private volatile boolean mEnrolledRefreshing;
     private CancellationSignal mCancel;
     private boolean mServiceBound;
     private boolean mFaceFallbackActive;
@@ -143,8 +152,7 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
         if (mFaceFallbackActive) return true;
         if (setting(KEY_UNLOCK, 1) != 1) return true;
         int user = KeyguardUpdateMonitor.getCurrentUser();
-        SemIrisManager iris = iris();
-        if (iris == null || !iris.hasEnrolledIrises(user)) return true;
+        if (!irisEnrolled(user)) return true;
         if (mMonitor.mPrimaryBouncerIsOrWillBeShowing) return false;
         boolean intelligent = isIntelligentScanActive();
         boolean screenOn = intelligent
@@ -159,6 +167,7 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
             Un1caIrisKeyguard inst = getOrCreate(monitor);
             if (inst == null) return;
             inst.ensureServiceBound();
+            inst.refreshEnrolled(KeyguardUpdateMonitor.getCurrentUser(), null);
             inst.mFaceFallbackActive = false;
             inst.mHandler.removeCallbacks(inst.mFaceFallbackDoneRunnable);
             boolean intelligent = inst.isIntelligentScanActive();
@@ -262,6 +271,57 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
         return mAuthHandler;
     }
 
+    /** Cached, never blocks: true only if the auth thread saw enrolled irises for this user. */
+    private boolean irisEnrolled(int user) {
+        if (mEnrolledUser != user
+                || android.os.SystemClock.elapsedRealtime() - mEnrolledAt > ENROLLED_CACHE_MS) {
+            refreshEnrolled(user, null);
+        }
+        return mEnrolledUser == user && mEnrolled;
+    }
+
+    /**
+     * Asks SecIrisService on the auth thread. Before the user is unlocked after a reboot the
+     * service is not available and iris may not unlock anyway (strong auth), so skip it.
+     * {@code then} runs on the main thread when irises turned out to be enrolled.
+     */
+    private void refreshEnrolled(int user, Runnable then) {
+        if (!isUserUnlocked(user)) {
+            mEnrolledUser = user;
+            mEnrolled = false;
+            mEnrolledAt = android.os.SystemClock.elapsedRealtime();
+            return;
+        }
+        if (mEnrolledRefreshing) return;
+        mEnrolledRefreshing = true;
+        authHandler().post(() -> {
+            boolean enrolled = false;
+            try {
+                SemIrisManager iris = iris();
+                enrolled = iris != null && iris.hasEnrolledIrises(user);
+            } catch (Throwable t) {
+                Log.w(TAG, "iris enrollment query failed", t);
+            }
+            mEnrolled = enrolled;
+            mEnrolledUser = user;
+            mEnrolledAt = android.os.SystemClock.elapsedRealtime();
+            mEnrolledRefreshing = false;
+            if (enrolled && then != null) mHandler.post(then);
+        });
+    }
+
+    private boolean isUserUnlocked(int user) {
+        try {
+            android.os.UserManager um = mMonitor.mContext.getSystemService(android.os.UserManager.class);
+            if (um == null) return true;
+            // UserHandle.of(int) is not in the public SDK the helper compiles against.
+            UserHandle handle = (UserHandle) UserHandle.class.getMethod("of", int.class).invoke(null, user);
+            return um.isUserUnlocked(handle);
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
     private SemIrisManager iris() {
         if (mIris == null) mIris = SemIrisManager.getSemIrisManager(mMonitor.mContext);
         return mIris;
@@ -275,9 +335,15 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
         if (!mMonitor.mKeyguardShowing || mMonitor.mKeyguardOccluded
                 || mMonitor.mKeyguardGoingAway || !mMonitor.mDeviceInteractive) return;
         if (!mMonitor.isUnlockingWithBiometricAllowed(false) || mMonitor.getUserCanSkipBouncer(user)) return;
+        if (mEnrolledUser != user) {
+            // Not known yet: ask off the main thread and start once the answer is in.
+            refreshEnrolled(user, () -> start(why));
+            return;
+        }
+        if (!irisEnrolled(user)) return;
         try {
             SemIrisManager iris = iris();
-            if (iris == null || !iris.hasEnrolledIrises(user)) return;
+            if (iris == null) return;
             mFaceFallbackActive = false;
             mHandler.removeCallbacks(mFaceFallbackDoneRunnable);
             // Face on the shared iris stream keeps running across iris attempts; face on its

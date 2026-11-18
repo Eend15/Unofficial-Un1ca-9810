@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Saat membuka kunci dengan Pemindaian Cerdas, tetaplah pada Layar kunci sampai Anda mengusap.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Pemindaian Cerdas dinonaktifkan secara otomatis saat Wajah dan Iris dinonaktifkan.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Wajah dan Iris dinonaktifkan secara otomatis saat Pemindaian Cerdas dinonaktifkan.</string>
+    <string name="iris_backup_lock_type_helptext_2">Sebelum mendaftarkan iris, Anda harus mengatur kunci layar aman (pola, PIN, atau kata sandi).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Sebelum mendaftarkan wajah dan iris, Anda harus mengatur kunci layar aman (pola, PIN, atau kata sandi).</string>
 </resources>

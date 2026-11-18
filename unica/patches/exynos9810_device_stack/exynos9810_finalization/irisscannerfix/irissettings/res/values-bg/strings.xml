@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Когато отключите с „Интелигентно сканиране“, останете на заключения екран, докато плъзнете.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">„Интелигентно сканиране“ се изключва автоматично, когато „Лице“ и „Ирис“ се изключат.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">„Лице“ и „Ириси“ се изключват автоматично, когато се изключи „Интелигентно сканиране“.</string>
+    <string name="iris_backup_lock_type_helptext_2">Преди да регистрирате ирисите си, трябва да зададете защитено заключване на екрана (шаблон, PIN или парола).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Преди да регистрирате лицето и ирисите си, трябва да зададете защитено заключване на екрана (шаблон, PIN или парола).</string>
 </resources>

@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">ඔබ බුද්ධිමත් පිරික්සුම සමග අගුළු හරින විට, ඔබ ස්වයිප් කරන තෙක් අගුළු තිරයේ රැඳී සිටින්න.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">මුහුණ සහ කළු ඉංගිරියාව යන දෙකම ක්‍රියා විරහිත වන විට බුද්ධිමත් පිරික්සුම ස්වයංක්‍රීයව ක්‍රියා විරහිත කෙරිණි.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">බුද්ධිමත් පිරික්සුම ක්‍රියා විරහිත විට මුහුණ සහ කළු ඉංගිරියාව ස්වයංක්‍රීයව ක්‍රියා විරහිත කෙරිණි.</string>
+    <string name="iris_backup_lock_type_helptext_2">ඔබට ඔබේ කළු ඉංගිරියා ලියාපදිංචියට හැකි වීමට පෙර, ඔබට සුරක්ෂිත තිර අගුලක් (රටාව, PIN, හෝ මුරපදය) පිහිටුවීමට අවශ්‍යයි.</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">ඔබට ඔබේ මුහුණ සහ කළු ඉංගිරියා ලියාපදිංචියට හැකි වීමට පෙර, ඔබට සුරක්ෂිත තිර අගුලක් (රටාව, PIN, හෝ මුරපදය) පිහිටුවීමට අවශ්‍යයි.</string>
 </resources>

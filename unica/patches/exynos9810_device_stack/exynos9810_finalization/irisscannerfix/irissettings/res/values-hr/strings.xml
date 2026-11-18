@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kada otključate s pomoću Inteligentnog skeniranja, ostanite na zaslonu za zaključavanje dok ne prijeđete prstima po zaslonu.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Inteligentno skeniranje automatski se isključuje kad su isključeni Lice i Šarenica.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Lice i Šarenica automatski su isključeni kad je isključeno Inteligentno skeniranje.</string>
+    <string name="iris_backup_lock_type_helptext_2">Prije nego što možete registrirati šarenice, morate postaviti sigurno zaključavanje zaslona (uzorak, PIN ili lozinku).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Prije nego što možete registrirati lice i šarenice, morate postaviti sigurno zaključavanje zaslona (uzorak, PIN ili lozinku).</string>
 </resources>

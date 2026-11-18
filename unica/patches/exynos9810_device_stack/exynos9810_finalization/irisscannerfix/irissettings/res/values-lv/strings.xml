@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kad atbloķējat, izmantojot Intelligent Scan, palieciet bloķēšanas ekrānā, līdz pavelkat.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Izslēdzot funkcijas Seja un Varavīksnene, funkcija Intelligent Scan tika automātiski izslēgta.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Izslēdzot Intelligent Scan, funkcijas Seja un Varavīksnene tika automātiski izslēgtas.</string>
+    <string name="iris_backup_lock_type_helptext_2">Lai reģistrētu savas varavīksnenes, vispirms iestatiet drošu ekrāna bloķēšanu (figūra, PIN kods vai parole).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Lai reģistrētu savu seju un varavīksnenes, vispirms iestatiet drošu ekrāna bloķēšanu (figūra, PIN kods vai parole).</string>
 </resources>

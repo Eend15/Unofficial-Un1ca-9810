@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">インテリジェントスキャンでロックを解除する際に、スワイプするまでロック画面を維持します。</string>
     <string name="sec_intelligentscan_turn_off_toast_message">顔認証と虹彩認証をOFFにすると、インテリジェントスキャンは自動的にOFFになります。</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">インテリジェントスキャンをOFFにすると、顔認証と虹彩認証は自動的にOFFになります。</string>
+    <string name="iris_backup_lock_type_helptext_2">虹彩を登録する前に、安全な画面ロック(パターン、PIN、またはパスワード)を設定する必要があります。</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">顔と虹彩を登録する前に、安全な画面ロック(パターン、PIN、またはパスワード)を設定する必要があります。</string>
 </resources>

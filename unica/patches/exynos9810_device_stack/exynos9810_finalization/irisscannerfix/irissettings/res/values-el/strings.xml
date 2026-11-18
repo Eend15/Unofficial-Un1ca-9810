@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Όταν ξεκλειδώνετε τη συσκευή με την Έξυπνη σάρωση, θα παραμένετε στην οθόνη κλειδώματος μέχρι να κάνετε τη χειρονομία σάρωσης.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Η Έξυπνη σάρωση απενεργοποιείται αυτόματα όταν απενεργοποιείται η σάρωση προσώπου και η σάρωση ιρίδων.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Η σάρωση προσώπου και ιρίδων απενεργοποιείται αυτόματα όταν απενεργοποιείται η Έξυπνη σάρωση.</string>
+    <string name="iris_backup_lock_type_helptext_2">Προτού καταχωρήσετε τις ίριδές σας, θα πρέπει να ορίσετε ένα ασφαλές κλείδωμα οθόνης (μοτίβο, PIN ή κωδικό πρόσβασης).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Προτού καταχωρήσετε το πρόσωπο και τις ίριδές σας, θα πρέπει να ορίσετε ένα ασφαλές κλείδωμα οθόνης (μοτίβο, PIN ή κωδικό πρόσβασης).</string>
 </resources>

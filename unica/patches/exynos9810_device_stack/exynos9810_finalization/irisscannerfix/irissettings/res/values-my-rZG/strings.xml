@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">အသိဉာဏ္ရွိရွိ စကန္ဖတ္ျခင္းျဖင့္ ေသာ့ဖြင့္သည့္အခါ သင္ပြတ္မဆြဲရေသးခင္အထိ ေသာ့ပိတ္ ဖန္သားျပင္ကို ဖြင့္ထားပါ။</string>
     <string name="sec_intelligentscan_turn_off_toast_message">မ်က္ႏွာႏွင့္ မ်က္ဝန္း ႏွစ္ခုလံုးကုိ ပိတ္ထားသည့္အခါ အထူး စကန္ဖတ္ျခင္းကုိ အလုိအေလ်ာက္ ပိတ္ပါသည္။</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">အထူး စကန္ဖတ္ျခင္းကုိ ပိတ္ထားသည့္အခါ မ်က္ႏွာႏွင့္ မ်က္ဝန္းကုိ အလုိအေလ်ာက္ ပိတ္ပါသည္။</string>
+    <string name="iris_backup_lock_type_helptext_2">သင့္မ်က္ဝန္းမ်ားကို မွတ္ပံုမတင္ႏိုင္မီ လံုျခံဳေသာ ဖန္သားျပင္ေသာ့ (ပက္တန္၊ PIN (သို႔) စကားဝွက္) ကို သတ္မွတ္ရန္ လိုသည္။</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">သင့္မ်က္ႏွာႏွင့္ မ်က္ဝန္းမ်ားကို မွတ္ပံုမတင္ႏိုင္မီ လံုျခံဳေသာ ဖန္သားျပင္ေသာ့ (ပက္တန္၊ PIN (သို႔) စကားဝွက္) ကို သတ္မွတ္ရန္ လိုသည္။</string>
 </resources>

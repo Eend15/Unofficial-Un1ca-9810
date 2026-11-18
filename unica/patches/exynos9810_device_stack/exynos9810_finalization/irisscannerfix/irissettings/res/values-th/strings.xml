@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">เมื่อคุณปลดล็อกด้วย การสแกนอัจฉริยะ ให้อยู่ในหน้าจอล็อกจนกว่าคุณจะปัด</string>
     <string name="sec_intelligentscan_turn_off_toast_message">ปิดการสแกนอัจฉริยะโดยอัตโนมัติเมื่อปิดทั้งใบหน้าและม่านตา</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ปิดใบหน้าและม่านตาโดยอัตโนมัติเมื่อปิดการสแกนอัจฉริยะ</string>
+    <string name="iris_backup_lock_type_helptext_2">ก่อนจะลงทะเบียนม่านตา คุณต้องตั้งค่าการล็อกหน้าจอที่ปลอดภัย (รูปแบบ, PIN หรือรหัสผ่าน)</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">ก่อนจะลงทะเบียนใบหน้าและม่านตา คุณต้องตั้งค่าการล็อกหน้าจอที่ปลอดภัย (รูปแบบ, PIN หรือรหัสผ่าน)</string>
 </resources>

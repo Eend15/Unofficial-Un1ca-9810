@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Cando desbloqueas con Escaneo intelixente, permaneces na Pantalla de bloqueo ata que pasas o dedo.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Escaneo intelixente desactívase automaticamente ao desactivar Cara e Iris.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Cara e Iris desactívanse automaticamente ao desactivar Escaneo intelixente.</string>
+    <string name="iris_backup_lock_type_helptext_2">Para poder rexistrar os teus iris, tes que definir un bloqueo de pantalla seguro (padrón, PIN ou contrasinal).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Para poder rexistrar a túa cara e os teus iris, tes que definir un bloqueo de pantalla seguro (padrón, PIN ou contrasinal).</string>
 </resources>

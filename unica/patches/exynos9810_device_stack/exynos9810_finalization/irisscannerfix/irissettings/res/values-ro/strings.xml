@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Atunci când deblocați utilizând funcția Scanare inteligentă, rămâneți pe ecranul de blocare până când glisați.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Funcția Scanare inteligentă este oprită automat atunci când sunt oprite metodele Față și Iris.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Metodele Față și Iris sunt oprite automat atunci când este oprită funcția Scanare inteligentă.</string>
+    <string name="iris_backup_lock_type_helptext_2">Înainte de a vă înregistra irisurile, este necesar să setați o metodă securizată de blocare a ecranului (model, cod PIN sau parolă).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Înainte de a vă înregistra fața și irisurile, este necesar să setați o metodă securizată de blocare a ecranului (model, cod PIN sau parolă).</string>
 </resources>

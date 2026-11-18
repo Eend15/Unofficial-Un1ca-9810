@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">透過智慧掃描解鎖時，保持鎖定螢幕畫面直到您滑動為止。</string>
     <string name="sec_intelligentscan_turn_off_toast_message">臉部與虹膜選項皆關閉時將自動關閉智慧掃描。</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">智慧掃描關閉時將自動關閉臉部與虹膜選項。</string>
+    <string name="iris_backup_lock_type_helptext_2">虹膜可供註冊前，需先設定安全螢幕鎖定類型 (圖形、數字密碼或密碼)。</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">臉部與虹膜可供註冊前，需先設定安全螢幕鎖定類型 (圖形、數字密碼或密碼)。</string>
 </resources>

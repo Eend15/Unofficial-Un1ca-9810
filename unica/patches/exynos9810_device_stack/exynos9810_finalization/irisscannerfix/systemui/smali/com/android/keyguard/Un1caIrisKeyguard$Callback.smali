@@ -38,18 +38,18 @@
         }
     .end annotation
 
-    .line 557
+    .line 623
     iput-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     invoke-direct {p0}, Lcom/samsung/android/camera/iris/SemIrisManager$AuthenticationCallback;-><init>()V
 
-    .line 558
+    .line 624
     iput-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->mSession:Landroid/os/CancellationSignal;
 
-    .line 559
+    .line 625
     iput p3, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->mUser:I
 
-    .line 560
+    .line 626
     return-void
 .end method
 
@@ -58,7 +58,7 @@
 .method synthetic lambda$onAuthenticationError$0$com-android-keyguard-Un1caIrisKeyguard$Callback(I)V
     .registers 5
 
-    .line 576
+    .line 642
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     new-instance v1, Ljava/lang/StringBuilder;
@@ -87,7 +87,7 @@
 .method public onAuthenticationError(ILjava/lang/CharSequence;)V
     .registers 6
 
-    .line 570
+    .line 636
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     invoke-static {v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmCancel(Lcom/android/keyguard/Un1caIrisKeyguard;)Landroid/os/CancellationSignal;
@@ -100,7 +100,7 @@
 
     return-void
 
-    .line 571
+    .line 637
     :cond_b
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
@@ -108,7 +108,7 @@
 
     invoke-static {v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$mfinish(Lcom/android/keyguard/Un1caIrisKeyguard;Landroid/os/CancellationSignal;)V
 
-    .line 572
+    .line 638
     invoke-static {p2}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
 
     move-result-object p2
@@ -145,7 +145,7 @@
 
     invoke-static {v0, p2}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 573
+    .line 639
     invoke-static {p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$smisRetryableError(I)Z
 
     move-result p2
@@ -160,7 +160,7 @@
 
     if-lez p2, :cond_69
 
-    .line 574
+    .line 640
     iget-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     invoke-static {p2}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmRetriesLeft(Lcom/android/keyguard/Un1caIrisKeyguard;)I
@@ -171,7 +171,7 @@
 
     invoke-static {p2, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fputmRetriesLeft(Lcom/android/keyguard/Un1caIrisKeyguard;I)V
 
-    .line 575
+    .line 641
     const/16 p2, 0x9
 
     if-ne p1, p2, :cond_58
@@ -183,7 +183,7 @@
     :cond_58
     const-wide/16 v0, 0xfa
 
-    .line 576
+    .line 642
     :goto_5a
     iget-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
@@ -199,7 +199,7 @@
 
     goto :goto_77
 
-    .line 577
+    .line 643
     :cond_69
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
@@ -209,19 +209,19 @@
 
     if-eqz p1, :cond_77
 
-    .line 578
+    .line 644
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     invoke-static {p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$mstartFaceFallback(Lcom/android/keyguard/Un1caIrisKeyguard;)V
 
     goto :goto_78
 
-    .line 577
+    .line 643
     :cond_77
     :goto_77
     nop
 
-    .line 580
+    .line 646
     :goto_78
     return-void
 .end method
@@ -229,21 +229,21 @@
 .method public onAuthenticationFailed()V
     .registers 3
 
-    .line 583
+    .line 649
     const-string v0, "UN1CA-IrisKeyguard"
 
     const-string v1, "iris not recognised"
 
     invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 584
+    .line 650
     return-void
 .end method
 
 .method public onAuthenticationSucceeded(Lcom/samsung/android/camera/iris/SemIrisManager$AuthenticationResult;)V
     .registers 3
 
-    .line 563
+    .line 629
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     invoke-static {p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$fgetmCancel(Lcom/android/keyguard/Un1caIrisKeyguard;)Landroid/os/CancellationSignal;
@@ -256,7 +256,7 @@
 
     return-void
 
-    .line 564
+    .line 630
     :cond_b
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
@@ -264,20 +264,20 @@
 
     invoke-static {p1, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$mfinish(Lcom/android/keyguard/Un1caIrisKeyguard;Landroid/os/CancellationSignal;)V
 
-    .line 565
+    .line 631
     const-string p1, "UN1CA-IrisKeyguard"
 
     const-string v0, "iris matched"
 
     invoke-static {p1, v0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 566
+    .line 632
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->this$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     iget v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;->mUser:I
 
     invoke-static {p1, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->-$$Nest$monMatched(Lcom/android/keyguard/Un1caIrisKeyguard;I)V
 
-    .line 567
+    .line 633
     return-void
 .end method

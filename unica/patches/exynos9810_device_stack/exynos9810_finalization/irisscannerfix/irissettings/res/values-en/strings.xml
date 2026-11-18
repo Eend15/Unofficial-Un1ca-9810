@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">When you unlock with Intelligent Scan, stay on the Lock screen until you swipe.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Intelligent Scan is turned off automatically when both Face and Iris are turned off.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Face and Iris turned off automatically when Intelligent Scan turned off.</string>
+    <string name="iris_backup_lock_type_helptext_2">Before you can register your irises, you need to set a secure screen lock (pattern, PIN, or password).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Before you can register your face and irises, you need to set a secure screen lock (pattern, PIN, or password).</string>
 </resources>

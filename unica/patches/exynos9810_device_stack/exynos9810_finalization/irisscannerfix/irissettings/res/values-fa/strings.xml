@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">وقتی با اسکن هوشمند قفل را باز می‌کنید، در صفحه قفل می‌ماند تا وقتی انگشت را روی صفحه بکشید.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">وقتی هم چهره و هم چشم خاموش شوند، اسکن هوشمند به طور خودکار خاموش می‌شود.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">وقتی اسکن هوشمند خاموش است، چهره و چشم به طور خودکار خاموش می‌شوند.</string>
+    <string name="iris_backup_lock_type_helptext_2">پیش از آنکه چشم‌های خود را ثبت کنید، باید یک قفل صفحه امن (الگو، پین یا رمزعبور) تنظیم کنید.</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">پیش از آنکه صورت و چشم‌های خود را ثبت کنید، باید یک قفل صفحه امن (الگو، پین یا رمزعبور) تنظیم کنید.</string>
 </resources>

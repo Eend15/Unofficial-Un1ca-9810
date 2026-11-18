@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">நீங்கள் நுண்ணறிவு ஸ்கேன் மூலம் பூட்டுநீக்கும் போது, ஸ்வைப் செய்யும் வரை பூட்டுதிரையிலேயே இருக்கவும்.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">முகம் மற்றும் கருவிழி இரண்டும் ஆஃப் செய்யப்பட்ட போது, நுண்ணறிவு ஸ்கேனானது தானாகவே ஆஃப் செய்யப்பட்டது.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">நுண்ணறிவு ஸ்கேன் ஆஃப் செய்யப்பட்டுள்ள போது, முகம் மற்றும் கருவிழித் தானாகவே ஆஃப் செய்யப்பட்டது.</string>
+    <string name="iris_backup_lock_type_helptext_2">உங்கள் கருவிழிகளைப் பதிவு செய்வதற்கு முன்னர், பாதுகாப்பான திரைப் பூட்டை நீங்கள் அமைக்க வேண்டும் (பேட்டர்ன், PIN அல்லது கடவுச்சொல்).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">உங்கள் முகம் அல்லது கருவிழிகளைப் பதிவு செய்வதற்கு முன்னர், பாதுகாப்பான திரைப் பூட்டை நீங்கள் அமைக்க வேண்டும் (பேட்டர்ன், PIN அல்லது கடவுச்சொல்).</string>
 </resources>

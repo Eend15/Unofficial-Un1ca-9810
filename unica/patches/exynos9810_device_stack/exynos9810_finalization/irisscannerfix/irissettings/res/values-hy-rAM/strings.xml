@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Intelligent Scan-ով արգելաբացելու ժամանակ մնացեք Կողպված էկրանում՝ մինչև մատով սահեցնելը:</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Intelligent Scan-ն ինքնաբերաբար անջատվում է, երբ և՛ Դեմքը, և՛ Ծիածանաթաղանթը անջատվում են:</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Դեմքը և Ծիածանաթաղանթը ինքնաբերաբար անջատվեցին, երբ Intelligent Scan-ն անջատվեց:</string>
+    <string name="iris_backup_lock_type_helptext_2">Նախքան կկարողանաք գրանցել Ձեր ծիածանաթաղանթները, հարկավոր է դնել էկրանի ապահով կողպում (նախշ, PIN կամ գաղտնաբառ):</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Նախքան կկարողանաք գրանցել Ձեր դեմքը և ծիածանաթաղանթները, հարկավոր է դնել էկրանի ապահով կողպում (նախշ, PIN կամ գաղտնաբառ):</string>
 </resources>

@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">عندما تقوم بإلغاء القفل بواسطة المسح الذكي، ابقَ على شاشة القفل حتى تقوم بالسحب.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">يتم إيقاف تشغيل المسح الذكي تلقائياً عند إيقاف تشغيل كل من الوجه وبصمة العين.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">يتم إيقاف تشغيل الوجه وبصمة العين تلقائياً عند إيقاف تشغيل المسح الذكي.</string>
+    <string name="iris_backup_lock_type_helptext_2">لتتمكن من تسجيل بصمة عينيك، عليك ضبط قفل شاشة آمن (النمط أو رقم PIN أو كلمة المرور).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">لتتمكن من تسجيل وجهك وبصمة عينيك، عليك ضبط قفل شاشة آمن (النمط أو رقم PIN أو كلمة المرور).</string>
 </resources>

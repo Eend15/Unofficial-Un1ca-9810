@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">आपके द्वारा इंटेलीजेंट स्कैन के साथ अनलॉक करने पर, लॉक स्क्रीन पर तब तक रहें जब तक आप स्वाइप नहीं करते।</string>
     <string name="sec_intelligentscan_turn_off_toast_message">चेहरा और आइरिस दोनों के बंद होने पर इंटेलिजेंट स्कैन स्वचालित रूप से बंद हो जाता है।</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">इंटेलिजेंट स्कैन के बंद होने पर चेहरे और आइरिस स्वचालित रूप से बंद हो जाते हैं।</string>
+    <string name="iris_backup_lock_type_helptext_2">इससे पहले कि आप अपनी आइरिसेस पंजीकृत कर सकें, आपको एक सुरक्षित स्क्रीन लॉक (पैटर्न, PIN या पासवर्ड ) सेट करना होगा।</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">इससे पहले कि आप अपना चेहरा और आइरिसेस पंजीकृत कर सकें, आपको एक सुरक्षित स्क्रीन लॉक (पैटर्न, PIN या पासवर्ड ) सेट करना होगा।</string>
 </resources>

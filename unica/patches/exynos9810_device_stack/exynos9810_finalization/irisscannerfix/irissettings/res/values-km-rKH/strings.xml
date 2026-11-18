@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">នៅពេល​អ្នក​ដោះសោ​ជាមួយ​ស្កេន​វាងវៃ សូម​ស្ថិត​លើ​អេក្រង់​ជាប់សោ​រហូត​ដល់​ពេល​អ្នក​អូស។</string>
     <string name="sec_intelligentscan_turn_off_toast_message">ស្កេន​វាងវៃ​ត្រូវ​បាន​បិទ​ដោយ​ស្វ័យប្រវត្តិ នៅពេល​បាន​បិទ​ទាំង​ផ្ទៃមុខ ទាំង​ប្រស្រីភ្នែក។</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ផ្ទៃមុខ​និង​ប្រស្រីភ្នែក​ត្រូវ​បាន​បិទ​ដោយ​ស្វ័យប្រវត្តិ នៅពេល​បាន​បិទ​ស្កេន​វាងវៃ។</string>
+    <string name="iris_backup_lock_type_helptext_2">មុនពេល​អ្នក​អាច​ចុះបញ្ជី​ប្រស្រីភ្នែក​របស់​អ្នក ត្រូវ​កំណត់​សោ​អេក្រង់​មាន​សន្តិសុខ​មួយ (លំនាំ, PIN ឬ​ពាក្យសម្ងាត់)។</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">មុនពេល​អ្នក​អាច​ចុះបញ្ជី​ផ្ទៃមុខ​និង​ប្រស្រីភ្នែក​របស់​អ្នក អ្នក​ត្រូវ​កំណត់​សោ​អេក្រង់​មាន​សន្តិសុខ​មួយ (លំនាំ, PIN ឬ​ពាក្យសម្ងាត់)។</string>
 </resources>

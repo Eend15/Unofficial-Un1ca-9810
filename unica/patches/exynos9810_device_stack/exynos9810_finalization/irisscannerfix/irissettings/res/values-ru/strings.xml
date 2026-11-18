@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">При разблокировании с помощью смарт-сканирования экран блокировки остается активным до тех пор, пока вы не проведете по нему пальцем.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Отключение распознавания лица и радужек приводит к автоматическому отключению смарт-сканирования.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">При отключении смарт-сканирования выполняется автоматическое отключение распознавания лица и радужек.</string>
+    <string name="iris_backup_lock_type_helptext_2">Перед регистрацией радужных оболочек глаза необходимо настроить защищенную блокировку экрана (рисунок разблокировки, PIN-код или пароль).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Перед регистрацией лица и радужных оболочек глаза необходимо настроить защищенную блокировку экрана (рисунок разблокировки, PIN-код или пароль).</string>
 </resources>

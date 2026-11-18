@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Az Intelligens azonosítással végzett feloldáskor a zárolt képernyőn marad, amíg el nem húzza az ujját.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Ha az arc- és az íriszazonosítást is kikapcsolja, az Intelligens azonosítás automatikusan kikapcsol.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Az Intelligens azonosítás kikapcsolásakor automatikusan kikapcsolt az arc- és az íriszfelismerés is.</string>
+    <string name="iris_backup_lock_type_helptext_2">Íriszei regisztrálása előtt be kell állítani egy biztonságos zártípust (mintát, PIN-kódot vagy jelszót).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Arca és íriszei regisztrálása előtt be kell állítani egy biztonságos zártípust (mintát, PIN-kódot vagy jelszót).</string>
 </resources>

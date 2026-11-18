@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Pri odklepanju s funkcijo Pametno optično branje bo naprava ostala na zaklenjenem zaslonu, dokler ne podrsate.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Funkcija Pametno optično branje je samodejno izklopljena, sta izklopljeni tudi funkciji Obraz in Šarenica.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Ko je funkcija Pametno optično branje izklopljena, sta samodejno izklopljeni tudi funkciji Obraz in Šarenica.</string>
+    <string name="iris_backup_lock_type_helptext_2">Preden lahko registrirate svoji šarenici, morate nastaviti varno zaklepanje zaslona (zaslon, koda PIN ali geslo).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Preden lahko registrirate svoj obraz in šarenici, morate nastaviti varno zaklepanje zaslona (zaslon, koda PIN ali geslo).</string>
 </resources>

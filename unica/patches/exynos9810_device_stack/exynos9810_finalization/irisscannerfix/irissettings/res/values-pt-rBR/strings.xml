@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Quando desbloqueia com a Leitura inteligente, você permanece na Tela de bloqueio até deslizar.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">A Leitura inteligente é desativada automaticamente quando tanto Rosto quanto Íris são desativados.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Rosto e Íris são desativados automaticamente quando a Leitura inteligente é desativada.</string>
+    <string name="iris_backup_lock_type_helptext_2">Para que possa registrar suas íris, você precisa definir um bloqueio de tela seguro (Padrão, PIN ou Senha).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Para que possa registrar seu rosto e suas íris, você precisa definir um bloqueio de tela seguro (Padrão, PIN ou Senha).</string>
 </resources>

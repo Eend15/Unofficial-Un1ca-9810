@@ -325,11 +325,13 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     private boolean chooseLock() {
         for (String cls : new String[]{BIO_CHOOSE_LOCK, CHOOSE_LOCK}) {
             Intent i = new Intent().setClassName(mContext.getPackageName(), cls);
-            // Same extras as the stock face flow (FaceLockSettings.launchChooseLock).
+            // Same extras as the stock face flow (FaceLockSettings.launchChooseLock); the
+            // iris flag keeps the "Set a secure screen lock first" chooser open and gives
+            // it the iris wording (IrisLockMenu.isIrisChooser/onChooser*).
             i.putExtra("request_gk_pw_handle", true);
             i.putExtra("hide_insecure_options", true);
-            i.putExtra("for_biometrics", true);
             i.putExtra("set_biometric_lock", true);
+            i.putExtra(IrisLockMenu.EXTRA_FOR_IRIS, true);
             i.putExtra("requested_min_complexity", 0);
             i.putExtra("android.intent.extra.USER_ID", mUserId);
             try {
@@ -395,14 +397,18 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
             i.putExtra("android.intent.extra.USER_ID", mUserId);
             i.putExtra("requested_min_complexity", 0);
             if (mGkHandle != 0) i.putExtra(EXTRA_GK_PW_HANDLE, mGkHandle);
+            // Its backup-lock chooser then says "face and irises".
+            if (mIntelligentScan) IrisLockMenu.markIntelligentChooser(true);
             startActivityForResult(i, REQUEST_FACE_ENROLL);
         } catch (Throwable t) {
+            IrisLockMenu.markIntelligentChooser(false);
             Log.e(TAG, "cannot launch face enrollment", t);
             startEnroll(false);
         }
     }
 
     private void onFaceEnrollResult(Intent data) {
+        IrisLockMenu.markIntelligentChooser(false);
         adoptHandle(data);
         if (!hasEnrolledFace()) {
             leaveIfNothingEnrolled();

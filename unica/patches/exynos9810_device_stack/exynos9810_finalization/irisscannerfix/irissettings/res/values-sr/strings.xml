@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Kada otključate pomoću Inteligentnog skeniranja, ostaje na zaključanom ekranu dok ne prevučete.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Inteligentno skeniranje se automatski isključuje kada se opcije Lice i Dužica (obe) isključe.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Opcije Lice i Dužica se automatski isključuju kada se funkcija Inteligentno skeniranje isključi.</string>
+    <string name="iris_backup_lock_type_helptext_2">Da biste mogli da registrujete dužice, prvo morate da podesite bezbedno zaključavanje ekrana (obrazac, PIN kod ili lozinku).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Da biste mogli da registrujete lice i dužice, prvo morate da podesite bezbedno zaključavanje ekrana (obrazac, PIN kod ili lozinku).</string>
 </resources>

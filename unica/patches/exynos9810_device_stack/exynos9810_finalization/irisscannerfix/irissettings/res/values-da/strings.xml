@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Bliv på låseskærmen, indtil du stryger, når du låser op med Intelligent scanning.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Intelligent scanning deaktiveres automatisk, når både Ansigt og Iris deaktiveres.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Ansigt og Iris blev deaktiveret automatisk, da Intelligent scanning blev deaktiveret.</string>
+    <string name="iris_backup_lock_type_helptext_2">Før du kan registrere din iris, skal du indstille en sikker skærmlås (mønster, PIN-kode eller adgangskode).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Før du kan registrere dit ansigt og din iris, skal du indstille en sikker skærmlås (mønster, PIN-kode eller adgangskode).</string>
 </resources>

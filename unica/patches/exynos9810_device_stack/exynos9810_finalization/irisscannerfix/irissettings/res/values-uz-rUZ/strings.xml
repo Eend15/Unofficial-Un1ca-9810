@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Intelligent Scan yordamida blokdan chiqarganingizda, surishdan oldin Bloklash ekranida turing.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Yuz va Ko‘z pardasi o‘chirilgan vaqtda Intelligent Scan ham avtomatik tarzda o‘chiriladi.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan o‘chirilgan vaqtda Yuz va Ko‘z pardasi ham avtomatik tarzda o‘chiriladi.</string>
+    <string name="iris_backup_lock_type_helptext_2">Ko‘z pardalaringizni ro‘yxatdan o‘tkazishdan oldin xavfsiz ekran bloki turini (grafik kalit, PIN-kod, yoki parol) o‘rnatishingiz zarur.</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Yuz va ko‘z pardalaringizni ro‘yxatdan o‘tkazishdan oldin xavfsiz ekran bloki turini (grafik kalit, PIN-kod yoki parol) o‘rnatishingiz zarur.</string>
 </resources>

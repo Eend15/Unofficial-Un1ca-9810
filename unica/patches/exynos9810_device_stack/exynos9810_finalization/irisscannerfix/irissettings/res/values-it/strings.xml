@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Quando è attivo lo sblocco con Scansione intelligente, rimane sulla schermata di blocco finché non trascinate.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">La funzione Scansione intelligente viene disattivata automaticamente quando Viso e Iride sono disattivati.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Viso e Iride disattivati automaticamente quando Scansione intelligente è disattivata.</string>
+    <string name="iris_backup_lock_type_helptext_2">Prima di registrare le iridi, occorre impostare un blocco schermo sicuro (segno, PIN o password).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Prima di registrare il viso e le iridi, occorre impostare un blocco schermo sicuro (segno, PIN o password).</string>
 </resources>

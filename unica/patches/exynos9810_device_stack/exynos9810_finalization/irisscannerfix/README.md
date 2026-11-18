@@ -51,7 +51,12 @@ vendor; the build stops if they are missing.
   remove/register, iris unlock / screen-on scan / stay on lock screen, tips.
   The PIN entered for Screen lock and biometrics is reused (gatekeeper handle).
   Without a screen lock the page first opens the biometrics lock chooser
-  (`BiometricsChooseLockGeneric`) and continues with the handle it returns;
+  (`BiometricsChooseLockGeneric`, "Set a secure screen lock first") and
+  continues with the handle it returns. Stock closes that chooser unless it is
+  for face or fingerprints; a hook keeps it open for `un1ca_for_iris` and
+  shows "PIN, Irises" and the Android 10 iris text
+  (`iris_backup_lock_type_helptext_2`, or the face-and-iris text for
+  Intelligent Scan);
   Intelligent Scan registers face through the stock `FaceLockSettings`
   activity (stage `lock_screen_face`, which also sets the backup lock), then
   irises with the same handle.

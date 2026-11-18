@@ -9,19 +9,23 @@
 # instance fields
 .field public final synthetic f$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
-.field public final synthetic f$1:Landroid/os/CancellationSignal;
+.field public final synthetic f$1:Z
+
+.field public final synthetic f$2:Landroid/os/CancellationSignal;
 
 
 # direct methods
-.method public synthetic constructor <init>(Lcom/android/keyguard/Un1caIrisKeyguard;Landroid/os/CancellationSignal;)V
-    .registers 3
+.method public synthetic constructor <init>(Lcom/android/keyguard/Un1caIrisKeyguard;ZLandroid/os/CancellationSignal;)V
+    .registers 4
 
     .line 0
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
     iput-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda10;->f$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
-    iput-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda10;->f$1:Landroid/os/CancellationSignal;
+    iput-boolean p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda10;->f$1:Z
+
+    iput-object p3, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda10;->f$2:Landroid/os/CancellationSignal;
 
     return-void
 .end method
@@ -29,14 +33,16 @@
 
 # virtual methods
 .method public final run()V
-    .registers 3
+    .registers 4
 
     .line 0
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda10;->f$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
-    iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda10;->f$1:Landroid/os/CancellationSignal;
+    iget-boolean v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda10;->f$1:Z
 
-    invoke-virtual {v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$start$4$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;)V
+    iget-object v2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda10;->f$2:Landroid/os/CancellationSignal;
+
+    invoke-virtual {v0, v1, v2}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$start$5$com-android-keyguard-Un1caIrisKeyguard(ZLandroid/os/CancellationSignal;)V
 
     return-void
 .end method

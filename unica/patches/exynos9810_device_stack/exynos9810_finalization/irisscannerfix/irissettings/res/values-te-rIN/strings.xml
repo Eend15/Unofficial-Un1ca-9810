@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">మీరు తెలివైన స్కాన్‌తో అన్‌లాక్ చేసినప్పుడు, మీరు స్వైప్ చేసే వరకు లాక్ స్క్రీన్ అలాగే ఉంటుంది.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">ముఖం మరియు కనుపాప రెండూ ఆఫ్ చేయబడినప్పుడు తెలివైన స్కాన్ స్వయంచాలకంగా ఆఫ్ అవుతుంది.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">తెలివైన స్కాన్ ఆఫ్ చేయబడినప్పుడు ముఖం మరియు కనుపాప స్వయంచాలకంగా ఆఫ్ చేయబడతాయి.</string>
+    <string name="iris_backup_lock_type_helptext_2">మీరు మీ కనుపాపలను నమోదు చేయడానికి ముందు, మీరు భద్రతా స్క్రీన్ లాక్‌ని సెట్ చేయాల్సి ఉంటుంది (నమూనా, PIN లేదా పాస్‌వర్డ్).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">మీరు మీ ముఖం మరియు కనుపాపలను నమోదు చేయడానికి ముందు, మీరు భద్రతా స్క్రీన్ లాక్‌ని సెట్ చేయాల్సి ఉంటుంది (నమూనా, PIN లేదా పాస్‌వర్డ్).</string>
 </resources>

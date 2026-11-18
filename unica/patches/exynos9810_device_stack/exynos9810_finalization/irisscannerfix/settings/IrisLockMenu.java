@@ -61,6 +61,135 @@ public final class IrisLockMenu {
         update(fragment);
     }
 
+    // ---- "Set a secure screen lock first" (BiometricsChooseLockGenericFragment) ----
+
+    /** Intent extra the iris page sets when it opens the biometrics lock chooser. */
+    public static final String EXTRA_FOR_IRIS = "un1ca_for_iris";
+    private static final String[] LOCK_TYPE_KEYS = {"unlock_set_pin", "unlock_set_password", "unlock_set_pattern"};
+    private static final long INTELLIGENT_WINDOW_MS = 10 * 60 * 1000L;
+    // Intelligent Scan goes through the stock face flow, which builds the chooser intent
+    // itself; the iris page marks that flow here (same Settings process).
+    private static long sIntelligentChooserSince;
+
+    /** Intelligent Scan is about to run the face flow (true) or it returned (false). */
+    public static void markIntelligentChooser(boolean active) {
+        sIntelligentChooserSince = active ? android.os.SystemClock.elapsedRealtime() : 0;
+    }
+
+    /**
+     * Hooked into BiometricsChooseLockGenericFragment.onCreate: stock finishes the chooser
+     * unless it is for face or fingerprints. Keep it open for irises.
+     */
+    public static boolean isIrisChooser(Object fragment) {
+        try {
+            Object activity = fragment.getClass().getMethod("getActivity").invoke(fragment);
+            Intent i = activity instanceof android.app.Activity ? ((android.app.Activity) activity).getIntent() : null;
+            return i != null && i.getBooleanExtra(EXTRA_FOR_IRIS, false);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static boolean isIntelligentChooser(Object fragment) {
+        if (sIntelligentChooserSince == 0
+                || android.os.SystemClock.elapsedRealtime() - sIntelligentChooserSince > INTELLIGENT_WINDOW_MS) {
+            return false;
+        }
+        try {
+            return fieldBoolean(fragment, "mForFace");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** End of the chooser's onCreate: "PIN, Irises" instead of "PIN, Biometrics" (or Face). */
+    public static void onChooserCreated(Object fragment) {
+        try {
+            boolean iris = isIrisChooser(fragment);
+            boolean intel = !iris && isIntelligentChooser(fragment);
+            if (!iris && !intel) return;
+            Context ctx = (Context) fragment.getClass().getMethod("getContext").invoke(fragment);
+            Resources res = ctx.getResources();
+            String pkg = ctx.getPackageName();
+            int stockId = res.getIdentifier(intel ? "bio_face_recognition_title" : "biometrics", "string", pkg);
+            if (stockId == 0) return;
+            String stock = res.getString(stockId);
+            String ours = intel
+                    ? irisText(ctx, "bio_intelligentscan_title", "Intelligent Scan")
+                    : irisText(ctx, "bio_iris_scanner_title", "Irises");
+            Method find = fragment.getClass().getMethod("findPreference", CharSequence.class);
+            for (String key : LOCK_TYPE_KEYS) {
+                Object pref = find.invoke(fragment, key);
+                if (pref == null) continue;
+                CharSequence title = (CharSequence) invoke(pref, "getTitle");
+                if (title == null) continue;
+                String t = title.toString();
+                // Stock appended ", <stock>" only for a biometric lock; replace that suffix.
+                if (t.endsWith(stock)) {
+                    set(pref, "setTitle", CharSequence.class, t.substring(0, t.length() - stock.length()) + ours);
+                }
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "lock chooser titles not updated", t);
+        }
+    }
+
+    /** After the chooser set its header text: the iris (or face and iris) wording. */
+    public static void onChooserViewCreated(Object fragment) {
+        try {
+            boolean iris = isIrisChooser(fragment);
+            boolean intel = !iris && isIntelligentChooser(fragment);
+            if (!iris && !intel) return;
+            Context ctx = (Context) fragment.getClass().getMethod("getContext").invoke(fragment);
+            Object header = callAny(fragment, "getHeaderView");
+            if (header == null) return;
+            android.view.View root = (android.view.View) fieldValue(header, "mRootView");
+            int id = ctx.getResources().getIdentifier("description_text", "id", ctx.getPackageName());
+            if (root == null || id == 0) return;
+            android.view.View v = root.findViewById(id);
+            if (!(v instanceof android.widget.TextView)) return;
+            ((android.widget.TextView) v).setText(intel
+                    ? irisText(ctx, "sec_intelligentscan_chooselock_help_text_1",
+                            "Before you can register your face and irises, you need to set a secure screen lock (pattern, PIN, or password).")
+                    : irisText(ctx, "iris_backup_lock_type_helptext_2",
+                            "Before you can register your irises, you need to set a secure screen lock (pattern, PIN, or password)."));
+        } catch (Throwable t) {
+            Log.w(TAG, "lock chooser text not updated", t);
+        }
+    }
+
+    private static boolean fieldBoolean(Object target, String name) throws Exception {
+        Object v = fieldValue(target, name);
+        return v instanceof Boolean && (Boolean) v;
+    }
+
+    private static Object fieldValue(Object target, String name) throws Exception {
+        for (Class<?> c = target.getClass(); c != null; c = c.getSuperclass()) {
+            try {
+                Field f = c.getDeclaredField(name);
+                f.setAccessible(true);
+                return f.get(target);
+            } catch (NoSuchFieldException e) {
+                // keep looking in the superclass
+            }
+        }
+        return null;
+    }
+
+    /** No-argument method of any visibility, looked up through the class hierarchy. */
+    private static Object callAny(Object target, String name) throws Exception {
+        for (Class<?> c = target.getClass(); c != null; c = c.getSuperclass()) {
+            try {
+                Method m = c.getDeclaredMethod(name);
+                m.setAccessible(true);
+                return m.invoke(target);
+            } catch (NoSuchMethodException e) {
+                // keep looking in the superclass
+            }
+        }
+        return null;
+    }
+
     /** Called from ChooseLockGenericFragment right after the face/fingerprint menus are updated. */
     public static void update(Object fragment) {
         try {
@@ -70,6 +199,16 @@ public final class IrisLockMenu {
             Object face = find.invoke(fragment, FACE_KEY);
             Object intel = find.invoke(fragment, INTEL_KEY);
             Object iris = find.invoke(fragment, KEY);
+            // "Set a secure screen lock first" (also a ChooseLockGenericFragment): only lock
+            // types, like the stock face chooser; no biometrics section.
+            if (fragment.getClass().getName().endsWith("BiometricsChooseLockGenericFragment")) {
+                for (Object p : new Object[]{intel, iris,
+                        find.invoke(fragment, "biometrics_category"),
+                        find.invoke(fragment, "pref_biometrics_description")}) {
+                    if (p != null) removeFromParent(p);
+                }
+                return;
+            }
             if (face == null || !ctx.getPackageManager().hasSystemFeature(FEATURE)) {
                 if (intel != null) removeFromParent(intel);
                 if (iris != null) removeFromParent(iris);

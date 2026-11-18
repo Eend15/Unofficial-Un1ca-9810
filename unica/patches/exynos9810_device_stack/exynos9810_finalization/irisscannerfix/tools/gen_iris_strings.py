@@ -28,6 +28,8 @@ KEYS = [
     "sec_intelligentscan_stay_on_lock_screen_summary",
     "sec_intelligentscan_turn_off_toast_message",
     "sec_intelligentscan_turn_off_toast_message_intelligentscan",
+    # "Set a secure screen lock first" texts for the One UI 8 biometrics lock chooser.
+    "iris_backup_lock_type_helptext_2", "sec_intelligentscan_chooselock_help_text_1",
 ]
 LINE = re.compile(r'^\s*<string name="([^"]+)"[^>]*>.*?</string>\s*$', re.M | re.S)
 # Samsung never translated the iris section headings; the app hides a heading that has

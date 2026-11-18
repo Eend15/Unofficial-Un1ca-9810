@@ -37,4 +37,6 @@
     <string name="sec_intelligentscan_stay_on_lock_screen_summary">Після розблокування за допомогою смарт-сканування буде відкрито екран блокування, доки ви не проведете по ньому пальцем.</string>
     <string name="sec_intelligentscan_turn_off_toast_message">Інтелектуальне сканування вимкнено, тому що ви вимкнули розпізнавання обличчя та райдужок.</string>
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Розпізнавання обличчя та райдужок автоматично вимикається після вимкнення інтелектуального сканування.</string>
+    <string name="iris_backup_lock_type_helptext_2">Перш ніж зареєструвати райдужки, потрібно встановити захищений тип блокування екрана (ключ розблокування, PIN-код чи пароль).</string>
+    <string name="sec_intelligentscan_chooselock_help_text_1">Перш ніж зареєструвати обличчя й райдужки, потрібно встановити захищений тип блокування екрана (ключ розблокування, PIN-код чи пароль).</string>
 </resources>
