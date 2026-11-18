@@ -56,10 +56,10 @@ if [ "$TARGET_CODENAME" = "crownlte" ]; then
 fi
 require_file "$WORK/vendor/etc/fstab.samsungexynos9810"
 require_file "$WORK/vendor/etc/init/init.samsungexynos9810.rc"
-require_file "$WORK/vendor/bin/hw/android.hardware.keymaster@4.0-service"
+require_file "$WORK/vendor/bin/hw/android.hardware.keymaster@3.0-service"
 require_file "$WORK/vendor/bin/hw/android.hardware.gatekeeper@1.0-service"
 require_file "$WORK/vendor/bin/hw/vendor.trustonic.tee@1.1-service"
-require_file "$WORK/vendor/etc/init/android.hardware.keymaster@4.0-service.rc"
+require_file "$WORK/vendor/etc/init/android.hardware.keymaster@3.0-service.rc"
 require_file "$WORK/vendor/etc/init/android.hardware.gatekeeper@1.0-service.rc"
 require_file "$WORK/vendor/etc/init/vendor.trustonic.tee@1.1-service.rc"
 require_file "$WORK/vendor/etc/vintf/manifest.xml"

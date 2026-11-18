@@ -1572,12 +1572,7 @@ _EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
     local MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest.xml"
     local ENTRY
 
-    if [ ! -x "$EXYNOS9810_SOFTWARE_KEYMASTER4_DIR/bin/hw/android.hardware.keymaster@4.0-service" ]; then
-        LOGE "Software Keymaster 4.0 payload is missing: $EXYNOS9810_SOFTWARE_KEYMASTER4_DIR"
-        return 1
-    fi
-
-    LOG "- Finalizing AOSP software Keymaster 4.0 security stack"
+    LOG "- Finalizing Exynos9810 Trustonic Keymaster 3.0 security stack"
 
     for ENTRY in \
         "lib64/libskeymaster4device.so" \
@@ -1589,21 +1584,21 @@ _EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
         "etc/init/cass.rc" \
         "etc/init/vaultkeeper_common.rc" \
         "etc/vintf/manifest/vaultkeeper_manifest.xml" \
-        "lib64/vendor.samsung.hardware.security.vaultkeeper@2.0.so"; do
+        "lib64/vendor.samsung.hardware.security.vaultkeeper@2.0.so" \
+        "bin/hw/android.hardware.keymaster@4.0-service" \
+        "etc/init/android.hardware.keymaster@4.0-service.rc" \
+        "lib64/libsoft_attestation_cert.so"; do
         rm -rf "$WORK_DIR/vendor/$ENTRY"
         _EXYNOS9810_DELETE_METADATA "vendor" "vendor/$ENTRY" "/vendor/$ENTRY"
     done
 
-    cp -a "$EXYNOS9810_SOFTWARE_KEYMASTER4_DIR"/. "$WORK_DIR/vendor"/
-    _EXYNOS9810_ENSURE_TREE_METADATA \
-        "vendor" "$WORK_DIR/vendor" "u:object_r:vendor_file:s0" 0 0
-
-    # The booting EROFS build retains the legacy Keymaster support libraries
-    # while removing the Trustonic service itself. Keep that exact split:
-    # software @4.0 remains the only service, but older clients can resolve
-    # the compatibility libraries.
+    # Restore the hardware Trustonic Keymaster 3.0 stack
     local KEYMASTER_REL KEYMASTER_SRC
     for KEYMASTER_REL in \
+        "bin/hw/android.hardware.keymaster@3.0-service" \
+        "etc/init/android.hardware.keymaster@3.0-service.rc" \
+        "lib/hw/android.hardware.keymaster@3.0-impl.so" \
+        "lib64/hw/android.hardware.keymaster@3.0-impl.so" \
         "lib/libkeymaster3device.so" \
         "lib/libskeymaster3device.so" \
         "lib64/libkeymaster2_mdfpp.so" \
@@ -1613,7 +1608,7 @@ _EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
         "lib64/libsoftkeymasterdevice.so"; do
         KEYMASTER_SRC="$EXYNOS9810_LEGACY_KEYMASTER_VENDOR_DIR/$KEYMASTER_REL"
         [ -f "$KEYMASTER_SRC" ] || {
-            LOGE "Embedded Exynos9810 Keymaster compatibility library is missing: $KEYMASTER_SRC"
+            LOGE "Embedded Exynos9810 Keymaster component is missing: $KEYMASTER_SRC"
             return 1
         }
         mkdir -p "$(dirname "$WORK_DIR/vendor/$KEYMASTER_REL")"
@@ -1623,45 +1618,33 @@ _EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
     done
 
     _EXYNOS9810_SET_METADATA_SAFE "vendor" \
-        "vendor/bin/hw/android.hardware.keymaster@4.0-service" \
+        "vendor/bin/hw/android.hardware.keymaster@3.0-service" \
         0 2000 755 "u:object_r:hal_keymaster_default_exec:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" \
-        "vendor/etc/init/android.hardware.keymaster@4.0-service.rc" \
+        "vendor/etc/init/android.hardware.keymaster@3.0-service.rc" \
         0 0 644 "u:object_r:vendor_configs_file:s0"
-    # The TEE @3.0 keymaster opens its Trustonic session through VaultKeeper,
-    # which is removed above. Left in place it exits with status 1 and init
-    # restarts it forever ("Trustonic TEE: client_get_session: session 0 not
-    # found"), so keystore2/vold never come up and boot hangs. Software @4.0 is
-    # the sole keymaster now -- drop @3.0 (service, rc and impl) entirely.
-    for ENTRY in \
-        "bin/hw/android.hardware.keymaster@3.0-service" \
-        "etc/init/android.hardware.keymaster@3.0-service.rc" \
-        "lib/hw/android.hardware.keymaster@3.0-impl.so" \
-        "lib64/hw/android.hardware.keymaster@3.0-impl.so"; do
-        rm -rf "$WORK_DIR/vendor/$ENTRY"
-        _EXYNOS9810_DELETE_METADATA "vendor" "vendor/$ENTRY" "/vendor/$ENTRY"
-    done
+
+    local RC="$WORK_DIR/vendor/etc/init/android.hardware.keymaster@3.0-service.rc"
+    if [ -f "$RC" ] && ! grep -q 'interface android.hardware.keymaster@3.0::IKeymasterDevice default' "$RC"; then
+        awk '
+            {
+                print
+                if ($0 ~ /^service vendor\.keymaster-3-0 /) {
+                    print "    interface android.hardware.keymaster@3.0::IKeymasterDevice default"
+                }
+            }
+        ' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
+    fi
 
     if [ -f "$MANIFEST" ]; then
-        # Declare ONLY software Keymaster @4.0. The base vendor manifest ships the
-        # TEE @3.0 HIDL declaration; if @3.0 is still advertised keystore2 waits on
-        # the (now removed) @3.0 service and hangs. Drop @3.0, keep/add @4.0.
         sed -i '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/ {
-            /<version>3\.0<\/version>/d
-            /@3\.0::IKeymasterDevice\/default/d
+            s/<version>4\.0<\/version>/<version>3.0<\/version>/
+            s/@4\.0::IKeymasterDevice/@3.0::IKeymasterDevice/
         }' "$MANIFEST"
-        if ! sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
-            "$MANIFEST" | grep -q '<version>4.0</version>'; then
-            sed -i '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/ {
-                /<transport>/a\        <version>4.0</version>
-            }' "$MANIFEST"
-        fi
-        if ! sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
-            "$MANIFEST" | grep -q '@4.0::IKeymasterDevice/default'; then
-            sed -i '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/ {
-                /<\/interface>/a\        <fqname>@4.0::IKeymasterDevice/default</fqname>
-            }' "$MANIFEST"
-        fi
+        sed -i '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/ {
+            /<version>4\.0<\/version>/d
+            /@4\.0::IKeymasterDevice\/default/d
+        }' "$MANIFEST"
     fi
 }
 
@@ -1670,20 +1653,13 @@ _EXYNOS9810_VERIFY_FINAL_SECURITY_STACK()
     local MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest.xml"
     local ENTRY
 
-    LOG "- Verifying final software Keymaster 4.0 stack after vendor restore"
+    LOG "- Verifying final Keymaster 3.0 hardware stack after vendor restore"
 
     for ENTRY in \
-        "bin/hw/android.hardware.keymaster@4.0-service" \
-        "etc/init/android.hardware.keymaster@4.0-service.rc" \
-        "lib64/android.hardware.keymaster@4.0.so" \
-        "lib64/libcppbor_external.so" \
-        "lib64/libcppcose_rkp.so" \
-        "lib64/libkeymaster4.so" \
-        "lib64/libkeymaster4support.so" \
-        "lib64/libkeymaster_messages.so" \
-        "lib64/libkeymaster_portable.so" \
-        "lib64/libpuresoftkeymasterdevice.so" \
-        "lib64/libsoft_attestation_cert.so" \
+        "bin/hw/android.hardware.keymaster@3.0-service" \
+        "etc/init/android.hardware.keymaster@3.0-service.rc" \
+        "lib/hw/android.hardware.keymaster@3.0-impl.so" \
+        "lib64/hw/android.hardware.keymaster@3.0-impl.so" \
         "lib/libkeymaster3device.so" \
         "lib/libskeymaster3device.so" \
         "lib64/libkeymaster2_mdfpp.so" \
@@ -1692,56 +1668,42 @@ _EXYNOS9810_VERIFY_FINAL_SECURITY_STACK()
         "lib64/libskeymaster3device.so" \
         "lib64/libsoftkeymasterdevice.so"; do
         if [ ! -f "$WORK_DIR/vendor/$ENTRY" ]; then
-            LOGE "Required software Keymaster 4.0 component is missing: /vendor/$ENTRY"
+            LOGE "Required Keymaster 3.0 component is missing: /vendor/$ENTRY"
             return 1
         fi
     done
 
-    if ! cmp -s \
-        "$EXYNOS9810_SOFTWARE_KEYMASTER4_DIR/bin/hw/android.hardware.keymaster@4.0-service" \
-        "$WORK_DIR/vendor/bin/hw/android.hardware.keymaster@4.0-service"; then
-        LOGE "Final vendor contains an unexpected Keymaster 4.0 service"
-        return 1
-    fi
-
-    if grep -a -q 'skeymaster4dev' \
-        "$WORK_DIR/vendor/bin/hw/android.hardware.keymaster@4.0-service"; then
-        LOGE "Final vendor contains the incompatible Trustonic Keymaster 4.0 service"
-        return 1
-    fi
-
     for ENTRY in \
+        "bin/hw/android.hardware.keymaster@4.0-service" \
+        "etc/init/android.hardware.keymaster@4.0-service.rc" \
         "lib64/libskeymaster4device.so" \
         "bin/cass" \
         "bin/vaultkeeperd" \
         "bin/vendor.samsung.hardware.security.vaultkeeper@2.0-service" \
         "etc/init/cass.rc" \
-        "etc/init/vaultkeeper_common.rc" \
-        "bin/hw/android.hardware.keymaster@3.0-service" \
-        "etc/init/android.hardware.keymaster@3.0-service.rc"; do
+        "etc/init/vaultkeeper_common.rc"; do
         if [ -e "$WORK_DIR/vendor/$ENTRY" ]; then
-            LOGE "Incompatible legacy security component remains: /vendor/$ENTRY"
+            LOGE "Incompatible security component remains: /vendor/$ENTRY"
             return 1
         fi
     done
 
-    # Keymaster must be advertised as software @4.0 ONLY. A lingering @3.0
-    # declaration makes keystore2 wait on the removed TEE service and hangs boot.
-    for ENTRY in \
-        '<version>4.0</version>' \
-        '@4.0::IKeymasterDevice/default'; do
-        if ! sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
-            "$MANIFEST" | grep -qF "$ENTRY"; then
-            LOGE "Final vendor manifest is missing software Keymaster declaration: $ENTRY"
-            return 1
-        fi
-    done
     for ENTRY in \
         '<version>3.0</version>' \
         '@3.0::IKeymasterDevice/default'; do
+        if ! sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
+            "$MANIFEST" | grep -qF "$ENTRY"; then
+            LOGE "Final vendor manifest is missing Keymaster 3.0 declaration: $ENTRY"
+            return 1
+        fi
+    done
+
+    for ENTRY in \
+        '<version>4.0</version>' \
+        '@4.0::IKeymasterDevice/default'; do
         if sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
             "$MANIFEST" | grep -qF "$ENTRY"; then
-            LOGE "Final vendor manifest still advertises TEE Keymaster: $ENTRY"
+            LOGE "Final vendor manifest must not declare software Keymaster: $ENTRY"
             return 1
         fi
     done

@@ -1965,8 +1965,8 @@ _EXYNOS9810_APPLY_KEYMASTER4()
     fi
 
     _EXYNOS9810_SET_METADATA "vendor" \
-        "vendor/bin/hw/android.hardware.keymaster@4.0-service" \
-        "/vendor/bin/hw/android.hardware.keymaster@4.0-service" \
+        "vendor/bin/hw/android.hardware.keymaster@3.0-service" \
+        "/vendor/bin/hw/android.hardware.keymaster@3.0-service" \
         0 2000 755 "u:object_r:hal_keymaster_default_exec:s0"
     _EXYNOS9810_SET_METADATA "vendor" \
         "vendor/etc/init/android.hardware.keymaster@4.0-service.rc" \
@@ -1978,42 +1978,26 @@ _EXYNOS9810_VERIFY_SECURITY_STACK()
 {
     local REQUIRED
 
-    LOG "- Verifying Exynos9810 software Keymaster 4.0 compatibility"
+    LOG "- Verifying Exynos9810 Keymaster 3.0 hardware security stack"
 
     for REQUIRED in \
         "bin/hw/android.hardware.keymaster@3.0-service" \
         "etc/init/android.hardware.keymaster@3.0-service.rc" \
         "lib/hw/android.hardware.keymaster@3.0-impl.so" \
         "lib64/hw/android.hardware.keymaster@3.0-impl.so" \
-        "bin/hw/android.hardware.keymaster@4.0-service" \
-        "etc/init/android.hardware.keymaster@4.0-service.rc" \
-        "lib64/android.hardware.keymaster@4.0.so" \
-        "lib64/libkeymaster4.so" \
-        "lib64/libkeymaster4support.so" \
-        "lib64/libkeymaster_messages.so" \
-        "lib64/libkeymaster_portable.so" \
-        "lib64/libpuresoftkeymasterdevice.so" \
-        "lib64/libsoft_attestation_cert.so"; do
+        "lib/libkeymaster3device.so" \
+        "lib/libskeymaster3device.so" \
+        "lib64/libkeymaster3device.so" \
+        "lib64/libskeymaster3device.so"; do
         [ -f "$WORK_DIR/vendor/$REQUIRED" ] || {
-            LOGE "Required software Keymaster 4.0 component is missing: /vendor/$REQUIRED"
+            LOGE "Required Keymaster 3.0 component is missing: /vendor/$REQUIRED"
             return 1
         }
     done
 
-    if ! cmp -s \
-        "$EXYNOS9810_KEYMASTER4_DIR/bin/hw/android.hardware.keymaster@4.0-service" \
-        "$WORK_DIR/vendor/bin/hw/android.hardware.keymaster@4.0-service"; then
-        LOGE "Unexpected Keymaster 4.0 service replaced the software implementation"
-        return 1
-    fi
-
-    if grep -a -q 'skeymaster4dev' \
-        "$WORK_DIR/vendor/bin/hw/android.hardware.keymaster@4.0-service"; then
-        LOGE "Trustonic Keymaster 4.0 service is not compatible with Exynos9810"
-        return 1
-    fi
-
     for REQUIRED in \
+        "bin/hw/android.hardware.keymaster@4.0-service" \
+        "etc/init/android.hardware.keymaster@4.0-service.rc" \
         "lib64/libskeymaster4device.so" \
         "bin/cass" \
         "bin/vaultkeeperd" \
@@ -2021,22 +2005,26 @@ _EXYNOS9810_VERIFY_SECURITY_STACK()
         "etc/init/cass.rc" \
         "etc/init/vaultkeeper_common.rc"; do
         if [ -e "$WORK_DIR/vendor/$REQUIRED" ]; then
-            LOGE "Incompatible legacy security component remains: /vendor/$REQUIRED"
+            LOGE "Incompatible security component remains: /vendor/$REQUIRED"
             return 1
         fi
     done
 
     for REQUIRED in \
         '<version>3.0</version>' \
-        '<version>4.0</version>' \
-        '@3.0::IKeymasterDevice/default' \
-        '@4.0::IKeymasterDevice/default'; do
+        '@3.0::IKeymasterDevice/default'; do
         if ! sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
             "$WORK_DIR/vendor/etc/vintf/manifest.xml" | grep -qF "$REQUIRED"; then
-            LOGE "Vendor manifest is missing dual Keymaster declaration: $REQUIRED"
+            LOGE "Vendor manifest is missing Keymaster 3.0 declaration: $REQUIRED"
             return 1
         fi
     done
+
+    if sed -n '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/p' \
+        "$WORK_DIR/vendor/etc/vintf/manifest.xml" | grep -qF '<version>4.0</version>'; then
+        LOGE "Vendor manifest must not declare software Keymaster 4.0: <version>4.0</version>"
+        return 1
+    fi
 }
 
 _EXYNOS9810_APPLY_AUDIO6_BRIDGE()
@@ -4244,7 +4232,7 @@ _EXYNOS9810_VERIFY_EMBEDDED_VENDOR_BASELINE()
     for REL in \
         bin/cat \
         bin/getprop \
-        bin/hw/android.hardware.keymaster@4.0-service \
+        bin/hw/android.hardware.keymaster@3.0-service \
         bin/hw/android.hardware.sensors@1.0-service \
         bin/hw/gpsd \
         bin/mcDriverDaemon \
@@ -4265,8 +4253,8 @@ _EXYNOS9810_VERIFY_EMBEDDED_VENDOR_BASELINE()
     # Generic vendor_file labels are sufficient for data files, but an
     # enforcing build cannot start these HALs when their exec labels are lost.
     _EXYNOS9810_SET_METADATA "vendor" \
-        "vendor/bin/hw/android.hardware.keymaster@4.0-service" \
-        "/vendor/bin/hw/android.hardware.keymaster@4.0-service" \
+        "vendor/bin/hw/android.hardware.keymaster@3.0-service" \
+        "/vendor/bin/hw/android.hardware.keymaster@3.0-service" \
         0 2000 755 "u:object_r:hal_keymaster_default_exec:s0"
     _EXYNOS9810_SET_METADATA "vendor" \
         "vendor/bin/hw/android.hardware.sensors@1.0-service" \
@@ -4282,7 +4270,7 @@ _EXYNOS9810_VERIFY_EMBEDDED_VENDOR_BASELINE()
         vendor/etc/floating_feature.xml \
         vendor/etc/fstab.exynos9810 \
         vendor/etc/fstab.samsungexynos9810 \
-        vendor/etc/init/android.hardware.keymaster@4.0-service.rc \
+        vendor/etc/init/android.hardware.keymaster@3.0-service.rc \
         vendor/etc/init/android.hardware.sensors@1.0-service.rc \
         vendor/etc/init/init.samsungexynos9810.rc \
         vendor/etc/selinux/vendor_sepolicy.cil \
@@ -4582,7 +4570,6 @@ _EXYNOS9810_PATCH_BLUETOOTH_AGENT
 _EXYNOS9810_APPLY_NFC_STACK
 _EXYNOS9810_PATCH_ONEUI8_CAMERA_APP
 _EXYNOS9810_APPLY_KEYMASTER3
-_EXYNOS9810_APPLY_KEYMASTER4
 _EXYNOS9810_APPLY_PANEL_WAKE_FIX
 _EXYNOS9810_PATCH_RT_CGROUPS
 _EXYNOS9810_APPLY_AUDIO6_BRIDGE
