@@ -15,8 +15,27 @@ six-GB models.
 
 Only starlte gets stock G960F cached/empty limits (6/19 and8/24), keeping the
 current port's whitelist and LMK scale. star2lte/crownlte retain their accepted
-8/24 and8/32 cache budgets. No low-RAM feature cuts, governor/thermal changes,
-heap caps or new zram policy are introduced.
+8/24 and8/32 cache budgets. No low-RAM feature cuts, thermal changes, heap caps
+or new zram policy are introduced.
+
+## CPU groups and HyPer (`vendor/`)
+
+`_EXYNOS9810_FINAL_APPLY_CPU_GROUPS` installs six vendor files (identical for
+all three targets):
+
+| File | Why |
+| --- | --- |
+| `etc/cgroups.json` | Android 16's system `cgroups.json` no longer mounts schedtune; the 4.9 kernel has it. Mounts `/dev/stune`. |
+| `etc/task_profiles.json` | Adds the schedtune joins (top-app/foreground/background/rt) to the profiles. |
+| `etc/init/init.9810-cpuset.rc` | Creates One UI's `moderate` (LITTLE 0-3) and `sf` cpusets. Without `sf`, GPIS wrote its boost mask into the root cpuset (permission denied). |
+| `etc/init/init.9810-schedtune.rc` | Creates/permissions the stune groups. |
+| `etc/init/hyper-default-sec.rc` | Gives HyPer (system uid) the 9810 cpufreq/hotplug/MIF nodes before the HAL starts. |
+| `etc/hyper/config_vendor.json` | 9810 HyPer hint table. |
+
+Measured on star2lte: before, SystemUI and Home sat in the `restricted`
+cpuset (CPUs 0-1) while visible, `/dev/stune` was missing and 45 GPIS writes
+failed per boot; after, SystemUI is in `top-app`, Home in `foreground`, no
+failed writes, and boot to `boot_completed` went from ~240 s to ~90 s.
 
 Source inspection of Android16 Dexopter.adjustCompilerFilter confirms the
 SystemUI property is applied specifically to SystemUI. This does not guarantee

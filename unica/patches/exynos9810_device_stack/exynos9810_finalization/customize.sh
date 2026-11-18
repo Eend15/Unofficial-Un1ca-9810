@@ -1360,6 +1360,32 @@ _EXYNOS9810_FINAL_RAM_TWEAKS()
         --work-dir "$WORK_DIR" --target "$TARGET_CODENAME" --apply || return 1
 }
 
+_EXYNOS9810_FINAL_APPLY_CPU_GROUPS()
+{
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+    # One UI 8 removed schedtune from system cgroups.json, so /dev/stune was never
+    # mounted, the One UI "moderate" cpuset had no CPUs and GPIS wrote its boost mask
+    # into the root cpuset (permission denied); SystemUI and Home stayed in the
+    # restricted 0-1 cpuset while visible. These vendor files mount schedtune, create
+    # the moderate/sf cpusets, map the task profiles to schedtune and let HyPer drive
+    # the 9810 DVFS nodes. Identical for all three targets.
+    local SRC="$MODPATH/performance/vendor" ENTRY F L
+    LOG "- Applying Exynos9810 cpuset, schedtune and HyPer resource tuning"
+    for ENTRY in \
+        etc/cgroups.json:vendor_cgroup_desc_file \
+        etc/task_profiles.json:vendor_task_profiles_file \
+        etc/init/init.9810-cpuset.rc:vendor_configs_file \
+        etc/init/init.9810-schedtune.rc:vendor_configs_file \
+        etc/init/hyper-default-sec.rc:vendor_configs_file \
+        etc/hyper/config_vendor.json:vendor_configs_file; do
+        F="${ENTRY%%:*}"
+        L="${ENTRY##*:}"
+        [ -s "$SRC/$F" ] || { LOGE "Missing Exynos9810 performance file: $SRC/$F"; return 1; }
+        install -D -m 644 "$SRC/$F" "$WORK_DIR/vendor/$F" || return 1
+        _EXYNOS9810_FINAL_SET_METADATA "vendor" "vendor/$F" 0 0 644 "u:object_r:$L:s0"
+    done
+}
+
 _EXYNOS9810_FINAL_ENSURE_DISPLAY_PROPS()
 {
     # The legacy device-stack module is optional now that its runtime payloads
@@ -8291,6 +8317,7 @@ _EXYNOS9810_FINAL_STAGE_LAUNCHER_DEFAULTS
 _EXYNOS9810_FINAL_ENABLE_NOW_BRIEF_WIDGET
 _EXYNOS9810_FINAL_PRUNE_LAUNCHER_DEBLOATED_FAVORITES
 _EXYNOS9810_FINAL_RAM_TWEAKS || return 1
+_EXYNOS9810_FINAL_APPLY_CPU_GROUPS || return 1
 _EXYNOS9810_FINAL_ENSURE_DISPLAY_PROPS
 _EXYNOS9810_FINAL_PATCH_EXTERNAL_DISPLAY || return 1
 _EXYNOS9810_FINAL_RESTORE_DOLBY_ATMOS_STACK

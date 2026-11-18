@@ -1,0 +1,25 @@
+# Exynos9810: initialize the One UI moderate cpuset on the LITTLE cluster.
+on init
+    mkdir /dev/cpuset/moderate 0755 system system
+    copy /dev/cpuset/mems /dev/cpuset/moderate/mems
+    write /dev/cpuset/moderate/cpus 0-3
+    chown system system /dev/cpuset/moderate/tasks
+    chown system system /dev/cpuset/moderate/cgroup.procs
+    chown system system /dev/cpuset/moderate/cpus
+    chmod 0664 /dev/cpuset/moderate/tasks
+    chmod 0664 /dev/cpuset/moderate/cgroup.procs
+    chmod 0664 /dev/cpuset/moderate/cpus
+
+# GPIS changes the CPU mask of the target task's current cpuset.
+# Create sf before class hal/core services join it; never restrict the root cpuset.
+# Exynos9810: LITTLE 0-3, BIG 4-7. GPIS selects 4-7 while boosting, 0-7 otherwise.
+on init
+    mkdir /dev/cpuset/sf 0755 system system
+    copy /dev/cpuset/mems /dev/cpuset/sf/mems
+    copy /dev/cpuset/cpus /dev/cpuset/sf/cpus
+    chown system system /dev/cpuset/sf/tasks
+    chown system system /dev/cpuset/sf/cgroup.procs
+    chown system system /dev/cpuset/sf/cpus
+    chmod 0664 /dev/cpuset/sf/tasks
+    chmod 0664 /dev/cpuset/sf/cgroup.procs
+    chmod 0664 /dev/cpuset/sf/cpus

@@ -1,0 +1,36 @@
+# Prepare Exynos9810 DVFS nodes before class hal starts HyPer.
+# Keep ownership and modes consistent with init.samsungexynos9810.rc.
+on init
+    chown system system /sys/kernel/mm/vmscan/am_app_launch
+    chmod 0664 /sys/kernel/mm/vmscan/am_app_launch
+    chown system system /sys/power/cpuhotplug/big_max_online_cpu
+    chmod 0664 /sys/power/cpuhotplug/big_max_online_cpu
+    chown system system /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq
+    chmod 0664 /sys/devices/system/cpu/cpufreq/policy4/scaling_max_freq
+    chown system system /sys/power/cpuhotplug/big_min_online_cpu
+    chmod 0664 /sys/power/cpuhotplug/big_min_online_cpu
+    # 9810 HyPer resource controls: prepare before the HAL starts.
+    chown system system /sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq
+    chmod 0664 /sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq
+    chown system system /sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq
+    chmod 0664 /sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq
+    chown system system /sys/devices/platform/17000010.devfreq_mif/devfreq/17000010.devfreq_mif/exynos_data/debug_scaling_devfreq_max
+    chmod 0664 /sys/devices/platform/17000010.devfreq_mif/devfreq/17000010.devfreq_mif/exynos_data/debug_scaling_devfreq_max
+    chown system system /sys/power/cpuhotplug/min_online_cpu
+    chmod 0664 /sys/power/cpuhotplug/min_online_cpu
+    chown system radio /sys/power/cpufreq_table
+    chmod 0664 /sys/power/cpufreq_table
+    chown system radio /sys/power/cpufreq_min_limit
+    chmod 0664 /sys/power/cpufreq_min_limit
+    chown system radio /sys/power/cpufreq_max_limit
+    chmod 0664 /sys/power/cpufreq_max_limit
+    chown system system /sys/power/cstate_control
+    chmod 0664 /sys/power/cstate_control
+
+service vendor.samsung.hardware.hyper-default /vendor/bin/hw/vendor.samsung.hardware.hyper-service
+    class hal
+    user system
+    group system
+
+on property:init.svc.zygote=restarting
+    restart vendor.samsung.hardware.hyper-default
