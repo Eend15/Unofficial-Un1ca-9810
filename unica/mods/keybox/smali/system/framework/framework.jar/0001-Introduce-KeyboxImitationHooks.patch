@@ -547,7 +547,7 @@ new file mode 100644
 index 00000000..a705d18c
 --- /dev/null
 +++ b/smali_classes6/io/mesalabs/unica/KeyProviderManager$DefaultKeyboxProvider.smali
-@@ -0,0 +1,709 @@
+@@ -0,0 +1,723 @@
 +.class Lio/mesalabs/unica/KeyProviderManager$DefaultKeyboxProvider;
 +.super Ljava/lang/Object;
 +.source "KeyProviderManager.java"
@@ -768,9 +768,9 @@ index 00000000..a705d18c
 +
 +    const/4 v3, 0x0
 +
-+    move v4, v2
++    const/4 v4, 0x1
 +
-+    move v6, v4
++    move v6, v2
 +
 +    move-object v5, v3
 +
@@ -828,7 +828,7 @@ index 00000000..a705d18c
 +
 +    move-result p1
 +
-+    if-eq p1, v7, :cond_1
++    if-ge p1, v7, :cond_1
 +
 +    new-instance p0, Ljava/lang/StringBuilder;
 +
@@ -883,6 +883,12 @@ index 00000000..a705d18c
 +
 +    move-result-object p1
 +
++    if-eqz p1, :cond_2
++
++    invoke-virtual {p1}, Ljava/lang/String;->trim()Ljava/lang/String;
++
++    move-result-object p1
++
 +    invoke-virtual {v10, p1}, Ljava/lang/String;->equalsIgnoreCase(Ljava/lang/String;)Z
 +
 +    move-result v7
@@ -912,7 +918,9 @@ index 00000000..a705d18c
 +    return-void
 +
 +    :cond_2
-+    invoke-interface {v1}, Lorg/xmlpull/v1/XmlPullParser;->next()I
++    invoke-interface {v1}, Lorg/xmlpull/v1/XmlPullParser;->nextText()Ljava/lang/String;
++
++    move-result-object v8
 +
 +    if-eqz v5, :cond_6
 +
@@ -926,19 +934,15 @@ index 00000000..a705d18c
 +
 +    move-result-object v7
 +
-+    const-string v8, ".PRIV"
++    const-string v9, ".PRIV"
 +
-+    invoke-virtual {v7, v8}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v7, v9}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v7
 +
 +    invoke-virtual {v7}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 +
 +    move-result-object v7
-+
-+    invoke-interface {v1}, Lorg/xmlpull/v1/XmlPullParser;->getText()Ljava/lang/String;
-+
-+    move-result-object v8
 +
 +    invoke-virtual {v8}, Ljava/lang/String;->trim()Ljava/lang/String;
 +
@@ -963,6 +967,14 @@ index 00000000..a705d18c
 +
 +    move-result-object p1
 +
++    const-string v5, "ec"
++
++    invoke-virtual {v5, p1}, Ljava/lang/String;->equalsIgnoreCase(Ljava/lang/String;)Z
++
++    move-result v5
++
++    if-nez v5, :cond_ec_match
++
 +    const-string v5, "ecdsa"
 +
 +    invoke-virtual {v5, p1}, Ljava/lang/String;->equalsIgnoreCase(Ljava/lang/String;)Z
@@ -970,6 +982,8 @@ index 00000000..a705d18c
 +    move-result v5
 +
 +    if-eqz v5, :cond_3
++
++    :cond_ec_match
 +
 +    const-string p1, "EC"
 +
@@ -1012,6 +1026,12 @@ index 00000000..a705d18c
 +
 +    move-result-object p1
 +
++    if-eqz p1, :cond_5
++
++    invoke-virtual {p1}, Ljava/lang/String;->trim()Ljava/lang/String;
++
++    move-result-object p1
++
 +    invoke-virtual {v10, p1}, Ljava/lang/String;->equalsIgnoreCase(Ljava/lang/String;)Z
 +
 +    move-result v7
@@ -1041,9 +1061,11 @@ index 00000000..a705d18c
 +    return-void
 +
 +    :cond_5
-+    if-eqz v5, :cond_6
++    invoke-interface {v1}, Lorg/xmlpull/v1/XmlPullParser;->nextText()Ljava/lang/String;
 +
-+    invoke-interface {v1}, Lorg/xmlpull/v1/XmlPullParser;->next()I
++    move-result-object v8
++
++    if-eqz v5, :cond_6
 +
 +    add-int/lit8 v6, v6, 0x1
 +
@@ -1057,9 +1079,9 @@ index 00000000..a705d18c
 +
 +    move-result-object v7
 +
-+    const-string v8, ".CERT_"
++    const-string v9, ".CERT_"
 +
-+    invoke-virtual {v7, v8}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    invoke-virtual {v7, v9}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 +
 +    move-result-object v7
 +
@@ -1070,10 +1092,6 @@ index 00000000..a705d18c
 +    invoke-virtual {v7}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 +
 +    move-result-object v7
-+
-+    invoke-interface {v1}, Lorg/xmlpull/v1/XmlPullParser;->getText()Ljava/lang/String;
-+
-+    move-result-object v8
 +
 +    invoke-virtual {v8}, Ljava/lang/String;->trim()Ljava/lang/String;
 +
@@ -1209,23 +1227,10 @@ index 00000000..a705d18c
 +
 +    move-result v0
 +
-+    const/4 v1, 0x0
++    const/4 v1, 0x1
 +
-+    if-eqz v0, :cond_2
++    if-eqz v0, :cond_0
 +
-+    iget-object v0, p0, Lio/mesalabs/unica/KeyProviderManager$DefaultKeyboxProvider;->keyboxData:Ljava/util/Map;
-+
-+    const-string v2, "RSA.PRIV"
-+
-+    invoke-interface {v0, v2}, Ljava/util/Map;->containsKey(Ljava/lang/Object;)Z
-+
-+    move-result v0
-+
-+    if-nez v0, :cond_0
-+
-+    goto :goto_0
-+
-+    :cond_0
 +    iget-object v0, p0, Lio/mesalabs/unica/KeyProviderManager$DefaultKeyboxProvider;->keyboxData:Ljava/util/Map;
 +
 +    const-string v2, "EC.CERT_1"
@@ -1234,7 +1239,20 @@ index 00000000..a705d18c
 +
 +    move-result v0
 +
-+    if-eqz v0, :cond_2
++    if-eqz v0, :cond_0
++
++    return v1
++
++    :cond_0
++    iget-object v0, p0, Lio/mesalabs/unica/KeyProviderManager$DefaultKeyboxProvider;->keyboxData:Ljava/util/Map;
++
++    const-string v2, "RSA.PRIV"
++
++    invoke-interface {v0, v2}, Ljava/util/Map;->containsKey(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_1
 +
 +    iget-object p0, p0, Lio/mesalabs/unica/KeyProviderManager$DefaultKeyboxProvider;->keyboxData:Ljava/util/Map;
 +
@@ -1244,18 +1262,14 @@ index 00000000..a705d18c
 +
 +    move-result p0
 +
-+    if-nez p0, :cond_1
++    if-eqz p0, :cond_1
 +
-+    goto :goto_0
++    return v1
 +
 +    :cond_1
-+    const/4 p0, 0x1
++    const/4 p0, 0x0
 +
 +    return p0
-+
-+    :cond_2
-+    :goto_0
-+    return v1
 +.end method
 diff --git a/smali_classes6/io/mesalabs/unica/KeyProviderManager-IA.smali b/smali_classes6/io/mesalabs/unica/KeyProviderManager-IA.smali
 new file mode 100644
@@ -2184,7 +2198,7 @@ new file mode 100644
 index 00000000..23b13b4b
 --- /dev/null
 +++ b/smali_classes6/io/mesalabs/unica/KeyboxChainGenerator.smali
-@@ -0,0 +1,1594 @@
+@@ -0,0 +1,1617 @@
 +.class final Lio/mesalabs/unica/KeyboxChainGenerator;
 +.super Ljava/lang/Object;
 +.source "KeyboxChainGenerator.java"
@@ -3564,20 +3578,6 @@ index 00000000..23b13b4b
 +    goto :goto_a
 +
 +    :cond_10
-+    new-instance v0, Lcom/android/internal/org/bouncycastle/operator/jcajce/JcaContentSignerBuilder;
-+
-+    if-eqz v2, :cond_11
-+
-+    const-string v1, "SHA256withRSA"
-+
-+    goto :goto_7
-+
-+    :cond_11
-+    const-string v1, "SHA256withECDSA"
-+
-+    :goto_7
-+    invoke-direct {v0, v1}, Lcom/android/internal/org/bouncycastle/operator/jcajce/JcaContentSignerBuilder;-><init>(Ljava/lang/String;)V
-+
 +    if-nez v6, :cond_12
 +
 +    invoke-virtual/range {p0 .. p0}, Ljava/security/KeyPair;->getPrivate()Ljava/security/PrivateKey;
@@ -3617,7 +3617,44 @@ index 00000000..23b13b4b
 +    move-result-object v1
 +
 +    :goto_9
-+    invoke-virtual {v0, v1}, Lcom/android/internal/org/bouncycastle/operator/jcajce/JcaContentSignerBuilder;->build(Ljava/security/PrivateKey;)Lcom/android/internal/org/bouncycastle/operator/ContentSigner;
++    instance-of v0, v1, Ljava/security/interfaces/ECKey;
++
++    if-nez v0, :cond_signer_ec
++
++    invoke-interface {v1}, Ljava/security/PrivateKey;->getAlgorithm()Ljava/lang/String;
++
++    move-result-object v0
++
++    const-string v2, "EC"
++
++    invoke-virtual {v2, v0}, Ljava/lang/String;->equalsIgnoreCase(Ljava/lang/String;)Z
++
++    move-result v2
++
++    if-nez v2, :cond_signer_ec
++
++    const-string v2, "ECDSA"
++
++    invoke-virtual {v2, v0}, Ljava/lang/String;->equalsIgnoreCase(Ljava/lang/String;)Z
++
++    move-result v2
++
++    if-eqz v2, :cond_11
++
++    :cond_signer_ec
++    const-string v0, "SHA256withECDSA"
++
++    goto :goto_7
++
++    :cond_11
++    const-string v0, "SHA256withRSA"
++
++    :goto_7
++    new-instance v2, Lcom/android/internal/org/bouncycastle/operator/jcajce/JcaContentSignerBuilder;
++
++    invoke-direct {v2, v0}, Lcom/android/internal/org/bouncycastle/operator/jcajce/JcaContentSignerBuilder;-><init>(Ljava/lang/String;)V
++
++    invoke-virtual {v2, v1}, Lcom/android/internal/org/bouncycastle/operator/jcajce/JcaContentSignerBuilder;->build(Ljava/security/PrivateKey;)Lcom/android/internal/org/bouncycastle/operator/ContentSigner;
 +
 +    move-result-object v0
 +
@@ -9728,7 +9765,7 @@ new file mode 100644
 index 00000000..c6bc67e8
 --- /dev/null
 +++ b/smali_classes6/io/mesalabs/unica/KeyboxUtils.smali
-@@ -0,0 +1,2372 @@
+@@ -0,0 +1,2431 @@
 +.class final Lio/mesalabs/unica/KeyboxUtils;
 +.super Ljava/lang/Object;
 +.source "KeyboxUtils.java"
@@ -9848,14 +9885,36 @@ index 00000000..c6bc67e8
 +
 +    move-result-object p0
 +
-+    goto :goto_0
++    if-eqz p0, :cond_fallback_rsa_chain
++
++    array-length v1, p0
++
++    if-nez v1, :cond_goto_chain_list
++
++    :cond_fallback_rsa_chain
++    invoke-interface {v0}, Lio/mesalabs/unica/IKeyboxProvider;->getRsaCertificateChain()[Ljava/lang/String;
++
++    move-result-object p0
++
++    goto :cond_goto_chain_list
 +
 +    :cond_0
 +    invoke-interface {v0}, Lio/mesalabs/unica/IKeyboxProvider;->getRsaCertificateChain()[Ljava/lang/String;
 +
 +    move-result-object p0
 +
-+    :goto_0
++    if-eqz p0, :cond_fallback_ec_chain
++
++    array-length v1, p0
++
++    if-nez v1, :cond_goto_chain_list
++
++    :cond_fallback_ec_chain
++    invoke-interface {v0}, Lio/mesalabs/unica/IKeyboxProvider;->getEcCertificateChain()[Ljava/lang/String;
++
++    move-result-object p0
++
++    :cond_goto_chain_list
 +    new-instance v0, Ljava/util/ArrayList;
 +
 +    invoke-direct {v0}, Ljava/util/ArrayList;-><init>()V
@@ -9884,7 +9943,7 @@ index 00000000..c6bc67e8
 +.end method
 +
 +.method static blacklist fetchCertificateHolderFromKeybox(Ljava/lang/String;)Lcom/android/internal/org/bouncycastle/cert/X509CertificateHolder;
-+    .locals 2
++    .locals 3
 +    .annotation system Ldalvik/annotation/Throws;
 +        value = {
 +            Ljava/lang/Exception;
@@ -9909,18 +9968,38 @@ index 00000000..c6bc67e8
 +
 +    move-result-object p0
 +
-+    aget-object p0, p0, v1
++    if-eqz p0, :cond_holder_fallback_rsa
 +
-+    goto :goto_0
++    array-length v2, p0
++
++    if-nez v2, :cond_holder_use
++
++    :cond_holder_fallback_rsa
++    invoke-interface {v0}, Lio/mesalabs/unica/IKeyboxProvider;->getRsaCertificateChain()[Ljava/lang/String;
++
++    move-result-object p0
++
++    goto :cond_holder_use
 +
 +    :cond_0
 +    invoke-interface {v0}, Lio/mesalabs/unica/IKeyboxProvider;->getRsaCertificateChain()[Ljava/lang/String;
 +
 +    move-result-object p0
 +
++    if-eqz p0, :cond_holder_fallback_ec
++
++    array-length v2, p0
++
++    if-nez v2, :cond_holder_use
++
++    :cond_holder_fallback_ec
++    invoke-interface {v0}, Lio/mesalabs/unica/IKeyboxProvider;->getEcCertificateChain()[Ljava/lang/String;
++
++    move-result-object p0
++
++    :cond_holder_use
 +    aget-object p0, p0, v1
 +
-+    :goto_0
 +    invoke-static {p0}, Lio/mesalabs/unica/KeyboxUtils;->decodePemOrBase64(Ljava/lang/String;)[B
 +
 +    move-result-object p0
@@ -10030,7 +10109,7 @@ index 00000000..c6bc67e8
 +.end method
 +
 +.method static blacklist fetchPrivateKeyFromKeybox(Ljava/lang/String;)Ljava/security/PrivateKey;
-+    .locals 2
++    .locals 3
 +    .annotation system Ldalvik/annotation/Throws;
 +        value = {
 +            Ljava/lang/Exception;
@@ -10045,23 +10124,40 @@ index 00000000..c6bc67e8
 +
 +    invoke-virtual {v1, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
 +
-+    move-result v1
++    move-result v2
 +
-+    if-eqz v1, :cond_0
++    if-eqz v2, :cond_0
 +
 +    invoke-interface {v0}, Lio/mesalabs/unica/IKeyboxProvider;->getEcPrivateKey()Ljava/lang/String;
 +
-+    move-result-object v0
++    move-result-object v2
++
++    if-nez v2, :cond_priv_ready
++
++    invoke-interface {v0}, Lio/mesalabs/unica/IKeyboxProvider;->getRsaPrivateKey()Ljava/lang/String;
++
++    move-result-object v2
++
++    const-string p0, "RSA"
 +
 +    goto :goto_0
 +
 +    :cond_0
 +    invoke-interface {v0}, Lio/mesalabs/unica/IKeyboxProvider;->getRsaPrivateKey()Ljava/lang/String;
 +
-+    move-result-object v0
++    move-result-object v2
 +
++    if-nez v2, :cond_priv_ready
++
++    invoke-interface {v0}, Lio/mesalabs/unica/IKeyboxProvider;->getEcPrivateKey()Ljava/lang/String;
++
++    move-result-object v2
++
++    move-object p0, v1
++
++    :cond_priv_ready
 +    :goto_0
-+    invoke-static {v0, p0}, Lio/mesalabs/unica/KeyboxUtils;->parsePrivateKey(Ljava/lang/String;Ljava/lang/String;)Ljava/security/PrivateKey;
++    invoke-static {v2, p0}, Lio/mesalabs/unica/KeyboxUtils;->parsePrivateKey(Ljava/lang/String;Ljava/lang/String;)Ljava/security/PrivateKey;
 +
 +    move-result-object p0
 +
