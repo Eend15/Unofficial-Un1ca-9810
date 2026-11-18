@@ -116,7 +116,11 @@ def verify_prerequisites(target: str) -> tuple[list[tuple[Path, Path]], bytes]:
         if not (WORK / relative.parts[0]).is_dir():
             raise RuntimeError(f"Missing target partition root for {relative}")
         pairs.append((src, dst))
-    if len(pairs) != len(NEW_SYSTEM_LABELS) + 2:
+    # boot_restore may have removed the vendor/etc/init/hw/ duplicate.
+    vendor_rc = sum((WORK / rc).is_file() for rc in (
+        "vendor/etc/init/init.samsungexynos9810.rc",
+        "vendor/etc/init/hw/init.samsungexynos9810.rc"))
+    if vendor_rc < 1 or len(pairs) != len(NEW_SYSTEM_LABELS) + vendor_rc:
         raise RuntimeError("Incomplete FaceunlockFix daemon/vendor-init bundle")
     print("PASS reviewed FaceunlockFix ROM staging inputs; existing framework unchanged")
     print(f"PASS native stage entries={len(pairs)}, bridge DEX SHA256={sha256(extra).hexdigest()}")

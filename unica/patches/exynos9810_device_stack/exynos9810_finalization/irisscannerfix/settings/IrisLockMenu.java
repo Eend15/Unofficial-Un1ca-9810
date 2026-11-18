@@ -9,6 +9,8 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import com.samsung.android.camera.iris.Iris;
+import com.samsung.android.camera.iris.SemIrisManager;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -24,6 +26,7 @@ public final class IrisLockMenu {
     private static final String KEY = "key_iris_menu";
     private static final String INTEL_KEY = "key_intelligent_scan_menu";
     private static final String FACE_KEY = "key_face_menu";
+    private static final String FINGERPRINT_KEY = "key_fingerprint_menu";
     private static final String FEATURE = "com.samsung.android.camera.iris";
     private static final String UNLOCK_KEY = "un1ca_iris_unlock";
     private static final String INTEL_SCREEN_ON_KEY = "un1ca_intelligent_scan_screen_on";
@@ -34,6 +37,29 @@ public final class IrisLockMenu {
     private static final int ICON_VISIBLE = 0, ICON_GONE = 8;
 
     private IrisLockMenu() { }
+
+    /**
+     * Called at the end of ChooseLockGenericFragment.onResume. Stock only refreshes the
+     * biometrics menus in onCreate/onActivityResult, so after registering or removing
+     * through the iris page (a plain startActivity) the old state stayed on screen.
+     */
+    public static void onResume(Object fragment) {
+        try {
+            Method find = fragment.getClass().getMethod("findPreference", CharSequence.class);
+            Method menu = fragment.getClass().getMethod("updateBiometricsMenuPreference", String.class);
+            for (String key : new String[]{FACE_KEY, FINGERPRINT_KEY}) {
+                Object pref = find.invoke(fragment, key);
+                if (pref == null) continue;
+                // Stock only sets the check mark when a method is active; clear it first.
+                setIconVisibility(pref, ICON_GONE);
+                menu.invoke(fragment, key);
+                notifyChanged(pref);
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "biometrics menus not refreshed", t);
+        }
+        update(fragment);
+    }
 
     /** Called from ChooseLockGenericFragment right after the face/fingerprint menus are updated. */
     public static void update(Object fragment) {
@@ -57,7 +83,8 @@ public final class IrisLockMenu {
                 iris = created[1];
             }
             int userId = userId(fragment);
-            boolean irisEnrolled = enrolledIrises(ctx, userId) > 0;
+            // Removing the screen lock deletes face and fingerprints, but not irises.
+            boolean irisEnrolled = clearIfInsecure(ctx, userId) > 0;
             boolean irisActive = irisEnrolled
                     && Settings.Secure.getInt(ctx.getContentResolver(), UNLOCK_KEY, 1) == 1;
             boolean faceEnrolled = hasEnrolledFace(ctx, userId);
@@ -72,6 +99,8 @@ public final class IrisLockMenu {
             Object enabled = invoke(face, "isEnabled");
 
             set(intel, "setEnabled", boolean.class, enabled);
+            // Check mark first: setSummary only rebinds when the text changes.
+            setIconVisibility(intel, bothActive ? ICON_VISIBLE : ICON_GONE);
             set(intel, "setSummary", CharSequence.class,
                     summary(ctx, fragment,
                             bothEnrolled
@@ -80,16 +109,17 @@ public final class IrisLockMenu {
                                     : irisText(ctx, "sec_intelligentscan_lockscreen_biometric_not_registered_summary",
                                             "Combine face and iris scanning for better results."),
                             bothActive));
-            setIconVisibility(intel, bothActive ? ICON_VISIBLE : ICON_GONE);
+            notifyChanged(intel);
 
             set(iris, "setEnabled", boolean.class, enabled);
+            setIconVisibility(iris, irisActive ? ICON_VISIBLE : ICON_GONE);
             set(iris, "setSummary", CharSequence.class,
                     summary(ctx, fragment,
                             irisEnrolled
                                     ? irisText(ctx, "iris_register_summary", "Your irises have been registered.")
                                     : irisText(ctx, "iris_add_summary", "Register your irises."),
                             irisActive));
-            setIconVisibility(iris, irisActive ? ICON_VISIBLE : ICON_GONE);
+            notifyChanged(iris);
         } catch (Throwable t) {
             Log.w(TAG, "iris menu not updated", t);
         }
@@ -197,6 +227,47 @@ public final class IrisLockMenu {
         }
     }
 
+    /**
+     * Without a secure screen lock there is no iris unlock. Android removes face and
+     * fingerprints together with the screen lock; do the same for the irises and turn
+     * iris unlock off, so Settings no longer shows them as registered or active.
+     * Returns the number of irises still registered (0 after a removal).
+     */
+    static int clearIfInsecure(Context ctx, int userId) {
+        int count = enrolledIrises(ctx, userId);
+        if (count == 0 || isSecure(ctx, userId)) return count;
+        Log.i(TAG, "no secure screen lock: removing " + count + " iris registration(s)");
+        try {
+            SemIrisManager m = SemIrisManager.getSemIrisManager(ctx);
+            List<?> irises = m == null ? null : m.getEnrolledIrises(userId);
+            if (irises != null) {
+                for (Object iris : irises) {
+                    m.remove((Iris) iris, userId, new SemIrisManager.RemovalCallback() {
+                        @Override public void onRemovalError(Iris removed, int code, CharSequence msg) {
+                            Log.w(TAG, "iris removal error " + code + " " + msg);
+                        }
+                    });
+                }
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "iris removal failed", t);
+        }
+        Settings.Secure.putInt(ctx.getContentResolver(), UNLOCK_KEY, 0);
+        return 0;
+    }
+
+    /** LockPatternUtils.isSecure; on any error assume secure so nothing is ever deleted by mistake. */
+    private static boolean isSecure(Context ctx, int userId) {
+        try {
+            Object lpu = Class.forName("com.android.internal.widget.LockPatternUtils")
+                    .getConstructor(Context.class).newInstance(ctx);
+            return (Boolean) lpu.getClass().getMethod("isSecure", int.class).invoke(lpu, userId);
+        } catch (Throwable t) {
+            Log.w(TAG, "isSecure failed", t);
+            return true;
+        }
+    }
+
     private static boolean hasEnrolledFace(Context ctx, int userId) {
         try {
             Object fm = ctx.getSystemService("face");
@@ -249,6 +320,23 @@ public final class IrisLockMenu {
             f.setInt(pref, visibility);
         } catch (Throwable t) {
             Log.w(TAG, "no lock type check mark", t);
+        }
+    }
+
+    /** Preference.notifyChanged: rebinds the row so a changed check mark is drawn. */
+    private static void notifyChanged(Object pref) {
+        for (Class<?> c = pref.getClass(); c != null; c = c.getSuperclass()) {
+            try {
+                Method m = c.getDeclaredMethod("notifyChanged");
+                m.setAccessible(true);
+                m.invoke(pref);
+                return;
+            } catch (NoSuchMethodException e) {
+                // keep looking in the superclass
+            } catch (Throwable t) {
+                Log.w(TAG, "notifyChanged failed", t);
+                return;
+            }
         }
     }
 

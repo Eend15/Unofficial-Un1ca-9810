@@ -131,7 +131,15 @@ def stage() -> None:
         raise RuntimeError("FaceunlockFix service not explicitly opt-in")
     store("system/etc/init/faceunlockfixd.rc", rc)
 
+    # exynos9810_boot_restore keeps only vendor/etc/init/ and deletes the
+    # init/hw/ copy so init does not run every vendor action twice. Stage the
+    # copies that exist; the primary rc is mandatory.
+    if not (WORK / VENDOR_RC_FILES[0]).is_file():
+        raise RuntimeError(f"Missing {VENDOR_RC_FILES[0]} in ROM work_dir")
     for path in VENDOR_RC_FILES:
+        if not (WORK / path).is_file():
+            (OUTPUT / path).unlink(missing_ok=True)
+            continue
         original = (WORK / path).read_text()
         patched = disable_competing_service(original)
         store(path, patched.encode())

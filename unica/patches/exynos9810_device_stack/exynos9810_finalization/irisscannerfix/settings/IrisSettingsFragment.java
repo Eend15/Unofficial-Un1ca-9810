@@ -45,7 +45,15 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     // Set by SecIrisService while the IR camera runs; irisd.rc turns it into a CPU floor.
     static final String BOOST_PROP = "sys.un1ca.iris_boost";
     static final int SEM_TYPE_FACE = 256;
-    static final int REQUEST_CONFIRM = 1, REQUEST_ENROLL = 2, REQUEST_FACE_ENROLL = 3;
+    static final int REQUEST_CONFIRM = 1, REQUEST_ENROLL = 2, REQUEST_FACE_ENROLL = 3, REQUEST_CHOOSE_LOCK = 4;
+    // One UI 8 entry points: the face flow ChooseLockGeneric itself uses for "Face recognition"
+    // (sets a backup lock when there is none, confirms it, registers) and the biometrics
+    // "Set secure screen lock" chooser it uses for that backup lock.
+    static final String FACE_LOCK_SETTINGS = "com.samsung.android.settings.biometrics.face.FaceLockSettings";
+    static final String FACE_STAGE = "lock_screen_face";
+    static final String BIO_CHOOSE_LOCK = "com.samsung.android.settings.biometrics.BiometricsChooseLockGeneric";
+    static final String CHOOSE_LOCK = "com.android.settings.password.ChooseLockGeneric";
+    static final String EXTRA_GK_PW_HANDLE = "gk_pw_handle";
     // LockPatternUtils.CREDENTIAL_TYPE_*
     static final int CREDENTIAL_TYPE_NONE = -1, CREDENTIAL_TYPE_PATTERN = 1;
     // SemIrisManager enrollment results that stock Settings answers with a Retry popup.
@@ -63,7 +71,6 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     private boolean mEnrollAfterConfirm;
     private boolean mRetriedStaleToken;
     private boolean mHadIrises;
-    private boolean mWaitingForFaceEnroll;
 
     private PreferenceCategory mManage;
     private Preference mRemove, mRegister;
@@ -93,16 +100,23 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
         }
         getActivity().setTitle(pageTitle(mContext));
         if (savedInstanceState != null) return;
+        // Irises left over from before the screen lock was removed are not registered.
+        IrisLockMenu.clearIfInsecure(mContext, mUserId);
+        refresh();
         // Like stock Settings: confirm the screen lock first, register at once if nothing
         // is enrolled. Coming from Screen lock and biometrics the PIN was just entered.
         boolean enroll = mIntelligentScan
                 ? (enrolled().isEmpty() || !hasEnrolledFace())
                 : enrolled().isEmpty();
-        long lent = args != null ? args.getLong("gk_pw_handle", 0) : 0;
+        long lent = args != null ? args.getLong(EXTRA_GK_PW_HANDLE, 0) : 0;
         if (lent != 0) {
             mGkHandle = lent;
             mBorrowedHandle = true;
             if (enroll) startRequestedEnroll(false);
+        } else if (enroll && mIntelligentScan && !hasEnrolledFace()) {
+            // Stock face flow: it sets a backup lock if there is none, or confirms the
+            // existing one, and hands the gatekeeper handle back for the iris step.
+            startFaceEnroll();
         } else {
             mEnrollAfterConfirm = enroll;
             if (!confirmCredential()) finish();
@@ -206,19 +220,6 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
 
     @Override public void onResume() {
         super.onResume();
-        if (mWaitingForFaceEnroll) {
-            mWaitingForFaceEnroll = false;
-            if (hasEnrolledFace()) {
-                setFaceUnlockEnabled(true);
-                if (enrolled().isEmpty()) {
-                    startEnroll(false);
-                    return;
-                }
-                enableIntelligentScanDefaults();
-            } else {
-                leaveIfNothingEnrolled();
-            }
-        }
         refresh();
     }
 
@@ -295,8 +296,9 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     private boolean confirmCredential() {
         int type = invokeInt(mLockUtils, "getCredentialTypeForUser", mUserId, CREDENTIAL_TYPE_NONE);
         if (type == CREDENTIAL_TYPE_NONE) {
-            startActivity(new Intent("android.app.action.SET_NEW_PASSWORD"));
-            return false;
+            // No screen lock yet: set one first and continue with its handle, as stock
+            // does for face and fingerprints (SET_NEW_PASSWORD lost the registration).
+            return chooseLock();
         }
         String cls = type == CREDENTIAL_TYPE_PATTERN
                 ? "com.android.settings.password.ConfirmLockPattern$InternalActivity"
@@ -318,6 +320,43 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
             Log.e(TAG, "cannot confirm credential", t);
             return false;
         }
+    }
+
+    private boolean chooseLock() {
+        for (String cls : new String[]{BIO_CHOOSE_LOCK, CHOOSE_LOCK}) {
+            Intent i = new Intent().setClassName(mContext.getPackageName(), cls);
+            // Same extras as the stock face flow (FaceLockSettings.launchChooseLock).
+            i.putExtra("request_gk_pw_handle", true);
+            i.putExtra("hide_insecure_options", true);
+            i.putExtra("for_biometrics", true);
+            i.putExtra("set_biometric_lock", true);
+            i.putExtra("requested_min_complexity", 0);
+            i.putExtra("android.intent.extra.USER_ID", mUserId);
+            try {
+                startActivityForResult(i, REQUEST_CHOOSE_LOCK);
+                return true;
+            } catch (Throwable t) {
+                Log.w(TAG, "cannot open " + cls, t);
+            }
+        }
+        return false;
+    }
+
+    private boolean isSecure() {
+        try {
+            return (Boolean) mLockUtils.getClass().getMethod("isSecure", int.class).invoke(mLockUtils, mUserId);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** Takes over a gatekeeper handle created for this page (it is released in onDestroy). */
+    private void adoptHandle(Intent data) {
+        long h = data != null ? data.getLongExtra(EXTRA_GK_PW_HANDLE, 0) : 0;
+        if (h == 0 || h == mGkHandle) return;
+        releaseHandle();
+        mGkHandle = h;
+        mBorrowedHandle = false;
     }
 
     private void releaseHandle() {
@@ -342,29 +381,38 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
         }
     }
 
+    /**
+     * FaceLockSettings is an Activity on One UI 8 (it was opened as a SubSettings fragment,
+     * which never showed). With the "lock_screen_face" stage it is exactly what Screen lock
+     * and biometrics runs for "Face recognition": backup lock if needed, PIN confirmation
+     * when no handle is given, disclaimer, registration. It keeps a handle it did not
+     * create and returns the one it obtained, so the iris step needs no second PIN.
+     */
     private void startFaceEnroll() {
-        if (mGkHandle == 0) {
-            mEnrollAfterConfirm = true;
-            confirmCredential();
-            return;
-        }
         try {
-            Bundle pageArgs = new Bundle();
-            pageArgs.putLong("gk_pw_handle", mGkHandle);
-            pageArgs.putInt("android.intent.extra.USER_ID", mUserId);
-            String subSettings = "com.android.settings.SubSettings";
-            String faceFrag = "com.samsung.android.settings.biometrics.face.FaceLockSettings";
-            Intent i = new Intent().setClassName(mContext.getPackageName(), subSettings);
-            i.putExtra(":settings:show_fragment", faceFrag);
-            i.putExtra(":settings:show_fragment_args", pageArgs);
-            i.putExtra("gk_pw_handle", mGkHandle);
+            Intent i = new Intent().setClassName(mContext.getPackageName(), FACE_LOCK_SETTINGS);
+            i.putExtra("previousStage", FACE_STAGE);
             i.putExtra("android.intent.extra.USER_ID", mUserId);
-            mWaitingForFaceEnroll = true;
+            i.putExtra("requested_min_complexity", 0);
+            if (mGkHandle != 0) i.putExtra(EXTRA_GK_PW_HANDLE, mGkHandle);
             startActivityForResult(i, REQUEST_FACE_ENROLL);
         } catch (Throwable t) {
             Log.e(TAG, "cannot launch face enrollment", t);
-            mWaitingForFaceEnroll = false;
             startEnroll(false);
+        }
+    }
+
+    private void onFaceEnrollResult(Intent data) {
+        adoptHandle(data);
+        if (!hasEnrolledFace()) {
+            leaveIfNothingEnrolled();
+            return;
+        }
+        setFaceUnlockEnabled(true);
+        if (enrolled().isEmpty()) {
+            startEnroll(false);
+        } else {
+            enableIntelligentScanDefaults();
         }
     }
 
@@ -448,11 +496,29 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
                 return;
             }
             releaseHandle();
-            mGkHandle = data.getLongExtra("gk_pw_handle", 0);
+            mGkHandle = data.getLongExtra(EXTRA_GK_PW_HANDLE, 0);
             if (mEnrollAfterConfirm) {
                 mEnrollAfterConfirm = false;
                 startRequestedEnroll(false);
             }
+        } else if (request == REQUEST_CHOOSE_LOCK) {
+            adoptHandle(data);
+            if (mGkHandle != 0) {
+                if (mEnrollAfterConfirm) {
+                    mEnrollAfterConfirm = false;
+                    startRequestedEnroll(false);
+                }
+            } else if (isSecure()) {
+                // A lock was set but no handle came back: confirm it once.
+                if (!confirmCredential()) finish();
+            } else {
+                Log.i(TAG, "no screen lock set (" + result + ")");
+                finish();
+                return;
+            }
+        } else if (request == REQUEST_FACE_ENROLL) {
+            Log.i(TAG, "face enroll result " + result);
+            onFaceEnrollResult(data);
         } else if (request == REQUEST_ENROLL) {
             Log.i(TAG, "enroll result " + result);
             setSystemProperty(BOOST_PROP, "0");
@@ -473,7 +539,9 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
             if (!enrolled().isEmpty()) {
                 if (mIntelligentScan) {
                     enableIntelligentScanDefaults();
-                } else if (Settings.Secure.getInt(mContext.getContentResolver(), KEY_UNLOCK, -1) == -1) {
+                } else {
+                    // A new registration turns iris unlock on, like stock. Removal sets it
+                    // to 0, so "only when unset" left it off after registering again.
                     Settings.Secure.putInt(mContext.getContentResolver(), KEY_UNLOCK, 1);
                 }
             }

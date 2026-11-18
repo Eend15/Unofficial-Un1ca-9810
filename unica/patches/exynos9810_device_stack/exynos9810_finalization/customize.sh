@@ -4437,6 +4437,12 @@ if '"swipe_enroll"' in text:
 F = "Lcom/android/server/biometrics/SemBiometricFeature;"
 SFF = "Lcom/samsung/android/feature/SemFloatingFeature;"
 old = f"    sput-boolean v3, {F}->FP_FEATURE_SWIPE_ENROLL:Z\n"
+# product_feature already forces the flag to true (v2 = 0x1) when
+# TARGET_FINGERPRINT_CONFIG_SENSOR contains swipe_enroll.
+forced = f"    sput-boolean v2, {F}->FP_FEATURE_SWIPE_ENROLL:Z\n"
+if text.count(old) == 0 and text.count(forced) == 1 and "const/4 v2, 0x1" in text:
+    print("FP_FEATURE_SWIPE_ENROLL already enabled by product_feature")
+    raise SystemExit(0)
 if text.count(old) != 1 or "const/4 v3, 0x0" not in text:
     raise SystemExit("SemBiometricFeature: FP_FEATURE_SWIPE_ENROLL store not found")
 new = f"""    invoke-static {{}}, {SFF}->getInstance(){SFF}

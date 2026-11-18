@@ -50,7 +50,10 @@ BUILD()
 
     LOG "- Building ${INPUT_FILE//$WORK_DIR/}"
 
-    # Copy original META-INF
+    # Copy original META-INF. Start from a clean build/dist: after an interrupted build
+    # build/apk/META-INF already exists and cp would nest the stock signature in
+    # META-INF/META-INF, which the runtime JarVerifier rejects (crash loop at boot).
+    rm -rf "$OUTPUT_PATH/build" "$OUTPUT_PATH/dist"
     mkdir -p "$OUTPUT_PATH/build/apk"
     cp -a "$OUTPUT_PATH/original/META-INF" "$OUTPUT_PATH/build/apk/META-INF"
 

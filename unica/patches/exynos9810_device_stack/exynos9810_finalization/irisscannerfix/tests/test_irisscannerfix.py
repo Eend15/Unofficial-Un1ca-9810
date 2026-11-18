@@ -133,6 +133,51 @@ class SystemUiTest(unittest.TestCase):
         self.assertTrue((d / "smali_classes5/com/android/keyguard/Un1caIrisKeyguard.smali").is_file())
 
 
+CLG = """.method public onResume()V
+    .locals 3
+    invoke-super {p0}, Lcom/android/settings/SettingsPreferenceFragment;->onResume()V
+    iget-object v0, p0, Lx;->mLockTypePolicy:Lx;
+    if-nez v0, :cond_2
+    :cond_1
+    return-void
+    :cond_2
+    return-void
+.end method
+.method public updatePreferencesOrFinish(Z)V
+    .locals 2
+    invoke-virtual {v0, v1}, Lcom/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment;->updateBiometricsMenuPreference(Ljava/lang/String;)V
+    invoke-virtual {v0, v1}, Lcom/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment;->updateBiometricsMenuPreference(Ljava/lang/String;)V
+    invoke-virtual {v0, v1}, Lcom/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment;->updateBiometricsMenuPreference(Ljava/lang/String;)V
+    return-void
+.end method
+"""
+
+
+class SecSettingsTest(unittest.TestCase):
+    def test_update_and_resume_hooks(self):
+        d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, d)
+        frag = d / "smali" / settings.FRAGMENT
+        frag.parent.mkdir(parents=True)
+        frag.write_text(CLG)
+        settings.main(d, FIX / "settings" / "smali")
+        settings.main(d, FIX / "settings" / "smali")
+        out = frag.read_text()
+        self.assertEqual(out.count("IrisLockMenu;->update(Ljava/lang/Object;)V"), 1)
+        self.assertEqual(out.count("IrisLockMenu;->onResume(Ljava/lang/Object;)V"), 1)
+        resume = out[out.index(".method public onResume"):out.index(".end method")]
+        # At the normal exit (last :cond_ block), with p0 still the fragment.
+        self.assertIn(":cond_2\n    invoke-static {p0}, Lcom/samsung/android/settings/un1ca/IrisLockMenu;->onResume",
+                      resume)
+        self.assertTrue((d / "smali_classes2/com/samsung/android/settings/un1ca/IrisLockMenu.smali").is_file())
+
+    def test_refuses_resume_that_reassigns_p0(self):
+        bad = CLG.replace("iget-object v0, p0, Lx;->mLockTypePolicy:Lx;",
+                          "iget-object p0, p0, Lx;->mLockTypePolicy:Lx;")
+        with self.assertRaises(ValueError):
+            settings.patch_resume(bad)
+
+
 class PrebuiltSmaliTest(unittest.TestCase):
     def test_only_helper_classes_are_shipped(self):
         allowed = {"secirisservice": ("com/samsung/android/server/iris/Un1caIrisGrace",

@@ -9,10 +9,15 @@ UPDATE = re.compile(
     r"    invoke-virtual \{(v\d+), v\d+\}, Lcom/android/settings/password/ChooseLockGeneric\$ChooseLockGenericFragment;"
     r"->updateBiometricsMenuPreference\(Ljava/lang/String;\)V\n")
 HOOK = "Lcom/samsung/android/settings/un1ca/IrisLockMenu;->update(Ljava/lang/Object;)V"
+P0_WRITE = re.compile(
+    r"^\s+(?:move|iget|sget|aget|const|new-instance|new-array|check-cast|instance-of|array-length"
+    r"|neg|not|add|sub|mul|div|rem|and|or|xor|shl|shr|ushr|int-to|long-to|float-to|double-to)"
+    r"[\w/-]* p0,", re.M)
+RESUME_HOOK ="Lcom/samsung/android/settings/un1ca/IrisLockMenu;->onResume(Ljava/lang/Object;)V"
 HELPER = "com/samsung/android/settings/un1ca/IrisLockMenu.smali"
 
 
-def patch(text: str) -> str:
+def patch_update(text: str) -> str:
     if HOOK in text:
         return text
     start = text.index(".method public updatePreferencesOrFinish(Z)V")
@@ -24,6 +29,30 @@ def patch(text: str) -> str:
     last = calls[-1]
     call = f"\n    invoke-static {{{last.group(1)}}}, {HOOK}\n"
     return text[:last.end()] + call + text[last.end():]
+
+
+def patch_resume(text: str) -> str:
+    # Stock refreshes the biometrics menus only in onCreate/onActivityResult; the iris
+    # page is a plain startActivity, so refresh them when the lock page comes back.
+    if RESUME_HOOK in text:
+        return text
+    start = text.index(".method public onResume()V")
+    end = text.index("\n.end method", start)
+    body = text[start:end]
+    # p0 must still be the fragment at the exit: no instruction may write to it.
+    if P0_WRITE.search(body):
+        raise ValueError("onResume reassigns p0")
+    tail = body.rindex("\n    :cond_")
+    ret = body.index("\n    return-void", tail)
+    if body[tail:ret].count("\n") != 1:
+        raise ValueError("unexpected onResume exit block")
+    pos = start + ret
+    call = f"\n    invoke-static {{p0}}, {RESUME_HOOK}\n"
+    return text[:pos] + call + text[pos:]
+
+
+def patch(text: str) -> str:
+    return patch_resume(patch_update(text))
 
 
 def main(root: Path, helper_smali_root: Path):
@@ -46,7 +75,8 @@ def main(root: Path, helper_smali_root: Path):
         n = max([1] + [int(p[len("smali_classes"):]) for p in existing]) + 1
         # Copy the whole package: D8 emits synthetic lambda classes next to the helper.
         shutil.copytree(helper_smali_root / pkg, root / f"smali_classes{n}" / pkg)
-    print("SecSettings: Intelligent Scan and Irises entries hooked into Screen lock and biometrics")
+    print("SecSettings: Intelligent Scan and Irises entries hooked into Screen lock and biometrics"
+          " (refreshed on resume)")
 
 
 if __name__ == "__main__":

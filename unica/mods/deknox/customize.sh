@@ -98,7 +98,7 @@ SOURCE_FILE_ATTR="${SOURCE_FILE_ATTR//\"/\\\"}"
 SOURCE_FILE_ATTR="${SOURCE_FILE_ATTR//\//\\\/}"
 LOG "- Replacing SourceFile attribute in /system/system/framework/services.jar"
 find "$APKTOOL_DIR/system/framework/services.jar" -type f -name "*.smali" -print0 \
-    | xargs -0 -I "{}" -P "$(nproc)" sed -i "s/^\.source.*/\.source \"SourceFile\"/g" "{}"
+    | xargs -0 -I "{}" -P "${UN1CA_DEKNOX_JOBS:-4}" sed -i "s/^\.source.*/\.source \"SourceFile\"/g" "{}"
 if [[ "$SOURCE_PRODUCT_SHIPPING_API_LEVEL" != "$TARGET_PRODUCT_SHIPPING_API_LEVEL" ]]; then
     SMALI_PATCH "system" "system/framework/services.jar" \
         "smali/com/android/server/knox/dar/ddar/ta/TAProxy.smali" "replace" \
@@ -350,6 +350,6 @@ fi
 
 LOG "- Restoring original SourceFile attribute in /system/system/framework/services.jar"
 find "$APKTOOL_DIR/system/framework/services.jar" -type f -name "*.smali" -print0 \
-    | xargs -0 -I "{}" -P "$(nproc)" sed -i "s/^\.source.*/$SOURCE_FILE_ATTR/g" "{}"
+    | xargs -0 -I "{}" -P "${UN1CA_DEKNOX_JOBS:-4}" sed -i "s/^\.source.*/$SOURCE_FILE_ATTR/g" "{}"
 
 unset SOURCE_FILE_ATTR

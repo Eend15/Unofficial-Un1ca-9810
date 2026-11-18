@@ -1995,20 +1995,11 @@ _EXYNOS9810_VERIFY_SECURITY_STACK()
         }
     done
 
-    for REQUIRED in \
-        "bin/hw/android.hardware.keymaster@4.0-service" \
-        "etc/init/android.hardware.keymaster@4.0-service.rc" \
-        "lib64/libskeymaster4device.so" \
-        "bin/cass" \
-        "bin/vaultkeeperd" \
-        "bin/vendor.samsung.hardware.security.vaultkeeper@2.0-service" \
-        "etc/init/cass.rc" \
-        "etc/init/vaultkeeper_common.rc"; do
-        if [ -e "$WORK_DIR/vendor/$REQUIRED" ]; then
-            LOGE "Incompatible security component remains: /vendor/$REQUIRED"
-            return 1
-        fi
-    done
+    # KM4/CASS/VaultKeeper leftovers (e.g. libskeymaster4device.so from the
+    # HXA3 vendor core) are removed by exynos9810_boot_restore
+    # (_EXYNOS9810_APPLY_FINAL_SECURITY_STACK) and their absence is enforced
+    # there by _EXYNOS9810_VERIFY_FINAL_SECURITY_STACK. Checking it here fails
+    # clean builds because of module ordering.
 
     for REQUIRED in \
         '<version>3.0</version>' \

@@ -50,6 +50,16 @@ vendor; the build stops if they are missing.
   page, so it has the same One UI 8 cards, switches and animations. Cards:
   remove/register, iris unlock / screen-on scan / stay on lock screen, tips.
   The PIN entered for Screen lock and biometrics is reused (gatekeeper handle).
+  Without a screen lock the page first opens the biometrics lock chooser
+  (`BiometricsChooseLockGeneric`) and continues with the handle it returns;
+  Intelligent Scan registers face through the stock `FaceLockSettings`
+  activity (stage `lock_screen_face`, which also sets the backup lock), then
+  irises with the same handle.
+* Removing the screen lock removes face and fingerprints but not irises;
+  `IrisLockMenu.clearIfInsecure` removes them (and turns iris unlock off)
+  when Screen lock and biometrics or the iris page opens without a secure lock.
+  The lock page also refreshes the biometrics entries in `onResume`, since the
+  iris page is not started for a result.
 * `Un1caIrisKeyguard` scans on swipe (or at screen on), in short fresh attempts
   (3 × 3.5 s): the iris engine rarely recovers once its exposure has drifted.
   A TEE-verified match is reported as `BiometricSourceType.IRIS`, a weak
