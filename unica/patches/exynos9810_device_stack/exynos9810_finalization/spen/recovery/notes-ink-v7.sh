@@ -37,7 +37,7 @@ for candidate in /system_root/system /system/system /system; do
     fi
 done
 [ -n "$SYSTEM" ] || die 'Mount System in TWRP first; no compatible Android system found'
-case "$(prop ro.unica.version "$SYSTEM/build.prop")" in 1.4*|1.5*) ;; *) die 'This patch requires the UN1CA 1.4/1.5 Note9 test ROM';; esac
+case "$(prop ro.unica.version "$SYSTEM/build.prop")" in 1.4*|1.5*|1.6*) ;; *) die 'This patch requires the UN1CA 1.4/1.5/1.6 Note9 test ROM';; esac
 [ "$(prop ro.build.version.sdk "$SYSTEM/build.prop")" = 36 ] || die 'Android 16 system required'
 [ "$(prop ro.build.version.incremental "$SYSTEM/build.prop")" = S901BXXSOGZH3 ] || die 'Different base firmware; refusing to replace AirCommand'
 # Require a real EXT4 mount containing SYSTEM, not a writable recovery tmpfs.
