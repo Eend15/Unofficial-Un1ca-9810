@@ -22,6 +22,21 @@ is_data_app()
 
 setup_adb_dir()
 {
+    if [ -d /cache ]; then
+        mkdir -p /cache/metadata/ksu
+        chmod 0771 /cache/metadata
+        chown 0:1000 /cache/metadata
+        chmod 0755 /cache/metadata/ksu
+        chown 0:0 /cache/metadata/ksu
+        if ! grep -q ' /metadata ' /proc/mounts 2>/dev/null; then
+            mkdir -p /metadata
+            mount none /cache/metadata /metadata bind 2>/dev/null || true
+        fi
+        mkdir -p /metadata/ksu
+        chmod 0755 /metadata/ksu
+        chown 0:0 /metadata/ksu
+    fi
+
     mkdir -p /data/adb
     chmod 0700 /data/adb
     chown 0:0 /data/adb

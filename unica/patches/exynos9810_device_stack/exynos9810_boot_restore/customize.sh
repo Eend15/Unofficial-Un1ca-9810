@@ -253,10 +253,8 @@ _EXYNOS9810_RESTORE_VENDOR_BASELINE()
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/build.prop" 0 0 644 "u:object_r:vendor_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fstab.samsungexynos9810" 0 0 644 "u:object_r:vendor_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fstab.exynos9810" 0 0 644 "u:object_r:vendor_configs_file:s0"
-    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/hw" 0 0 755 "u:object_r:vendor_configs_file:s0"
-    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/hw/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/vintf/manifest/android.hardware.health@2.1-samsung.xml" 0 0 644 "u:object_r:vendor_configs_file:s0"
-    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_file:s0"
+    _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/android.hardware.keymaster@3.0-service.rc" 0 0 644 "u:object_r:vendor_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/vendor.samsung.hardware.camera.provider@4.0-service.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/init/unica_exynos9810_trace.rc" 0 0 644 "u:object_r:vendor_file:s0"
@@ -265,12 +263,9 @@ _EXYNOS9810_RESTORE_VENDOR_BASELINE()
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fs_config_dirs" 0 0 444 "u:object_r:vendor_file:s0"
     _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/etc/fs_config_files" 0 0 444 "u:object_r:vendor_file:s0"
 
-    if [ -f "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" ] && \
-       [ ! -f "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc" ]; then
-        mkdir -p "$WORK_DIR/vendor/etc/init/hw"
-        cp -pf "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" \
-            "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"
-    fi
+    # Keep only vendor/etc/init/init.samsungexynos9810.rc so init does not parse
+    # both init/ and init/hw/ and execute every vendor action/mount twice.
+    rm -f "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"
 }
 
 _EXYNOS9810_APPLY_TARGET_VENDOR_DELTA()
@@ -428,24 +423,45 @@ _EXYNOS9810_APPLY_TARGET_VENDOR_IDENTITY()
         [ -f "$FILE" ] || continue
 
         _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.brand" "samsung"
-        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.device" "$TARGET_CODENAME"
         _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.manufacturer" "samsung"
-        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.model" "$MODEL"
-        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.name" "$NAME"
-        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.fingerprint" "$FINGERPRINT"
-        _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "$STOCK_INCREMENTAL"
+        if [ "${EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY:-true}" = "true" ]; then
+            if [ "$PREFIX" = "odm" ]; then
+                _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.device" "r0s"
+                _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.model" "SM-S901B"
+                _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.name" "r0sxxx"
+                _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.fingerprint" "samsung/r0sxxx/r0s:12/SP1A.210812.016/S901BXXSOGZH3:user/release-keys"
+                _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "S901BXXSOGZH3"
+            else
+                _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.device" "r7"
+                _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.model" "SM-N770F"
+                _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.name" "r7naxx"
+                _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.fingerprint" "samsung/r0sxxx/essi:16/BP2A.250605.031.A3/S901BXXSOGZH3:user/release-keys"
+                _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "N770FXXS8GVI2"
+            fi
+        else
+            _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.device" "$TARGET_CODENAME"
+            _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.model" "$MODEL"
+            _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.product.$PREFIX.name" "$NAME"
+            _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.fingerprint" "$FINGERPRINT"
+            _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "$STOCK_INCREMENTAL"
+        fi
         _EXYNOS9810_SET_BUILD_PROP "$FILE" "ro.factory.model" "$MODEL"
     done
 
     # Keep the Note10 Lite Android 13/VNDK33 contract that makes this vendor
     # boot against the One UI 8 system. Only the physical-device identity and
     # original shipping API differ between S9/S9+/Note9.
-    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.product.first_api_level" "$FIRST_API"
-    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.first_api_level" "$FIRST_API"
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.version.sdk" "33"
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vndk.version" "33"
-    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.api_level" "33"
-    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.api_level" "33"
+    if [ "${EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY:-true}" = "true" ]; then
+        _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.product.first_api_level" "29"
+        sed -i '/^ro\.board\.first_api_level=/d; /^ro\.vendor\.api_level=/d; /^ro\.board\.api_level=/d' "$WORK_DIR/vendor/build.prop" 2>/dev/null || true
+    else
+        _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.product.first_api_level" "$FIRST_API"
+        _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.first_api_level" "$FIRST_API"
+        _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.api_level" "33"
+        _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.api_level" "33"
+    fi
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.product.board" "exynos9810"
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.hardware.gralloc" "exynos9810"
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.board.platform" "universal9810"
@@ -593,9 +609,13 @@ _EXYNOS9810_PATCH_FINAL_VENDOR_BOOT_COMPAT()
 
     LOG "- Applying final Exynos9810 vendor boot compat"
 
-    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.security_patch" "2026-05-05"
+    if [ "${EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY:-true}" = "true" ]; then
+        _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.security_patch" "2023-07-01"
+    else
+        _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.security_patch" "2026-05-05"
+    fi
     _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.hardware.keystore" "mdfpp"
-    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.security.keystore.keytype" "sak"
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "ro.security.keystore.keytype" "gak"
     sed -i '/^ro.hardware.keystore_desede=/d' "$WORK_DIR/vendor/build.prop" 2> /dev/null || true
 
     # Keep the donor's single, internally consistent LMKD/DHA profile. Do not
@@ -755,6 +775,13 @@ _EXYNOS9810_APPLY_SUPPLEMENTARY_SEPOLICY()
 (allow system_app system_suspend_control_internal_service (service_manager (find)))
 (allow system_app logpersistd_logging_prop (property_service (set)))
 (allow hal_audio_default hal_system_suspend_service (service_manager (find)))
+(allow hal_keymaster_default sec_poc_file (dir (ioctl read getattr lock open watch watch_reads search)))
+(allow hal_keymaster_default sec_poc_file (file (ioctl read getattr lock map open watch watch_reads)))
+(allow hal_keymaster_default sec_poc_file (lnk_file (ioctl read getattr lock map open watch watch_reads)))
+(allow hal_keymaster_default keymaster_efs_file (dir (ioctl read getattr lock open watch watch_reads search)))
+(allow hal_keymaster_default keymaster_efs_file (file (ioctl read getattr lock map open watch watch_reads)))
+(allow mobicore sec_poc_file (dir (ioctl read write create getattr setattr lock rename open watch watch_reads add_name remove_name reparent search rmdir)))
+(allow mobicore sec_poc_file (file (ioctl read write create getattr setattr lock append map unlink rename open watch watch_reads)))
 "
 
     if [ ! -f "$CIL" ]; then
@@ -1436,6 +1463,19 @@ for old, new in replacements:
     # work.dir is intentionally reusable; collapse stale repeated options
     # before adding the required Android 16 encryption flag.
     text = re.sub(r"(?m)^" + re.escape(old) + r"(?:\s+encryption=Require)*\s*$", new, text)
+
+# Ensure /metadata bind mount is present once after --late (since vendor baseline
+# restore overwrites init.samsungexynos9810.rc).
+text = re.sub(r"\n    # UN1CA Exynos9810 metadata bind mount.*?restorecon_recursive /metadata(?:/ksu)?\n", "\n", text, flags=re.S)
+metadata_block = (
+    "\n    # UN1CA Exynos9810 metadata bind mount for devices without a metadata partition.\n"
+    "    mkdir /cache/metadata 0771 root system\n"
+    "    mount none /cache/metadata /metadata bind\n"
+    "    restorecon_recursive /metadata\n"
+    "    mkdir /metadata/ksu 0755 root root\n"
+    "    restorecon_recursive /metadata/ksu\n"
+)
+text = re.sub(r"(?m)^(    mount_all [^\n]*--late\s*)$", r"\1" + metadata_block.rstrip("\n"), text, count=1)
 path.write_text(text)
 PY
         _EXYNOS9810_SET_METADATA_SAFE "vendor"             "vendor/etc/init/$(basename "$RC")"             0 0 644 "u:object_r:vendor_configs_file:s0"
@@ -1567,6 +1607,55 @@ _EXYNOS9810_FIX_SYSTEM_PERMISSION_CASE()
     sed -i 's|/system/etc/Permissions|/system/etc/permissions|g' "$WORK_DIR/configs/file_context-system"
 }
 
+_EXYNOS9810_ALIGN_TRUSTONIC_REGISTRY()
+{
+    # The Keymaster 3.0 HAL opens its TEE session through mcDriverDaemon, so the
+    # secure-driver set the daemon registers at start must suit this TEE.
+    #  - Drop registry entries that the target's stock firmware never shipped.
+    #  - Drop the embedded ...0000000a / ...00000062 secure drivers: they are not
+    #    the stock builds, and a mismatched driver registered with -r at daemon
+    #    start leaves Keymaster sessions failing ("client_get_session: session 0
+    #    not found"). The enforcing KM 3.0 reference stack runs without both.
+    #  - Only register (-r) files that are actually present.
+    local TARGET_FW STOCK_REG REG RC F ARG
+    TARGET_FW="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+    STOCK_REG="$FW_DIR/$TARGET_FW/vendor/app/mcRegistry"
+    REG="$WORK_DIR/vendor/app/mcRegistry"
+
+    [ -d "$STOCK_REG" ] || {
+        LOGE "Stock Trustonic registry is missing: $STOCK_REG"
+        return 1
+    }
+    [ -f "$REG/ffffffff00000000000000000000003e.tlbin" ] || {
+        LOGE "Keymaster trustlet is missing: /vendor/app/mcRegistry/ffffffff00000000000000000000003e.tlbin"
+        return 1
+    }
+
+    LOG "- Aligning the Trustonic registry with the stock $TARGET_FW firmware"
+    for F in "$REG"/*; do
+        [ -f "$F" ] || continue
+        case "${F##*/}" in
+            ffffffffd0000000000000000000000a.tlbin|ffffffffd00000000000000000000062.tlbin) ;;
+            *) [ -e "$STOCK_REG/${F##*/}" ] && continue ;;
+        esac
+        LOG "  - Dropping registry entry ${F##*/}"
+        rm -f "$F"
+        _EXYNOS9810_DELETE_METADATA "vendor" \
+            "vendor/app/mcRegistry/${F##*/}" "/vendor/app/mcRegistry/${F##*/}"
+    done
+
+    for RC in \
+        "$WORK_DIR/vendor/etc/init/mobicore.rc" \
+        "$WORK_DIR/vendor/etc/init/hw/mobicore.rc"; do
+        [ -f "$RC" ] || continue
+        for ARG in $(grep -o -- '-r /vendor/app/mcRegistry/[^ ]*' "$RC" | awk '{print $2}' | sort -u); do
+            [ -f "$WORK_DIR$ARG" ] && continue
+            LOG "  - Removing unavailable mcDriverDaemon registration ${ARG##*/}"
+            sed -i "s@[[:space:]]*-r ${ARG//./\\.}@@g" "$RC"
+        done
+    done
+}
+
 _EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
 {
     local MANIFEST="$WORK_DIR/vendor/etc/vintf/manifest.xml"
@@ -1592,8 +1681,20 @@ _EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
         _EXYNOS9810_DELETE_METADATA "vendor" "vendor/$ENTRY" "/vendor/$ENTRY"
     done
 
-    # Restore the hardware Trustonic Keymaster 3.0 stack
-    local KEYMASTER_REL KEYMASTER_SRC
+    # Restore the hardware Trustonic Keymaster 3.0 stack from the target's own
+    # stock firmware, as one ABI family:
+    #  - the Keymaster 3.0 HAL/TEE client from the stock vendor image;
+    #  - the AOSP keymaster core it links against from the stock VNDK-29 set.
+    # The 3.0 impl pulls in libsoftkeymasterdevice.so, which needs the VNDK-29
+    # libkeymaster_portable/messages/puresoft ABI. The donor vendor ships the
+    # newer S22 builds of those libraries; mixing them makes the HAL fail to
+    # dlopen ("cannot locate symbol keymaster::EcKeyFactory::CreateEmptyKey"),
+    # init restarts it forever, keystore2 never gets a Keymaster and boot hangs
+    # at "vdc keymaster earlyBootEnded" on the splash screen.
+    local KEYMASTER_REL KEYMASTER_SRC TARGET_FW STOCK_VENDOR STOCK_VNDK
+    TARGET_FW="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+    STOCK_VENDOR="$FW_DIR/$TARGET_FW/vendor"
+    STOCK_VNDK="$FW_DIR/$TARGET_FW/system/system"
     for KEYMASTER_REL in \
         "bin/hw/android.hardware.keymaster@3.0-service" \
         "etc/init/android.hardware.keymaster@3.0-service.rc" \
@@ -1605,14 +1706,28 @@ _EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
         "lib64/libkeymaster3device.so" \
         "lib64/libkeymaster_helper_vendor.so" \
         "lib64/libskeymaster3device.so" \
-        "lib64/libsoftkeymasterdevice.so"; do
-        KEYMASTER_SRC="$EXYNOS9810_LEGACY_KEYMASTER_VENDOR_DIR/$KEYMASTER_REL"
+        "lib/libkeymaster_portable.so:vndk" \
+        "lib/libkeymaster_messages.so:vndk" \
+        "lib/libpuresoftkeymasterdevice.so:vndk" \
+        "lib/libsoftkeymasterdevice.so:vndk" \
+        "lib/android.hardware.keymaster@3.0.so:vndk" \
+        "lib64/libkeymaster_portable.so:vndk" \
+        "lib64/libkeymaster_messages.so:vndk" \
+        "lib64/libpuresoftkeymasterdevice.so:vndk" \
+        "lib64/libsoftkeymasterdevice.so:vndk" \
+        "lib64/android.hardware.keymaster@3.0.so:vndk"; do
+        if [[ "$KEYMASTER_REL" == *":vndk" ]]; then
+            KEYMASTER_REL="${KEYMASTER_REL%:vndk}"
+            KEYMASTER_SRC="$STOCK_VNDK/${KEYMASTER_REL%%/*}/vndk-29/${KEYMASTER_REL#*/}"
+        else
+            KEYMASTER_SRC="$STOCK_VENDOR/$KEYMASTER_REL"
+        fi
         [ -f "$KEYMASTER_SRC" ] || {
-            LOGE "Embedded Exynos9810 Keymaster component is missing: $KEYMASTER_SRC"
+            LOGE "Stock Exynos9810 Keymaster component is missing: $KEYMASTER_SRC"
             return 1
         }
         mkdir -p "$(dirname "$WORK_DIR/vendor/$KEYMASTER_REL")"
-        cp -pf "$KEYMASTER_SRC" "$WORK_DIR/vendor/$KEYMASTER_REL" || return 1
+        cp -f "$KEYMASTER_SRC" "$WORK_DIR/vendor/$KEYMASTER_REL" || return 1
         _EXYNOS9810_SET_METADATA_SAFE "vendor" "vendor/$KEYMASTER_REL" \
             0 0 644 "u:object_r:vendor_file:s0"
     done
@@ -1635,6 +1750,8 @@ _EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
             }
         ' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
     fi
+
+    _EXYNOS9810_ALIGN_TRUSTONIC_REGISTRY || return 1
 
     if [ -f "$MANIFEST" ]; then
         sed -i '/<name>android.hardware.keymaster<\/name>/,/<\/hal>/ {
@@ -1706,6 +1823,41 @@ _EXYNOS9810_VERIFY_FINAL_SECURITY_STACK()
             LOGE "Final vendor manifest must not declare software Keymaster: $ENTRY"
             return 1
         fi
+    done
+
+    # libsoftkeymasterdevice.so (VNDK-29) must find its keymaster core ABI.
+    if ! grep -qaF '_ZNK9keymaster12EcKeyFactory14CreateEmptyKeyEONS_16AuthorizationSetES2_PNS_9UniquePtrINS_13AsymmetricKeyENS_13DefaultDeleteIS4_EEEE' \
+            "$WORK_DIR/vendor/lib64/libkeymaster_portable.so"; then
+        LOGE "vendor libkeymaster_portable.so does not match the Keymaster 3.0 (VNDK-29) ABI"
+        return 1
+    fi
+    for ENTRY in libkeymaster_portable.so libkeymaster_messages.so libpuresoftkeymasterdevice.so \
+            libsoftkeymasterdevice.so android.hardware.keymaster@3.0.so; do
+        cmp -s "$WORK_DIR/vendor/lib64/$ENTRY" \
+            "$FW_DIR/$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")/system/system/lib64/vndk-29/$ENTRY" || {
+            LOGE "vendor/lib64/$ENTRY is not the stock VNDK-29 build the Keymaster 3.0 HAL needs"
+            return 1
+        }
+    done
+
+    if [ -e "$WORK_DIR/vendor/app/mcRegistry/ffffffffd0000000000000000000000a.tlbin" ]; then
+        LOGE "Mismatched Trustonic secure driver remains: ...0000000a.tlbin"
+        return 1
+    fi
+    for ENTRY in $(grep -ho -- '-r /vendor/app/mcRegistry/[^ ]*' \
+            "$WORK_DIR"/vendor/etc/init/mobicore.rc 2>/dev/null | awk '{print $2}'); do
+        [ -f "$WORK_DIR$ENTRY" ] || {
+            LOGE "mobicore.rc registers a missing trustlet: $ENTRY"
+            return 1
+        }
+    done
+    for ENTRY in \
+        '(allow hal_keymaster_default sec_poc_file (file ' \
+        '(allow mobicore sec_poc_file (dir '; do
+        grep -qF "$ENTRY" "$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil" || {
+            LOGE "Keymaster 3.0 SELinux rule is missing from vendor policy: $ENTRY"
+            return 1
+        }
     done
 }
 

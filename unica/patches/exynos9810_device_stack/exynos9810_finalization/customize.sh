@@ -1302,21 +1302,45 @@ _EXYNOS9810_FINAL_ENSURE_TARGET_IDENTITY()
         [ -f "$FILE" ] || continue
 
         _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.brand" "samsung"
-        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.device" "$TARGET_CODENAME"
         _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.manufacturer" "samsung"
-        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.model" "$MODEL"
-        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.name" "$NAME"
-        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.$PREFIX.build.fingerprint" \
-            "samsung/$NAME/$TARGET_CODENAME:10/QP1A.190711.020/$STOCK_INCREMENTAL:user/release-keys"
-        _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "$STOCK_INCREMENTAL"
+        if [ "${EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY:-true}" = "true" ] && [ "$PREFIX" != "product" ]; then
+            if [ "$PREFIX" = "odm" ]; then
+                _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.device" "r0s"
+                _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.model" "SM-S901B"
+                _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.name" "r0sxxx"
+                _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.$PREFIX.build.fingerprint" \
+                    "samsung/r0sxxx/r0s:12/SP1A.210812.016/S901BXXSOGZH3:user/release-keys"
+                _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "S901BXXSOGZH3"
+            else
+                _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.device" "r7"
+                _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.model" "SM-N770F"
+                _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.name" "r7naxx"
+                _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.$PREFIX.build.fingerprint" \
+                    "samsung/r0sxxx/essi:16/BP2A.250605.031.A3/S901BXXSOGZH3:user/release-keys"
+                _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "N770FXXS8GVI2"
+            fi
+        else
+            _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.device" "$TARGET_CODENAME"
+            _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.model" "$MODEL"
+            _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.product.$PREFIX.name" "$NAME"
+            _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.$PREFIX.build.fingerprint" \
+                "samsung/$NAME/$TARGET_CODENAME:10/QP1A.190711.020/$STOCK_INCREMENTAL:user/release-keys"
+            _EXYNOS9810_FINAL_SET_PROP "$FILE" "ro.$PREFIX.build.version.incremental" "$STOCK_INCREMENTAL"
+        fi
     done
 
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.product.first_api_level" "$FIRST_API"
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.board.first_api_level" "$FIRST_API"
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.version.sdk" "33"
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.vndk.version" "33"
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.api_level" "33"
-    _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.board.api_level" "33"
+    if [ "${EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY:-true}" = "true" ]; then
+        _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.product.first_api_level" "29"
+        _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.build.security_patch" "2023-07-01"
+        sed -i '/^ro\.board\.first_api_level=/d; /^ro\.vendor\.api_level=/d; /^ro\.board\.api_level=/d' "$WORK_DIR/vendor/build.prop" 2>/dev/null || true
+    else
+        _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.product.first_api_level" "$FIRST_API"
+        _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.board.first_api_level" "$FIRST_API"
+        _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.vendor.api_level" "33"
+        _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.board.api_level" "33"
+    fi
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.product.board" "exynos9810"
     _EXYNOS9810_FINAL_SET_PROP "$WORK_DIR/vendor/build.prop" "ro.board.platform" "universal9810"
 }

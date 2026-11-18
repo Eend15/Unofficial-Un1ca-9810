@@ -8,7 +8,7 @@ EXYNOS9810_KEYMASTER4_DIR="$EXYNOS9810_PATCH_DIR/keymaster4/vendor"
 EXYNOS9810_PANEL_WAKE_RC="$EXYNOS9810_PATCH_DIR/panel/vendor/etc/init/exynos9810-panel-wake.rc"
 EXYNOS9810_USE_N770_HXA3_VENDOR="${EXYNOS9810_USE_N770_HXA3_VENDOR:-false}"
 EXYNOS9810_VENDOR_FIRMWARE="${EXYNOS9810_VENDOR_FIRMWARE:-SM-N770F_PHN}"
-EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY="${EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY:-false}"
+EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY="${EXYNOS9810_PRESERVE_N770_VENDOR_IDENTITY:-true}"
 EXYNOS9810_DISABLE_SETUP_WIZARDS="${EXYNOS9810_DISABLE_SETUP_WIZARDS:-false}"
 # Exynos9810 requires the legacy Samsung RIL bridge for SIM/IMEI/LTE. Keep it
 # enabled by default; callers can still explicitly set it to false for a
@@ -2241,7 +2241,7 @@ _EXYNOS9810_APPLY_LEGACY_VENDOR_COMPAT()
     _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "ro.incremental.enable" "yes"
     _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "ro.hardware.keystore" "mdfpp"
     _EXYNOS9810_DELETE_PROP_FILE "$WORK_DIR/vendor/build.prop" "ro.hardware.keystore_desede"
-    _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "ro.security.keystore.keytype" "sak"
+    _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "ro.security.keystore.keytype" "gak"
     _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "ro.zygote.disable_gl_preload" "true"
 }
 
@@ -4129,25 +4129,33 @@ EOF
 
 _EXYNOS9810_PATCH_EXYNOS9810_INIT_FS()
 {
-    local INIT_RC="$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc"
-
-    [ -f "$INIT_RC" ] || return 0
-
+    local RC
     LOG "- Patching Exynos9810 init fs flow"
 
-    # apexd (Google Play system updates), vold and bootstat need a writable /metadata;
-    # the DS-ACK kernel supports f2fs checkpoint=disable. Verified on S9+ (November13).
-    if [ "${EXYNOS9810_ENABLE_METADATA_BIND:-true}" = "true" ] && ! grep -q "UN1CA Exynos9810 metadata bind" "$INIT_RC"; then
-        sed -i '/mount_all \/vendor\/etc\/fstab\.${ro.hardware} --early/a\
+    # apexd (Google Play system updates), vold, ksud and modules need a writable /metadata;
+    # on Exynos9810 there is no dedicated metadata partition, so bind mount to /cache/metadata
+    # in late-fs right after /cache is mounted by mount_all ... --late.
+    for RC in "$WORK_DIR/vendor/etc/init/init.samsungexynos9810.rc" \
+              "$WORK_DIR/vendor/etc/init/hw/init.samsungexynos9810.rc"; do
+        [ -f "$RC" ] || continue
+
+        # Clean up any misplaced bind mount under "on fs"
+        sed -i '/# UN1CA Exynos9810 metadata bind mount/,/restorecon_recursive \/metadata/d' "$RC"
+
+        if [ "${EXYNOS9810_ENABLE_METADATA_BIND:-true}" = "true" ] && ! grep -q "UN1CA Exynos9810 metadata bind" "$RC"; then
+            sed -i '/mount_all .* --late/a\
 \
     # UN1CA Exynos9810 metadata bind mount for devices without a metadata partition.\
     mkdir /cache/metadata 0771 root system\
     mount none /cache/metadata /metadata bind\
-    restorecon_recursive /metadata' "$INIT_RC"
-    fi
+    restorecon_recursive /metadata\
+    mkdir /metadata/ksu 0755 root root\
+    restorecon_recursive /metadata/ksu' "$RC"
+        fi
 
-    _EXYNOS9810_SET_METADATA "vendor" "vendor/etc/init/init.samsungexynos9810.rc" \
-        "/vendor/etc/init/init.samsungexynos9810.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+        _EXYNOS9810_SET_METADATA "vendor" "${RC#$WORK_DIR/}" \
+            "/${RC#$WORK_DIR/}" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    done
 }
 
 _EXYNOS9810_WRITE_VENDOR_BOOT_TRACE()
@@ -4223,7 +4231,6 @@ _EXYNOS9810_VERIFY_EMBEDDED_VENDOR_BASELINE()
     for REL in \
         bin/cat \
         bin/getprop \
-        bin/hw/android.hardware.keymaster@3.0-service \
         bin/hw/android.hardware.sensors@1.0-service \
         bin/hw/gpsd \
         bin/mcDriverDaemon \
@@ -4367,9 +4374,11 @@ _EXYNOS9810_NORMALIZE_TRUSTONIC_SERVICE()
         return 1
     fi
 
+    # ...0000000a.tlbin is intentionally not required: the embedded copy is not
+    # the stock build, and exynos9810_boot_restore drops it (and its -r line)
+    # so the Trustonic Keymaster 3.0 stack can open its TEE sessions.
     for REL in \
         FFFFFFFF000000000000000000000001.drbin \
-        ffffffffd0000000000000000000000a.tlbin \
         ffffffffd00000000000000000000016.tlbin \
         ffffffffd00000000000000000000045.drbin; do
         [ -f "$WORK_DIR/vendor/app/mcRegistry/$REL" ] || {

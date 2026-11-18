@@ -25,9 +25,11 @@ def patch(text):
         raise ValueError("Data checkpoint preparation missing from main action")
     marker = "UN1CA_KSUNEXT_EARLY_DAEMON"
     if marker in text:
-        if text.count(marker) != 1 or BLOCK.strip() not in body:
-            raise ValueError("Unexpected existing KernelSU bootstrap")
-        return text
+        if BLOCK.strip() in body:
+            return text
+        pattern = r"\n    # UN1CA_KSUNEXT_EARLY_DAEMON:.*?(?=\n\n|\non )"
+        updated = re.sub(pattern, BLOCK.rstrip(), text, flags=re.S)
+        return updated
     return text[:action.end()] + BLOCK + text[action.end():]
 
 

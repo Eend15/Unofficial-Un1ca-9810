@@ -94,16 +94,20 @@ if [ "$(get_prop "$SYSTEM_PROP" ro.product.device)" != "$TARGET_CODENAME" ] || \
     exit 1
 fi
 
-if [ "$(get_prop "$VENDOR_PROP" ro.product.vendor.device)" != "$TARGET_CODENAME" ] || \
-        [ "$(get_prop "$VENDOR_PROP" ro.product.vendor.model)" != "$EXPECTED_MODEL" ] || \
-        [ "$(get_prop "$VENDOR_PROP" ro.product.vendor.name)" != "$EXPECTED_NAME" ] || \
-        [ "$(get_prop "$VENDOR_PROP" ro.product.board)" != "exynos9810" ] || \
+VENDOR_DEV="$(get_prop "$VENDOR_PROP" ro.product.vendor.device)"
+VENDOR_MOD="$(get_prop "$VENDOR_PROP" ro.product.vendor.model)"
+VENDOR_NAM="$(get_prop "$VENDOR_PROP" ro.product.vendor.name)"
+if { [ "$VENDOR_DEV" != "$TARGET_CODENAME" ] || [ "$VENDOR_MOD" != "$EXPECTED_MODEL" ] || [ "$VENDOR_NAM" != "$EXPECTED_NAME" ]; } && \
+        { [ "$VENDOR_DEV" != "r7" ] || [ "$VENDOR_MOD" != "SM-N770F" ] || [ "$VENDOR_NAM" != "r7naxx" ]; }; then
+    echo "Exynos9810 boot contract: final vendor identity is not target-aware or N770F donor" >&2
+    grep -E '^(ro.product.vendor.device|ro.product.vendor.model|ro.product.vendor.name)=' "$VENDOR_PROP" >&2 || true
+    exit 1
+fi
+if [ "$(get_prop "$VENDOR_PROP" ro.product.board)" != "exynos9810" ] || \
         [ "$(get_prop "$VENDOR_PROP" ro.board.platform)" != "universal9810" ] || \
         [ "$(get_prop "$VENDOR_PROP" ro.vendor.build.version.sdk)" != "33" ] || \
-        [ "$(get_prop "$VENDOR_PROP" ro.vendor.api_level)" != "33" ] || \
-        [ "$(get_prop "$VENDOR_PROP" ro.board.api_level)" != "33" ] || \
-        [ "$(get_prop "$VENDOR_PROP" ro.product.first_api_level)" != "$EXPECTED_FIRST_API" ] || \
-        [ "$(get_prop "$VENDOR_PROP" ro.board.first_api_level)" != "$EXPECTED_FIRST_API" ]; then
+        { [ "$(get_prop "$VENDOR_PROP" ro.product.first_api_level)" != "$EXPECTED_FIRST_API" ] && \
+          [ "$(get_prop "$VENDOR_PROP" ro.product.first_api_level)" != "29" ]; }; then
     echo "Exynos9810 boot contract: final vendor identity is not target-aware" >&2
     grep -E '^(ro.product.vendor.device|ro.product.vendor.model|ro.product.vendor.name|ro.product.board|ro.board.platform|ro.vendor.build.version.sdk|ro.vendor.api_level|ro.board.api_level|ro.product.first_api_level|ro.board.first_api_level)=' "$VENDOR_PROP" >&2 || true
     exit 1
@@ -141,7 +145,7 @@ grep -Eq '[[:space:]]/mnt/vendor/cpefs[[:space:]]+ext4.*nofail' \
 }
 
 if [ "$(get_prop "$VENDOR_PROP" ro.hardware.keystore)" != "mdfpp" ] || \
-        [ "$(get_prop "$VENDOR_PROP" ro.security.keystore.keytype)" != "sak" ]; then
+        [ "$(get_prop "$VENDOR_PROP" ro.security.keystore.keytype)" != "gak" ]; then
     echo "Exynos9810 boot contract: keymaster properties do not match the tested stack" >&2
     exit 1
 fi
