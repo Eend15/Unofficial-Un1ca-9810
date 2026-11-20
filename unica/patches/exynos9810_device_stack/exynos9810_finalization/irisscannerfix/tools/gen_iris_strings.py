@@ -35,7 +35,16 @@ LINE = re.compile(r'^\s*<string name="([^"]+)"[^>]*>.*?</string>\s*$', re.M | re
 # Samsung never translated the iris section headings; the app hides a heading that has
 # no translation for the phone's language instead of showing English.
 EXTRA = {
+    # UN1CA's own iris option (no Samsung string exists for it).
+    "values": {
+        "un1ca_iris_preview_title": "Show camera preview",
+        "un1ca_iris_preview_summary":
+            "Show the camera preview at the top of the screen while your irises are scanned.",
+    },
     "values-nl": {
+        "un1ca_iris_preview_title": "Cameravoorbeeld tonen",
+        "un1ca_iris_preview_summary":
+            "Toon het cameravoorbeeld boven aan het scherm terwijl uw irissen worden gescand.",
         "manage_irises": "Irissen beheren",
         "iris_verification": "Irisverificatie",
         "sec_intelligentscan_lockscreen_biometric_not_registered_summary":
@@ -66,7 +75,8 @@ def main(src_res: Path, out_res: Path):
             continue
         out = out_res / d.name
         out.mkdir(parents=True, exist_ok=True)
-        body = "\n".join("    " + entries[k] for k in KEYS if k in entries)
+        order = KEYS + [k for k in EXTRA.get(d.name, {}) if k not in KEYS]
+        body = "\n".join("    " + entries[k] for k in order if k in entries)
         (out / "strings.xml").write_text(
             '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n' + body + "\n</resources>\n")
         locales += 1

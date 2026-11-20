@@ -104,6 +104,54 @@ def patch_privacy(text: str) -> str:
     return text.replace(PRIVACY_HEAD, PRIVACY_HEAD + PRIVACY_HOOK, 1)
 
 
+COLLAPSE_MARKER = "# UN1CA: iris finishes the unlock like face when the screen is on"
+COLLAPSE_METHOD = re.compile(
+    r"\.method public final startWakeAndUnlock\(ILcom/android/systemui/keyguard/shared/model/"
+    r"BiometricUnlockSource;\)V\n.*?\.end method", re.S)
+COLLAPSE_FACE = re.compile(
+    r"(    sget-object v1, Landroid/hardware/biometrics/BiometricSourceType;->FACE:"
+    r"Landroid/hardware/biometrics/BiometricSourceType;\n\n    if-ne p1, v1, (:cond_\w+)\n)")
+
+
+def patch_collapse(text: str) -> str:
+    """MODE_UNLOCK_COLLAPSING (screen already on) only finished the unlock for FINGERPRINT
+    and FACE, so a successful iris scan left the phone on the lock screen until a swipe.
+    Un1caIrisKeyguard already returned for "Stay on Lock screen", so finish it here."""
+    if COLLAPSE_MARKER in text:
+        return text
+    methods = COLLAPSE_METHOD.findall(text)
+    if len(methods) != 1:
+        raise ValueError("BiometricUnlockController.startWakeAndUnlock(I, source) does not match One UI 8")
+    body = methods[0]
+    face = COLLAPSE_FACE.findall(body)
+    if len(face) != 1 or "MODE_UNLOCK_COLLAPSING" not in body \
+            or "iget-object v0, p0, Lcom/android/systemui/statusbar/phone/BiometricUnlockController;->mUpdateMonitor" not in body \
+            or "const/4 v4, 0x1" not in body or "const/4 v8, 0x0" not in body:
+        raise ValueError("MODE_UNLOCK_COLLAPSING face branch does not match One UI 8")
+    skip = face[0][1]
+    hook = f"""    {COLLAPSE_MARKER}
+    sget-object v1, Landroid/hardware/biometrics/BiometricSourceType;->IRIS:Landroid/hardware/biometrics/BiometricSourceType;
+
+    if-ne p1, v1, :un1ca_not_iris_collapse
+
+    invoke-virtual {{v0, v4}}, Lcom/android/keyguard/KeyguardUpdateMonitor;->isUnlockingWithBiometricAllowed(Z)Z
+
+    move-result p1
+
+    if-eqz p1, {skip}
+
+    iget-object p1, p0, Lcom/android/systemui/statusbar/phone/BiometricUnlockController;->mKeyguardViewController:Lcom/android/keyguard/KeyguardViewController;
+
+    invoke-interface {{p1, v8}}, Lcom/android/keyguard/KeyguardViewController;->notifyKeyguardAuthenticated(Z)V
+
+    goto {skip}
+
+    :un1ca_not_iris_collapse
+"""
+    new_body = COLLAPSE_FACE.sub(lambda m: hook + m[1], body, count=1)
+    return text.replace(body, new_body, 1)
+
+
 HELPER_PKG = "com/android/keyguard"
 HELPER = HELPER_PKG + "/Un1caIrisKeyguard.smali"
 
@@ -133,6 +181,11 @@ def main(root: Path, helper_smali_root: Path):
     if patch_privacy(out) != out:
         raise ValueError("not idempotent")
     ops.write_text(out)
+    buc = one(root, "com/android/systemui/statusbar/phone/BiometricUnlockController.smali")
+    out = patch_collapse(buc.read_text())
+    if patch_collapse(out) != out:
+        raise ValueError("not idempotent")
+    buc.write_text(out)
     # The helper gets its own dex so no existing dex grows past the method limit.
     found_helper = list(root.glob("smali*/" + HELPER))
     if found_helper:
@@ -147,7 +200,8 @@ def main(root: Path, helper_smali_root: Path):
     # Copy only the helper and its synthetic classes; the package itself is SystemUI's.
     for f in (helper_smali_root / HELPER_PKG).glob("Un1caIrisKeyguard*.smali"):
         shutil.copyfile(f, dst / f.name)
-    print("SystemUI: KeyguardUpdateMonitor wake hook, Face/Iris Camera 1 guard, and privacy dot exemption added")
+    print("SystemUI: KeyguardUpdateMonitor wake hook, Face/Iris Camera 1 guard, privacy dot exemption "
+          "and iris unlock-collapsing added")
 
 
 if __name__ == "__main__":

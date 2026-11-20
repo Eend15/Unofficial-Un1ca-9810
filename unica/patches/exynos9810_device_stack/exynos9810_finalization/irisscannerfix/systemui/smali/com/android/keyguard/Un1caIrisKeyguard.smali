@@ -38,6 +38,8 @@
 
 .field private static final KEY_INTELLIGENT_SCREEN_ON:Ljava/lang/String; = "un1ca_intelligent_scan_screen_on"
 
+.field private static final KEY_PREVIEW:Ljava/lang/String; = "un1ca_iris_preview"
+
 .field private static final KEY_SCREEN_ON:Ljava/lang/String; = "un1ca_iris_unlock_screen_on"
 
 .field private static final KEY_STAY:Ljava/lang/String; = "un1ca_iris_stay_on_lockscreen"
@@ -201,10 +203,10 @@
 .method private constructor <init>(Lcom/android/keyguard/KeyguardUpdateMonitor;)V
     .registers 4
 
-    .line 121
+    .line 126
     invoke-direct {p0}, Lcom/android/keyguard/KeyguardUpdateMonitorCallback;-><init>()V
 
-    .line 63
+    .line 68
     new-instance v0, Landroid/os/Handler;
 
     invoke-static {}, Landroid/os/Looper;->getMainLooper()Landroid/os/Looper;
@@ -215,36 +217,36 @@
 
     iput-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
-    .line 65
+    .line 70
     new-instance v0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda13;
 
     invoke-direct {v0, p0}, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda13;-><init>(Lcom/android/keyguard/Un1caIrisKeyguard;)V
 
     iput-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackDoneRunnable:Ljava/lang/Runnable;
 
-    .line 72
+    .line 77
     const/16 v0, -0x2710
 
     iput v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledUser:I
 
-    .line 102
+    .line 107
     new-instance v0, Lcom/android/keyguard/Un1caIrisKeyguard$1;
 
     invoke-direct {v0, p0}, Lcom/android/keyguard/Un1caIrisKeyguard$1;-><init>(Lcom/android/keyguard/Un1caIrisKeyguard;)V
 
     iput-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mServiceConn:Landroid/content/ServiceConnection;
 
-    .line 122
+    .line 127
     iput-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
-    .line 123
+    .line 128
     return-void
 .end method
 
 .method private allowFaceAuth()Z
     .registers 4
 
-    .line 150
+    .line 155
     iget-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceShared:Z
 
     const/4 v1, 0x1
@@ -253,7 +255,7 @@
 
     return v1
 
-    .line 151
+    .line 156
     :cond_6
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
@@ -263,7 +265,7 @@
 
     return v2
 
-    .line 152
+    .line 157
     :cond_c
     iget-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
@@ -271,7 +273,7 @@
 
     return v1
 
-    .line 153
+    .line 158
     :cond_11
     const-string v0, "un1ca_iris_unlock"
 
@@ -283,13 +285,13 @@
 
     return v1
 
-    .line 154
+    .line 159
     :cond_1a
     invoke-static {}, Lcom/android/keyguard/KeyguardUpdateMonitor;->getCurrentUser()I
 
     move-result v0
 
-    .line 155
+    .line 160
     invoke-direct {p0, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->irisEnrolled(I)Z
 
     move-result v0
@@ -298,7 +300,7 @@
 
     return v1
 
-    .line 156
+    .line 161
     :cond_25
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
@@ -308,16 +310,16 @@
 
     return v2
 
-    .line 157
+    .line 162
     :cond_2c
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->isIntelligentScanActive()Z
 
     move-result v0
 
-    .line 158
+    .line 163
     if-eqz v0, :cond_3c
 
-    .line 159
+    .line 164
     const-string v0, "un1ca_intelligent_scan_screen_on"
 
     invoke-direct {p0, v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->setting(Ljava/lang/String;I)I
@@ -330,7 +332,7 @@
 
     goto :goto_45
 
-    .line 160
+    .line 165
     :cond_3c
     const-string v0, "un1ca_iris_unlock_screen_on"
 
@@ -342,7 +344,7 @@
 
     move v2, v1
 
-    .line 161
+    .line 166
     :cond_45
     :goto_45
     xor-int/lit8 v0, v2, 0x1
@@ -353,17 +355,17 @@
 .method private announceFace()Z
     .registers 7
 
-    .line 445
+    .line 456
     invoke-static {}, Landroid/os/Parcel;->obtain()Landroid/os/Parcel;
 
     move-result-object v0
 
-    .line 446
+    .line 457
     invoke-static {}, Landroid/os/Parcel;->obtain()Landroid/os/Parcel;
 
     move-result-object v1
 
-    .line 448
+    .line 459
     const/4 v2, 0x0
 
     :try_start_9
@@ -381,7 +383,7 @@
 
     move-result-object v5
 
-    .line 449
+    .line 460
     invoke-virtual {v3, v4, v5}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object v3
@@ -402,26 +404,26 @@
     :try_end_28
     .catchall {:try_start_9 .. :try_end_28} :catchall_58
 
-    .line 450
+    .line 461
     if-nez v3, :cond_31
 
-    .line 459
+    .line 470
     invoke-virtual {v0}, Landroid/os/Parcel;->recycle()V
 
-    .line 460
+    .line 471
     invoke-virtual {v1}, Landroid/os/Parcel;->recycle()V
 
-    .line 450
+    .line 461
     return v2
 
-    .line 451
+    .line 462
     :cond_31
     :try_start_31
     const-string v4, "com.samsung.android.camera.iris.IIrisService"
 
     invoke-virtual {v0, v4}, Landroid/os/Parcel;->writeInterfaceToken(Ljava/lang/String;)V
 
-    .line 452
+    .line 463
     const v4, 0xff5503
 
     invoke-interface {v3, v4, v0, v1, v2}, Landroid/os/IBinder;->transact(ILandroid/os/Parcel;Landroid/os/Parcel;I)Z
@@ -432,21 +434,21 @@
 
     if-nez v3, :cond_46
 
-    .line 459
+    .line 470
     invoke-virtual {v0}, Landroid/os/Parcel;->recycle()V
 
-    .line 460
+    .line 471
     invoke-virtual {v1}, Landroid/os/Parcel;->recycle()V
 
-    .line 452
+    .line 463
     return v2
 
-    .line 453
+    .line 464
     :cond_46
     :try_start_46
     invoke-virtual {v1}, Landroid/os/Parcel;->readException()V
 
-    .line 454
+    .line 465
     invoke-virtual {v1}, Landroid/os/Parcel;->readInt()I
 
     move-result v3
@@ -459,21 +461,21 @@
 
     move v2, v4
 
-    .line 459
+    .line 470
     :cond_51
     invoke-virtual {v0}, Landroid/os/Parcel;->recycle()V
 
-    .line 460
+    .line 471
     invoke-virtual {v1}, Landroid/os/Parcel;->recycle()V
 
-    .line 454
+    .line 465
     return v2
 
-    .line 455
+    .line 466
     :catchall_58
     move-exception v3
 
-    .line 456
+    .line 467
     :try_start_59
     const-string v4, "UN1CA-IrisKeyguard"
 
@@ -483,50 +485,50 @@
     :try_end_60
     .catchall {:try_start_59 .. :try_end_60} :catchall_68
 
-    .line 457
+    .line 468
     nop
 
-    .line 459
+    .line 470
     invoke-virtual {v0}, Landroid/os/Parcel;->recycle()V
 
-    .line 460
+    .line 471
     invoke-virtual {v1}, Landroid/os/Parcel;->recycle()V
 
-    .line 457
+    .line 468
     return v2
 
-    .line 459
+    .line 470
     :catchall_68
     move-exception v2
 
     invoke-virtual {v0}, Landroid/os/Parcel;->recycle()V
 
-    .line 460
+    .line 471
     invoke-virtual {v1}, Landroid/os/Parcel;->recycle()V
 
-    .line 461
+    .line 472
     throw v2
 .end method
 
 .method private authHandler()Landroid/os/Handler;
     .registers 3
 
-    .line 266
+    .line 271
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mAuthHandler:Landroid/os/Handler;
 
     if-nez v0, :cond_19
 
-    .line 267
+    .line 272
     new-instance v0, Landroid/os/HandlerThread;
 
     const-string v1, "UN1CA-IrisAuth"
 
     invoke-direct {v0, v1}, Landroid/os/HandlerThread;-><init>(Ljava/lang/String;)V
 
-    .line 268
+    .line 273
     invoke-virtual {v0}, Landroid/os/HandlerThread;->start()V
 
-    .line 269
+    .line 274
     new-instance v1, Landroid/os/Handler;
 
     invoke-virtual {v0}, Landroid/os/HandlerThread;->getLooper()Landroid/os/Looper;
@@ -537,7 +539,7 @@
 
     iput-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mAuthHandler:Landroid/os/Handler;
 
-    .line 271
+    .line 276
     :cond_19
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mAuthHandler:Landroid/os/Handler;
 
@@ -547,14 +549,14 @@
 .method private ensureServiceBound()V
     .registers 10
 
-    .line 187
+    .line 192
     iget-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mServiceBound:Z
 
     if-eqz v0, :cond_5
 
     return-void
 
-    .line 189
+    .line 194
     :cond_5
     :try_start_5
     new-instance v0, Landroid/content/Intent;
@@ -571,10 +573,10 @@
     :try_end_12
     .catchall {:try_start_5 .. :try_end_12} :catchall_61
 
-    .line 190
+    .line 195
     nop
 
-    .line 192
+    .line 197
     const/16 v1, 0x41
 
     :try_start_15
@@ -594,7 +596,7 @@
 
     check-cast v2, Landroid/os/UserHandle;
 
-    .line 193
+    .line 198
     const-class v3, Landroid/content/Context;
 
     const-string v4, "bindServiceAsUser"
@@ -611,7 +613,7 @@
 
     move-result-object v5
 
-    .line 194
+    .line 199
     invoke-virtual {v3, v4, v5}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object v3
@@ -622,7 +624,7 @@
 
     iget-object v5, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mServiceConn:Landroid/content/ServiceConnection;
 
-    .line 195
+    .line 200
     invoke-static {v1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
 
     move-result-object v6
@@ -637,7 +639,7 @@
 
     check-cast v2, Ljava/lang/Boolean;
 
-    .line 193
+    .line 198
     invoke-virtual {v2}, Ljava/lang/Boolean;->booleanValue()Z
 
     move-result v2
@@ -646,14 +648,14 @@
     :try_end_52
     .catchall {:try_start_15 .. :try_end_52} :catchall_53
 
-    .line 198
+    .line 203
     goto :goto_60
 
-    .line 196
+    .line 201
     :catchall_53
     move-exception v2
 
-    .line 197
+    .line 202
     :try_start_54
     iget-object v2, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
@@ -669,22 +671,22 @@
     :try_end_60
     .catchall {:try_start_54 .. :try_end_60} :catchall_61
 
-    .line 201
+    .line 206
     :goto_60
     goto :goto_69
 
-    .line 199
+    .line 204
     :catchall_61
     move-exception v0
 
-    .line 200
+    .line 205
     const-string v1, "UN1CA-IrisKeyguard"
 
     const-string v2, "cannot bind iris service"
 
     invoke-static {v1, v2, v0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 202
+    .line 207
     :goto_69
     return-void
 .end method
@@ -692,7 +694,7 @@
 .method private finish(Landroid/os/CancellationSignal;)V
     .registers 3
 
-    .line 438
+    .line 449
     if-eqz p1, :cond_e
 
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
@@ -701,19 +703,19 @@
 
     goto :goto_e
 
-    .line 439
+    .line 450
     :cond_7
     const/4 p1, 0x0
 
     iput-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
-    .line 440
+    .line 451
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->hidePreviewAnchor()V
 
-    .line 441
+    .line 452
     return-void
 
-    .line 438
+    .line 449
     :cond_e
     :goto_e
     return-void
@@ -722,26 +724,26 @@
 .method private static getOrCreate(Lcom/android/keyguard/KeyguardUpdateMonitor;)Lcom/android/keyguard/Un1caIrisKeyguard;
     .registers 2
 
-    .line 126
+    .line 131
     sget-object v0, Lcom/android/keyguard/Un1caIrisKeyguard;->sInstance:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     if-nez v0, :cond_12
 
     if-eqz p0, :cond_12
 
-    .line 127
+    .line 132
     new-instance v0, Lcom/android/keyguard/Un1caIrisKeyguard;
 
     invoke-direct {v0, p0}, Lcom/android/keyguard/Un1caIrisKeyguard;-><init>(Lcom/android/keyguard/KeyguardUpdateMonitor;)V
 
     sput-object v0, Lcom/android/keyguard/Un1caIrisKeyguard;->sInstance:Lcom/android/keyguard/Un1caIrisKeyguard;
 
-    .line 128
+    .line 133
     sget-object v0, Lcom/android/keyguard/Un1caIrisKeyguard;->sInstance:Lcom/android/keyguard/Un1caIrisKeyguard;
 
     invoke-virtual {p0, v0}, Lcom/android/keyguard/KeyguardUpdateMonitor;->registerCallback(Lcom/android/keyguard/KeyguardUpdateMonitorCallback;)V
 
-    .line 130
+    .line 135
     :cond_12
     sget-object p0, Lcom/android/keyguard/Un1caIrisKeyguard;->sInstance:Lcom/android/keyguard/Un1caIrisKeyguard;
 
@@ -751,21 +753,21 @@
 .method private hidePreviewAnchor()V
     .registers 4
 
-    .line 426
+    .line 437
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mPreviewAnchor:Landroid/view/View;
 
-    .line 427
+    .line 438
     if-nez v0, :cond_5
 
     return-void
 
-    .line 428
+    .line 439
     :cond_5
     const/4 v1, 0x0
 
     iput-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mPreviewAnchor:Landroid/view/View;
 
-    .line 430
+    .line 441
     :try_start_8
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
@@ -783,21 +785,21 @@
     :try_end_17
     .catchall {:try_start_8 .. :try_end_17} :catchall_18
 
-    .line 433
+    .line 444
     goto :goto_20
 
-    .line 431
+    .line 442
     :catchall_18
     move-exception v0
 
-    .line 432
+    .line 443
     const-string v1, "UN1CA-IrisKeyguard"
 
     const-string v2, "preview anchor already gone"
 
     invoke-static {v1, v2, v0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 434
+    .line 445
     :goto_20
     return-void
 .end method
@@ -805,7 +807,7 @@
 .method private iris()Lcom/samsung/android/camera/iris/SemIrisManager;
     .registers 2
 
-    .line 326
+    .line 331
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mIris:Lcom/samsung/android/camera/iris/SemIrisManager;
 
     if-nez v0, :cond_e
@@ -820,7 +822,7 @@
 
     iput-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mIris:Lcom/samsung/android/camera/iris/SemIrisManager;
 
-    .line 327
+    .line 332
     :cond_e
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mIris:Lcom/samsung/android/camera/iris/SemIrisManager;
 
@@ -830,12 +832,12 @@
 .method private irisEnrolled(I)Z
     .registers 6
 
-    .line 276
+    .line 281
     iget v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledUser:I
 
     if-ne v0, p1, :cond_11
 
-    .line 277
+    .line 282
     invoke-static {}, Landroid/os/SystemClock;->elapsedRealtime()J
 
     move-result-wide v0
@@ -850,13 +852,13 @@
 
     if-lez v0, :cond_15
 
-    .line 278
+    .line 283
     :cond_11
     const/4 v0, 0x0
 
     invoke-direct {p0, p1, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->refreshEnrolled(ILjava/lang/Runnable;)V
 
-    .line 280
+    .line 285
     :cond_15
     iget v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledUser:I
 
@@ -880,7 +882,7 @@
 .method private isFaceActive()Z
     .registers 2
 
-    .line 206
+    .line 211
     :try_start_0
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
@@ -892,11 +894,11 @@
 
     return v0
 
-    .line 207
+    .line 212
     :catchall_7
     move-exception v0
 
-    .line 208
+    .line 213
     const/4 v0, 0x0
 
     return v0
@@ -905,7 +907,7 @@
 .method private isIntelligentScanActive()Z
     .registers 3
 
-    .line 213
+    .line 218
     const-string v0, "un1ca_iris_unlock"
 
     const/4 v1, 0x1
@@ -934,7 +936,7 @@
 .method private static isRetryableError(I)Z
     .registers 2
 
-    .line 613
+    .line 625
     const/16 v0, 0x9
 
     if-eq p0, v0, :cond_13
@@ -969,7 +971,7 @@
 .method private isUserUnlocked(I)Z
     .registers 7
 
-    .line 315
+    .line 320
     const/4 v0, 0x1
 
     :try_start_1
@@ -985,12 +987,12 @@
 
     check-cast v1, Landroid/os/UserManager;
 
-    .line 316
+    .line 321
     if-nez v1, :cond_10
 
     return v0
 
-    .line 318
+    .line 323
     :cond_10
     const-class v2, Landroid/os/UserHandle;
 
@@ -1022,7 +1024,7 @@
 
     check-cast p1, Landroid/os/UserHandle;
 
-    .line 319
+    .line 324
     invoke-virtual {v1, p1}, Landroid/os/UserManager;->isUserUnlocked(Landroid/os/UserHandle;)Z
 
     move-result p1
@@ -1031,18 +1033,18 @@
 
     return p1
 
-    .line 320
+    .line 325
     :catchall_32
     move-exception p1
 
-    .line 321
+    .line 326
     return v0
 .end method
 
 .method private joinFace(Landroid/os/CancellationSignal;)V
     .registers 3
 
-    .line 466
+    .line 477
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
     if-ne v0, p1, :cond_17
@@ -1053,26 +1055,26 @@
 
     goto :goto_17
 
-    .line 467
+    .line 478
     :cond_9
     const/4 p1, 0x1
 
     iput-boolean p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceShared:Z
 
-    .line 468
+    .line 479
     const-string p1, "UN1CA-IrisKeyguard"
 
     const-string v0, "intelligent scan: face joins the iris camera"
 
     invoke-static {p1, v0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 469
+    .line 480
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->triggerFaceAuth()V
 
-    .line 470
+    .line 481
     return-void
 
-    .line 466
+    .line 477
     :cond_17
     :goto_17
     return-void
@@ -1081,23 +1083,23 @@
 .method private nextAttempt(Landroid/os/CancellationSignal;)V
     .registers 5
 
-    .line 474
+    .line 485
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
     if-eq v0, p1, :cond_5
 
     return-void
 
-    .line 475
+    .line 486
     :cond_5
     const/4 v0, 0x0
 
     iput-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
-    .line 476
+    .line 487
     invoke-virtual {p1}, Landroid/os/CancellationSignal;->cancel()V
 
-    .line 477
+    .line 488
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->isIntelligentScanActive()Z
 
     move-result p1
@@ -1112,36 +1114,36 @@
 
     if-gtz p1, :cond_20
 
-    .line 478
+    .line 489
     :cond_19
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->hidePreviewAnchor()V
 
-    .line 479
+    .line 490
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->startFaceFallback()V
 
-    .line 480
+    .line 491
     return-void
 
-    .line 482
+    .line 493
     :cond_20
     iget p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
     if-gtz p1, :cond_2f
 
-    .line 483
+    .line 494
     const-string p1, "UN1CA-IrisKeyguard"
 
     const-string v0, "no match after 3 attempts"
 
     invoke-static {p1, v0}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 484
+    .line 495
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->hidePreviewAnchor()V
 
-    .line 485
+    .line 496
     return-void
 
-    .line 487
+    .line 498
     :cond_2f
     iget p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
@@ -1149,7 +1151,7 @@
 
     iput p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
-    .line 489
+    .line 500
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     new-instance v0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda2;
@@ -1160,14 +1162,14 @@
 
     invoke-virtual {p1, v0, v1, v2}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
-    .line 494
+    .line 505
     return-void
 .end method
 
 .method private onFaceFallbackTimeout()V
     .registers 5
 
-    .line 515
+    .line 526
     iget-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
     if-eqz v0, :cond_26
@@ -1178,28 +1180,28 @@
 
     goto :goto_26
 
-    .line 516
+    .line 527
     :cond_9
     const/4 v0, 0x0
 
     iput-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
-    .line 517
+    .line 528
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->stopFaceAuth()Z
 
-    .line 518
+    .line 529
     iget v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
     if-lez v0, :cond_25
 
-    .line 519
+    .line 530
     iget v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
     add-int/lit8 v0, v0, -0x1
 
     iput v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
-    .line 520
+    .line 531
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     new-instance v1, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda1;
@@ -1210,11 +1212,11 @@
 
     invoke-virtual {v0, v1, v2, v3}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
-    .line 522
+    .line 533
     :cond_25
     return-void
 
-    .line 515
+    .line 526
     :cond_26
     :goto_26
     return-void
@@ -1223,10 +1225,10 @@
 .method private onMatched(I)V
     .registers 9
 
-    .line 576
+    .line 587
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->stopFaceAuth()Z
 
-    .line 579
+    .line 590
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     iget-object v0, v0, Lcom/android/keyguard/KeyguardUpdateMonitor;->mUserFaceAuthenticated:Landroid/util/SparseArray;
@@ -1241,7 +1243,7 @@
 
     invoke-virtual {v0, p1, v1}, Landroid/util/SparseArray;->put(ILjava/lang/Object;)V
 
-    .line 580
+    .line 591
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     invoke-virtual {v0, p1}, Lcom/android/keyguard/KeyguardUpdateMonitor;->getUserCanSkipBouncer(I)Z
@@ -1252,7 +1254,7 @@
 
     if-eqz v0, :cond_49
 
-    .line 582
+    .line 593
     :try_start_1b
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
@@ -1272,7 +1274,7 @@
 
     move-result-object v5
 
-    .line 583
+    .line 594
     invoke-virtual {v0, v4, v5}, Ljava/lang/Class;->getMethod(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
 
     move-result-object v0
@@ -1281,7 +1283,7 @@
 
     iget-object v4, v4, Lcom/android/keyguard/KeyguardUpdateMonitor;->mTrustManager:Landroid/app/trust/TrustManager;
 
-    .line 584
+    .line 595
     invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
 
     move-result-object v5
@@ -1296,19 +1298,19 @@
     :try_end_42
     .catchall {:try_start_1b .. :try_end_42} :catchall_43
 
-    .line 587
+    .line 598
     goto :goto_49
 
-    .line 585
+    .line 596
     :catchall_43
     move-exception v0
 
-    .line 586
+    .line 597
     const-string v4, "TrustManager not notified"
 
     invoke-static {v1, v4, v0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 592
+    .line 605
     :cond_49
     :goto_49
     const-string v0, "un1ca_iris_stay_on_lockscreen"
@@ -1317,55 +1319,46 @@
 
     move-result v0
 
-    if-eq v0, v2, :cond_6a
+    if-eq v0, v2, :cond_62
 
-    .line 593
+    .line 606
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->isIntelligentScanActive()Z
 
     move-result v0
 
-    if-eqz v0, :cond_68
+    if-eqz v0, :cond_60
 
-    iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
+    const-string v0, "face_stay_on_lock_screen"
 
-    iget-object v0, v0, Lcom/android/keyguard/KeyguardUpdateMonitor;->mContext:Landroid/content/Context;
-
-    .line 594
-    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
-
-    move-result-object v0
-
-    const-string v4, "face_stay_on_lock_screen"
-
-    invoke-static {v0, v4, v3}, Landroid/provider/Settings$System;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
+    invoke-direct {p0, v0, v3}, Lcom/android/keyguard/Un1caIrisKeyguard;->setting(Ljava/lang/String;I)I
 
     move-result v0
 
-    if-ne v0, v2, :cond_68
+    if-ne v0, v2, :cond_60
 
-    goto :goto_6a
+    goto :goto_62
 
-    :cond_68
+    :cond_60
     move v2, v3
 
-    goto :goto_6b
+    goto :goto_63
 
-    :cond_6a
-    :goto_6a
+    :cond_62
+    :goto_62
     nop
 
-    .line 595
-    :goto_6b
-    if-eqz v2, :cond_9d
+    .line 607
+    :goto_63
+    if-eqz v2, :cond_95
 
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     iget-boolean v0, v0, Lcom/android/keyguard/KeyguardUpdateMonitor;->mPrimaryBouncerIsOrWillBeShowing:Z
 
-    if-nez v0, :cond_9d
+    if-nez v0, :cond_95
 
-    .line 597
-    :try_start_73
+    .line 609
+    :try_start_6b
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     invoke-virtual {p1}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
@@ -1392,34 +1385,34 @@
 
     move-result-object v2
 
-    .line 598
+    .line 610
     invoke-virtual {p1, v0, v2}, Ljava/lang/reflect/Method;->invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;
-    :try_end_90
-    .catchall {:try_start_73 .. :try_end_90} :catchall_91
+    :try_end_88
+    .catchall {:try_start_6b .. :try_end_88} :catchall_89
 
-    .line 601
-    goto :goto_97
+    .line 613
+    goto :goto_8f
 
-    .line 599
-    :catchall_91
+    .line 611
+    :catchall_89
     move-exception p1
 
-    .line 600
+    .line 612
     const-string v0, "lock screen not marked unlocked"
 
     invoke-static {v1, v0, p1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 602
-    :goto_97
+    .line 614
+    :goto_8f
     const-string p1, "staying on lock screen until swipe"
 
     invoke-static {v1, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 603
+    .line 615
     return-void
 
-    .line 605
-    :cond_9d
+    .line 617
+    :cond_95
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     iget-object v0, v0, Lcom/android/keyguard/KeyguardUpdateMonitor;->mCallbacks:Ljava/util/ArrayList;
@@ -1428,64 +1421,64 @@
 
     move-result-object v0
 
-    :goto_a5
+    :goto_9d
     invoke-interface {v0}, Ljava/util/Iterator;->hasNext()Z
 
     move-result v1
 
-    if-eqz v1, :cond_c1
+    if-eqz v1, :cond_b9
 
     invoke-interface {v0}, Ljava/util/Iterator;->next()Ljava/lang/Object;
 
     move-result-object v1
 
-    .line 606
+    .line 618
     check-cast v1, Ljava/lang/ref/WeakReference;
 
     invoke-virtual {v1}, Ljava/lang/ref/WeakReference;->get()Ljava/lang/Object;
 
     move-result-object v1
 
-    .line 607
+    .line 619
     instance-of v2, v1, Lcom/android/keyguard/KeyguardUpdateMonitorCallback;
 
-    if-eqz v2, :cond_c0
+    if-eqz v2, :cond_b8
 
-    .line 608
+    .line 620
     check-cast v1, Lcom/android/keyguard/KeyguardUpdateMonitorCallback;
 
     sget-object v2, Landroid/hardware/biometrics/BiometricSourceType;->IRIS:Landroid/hardware/biometrics/BiometricSourceType;
 
     invoke-virtual {v1, p1, v2, v3}, Lcom/android/keyguard/KeyguardUpdateMonitorCallback;->onBiometricAuthenticated(ILandroid/hardware/biometrics/BiometricSourceType;Z)V
 
-    .line 609
-    :cond_c0
-    goto :goto_a5
+    .line 621
+    :cond_b8
+    goto :goto_9d
 
-    .line 610
-    :cond_c1
+    .line 622
+    :cond_b9
     return-void
 .end method
 
 .method public static onStartedWakingUp(Lcom/android/keyguard/KeyguardUpdateMonitor;)V
     .registers 4
 
-    .line 167
+    .line 172
     :try_start_0
     invoke-static {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->getOrCreate(Lcom/android/keyguard/KeyguardUpdateMonitor;)Lcom/android/keyguard/Un1caIrisKeyguard;
 
     move-result-object p0
 
-    .line 168
+    .line 173
     if-nez p0, :cond_7
 
     return-void
 
-    .line 169
+    .line 174
     :cond_7
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->ensureServiceBound()V
 
-    .line 170
+    .line 175
     invoke-static {}, Lcom/android/keyguard/KeyguardUpdateMonitor;->getCurrentUser()I
 
     move-result v0
@@ -1494,29 +1487,29 @@
 
     invoke-direct {p0, v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->refreshEnrolled(ILjava/lang/Runnable;)V
 
-    .line 171
+    .line 176
     const/4 v0, 0x0
 
     iput-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
-    .line 172
+    .line 177
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     iget-object v2, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackDoneRunnable:Ljava/lang/Runnable;
 
     invoke-virtual {v1, v2}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    .line 173
+    .line 178
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->isIntelligentScanActive()Z
 
     move-result v1
 
-    .line 174
+    .line 179
     const/4 v2, 0x1
 
     if-eqz v1, :cond_2d
 
-    .line 175
+    .line 180
     const-string v1, "un1ca_intelligent_scan_screen_on"
 
     invoke-direct {p0, v1, v2}, Lcom/android/keyguard/Un1caIrisKeyguard;->setting(Ljava/lang/String;I)I
@@ -1529,7 +1522,7 @@
 
     goto :goto_36
 
-    .line 176
+    .line 181
     :cond_2d
     const-string v1, "un1ca_iris_unlock_screen_on"
 
@@ -1541,39 +1534,39 @@
 
     move v0, v2
 
-    .line 177
+    .line 182
     :cond_36
     :goto_36
     if-eqz v0, :cond_40
 
-    .line 178
+    .line 183
     const/4 v0, 0x2
 
     iput v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
-    .line 179
+    .line 184
     const-string v0, "screen on"
 
     invoke-direct {p0, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->start(Ljava/lang/String;)V
     :try_end_40
     .catchall {:try_start_0 .. :try_end_40} :catchall_41
 
-    .line 183
+    .line 188
     :cond_40
     goto :goto_49
 
-    .line 181
+    .line 186
     :catchall_41
     move-exception p0
 
-    .line 182
+    .line 187
     const-string v0, "UN1CA-IrisKeyguard"
 
     const-string v1, "wake hook failed"
 
     invoke-static {v0, v1, p0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 184
+    .line 189
     :goto_49
     return-void
 .end method
@@ -1581,32 +1574,32 @@
 .method private refreshEnrolled(ILjava/lang/Runnable;)V
     .registers 5
 
-    .line 289
+    .line 294
     invoke-direct {p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->isUserUnlocked(I)Z
 
     move-result v0
 
     if-nez v0, :cond_12
 
-    .line 290
+    .line 295
     iput p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledUser:I
 
-    .line 291
+    .line 296
     const/4 p1, 0x0
 
     iput-boolean p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolled:Z
 
-    .line 292
+    .line 297
     invoke-static {}, Landroid/os/SystemClock;->elapsedRealtime()J
 
     move-result-wide p1
 
     iput-wide p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledAt:J
 
-    .line 293
+    .line 298
     return-void
 
-    .line 295
+    .line 300
     :cond_12
     iget-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledRefreshing:Z
 
@@ -1614,13 +1607,13 @@
 
     return-void
 
-    .line 296
+    .line 301
     :cond_17
     const/4 v0, 0x1
 
     iput-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledRefreshing:Z
 
-    .line 297
+    .line 302
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->authHandler()Landroid/os/Handler;
 
     move-result-object v0
@@ -1631,14 +1624,14 @@
 
     invoke-virtual {v0, v1}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 311
+    .line 316
     return-void
 .end method
 
 .method private setting(Ljava/lang/String;I)I
     .registers 4
 
-    .line 262
+    .line 267
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     iget-object v0, v0, Lcom/android/keyguard/KeyguardUpdateMonitor;->mContext:Landroid/content/Context;
@@ -1657,7 +1650,7 @@
 .method public static shouldAllowFaceAuth(Lcom/android/keyguard/KeyguardUpdateMonitor;)Z
     .registers 2
 
-    .line 141
+    .line 146
     const/4 v0, 0x1
 
     :try_start_1
@@ -1665,12 +1658,12 @@
 
     move-result-object p0
 
-    .line 142
+    .line 147
     if-nez p0, :cond_8
 
     return v0
 
-    .line 143
+    .line 148
     :cond_8
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->allowFaceAuth()Z
 
@@ -1680,18 +1673,18 @@
 
     return p0
 
-    .line 144
+    .line 149
     :catchall_d
     move-exception p0
 
-    .line 145
+    .line 150
     return v0
 .end method
 
 .method private showPreviewAnchor(Lcom/samsung/android/camera/iris/SemIrisManager;)Landroid/view/View;
     .registers 8
 
-    .line 406
+    .line 411
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mPreviewAnchor:Landroid/view/View;
 
     if-eqz v0, :cond_7
@@ -1700,13 +1693,13 @@
 
     return-object p1
 
-    .line 407
+    .line 412
     :cond_7
     invoke-virtual {p1}, Lcom/samsung/android/camera/iris/SemIrisManager;->getMinimumIrisViewSize()Landroid/util/Size;
 
     move-result-object p1
 
-    .line 408
+    .line 413
     if-eqz p1, :cond_12
 
     invoke-virtual {p1}, Landroid/util/Size;->getHeight()I
@@ -1718,7 +1711,7 @@
     :cond_12
     const/4 p1, 0x0
 
-    .line 409
+    .line 414
     :goto_13
     if-gtz p1, :cond_27
 
@@ -1743,7 +1736,7 @@
     :cond_27
     move v2, p1
 
-    .line 410
+    .line 415
     new-instance p1, Landroid/view/WindowManager$LayoutParams;
 
     const/16 v4, 0x118
@@ -1758,17 +1751,34 @@
 
     invoke-direct/range {v0 .. v5}, Landroid/view/WindowManager$LayoutParams;-><init>(IIIII)V
 
-    .line 417
+    .line 422
     const/16 v0, 0x30
 
     iput v0, p1, Landroid/view/WindowManager$LayoutParams;->gravity:I
 
-    .line 418
+    .line 423
+    const-string v0, "un1ca_iris_preview"
+
+    const/4 v1, 0x1
+
+    invoke-direct {p0, v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->setting(Ljava/lang/String;I)I
+
+    move-result v0
+
+    if-eq v0, v1, :cond_44
+
+    .line 427
+    const/4 v0, 0x0
+
+    iput v0, p1, Landroid/view/WindowManager$LayoutParams;->alpha:F
+
+    .line 429
+    :cond_44
     const-string v0, "IrisPreviewAnchor"
 
     invoke-virtual {p1, v0}, Landroid/view/WindowManager$LayoutParams;->setTitle(Ljava/lang/CharSequence;)V
 
-    .line 419
+    .line 430
     new-instance v0, Landroid/widget/FrameLayout;
 
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
@@ -1777,7 +1787,7 @@
 
     invoke-direct {v0, v1}, Landroid/widget/FrameLayout;-><init>(Landroid/content/Context;)V
 
-    .line 420
+    .line 431
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     iget-object v1, v1, Lcom/android/keyguard/KeyguardUpdateMonitor;->mContext:Landroid/content/Context;
@@ -1792,17 +1802,17 @@
 
     invoke-interface {v1, v0, p1}, Landroid/view/WindowManager;->addView(Landroid/view/View;Landroid/view/ViewGroup$LayoutParams;)V
 
-    .line 421
+    .line 432
     iput-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mPreviewAnchor:Landroid/view/View;
 
-    .line 422
+    .line 433
     return-object v0
 .end method
 
 .method private start(Ljava/lang/String;)V
     .registers 12
 
-    .line 331
+    .line 336
     const-string v0, "UN1CA-IrisKeyguard"
 
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
@@ -1811,16 +1821,16 @@
 
     return-void
 
-    .line 332
+    .line 337
     :cond_7
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->ensureServiceBound()V
 
-    .line 333
+    .line 338
     invoke-static {}, Lcom/android/keyguard/KeyguardUpdateMonitor;->getCurrentUser()I
 
     move-result v6
 
-    .line 334
+    .line 339
     const-string v1, "un1ca_iris_unlock"
 
     const/4 v2, 0x1
@@ -1833,7 +1843,7 @@
 
     return-void
 
-    .line 335
+    .line 340
     :cond_18
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
@@ -1861,7 +1871,7 @@
 
     goto/16 :goto_d7
 
-    .line 337
+    .line 342
     :cond_32
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
@@ -1883,23 +1893,23 @@
 
     goto/16 :goto_d6
 
-    .line 338
+    .line 343
     :cond_45
     iget v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledUser:I
 
     if-eq v1, v6, :cond_52
 
-    .line 340
+    .line 345
     new-instance v0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda7;
 
     invoke-direct {v0, p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda7;-><init>(Lcom/android/keyguard/Un1caIrisKeyguard;Ljava/lang/String;)V
 
     invoke-direct {p0, v6, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->refreshEnrolled(ILjava/lang/Runnable;)V
 
-    .line 341
+    .line 346
     return-void
 
-    .line 343
+    .line 348
     :cond_52
     invoke-direct {p0, v6}, Lcom/android/keyguard/Un1caIrisKeyguard;->irisEnrolled(I)Z
 
@@ -1909,30 +1919,30 @@
 
     return-void
 
-    .line 345
+    .line 350
     :cond_59
     :try_start_59
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->iris()Lcom/samsung/android/camera/iris/SemIrisManager;
 
     move-result-object v5
 
-    .line 346
+    .line 351
     if-nez v5, :cond_60
 
     return-void
 
-    .line 347
+    .line 352
     :cond_60
     iput-boolean v3, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
-    .line 348
+    .line 353
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     iget-object v4, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackDoneRunnable:Ljava/lang/Runnable;
 
     invoke-virtual {v1, v4}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    .line 351
+    .line 356
     iget-boolean v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceShared:Z
 
     if-nez v1, :cond_74
@@ -1948,16 +1958,16 @@
     :cond_74
     move v2, v3
 
-    .line 352
+    .line 357
     :goto_75
     new-instance v4, Landroid/os/CancellationSignal;
 
     invoke-direct {v4}, Landroid/os/CancellationSignal;-><init>()V
 
-    .line 353
+    .line 358
     iput-object v4, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
-    .line 354
+    .line 359
     new-instance v1, Ljava/lang/StringBuilder;
 
     invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
@@ -1988,7 +1998,7 @@
 
     invoke-static {v0, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 355
+    .line 360
     iget-boolean p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceShared:Z
 
     if-nez p1, :cond_b2
@@ -1999,7 +2009,7 @@
 
     if-eqz p1, :cond_b2
 
-    .line 359
+    .line 364
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->authHandler()Landroid/os/Handler;
 
     move-result-object p1
@@ -2010,13 +2020,13 @@
 
     invoke-virtual {p1, v1}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 366
+    .line 371
     :cond_b2
     invoke-direct {p0, v5}, Lcom/android/keyguard/Un1caIrisKeyguard;->showPreviewAnchor(Lcom/samsung/android/camera/iris/SemIrisManager;)Landroid/view/View;
 
     move-result-object p1
 
-    .line 367
+    .line 372
     if-eqz v2, :cond_bb
 
     const-wide/16 v1, 0x78
@@ -2029,7 +2039,7 @@
     :goto_bd
     move-wide v8, v1
 
-    .line 369
+    .line 374
     new-instance v1, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda9;
 
     move-object v2, v1
@@ -2044,33 +2054,33 @@
     :try_end_c9
     .catchall {:try_start_59 .. :try_end_c9} :catchall_ca
 
-    .line 402
+    .line 407
     goto :goto_d5
 
-    .line 399
+    .line 404
     :catchall_ca
     move-exception p1
 
-    .line 400
+    .line 405
     const-string v1, "cannot start iris"
 
     invoke-static {v0, v1, p1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 401
+    .line 406
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
     invoke-direct {p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->finish(Landroid/os/CancellationSignal;)V
 
-    .line 403
+    .line 408
     :goto_d5
     return-void
 
-    .line 337
+    .line 342
     :cond_d6
     :goto_d6
     return-void
 
-    .line 336
+    .line 341
     :cond_d7
     :goto_d7
     return-void
@@ -2079,20 +2089,20 @@
 .method private startFaceFallback()V
     .registers 5
 
-    .line 497
+    .line 508
     iget-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceShared:Z
 
     if-eqz v0, :cond_a
 
-    .line 499
+    .line 510
     const/4 v0, 0x0
 
     iput-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceShared:Z
 
-    .line 500
+    .line 511
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->stopFaceAuth()Z
 
-    .line 502
+    .line 513
     :cond_a
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
@@ -2114,20 +2124,20 @@
 
     goto :goto_34
 
-    .line 503
+    .line 514
     :cond_1d
     const/4 v0, 0x1
 
     iput-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
-    .line 504
+    .line 515
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackDoneRunnable:Ljava/lang/Runnable;
 
     invoke-virtual {v0, v1}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    .line 505
+    .line 516
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     new-instance v1, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda6;
@@ -2138,10 +2148,10 @@
 
     invoke-virtual {v0, v1, v2, v3}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
-    .line 512
+    .line 523
     return-void
 
-    .line 502
+    .line 513
     :cond_34
     :goto_34
     return-void
@@ -2150,37 +2160,37 @@
 .method private stop(Ljava/lang/String;)V
     .registers 5
 
-    .line 537
+    .line 548
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackDoneRunnable:Ljava/lang/Runnable;
 
     invoke-virtual {v0, v1}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    .line 538
+    .line 549
     const/4 v0, 0x0
 
     iput-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
-    .line 539
+    .line 550
     iput-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceShared:Z
 
-    .line 540
+    .line 551
     iput v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
-    .line 541
+    .line 552
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
-    .line 542
+    .line 553
     if-nez v0, :cond_16
 
-    .line 543
+    .line 554
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->hidePreviewAnchor()V
 
-    .line 544
+    .line 555
     return-void
 
-    .line 546
+    .line 557
     :cond_16
     new-instance v1, Ljava/lang/StringBuilder;
 
@@ -2210,23 +2220,23 @@
 
     invoke-static {v1, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 547
+    .line 558
     invoke-direct {p0, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->finish(Landroid/os/CancellationSignal;)V
 
-    .line 548
+    .line 559
     invoke-virtual {v0}, Landroid/os/CancellationSignal;->cancel()V
 
-    .line 549
+    .line 560
     return-void
 .end method
 
 .method private stopFaceAuth()Z
     .registers 7
 
-    .line 553
+    .line 564
     nop
 
-    .line 555
+    .line 566
     const/4 v0, 0x0
 
     :try_start_2
@@ -2243,7 +2253,7 @@
     :goto_9
     if-eqz v1, :cond_3f
 
-    .line 557
+    .line 568
     :try_start_b
     const-string v3, "mSemFaceCancelSignal"
 
@@ -2251,12 +2261,12 @@
 
     move-result-object v3
 
-    .line 558
+    .line 569
     const/4 v4, 0x1
 
     invoke-virtual {v3, v4}, Ljava/lang/reflect/Field;->setAccessible(Z)V
 
-    .line 559
+    .line 570
     iget-object v5, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     invoke-virtual {v3, v5}, Ljava/lang/reflect/Field;->get(Ljava/lang/Object;)Ljava/lang/Object;
@@ -2268,24 +2278,24 @@
     .catch Ljava/lang/NoSuchFieldException; {:try_start_b .. :try_end_1d} :catch_39
     .catchall {:try_start_b .. :try_end_1d} :catchall_37
 
-    .line 560
+    .line 571
     if-eqz v5, :cond_36
 
-    .line 561
+    .line 572
     nop
 
-    .line 562
+    .line 573
     :try_start_20
     invoke-virtual {v5}, Landroid/os/CancellationSignal;->cancel()V
 
-    .line 563
+    .line 574
     iget-object v2, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     const/4 v5, 0x0
 
     invoke-virtual {v3, v2, v5}, Ljava/lang/reflect/Field;->set(Ljava/lang/Object;Ljava/lang/Object;)V
 
-    .line 564
+    .line 575
     iget-object v2, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     invoke-virtual {v2, v0}, Lcom/android/keyguard/KeyguardUpdateMonitor;->setFaceRunningState(I)V
@@ -2297,7 +2307,7 @@
 
     goto :goto_36
 
-    .line 569
+    .line 580
     :catchall_30
     move-exception v0
 
@@ -2305,7 +2315,7 @@
 
     goto :goto_43
 
-    .line 567
+    .line 578
     :catch_33
     move-exception v2
 
@@ -2313,22 +2323,22 @@
 
     goto :goto_3a
 
-    .line 566
+    .line 577
     :cond_36
     :goto_36
     goto :goto_3f
 
-    .line 569
+    .line 580
     :catchall_37
     move-exception v0
 
     goto :goto_43
 
-    .line 567
+    .line 578
     :catch_39
     move-exception v3
 
-    .line 555
+    .line 566
     :goto_3a
     :try_start_3a
     invoke-virtual {v1}, Ljava/lang/Class;->getSuperclass()Ljava/lang/Class;
@@ -2339,12 +2349,12 @@
 
     goto :goto_9
 
-    .line 571
+    .line 582
     :cond_3f
     :goto_3f
     goto :goto_4a
 
-    .line 569
+    .line 580
     :catchall_40
     move-exception v1
 
@@ -2352,7 +2362,7 @@
 
     move-object v0, v1
 
-    .line 570
+    .line 581
     :goto_43
     const-string v1, "UN1CA-IrisKeyguard"
 
@@ -2360,7 +2370,7 @@
 
     invoke-static {v1, v3, v0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 572
+    .line 583
     :goto_4a
     return v2
 .end method
@@ -2368,7 +2378,7 @@
 .method private triggerFaceAuth()V
     .registers 6
 
-    .line 527
+    .line 538
     :try_start_0
     const-string v0, "com.android.systemui.deviceentry.shared.FaceAuthUiEvent"
 
@@ -2376,14 +2386,14 @@
 
     move-result-object v0
 
-    .line 528
+    .line 539
     const-string v1, "FACE_AUTH_UPDATED_STARTED_WAKING_UP"
 
     invoke-static {v0, v1}, Ljava/lang/Enum;->valueOf(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Enum;
 
     move-result-object v1
 
-    .line 529
+    .line 540
     iget-object v2, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
     invoke-virtual {v2}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
@@ -2404,7 +2414,7 @@
 
     iget-object v2, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
 
-    .line 530
+    .line 541
     const/4 v3, 0x2
 
     invoke-static {v3}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
@@ -2419,21 +2429,21 @@
     :try_end_2c
     .catchall {:try_start_0 .. :try_end_2c} :catchall_2d
 
-    .line 533
+    .line 544
     goto :goto_35
 
-    .line 531
+    .line 542
     :catchall_2d
     move-exception v0
 
-    .line 532
+    .line 543
     const-string v1, "UN1CA-IrisKeyguard"
 
     const-string v2, "could not trigger face fallback"
 
     invoke-static {v1, v2, v0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 534
+    .line 545
     :goto_35
     return-void
 .end method
@@ -2443,7 +2453,7 @@
 .method synthetic lambda$new$0$com-android-keyguard-Un1caIrisKeyguard()V
     .registers 1
 
-    .line 65
+    .line 70
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->onFaceFallbackTimeout()V
 
     return-void
@@ -2452,7 +2462,7 @@
 .method synthetic lambda$nextAttempt$12$com-android-keyguard-Un1caIrisKeyguard()V
     .registers 2
 
-    .line 490
+    .line 501
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
     if-nez v0, :cond_16
@@ -2463,24 +2473,24 @@
 
     goto :goto_16
 
-    .line 491
+    .line 502
     :cond_9
     const-string v0, "next attempt"
 
     invoke-direct {p0, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->start(Ljava/lang/String;)V
 
-    .line 492
+    .line 503
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
     if-nez v0, :cond_15
 
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->hidePreviewAnchor()V
 
-    .line 493
+    .line 504
     :cond_15
     return-void
 
-    .line 490
+    .line 501
     :cond_16
     :goto_16
     return-void
@@ -2489,7 +2499,7 @@
 .method synthetic lambda$onBiometricAuthFailed$1$com-android-keyguard-Un1caIrisKeyguard()V
     .registers 2
 
-    .line 232
+    .line 237
     const-string v0, "after face failed"
 
     invoke-direct {p0, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->start(Ljava/lang/String;)V
@@ -2500,7 +2510,7 @@
 .method synthetic lambda$onBiometricError$2$com-android-keyguard-Un1caIrisKeyguard()V
     .registers 2
 
-    .line 244
+    .line 249
     const-string v0, "after face error"
 
     invoke-direct {p0, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->start(Ljava/lang/String;)V
@@ -2511,7 +2521,7 @@
 .method synthetic lambda$onFaceFallbackTimeout$14$com-android-keyguard-Un1caIrisKeyguard()V
     .registers 2
 
-    .line 520
+    .line 531
     const-string v0, "next attempt after face fallback"
 
     invoke-direct {p0, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->start(Ljava/lang/String;)V
@@ -2522,10 +2532,10 @@
 .method synthetic lambda$refreshEnrolled$3$com-android-keyguard-Un1caIrisKeyguard(ILjava/lang/Runnable;)V
     .registers 7
 
-    .line 298
+    .line 303
     nop
 
-    .line 300
+    .line 305
     const/4 v0, 0x0
 
     :try_start_2
@@ -2533,7 +2543,7 @@
 
     move-result-object v1
 
-    .line 301
+    .line 306
     if-eqz v1, :cond_10
 
     invoke-virtual {v1, p1}, Lcom/samsung/android/camera/iris/SemIrisManager;->hasEnrolledIrises(I)Z
@@ -2551,15 +2561,15 @@
     :cond_10
     move v1, v0
 
-    .line 304
+    .line 309
     :goto_11
     goto :goto_1b
 
-    .line 302
+    .line 307
     :catchall_12
     move-exception v1
 
-    .line 303
+    .line 308
     const-string v2, "UN1CA-IrisKeyguard"
 
     const-string v3, "iris enrollment query failed"
@@ -2568,24 +2578,24 @@
 
     move v1, v0
 
-    .line 305
+    .line 310
     :goto_1b
     iput-boolean v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolled:Z
 
-    .line 306
+    .line 311
     iput p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledUser:I
 
-    .line 307
+    .line 312
     invoke-static {}, Landroid/os/SystemClock;->elapsedRealtime()J
 
     move-result-wide v2
 
     iput-wide v2, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledAt:J
 
-    .line 308
+    .line 313
     iput-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mEnrolledRefreshing:Z
 
-    .line 309
+    .line 314
     if-eqz v1, :cond_30
 
     if-eqz p2, :cond_30
@@ -2594,7 +2604,7 @@
 
     invoke-virtual {p1, p2}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 310
+    .line 315
     :cond_30
     return-void
 .end method
@@ -2602,14 +2612,14 @@
 .method synthetic lambda$start$10$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;Lcom/samsung/android/camera/iris/SemIrisManager;ILandroid/view/View;)V
     .registers 13
 
-    .line 372
+    .line 377
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
     if-eq v0, p1, :cond_5
 
     return-void
 
-    .line 376
+    .line 381
     :cond_5
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->authHandler()Landroid/os/Handler;
 
@@ -2633,7 +2643,7 @@
 
     invoke-virtual {v0, v7}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 391
+    .line 396
     iget-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     new-instance p3, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda12;
@@ -2644,21 +2654,21 @@
 
     invoke-virtual {p2, p3, v0, v1}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
-    .line 392
+    .line 397
     return-void
 .end method
 
 .method synthetic lambda$start$11$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;Lcom/samsung/android/camera/iris/SemIrisManager;ILandroid/view/View;J)V
     .registers 14
 
-    .line 370
+    .line 375
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
     if-eq v0, p1, :cond_5
 
     return-void
 
-    .line 371
+    .line 376
     :cond_5
     new-instance v0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda3;
 
@@ -2676,25 +2686,25 @@
 
     invoke-direct/range {v1 .. v6}, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda3;-><init>(Lcom/android/keyguard/Un1caIrisKeyguard;Landroid/os/CancellationSignal;Lcom/samsung/android/camera/iris/SemIrisManager;ILandroid/view/View;)V
 
-    .line 393
+    .line 398
     const-wide/16 p1, 0x0
 
     cmp-long p1, p5, p1
 
     if-lez p1, :cond_1c
 
-    .line 394
+    .line 399
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     invoke-virtual {p1, v0, p5, p6}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
     goto :goto_1f
 
-    .line 396
+    .line 401
     :cond_1c
     invoke-interface {v0}, Ljava/lang/Runnable;->run()V
 
-    .line 398
+    .line 403
     :goto_1f
     return-void
 .end method
@@ -2702,7 +2712,7 @@
 .method synthetic lambda$start$4$com-android-keyguard-Un1caIrisKeyguard(Ljava/lang/String;)V
     .registers 2
 
-    .line 340
+    .line 345
     invoke-direct {p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->start(Ljava/lang/String;)V
 
     return-void
@@ -2711,12 +2721,12 @@
 .method synthetic lambda$start$5$com-android-keyguard-Un1caIrisKeyguard(ZLandroid/os/CancellationSignal;)V
     .registers 3
 
-    .line 362
+    .line 367
     if-eqz p1, :cond_5
 
     invoke-direct {p0, p2}, Lcom/android/keyguard/Un1caIrisKeyguard;->joinFace(Landroid/os/CancellationSignal;)V
 
-    .line 363
+    .line 368
     :cond_5
     return-void
 .end method
@@ -2724,12 +2734,12 @@
 .method synthetic lambda$start$6$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;)V
     .registers 7
 
-    .line 360
+    .line 365
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->announceFace()Z
 
     move-result v0
 
-    .line 361
+    .line 366
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     new-instance v2, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda10;
@@ -2740,25 +2750,25 @@
 
     invoke-virtual {v1, v2, v3, v4}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
-    .line 364
+    .line 369
     return-void
 .end method
 
 .method synthetic lambda$start$7$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;)V
     .registers 3
 
-    .line 384
+    .line 389
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
     if-eq v0, p1, :cond_5
 
     return-void
 
-    .line 385
+    .line 390
     :cond_5
     invoke-direct {p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->finish(Landroid/os/CancellationSignal;)V
 
-    .line 387
+    .line 392
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->isIntelligentScanActive()Z
 
     move-result p1
@@ -2767,7 +2777,7 @@
 
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->startFaceFallback()V
 
-    .line 388
+    .line 393
     :cond_11
     return-void
 .end method
@@ -2775,7 +2785,7 @@
 .method synthetic lambda$start$8$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;Lcom/samsung/android/camera/iris/SemIrisManager;ILandroid/view/View;)V
     .registers 15
 
-    .line 377
+    .line 382
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
     if-ne v0, p1, :cond_30
@@ -2788,7 +2798,7 @@
 
     goto :goto_30
 
-    .line 379
+    .line 384
     :cond_b
     :try_start_b
     new-instance v5, Lcom/android/keyguard/Un1caIrisKeyguard$Callback;
@@ -2815,21 +2825,21 @@
     :try_end_1c
     .catchall {:try_start_b .. :try_end_1c} :catchall_1d
 
-    .line 389
+    .line 394
     goto :goto_2f
 
-    .line 381
+    .line 386
     :catchall_1d
     move-exception p2
 
-    .line 382
+    .line 387
     const-string p3, "UN1CA-IrisKeyguard"
 
     const-string p4, "cannot start iris"
 
     invoke-static {p3, p4, p2}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
 
-    .line 383
+    .line 388
     iget-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     new-instance p3, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda5;
@@ -2838,11 +2848,11 @@
 
     invoke-virtual {p2, p3}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 
-    .line 390
+    .line 395
     :goto_2f
     return-void
 
-    .line 377
+    .line 382
     :cond_30
     :goto_30
     return-void
@@ -2851,7 +2861,7 @@
 .method synthetic lambda$start$9$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;)V
     .registers 2
 
-    .line 391
+    .line 396
     invoke-direct {p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->nextAttempt(Landroid/os/CancellationSignal;)V
 
     return-void
@@ -2860,7 +2870,7 @@
 .method synthetic lambda$startFaceFallback$13$com-android-keyguard-Un1caIrisKeyguard()V
     .registers 5
 
-    .line 506
+    .line 517
     iget-boolean v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
     if-eqz v0, :cond_1a
@@ -2871,16 +2881,16 @@
 
     goto :goto_1a
 
-    .line 507
+    .line 518
     :cond_9
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->triggerFaceAuth()V
 
-    .line 508
+    .line 519
     iget v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
     if-lez v0, :cond_19
 
-    .line 509
+    .line 520
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackDoneRunnable:Ljava/lang/Runnable;
@@ -2889,11 +2899,11 @@
 
     invoke-virtual {v0, v1, v2, v3}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
-    .line 511
+    .line 522
     :cond_19
     return-void
 
-    .line 506
+    .line 517
     :cond_1a
     :goto_1a
     return-void
@@ -2902,7 +2912,7 @@
 .method public onBiometricAuthFailed(Landroid/hardware/biometrics/BiometricSourceType;)V
     .registers 5
 
-    .line 226
+    .line 231
     sget-object v0, Landroid/hardware/biometrics/BiometricSourceType;->FACE:Landroid/hardware/biometrics/BiometricSourceType;
 
     if-ne p1, v0, :cond_35
@@ -2921,34 +2931,34 @@
 
     if-eqz p1, :cond_35
 
-    .line 227
+    .line 232
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackDoneRunnable:Ljava/lang/Runnable;
 
     invoke-virtual {p1, v0}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    .line 228
+    .line 233
     const/4 p1, 0x0
 
     iput-boolean p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
-    .line 229
+    .line 234
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->stopFaceAuth()Z
 
-    .line 230
+    .line 235
     iget p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
     if-lez p1, :cond_35
 
-    .line 231
+    .line 236
     iget p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
     add-int/lit8 p1, p1, -0x1
 
     iput p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
-    .line 232
+    .line 237
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     new-instance v0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda0;
@@ -2959,7 +2969,7 @@
 
     invoke-virtual {p1, v0, v1, v2}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
-    .line 235
+    .line 240
     :cond_35
     return-void
 .end method
@@ -2967,7 +2977,7 @@
 .method public onBiometricAuthenticated(ILandroid/hardware/biometrics/BiometricSourceType;Z)V
     .registers 4
 
-    .line 258
+    .line 263
     sget-object p1, Landroid/hardware/biometrics/BiometricSourceType;->IRIS:Landroid/hardware/biometrics/BiometricSourceType;
 
     if-eq p2, p1, :cond_1e
@@ -2996,7 +3006,7 @@
 
     invoke-direct {p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->stop(Ljava/lang/String;)V
 
-    .line 259
+    .line 264
     :cond_1e
     return-void
 .end method
@@ -3004,7 +3014,7 @@
 .method public onBiometricError(ILjava/lang/String;Landroid/hardware/biometrics/BiometricSourceType;)V
     .registers 6
 
-    .line 238
+    .line 243
     sget-object p1, Landroid/hardware/biometrics/BiometricSourceType;->FACE:Landroid/hardware/biometrics/BiometricSourceType;
 
     if-ne p3, p1, :cond_35
@@ -3023,34 +3033,34 @@
 
     if-eqz p1, :cond_35
 
-    .line 239
+    .line 244
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     iget-object p2, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackDoneRunnable:Ljava/lang/Runnable;
 
     invoke-virtual {p1, p2}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    .line 240
+    .line 245
     const/4 p1, 0x0
 
     iput-boolean p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
-    .line 241
+    .line 246
     invoke-direct {p0}, Lcom/android/keyguard/Un1caIrisKeyguard;->stopFaceAuth()Z
 
-    .line 242
+    .line 247
     iget p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
     if-lez p1, :cond_35
 
-    .line 243
+    .line 248
     iget p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
     add-int/lit8 p1, p1, -0x1
 
     iput p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
-    .line 244
+    .line 249
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     new-instance p2, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda4;
@@ -3061,7 +3071,7 @@
 
     invoke-virtual {p1, p2, v0, v1}, Landroid/os/Handler;->postDelayed(Ljava/lang/Runnable;J)Z
 
-    .line 247
+    .line 252
     :cond_35
     return-void
 .end method
@@ -3069,7 +3079,7 @@
 .method public onKeyguardGoingAway()V
     .registers 2
 
-    .line 250
+    .line 255
     const-string v0, "keyguard going away"
 
     invoke-direct {p0, v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->stop(Ljava/lang/String;)V
@@ -3080,14 +3090,14 @@
 .method public onKeyguardVisibilityChanged(Z)V
     .registers 2
 
-    .line 254
+    .line 259
     if-nez p1, :cond_7
 
     const-string p1, "keyguard hidden"
 
     invoke-direct {p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->stop(Ljava/lang/String;)V
 
-    .line 255
+    .line 260
     :cond_7
     return-void
 .end method
@@ -3095,36 +3105,36 @@
 .method public onPrimaryBouncerVisibilityChanged(Z)V
     .registers 3
 
-    .line 217
+    .line 222
     if-eqz p1, :cond_18
 
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mCancel:Landroid/os/CancellationSignal;
 
     if-nez p1, :cond_18
 
-    .line 218
+    .line 223
     const/4 p1, 0x0
 
     iput-boolean p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackActive:Z
 
-    .line 219
+    .line 224
     iget-object p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mHandler:Landroid/os/Handler;
 
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mFaceFallbackDoneRunnable:Ljava/lang/Runnable;
 
     invoke-virtual {p1, v0}, Landroid/os/Handler;->removeCallbacks(Ljava/lang/Runnable;)V
 
-    .line 220
+    .line 225
     const/4 p1, 0x2
 
     iput p1, p0, Lcom/android/keyguard/Un1caIrisKeyguard;->mRetriesLeft:I
 
-    .line 221
+    .line 226
     const-string p1, "bouncer"
 
     invoke-direct {p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->start(Ljava/lang/String;)V
 
-    .line 223
+    .line 228
     :cond_18
     return-void
 .end method
@@ -3132,7 +3142,7 @@
 .method public onStartedGoingToSleep(I)V
     .registers 2
 
-    .line 249
+    .line 254
     const-string p1, "going to sleep"
 
     invoke-direct {p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->stop(Ljava/lang/String;)V
@@ -3143,7 +3153,7 @@
 .method public onUserSwitching(I)V
     .registers 2
 
-    .line 251
+    .line 256
     const-string p1, "user switching"
 
     invoke-direct {p0, p1}, Lcom/android/keyguard/Un1caIrisKeyguard;->stop(Ljava/lang/String;)V

@@ -30,7 +30,7 @@
         }
     .end annotation
 
-    .line 591
+    .line 601
     iput-object p1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment$1;->this$0:Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;
 
     invoke-direct {p0}, Lcom/samsung/android/camera/iris/SemIrisManager$RemovalCallback;-><init>()V
@@ -43,7 +43,7 @@
 .method public onRemovalError(Lcom/samsung/android/camera/iris/Iris;ILjava/lang/CharSequence;)V
     .registers 5
 
-    .line 594
+    .line 604
     invoke-static {p3}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
 
     move-result-object p1
@@ -80,19 +80,19 @@
 
     invoke-static {p2, p1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 595
+    .line 605
     iget-object p1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment$1;->this$0:Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;
 
     invoke-static {p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->-$$Nest$monRemoved(Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;)V
 
-    .line 596
+    .line 606
     return-void
 .end method
 
 .method public onRemovalSucceeded(Lcom/samsung/android/camera/iris/Iris;)V
     .registers 2
 
-    .line 592
+    .line 602
     iget-object p1, p0, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment$1;->this$0:Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;
 
     invoke-static {p1}, Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;->-$$Nest$monRemoved(Lcom/samsung/android/settings/un1ca/IrisSettingsFragment;)V

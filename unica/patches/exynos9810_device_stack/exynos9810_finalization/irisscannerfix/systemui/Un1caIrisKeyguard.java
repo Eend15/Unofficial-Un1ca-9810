@@ -54,6 +54,11 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
     private static final String KEY_INTELLIGENT_SCREEN_ON = "un1ca_intelligent_scan_screen_on";
     private static final String KEY_STAY = "un1ca_iris_stay_on_lockscreen";
     private static final String KEY_FACE_STAY = "face_stay_on_lock_screen";
+    // Iris settings "Show camera preview" (default on). SecIrisService always opens its
+    // preview on the lock screen (IRIS_AUTH_TYPE_UI_NO_PREVIEW is ignored there), so with
+    // the option off the anchor it attaches the preview to is transparent: the camera
+    // session and the face share run as usual, the preview is just never seen.
+    private static final String KEY_PREVIEW = "un1ca_iris_preview";
     // WindowManager.LayoutParams.TYPE_SECURE_SYSTEM_OVERLAY (hidden): stacks above the bouncer.
     private static final int TYPE_SECURE_SYSTEM_OVERLAY = 2015;
 
@@ -415,6 +420,12 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP;
+        if (setting(KEY_PREVIEW, 1) != 1) {
+            // Same size and place (the service sizes and positions its camera surface from
+            // it), but fully transparent: the service's preview window is a child layer of
+            // this one and inherits the alpha, so the camera runs while nothing is shown.
+            lp.alpha = 0f;
+        }
         lp.setTitle("IrisPreviewAnchor");
         View anchor = new FrameLayout(mMonitor.mContext);
         mMonitor.mContext.getSystemService(WindowManager.class).addView(anchor, lp);
@@ -589,9 +600,10 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
         // "Stay on Lock screen": like Samsung's face lock-stay, show the lock screen as
         // unlocked and let the next swipe open the phone without the PIN. When the PIN
         // screen is already up the user has swiped, so finish the unlock.
+        // One UI 8 keeps face_stay_on_lock_screen in Settings.Secure (Settings.System
+        // never has it, so Intelligent Scan always skipped "Stay on Lock screen").
         boolean stay = setting(KEY_STAY, 0) == 1
-                || (isIntelligentScanActive()
-                    && Settings.System.getInt(mMonitor.mContext.getContentResolver(), KEY_FACE_STAY, 0) == 1);
+                || (isIntelligentScanActive() && setting(KEY_FACE_STAY, 0) == 1);
         if (stay && !mMonitor.mPrimaryBouncerIsOrWillBeShowing) {
             try {
                 mMonitor.getClass().getMethod("sendBiometricUnlockState", BiometricSourceType.class)

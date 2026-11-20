@@ -40,6 +40,8 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     static final String KEY_SCREEN_ON = "un1ca_iris_unlock_screen_on";
     static final String KEY_INTEL_SCREEN_ON = "un1ca_intelligent_scan_screen_on";
     static final String KEY_STAY = "un1ca_iris_stay_on_lockscreen";
+    // 1 (default): SecIrisService shows its camera preview at the top while scanning.
+    static final String KEY_PREVIEW = "un1ca_iris_preview";
     static final String KEY_FACE_STAY = "face_stay_on_lock_screen";
     static final String ARG_INTELLIGENT_SCAN = "un1ca_intelligent_scan";
     // Set by SecIrisService while the IR camera runs; irisd.rc turns it into a CPU floor.
@@ -74,7 +76,7 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
 
     private PreferenceCategory mManage;
     private Preference mRemove, mRegister;
-    private SwitchPreference mUnlock, mScreenOn, mStay;
+    private SwitchPreference mUnlock, mScreenOn, mStay, mPreview;
 
     @Override public int getMetricsCategory() {
         return 0;
@@ -199,6 +201,10 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
                     text(ctx, "iris_stay_on_lockscreen_summary",
                             "When you unlock with iris recognition, stay on the Lock screen until you swipe."));
         }
+        mPreview = toggle(unlocking, KEY_PREVIEW, 1,
+                text(ctx, "un1ca_iris_preview_title", "Show camera preview"),
+                text(ctx, "un1ca_iris_preview_summary",
+                        "Show the camera preview at the top of the screen while your irises are scanned."));
 
         // Always the last card, like "About face recognition" on the face page.
         PreferenceCategory help = new PreferenceCategory(ctx);
@@ -239,7 +245,8 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
             int val = (Boolean) v ? 1 : 0;
             Settings.Secure.putInt(mContext.getContentResolver(), key, val);
             if (KEY_STAY.equals(key) && (mIntelligentScan || isFaceUnlockEnabled())) {
-                Settings.System.putInt(mContext.getContentResolver(), KEY_FACE_STAY, val);
+                // One UI 8 keeps the face "Stay on Lock screen" option in Settings.Secure.
+                Settings.Secure.putInt(mContext.getContentResolver(), KEY_FACE_STAY, val);
             }
             if (KEY_UNLOCK.equals(key) && val == 1 && isFaceUnlockEnabled()) {
                 if (Settings.Secure.getInt(mContext.getContentResolver(), KEY_INTEL_SCREEN_ON, -1) == -1) {
@@ -271,6 +278,7 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
             mScreenOn.setChecked(Settings.Secure.getInt(mContext.getContentResolver(), KEY_INTEL_SCREEN_ON, 1) == 1);
             mStay.setEnabled(unlocking);
             mStay.setChecked(Settings.Secure.getInt(mContext.getContentResolver(), KEY_STAY, 0) == 1);
+            mPreview.setEnabled(unlocking);
         } else {
             mHadIrises |= hasIris;
             mRemove.setEnabled(hasIris);
@@ -283,7 +291,9 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
             mScreenOn.setChecked(Settings.Secure.getInt(mContext.getContentResolver(), KEY_SCREEN_ON, 0) == 1);
             mStay.setEnabled(unlocking);
             mStay.setChecked(Settings.Secure.getInt(mContext.getContentResolver(), KEY_STAY, 0) == 1);
+            mPreview.setEnabled(unlocking);
         }
+        mPreview.setChecked(Settings.Secure.getInt(mContext.getContentResolver(), KEY_PREVIEW, 1) == 1);
     }
 
     private void finish() {

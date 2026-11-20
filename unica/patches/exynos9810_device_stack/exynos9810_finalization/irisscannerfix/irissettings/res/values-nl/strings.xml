@@ -42,4 +42,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Gezicht en Iris automatisch uitgeschakeld wanneer Intelligente scan is uitgeschakeld.</string>
     <string name="iris_backup_lock_type_helptext_2">Voordat u uw irissen kunt registreren, moet u een veilige schermvergrendeling (patroon, pincode of wachtwoord) instellen.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Voordat u uw gezicht en irissen kunt registreren, moet u een veilige schermvergrendeling (patroon, pincode of wachtwoord) instellen.</string>
+    <string name="un1ca_iris_preview_title">Cameravoorbeeld tonen</string>
+    <string name="un1ca_iris_preview_summary">Toon het cameravoorbeeld boven aan het scherm terwijl uw irissen worden gescand.</string>
 </resources>

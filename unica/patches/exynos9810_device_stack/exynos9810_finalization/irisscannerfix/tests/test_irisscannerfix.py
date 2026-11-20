@@ -112,6 +112,28 @@ OPS = """.method public final isUserVisible(Ljava/lang/String;Ljava/lang/String;
     return v2
 .end method
 """
+BUC = """.method public final startWakeAndUnlock(ILcom/android/systemui/keyguard/shared/model/BiometricUnlockSource;)V
+    .locals 18
+    iget-object v0, p0, Lcom/android/systemui/statusbar/phone/BiometricUnlockController;->mUpdateMonitor:Lcom/android/keyguard/KeyguardUpdateMonitor;
+
+    const/4 v4, 0x1
+
+    const/4 v8, 0x0
+
+    const-string p1, "MODE_UNLOCK_COLLAPSING"
+
+    :cond_8
+    sget-object v1, Landroid/hardware/biometrics/BiometricSourceType;->FACE:Landroid/hardware/biometrics/BiometricSourceType;
+
+    if-ne p1, v1, :cond_a
+
+    :cond_9
+    invoke-interface {p1, v8}, Lcom/android/keyguard/KeyguardViewController;->notifyKeyguardAuthenticated(Z)V
+
+    :cond_a
+    return-void
+.end method
+"""
 
 
 class SystemUiTest(unittest.TestCase):
@@ -123,8 +145,15 @@ class SystemUiTest(unittest.TestCase):
         (d / "smali_classes4").mkdir()
         (d / "smali/com/android/keyguard/KeyguardUpdateMonitor.smali").write_text(KUM)
         (d / "smali/com/android/systemui/appops/AppOpsControllerImpl.smali").write_text(OPS)
+        (d / "smali/com/android/systemui/statusbar/phone").mkdir(parents=True)
+        (d / "smali/com/android/systemui/statusbar/phone/BiometricUnlockController.smali").write_text(BUC)
         systemui.main(d, FIX / "systemui" / "smali")
         systemui.main(d, FIX / "systemui" / "smali")
+        buc = (d / "smali/com/android/systemui/statusbar/phone/BiometricUnlockController.smali").read_text()
+        self.assertEqual(buc.count("BiometricSourceType;->IRIS"), 1)
+        self.assertLess(buc.index("BiometricSourceType;->IRIS"), buc.index("BiometricSourceType;->FACE"))
+        self.assertIn("if-eqz p1, :cond_a", buc)
+        self.assertIn("goto :cond_a", buc)
         kum = (d / "smali/com/android/keyguard/KeyguardUpdateMonitor.smali").read_text()
         self.assertEqual(kum.count("Un1caIrisKeyguard;->onStartedWakingUp"), 1)
         self.assertLess(kum.index("onStartedWakingUp"), kum.index("return-void"))
