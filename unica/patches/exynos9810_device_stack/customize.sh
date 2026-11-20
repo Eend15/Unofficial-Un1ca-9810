@@ -1921,6 +1921,62 @@ _EXYNOS9810_APPLY_KEYMASTER3()
         "vendor/etc/init/android.hardware.keymaster@3.0-service.rc" \
         "/vendor/etc/init/android.hardware.keymaster@3.0-service.rc" \
         0 0 644 "u:object_r:vendor_configs_file:s0"
+
+    _EXYNOS9810_PIN_KEYMASTER_PATCHLEVEL || return 1
+}
+
+# Keymaster 3.0 binds every key to the OS patch level it reads from
+# ro.build.version.security_patch when the HAL configures the TEE. Integrity
+# modules (TrickyStore, AlwaysStrong, ...) resetprop that value; every key made
+# before then needs an upgrade the Trustonic TA refuses (INVALID_KEY_BLOB), and
+# going back to the real value is a downgrade it never accepts. Samsung Account,
+# banking apps and other keystore users then lose their keys.
+# Read a ROM-owned property of the same length instead, so the Keymaster's patch
+# level only changes with the ROM. Attestation (strong integrity) is unaffected:
+# keybox spoofing writes its own patch level into the certificate.
+EXYNOS9810_KM_PATCH_PROP="ro.vendor.keymaster.os_patchlvl"
+
+_EXYNOS9810_PIN_KEYMASTER_PATCHLEVEL()
+{
+    local OLD="ro.build.version.security_patch"
+    local NEW="$EXYNOS9810_KM_PATCH_PROP"
+    local LEVEL CONTEXTS REL
+
+    LEVEL="$(sed -n "s/^${OLD//./\\.}=//p" "$WORK_DIR/system/system/build.prop" | tail -n 1)"
+    if ! [[ "$LEVEL" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+        LOGE "Cannot pin the Keymaster patch level: no $OLD in system build.prop"
+        return 1
+    fi
+    LOG "- Pinning the Exynos9810 Keymaster 3.0 OS patch level to $LEVEL ($NEW)"
+
+    for REL in \
+        "lib/libkeymaster3device.so" \
+        "lib64/libkeymaster3device.so" \
+        "lib64/libkeymaster_helper_vendor.so" \
+        "lib64/libsoftkeymasterdevice.so" \
+        "lib64/libpuresoftkeymasterdevice.so"; do
+        python3 - "$WORK_DIR/vendor/$REL" "$OLD" "$NEW" <<'PY' || { LOGE "Keymaster patch-level pin failed: $REL"; return 1; }
+import sys
+path, old, new = sys.argv[1], sys.argv[2].encode() + b"\0", sys.argv[3].encode() + b"\0"
+assert len(old) == len(new)
+data = open(path, "rb").read()
+if data.count(new) == 1 and data.count(old) == 0:
+    sys.exit(0)
+if data.count(old) != 1:
+    sys.exit(f"{path}: expected one {old!r}, found {data.count(old)}")
+open(path, "wb").write(data.replace(old, new, 1))
+PY
+    done
+
+    _EXYNOS9810_SET_PROP_FILE "$WORK_DIR/vendor/build.prop" "$NEW" "$LEVEL"
+
+    # hal_keymaster_default may read vendor_security_patch_level_prop and
+    # vendor_init may set it, like ro.vendor.build.security_patch.
+    CONTEXTS="$WORK_DIR/vendor/etc/selinux/vendor_property_contexts"
+    [ -f "$CONTEXTS" ] || { LOGE "Missing $CONTEXTS"; return 1; }
+    sed -i "\|^${NEW//./\\.}[[:space:]]|d" "$CONTEXTS"
+    [ -z "$(tail -c 1 "$CONTEXTS")" ] || echo >> "$CONTEXTS"
+    printf '%s u:object_r:vendor_security_patch_level_prop:s0 exact string\n' "$NEW" >> "$CONTEXTS"
 }
 
 _EXYNOS9810_APPLY_KEYMASTER4()

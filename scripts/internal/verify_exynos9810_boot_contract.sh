@@ -149,6 +149,22 @@ if [ "$(get_prop "$VENDOR_PROP" ro.hardware.keystore)" != "mdfpp" ] || \
     echo "Exynos9810 boot contract: keymaster properties do not match the tested stack" >&2
     exit 1
 fi
+# Keymaster 3.0 must read the ROM-owned patch level, never the spoofable
+# ro.build.version.security_patch (see _EXYNOS9810_PIN_KEYMASTER_PATCHLEVEL).
+KM_PATCH_PROP="ro.vendor.keymaster.os_patchlvl"
+for LIB in lib/libkeymaster3device.so lib64/libkeymaster3device.so lib64/libkeymaster_helper_vendor.so \
+        lib64/libsoftkeymasterdevice.so lib64/libpuresoftkeymasterdevice.so; do
+    if ! grep -aq "$KM_PATCH_PROP" "$WORK/vendor/$LIB" || grep -aq 'ro\.build\.version\.security_patch' "$WORK/vendor/$LIB"; then
+        echo "Exynos9810 boot contract: $LIB does not read the pinned Keymaster patch level" >&2
+        exit 1
+    fi
+done
+if [ "$(get_prop "$VENDOR_PROP" "$KM_PATCH_PROP")" != "$(get_prop "$WORK/system/system/build.prop" ro.build.version.security_patch)" ] || \
+        ! grep -q "^$KM_PATCH_PROP u:object_r:vendor_security_patch_level_prop:s0 " \
+            "$WORK/vendor/etc/selinux/vendor_property_contexts"; then
+    echo "Exynos9810 boot contract: $KM_PATCH_PROP is not set to the system security patch" >&2
+    exit 1
+fi
 for HAL in android.hardware.keymaster android.hardware.gatekeeper vendor.trustonic.tee; do
     grep -q "<name>${HAL}</name>" "$WORK/vendor/etc/vintf/manifest.xml" || {
         echo "Exynos9810 boot contract: missing VINTF HAL $HAL" >&2
