@@ -1,0 +1,4 @@
+id=webview
+name=WebView zygote watchdog
+author=Eend15
+description=Restart the webview zygote when it lost its socket, so a dead WebView sandbox no longer force-stops Google Play services.

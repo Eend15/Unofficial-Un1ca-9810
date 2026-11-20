@@ -1,0 +1,87 @@
+From: Eend15 <Eend15@users.noreply.github.com>
+Subject: [PATCH] Restart a webview zygote that stopped listening
+
+---
+diff --git a/smali_classes4/android/webkit/WebViewZygote.smali b/smali_classes4/android/webkit/WebViewZygote.smali
+index 8accc41..67ae71c 100644
+--- a/smali_classes4/android/webkit/WebViewZygote.smali
++++ b/smali_classes4/android/webkit/WebViewZygote.smali
+@@ -191,10 +191,21 @@
+ 
+     if-eqz v1, :cond_0
+ 
++    invoke-static {v1}, Landroid/webkit/WebViewZygote;->isZygoteListening(Landroid/os/ChildZygoteProcess;)Z
++
++    move-result v1
++
++    if-eqz v1, :un1ca_restart_zygote
++
++    sget-object v1, Landroid/webkit/WebViewZygote;->sZygote:Landroid/os/ChildZygoteProcess;
++
+     monitor-exit v0
+ 
+     return-object v1
+ 
++    :un1ca_restart_zygote
++    invoke-static {}, Landroid/webkit/WebViewZygote;->stopZygoteLocked()V
++
+     :cond_0
+     invoke-static {}, Landroid/webkit/WebViewZygote;->connectToZygoteIfNeededLocked()V
+ 
+@@ -274,6 +285,56 @@
+     throw p0
+ .end method
+ 
++.method private static isZygoteListening(Landroid/os/ChildZygoteProcess;)Z
++    .locals 4
++
++    # UN1CA: the webview zygote can stay alive without its listening socket. Every
++    # sandboxed WebView start then fails with "Connection refused", and ActivityManager
++    # force-stops the host app (Google Play services, and everything bound to it).
++    # Check the socket before handing the zygote out; a dead one is restarted.
++    new-instance v1, Landroid/net/LocalSocket;
++
++    invoke-direct {v1}, Landroid/net/LocalSocket;-><init>()V
++
++    :try_start_0
++    invoke-virtual {p0}, Landroid/os/ChildZygoteProcess;->getPrimarySocketAddress()Landroid/net/LocalSocketAddress;
++
++    move-result-object v0
++
++    invoke-virtual {v1, v0}, Landroid/net/LocalSocket;->connect(Landroid/net/LocalSocketAddress;)V
++    :try_end_0
++    .catch Ljava/io/IOException; {:try_start_0 .. :try_end_0} :catch_0
++
++    :try_start_1
++    invoke-virtual {v1}, Landroid/net/LocalSocket;->close()V
++    :try_end_1
++    .catch Ljava/io/IOException; {:try_start_1 .. :try_end_1} :catch_1
++
++    :catch_1
++    const/4 v0, 0x1
++
++    return v0
++
++    :catch_0
++    move-exception v0
++
++    const-string v2, "WebViewZygote"
++
++    const-string v3, "UN1CA: webview zygote is not listening, restarting it"
++
++    invoke-static {v2, v3, v0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++
++    :try_start_2
++    invoke-virtual {v1}, Landroid/net/LocalSocket;->close()V
++    :try_end_2
++    .catch Ljava/io/IOException; {:try_start_2 .. :try_end_2} :catch_2
++
++    :catch_2
++    const/4 v0, 0x0
++
++    return v0
++.end method
++
+ .method private static greylist-max-o stopZygoteLocked()V
+     .locals 1
+ 

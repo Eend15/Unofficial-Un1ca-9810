@@ -12538,7 +12538,9 @@
     "unica/patches/vintf/customize.sh",
     "unica/patches/vintf/module.prop",
     "unica/patches/vndk/customize.sh",
-    "unica/patches/vndk/module.prop"
+    "unica/patches/vndk/module.prop",
+    "unica/patches/webview/module.prop",
+    "unica/patches/webview/smali/system/framework/framework.jar/0001-Restart-a-webview-zygote-that-stopped-listening.patch"
   ],
   "submodules": {
     "external/android-tools": "5a3729b98ab2982e72fa52174b784e80fd5a6f15",
