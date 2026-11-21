@@ -42,7 +42,7 @@
 
     iget-object v2, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda14;->f$2:Ljava/lang/Runnable;
 
-    invoke-virtual {v0, v1, v2}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$refreshEnrolled$3$com-android-keyguard-Un1caIrisKeyguard(ILjava/lang/Runnable;)V
+    invoke-virtual {v0, v1, v2}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$refreshEnrolled$4$com-android-keyguard-Un1caIrisKeyguard(ILjava/lang/Runnable;)V
 
     return-void
 .end method

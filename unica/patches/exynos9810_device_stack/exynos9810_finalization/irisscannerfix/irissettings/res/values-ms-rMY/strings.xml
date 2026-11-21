@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Muka dan Iris dimatikan secara automatik apabila Imbas Pintar dimatikan.</string>
     <string name="iris_backup_lock_type_helptext_2">Sebelum anda boleh mendaftarkan iris, anda perlu menetapkan kunci skrin selamat (corak, PIN atau kata laluan).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Sebelum anda boleh mendaftarkan muka dan iris anda, anda perlu menetapkan kunci skrin selamat (corak, PIN atau kata laluan).</string>
+    <string name="un1ca_iris_preview_title">Tunjukkan pratonton kamera</string>
+    <string name="un1ca_iris_preview_summary">Tunjukkan pratonton kamera di bahagian atas skrin semasa iris anda diimbas.</string>
 </resources>

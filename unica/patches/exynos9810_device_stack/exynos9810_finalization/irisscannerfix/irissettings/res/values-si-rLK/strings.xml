@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">බුද්ධිමත් පිරික්සුම ක්‍රියා විරහිත විට මුහුණ සහ කළු ඉංගිරියාව ස්වයංක්‍රීයව ක්‍රියා විරහිත කෙරිණි.</string>
     <string name="iris_backup_lock_type_helptext_2">ඔබට ඔබේ කළු ඉංගිරියා ලියාපදිංචියට හැකි වීමට පෙර, ඔබට සුරක්ෂිත තිර අගුලක් (රටාව, PIN, හෝ මුරපදය) පිහිටුවීමට අවශ්‍යයි.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">ඔබට ඔබේ මුහුණ සහ කළු ඉංගිරියා ලියාපදිංචියට හැකි වීමට පෙර, ඔබට සුරක්ෂිත තිර අගුලක් (රටාව, PIN, හෝ මුරපදය) පිහිටුවීමට අවශ්‍යයි.</string>
+    <string name="un1ca_iris_preview_title">කැමරා පෙරදසුන පෙන්වන්න</string>
+    <string name="un1ca_iris_preview_summary">ඔබේ ඇස් කළු ඉංගිරියාව ස්කෑන් කරන අතරතුර තිරයේ ඉහළින් කැමරා පෙරදසුන පෙන්වන්න.</string>
 </resources>

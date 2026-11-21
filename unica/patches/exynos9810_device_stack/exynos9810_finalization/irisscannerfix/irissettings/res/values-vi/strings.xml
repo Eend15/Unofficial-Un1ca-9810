@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Khuôn mặt và Mống mắt tự động tắt khi tắt Quét thông minh.</string>
     <string name="iris_backup_lock_type_helptext_2">Trước khi có thể đăng ký mống mắt, bạn cần đặt khóa màn hình bảo mật (mẫu hình, mã PIN hoặc mật mã).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Trước khi có thể đăng ký khuôn mặt và mống mắt, bạn cần đặt khóa màn hình bảo mật (mẫu hình, mã PIN hoặc mật mã).</string>
+    <string name="un1ca_iris_preview_title">Hiển thị bản xem trước camera</string>
+    <string name="un1ca_iris_preview_summary">Hiển thị bản xem trước camera ở đầu màn hình trong khi quét mống mắt của bạn.</string>
 </resources>

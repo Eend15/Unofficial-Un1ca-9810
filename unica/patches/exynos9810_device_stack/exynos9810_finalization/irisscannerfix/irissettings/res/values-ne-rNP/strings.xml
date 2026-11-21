@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">इन्टेलिजेन्ट स्क्यानलाई अफ गरिँदा अनुहार र आइरिस सुविधा स्वचालित रूपमा अफ हुनेछ।</string>
     <string name="iris_backup_lock_type_helptext_2">कुनै सुरक्षित स्क्रीन लक (ढाँचा, PIN वा पासवर्ड) सेट गरेपछि मात्र तपाई आफ्ना आइरिसहरू दर्ता गर्न सक्नुहुन्छ।</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">कुनै सुरक्षित स्क्रीन लक (ढाँचा, PIN वा पासवर्ड) सेट गरेपछि मात्र तपाई आफ्नो अनुहार वा आइरिसहरू दर्ता गर्न सक्नुहुन्छ।</string>
+    <string name="un1ca_iris_preview_title">क्यामेराको पूर्वावलोकन देखाउनुहोस्</string>
+    <string name="un1ca_iris_preview_summary">तपाईंको आइरिस स्क्यान हुँदा स्क्रिनको माथि क्यामेराको पूर्वावलोकन देखाउनुहोस्।</string>
 </resources>

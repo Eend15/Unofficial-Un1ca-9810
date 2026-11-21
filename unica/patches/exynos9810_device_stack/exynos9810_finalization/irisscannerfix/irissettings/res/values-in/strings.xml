@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Wajah dan Iris dinonaktifkan secara otomatis saat Pemindaian Cerdas dinonaktifkan.</string>
     <string name="iris_backup_lock_type_helptext_2">Sebelum mendaftarkan iris, Anda harus mengatur kunci layar aman (pola, PIN, atau kata sandi).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Sebelum mendaftarkan wajah dan iris, Anda harus mengatur kunci layar aman (pola, PIN, atau kata sandi).</string>
+    <string name="un1ca_iris_preview_title">Tampilkan pratinjau kamera</string>
+    <string name="un1ca_iris_preview_summary">Tampilkan pratinjau kamera di bagian atas layar saat iris Anda dipindai.</string>
 </resources>

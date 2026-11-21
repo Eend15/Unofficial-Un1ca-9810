@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">အထူး စကန်ဖတ်ခြင်းကို ပိတ်ထားသည့်အခါ မျက်နှာနှင့် မျက်ဝန်းကို အလိုအလျောက် ပိတ်ပါသည်။</string>
     <string name="iris_backup_lock_type_helptext_2">သင့်မျက်ဝန်းများကို မှတ်ပုံမတင်နိုင်မီ လုံခြုံသော ဖန်သားပြင်သော့ (ပက်တန်၊ PIN (သို့) စကားဝှက်) ကို သတ်မှတ်ရန် လိုသည်။</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">သင့်မျက်နှာနှင့် မျက်ဝန်းများကို မှတ်ပုံမတင်နိုင်မီ လုံခြုံသော ဖန်သားပြင်သော့ (ပက်တန်၊ PIN (သို့) စကားဝှက်) ကို သတ်မှတ်ရန် လိုသည်။</string>
+    <string name="un1ca_iris_preview_title">ကင်မရာ အစမ်းကြည့်ရှုမှုကို ပြရန်</string>
+    <string name="un1ca_iris_preview_summary">သင့်မျက်ဝန်းများကို စကင်ဖတ်နေစဉ် မျက်နှာပြင်ထိပ်တွင် ကင်မရာ အစမ်းကြည့်ရှုမှုကို ပြပါ။</string>
 </resources>

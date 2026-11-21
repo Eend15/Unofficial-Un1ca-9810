@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ปิดใบหน้าและม่านตาโดยอัตโนมัติเมื่อปิดการสแกนอัจฉริยะ</string>
     <string name="iris_backup_lock_type_helptext_2">ก่อนจะลงทะเบียนม่านตา คุณต้องตั้งค่าการล็อกหน้าจอที่ปลอดภัย (รูปแบบ, PIN หรือรหัสผ่าน)</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">ก่อนจะลงทะเบียนใบหน้าและม่านตา คุณต้องตั้งค่าการล็อกหน้าจอที่ปลอดภัย (รูปแบบ, PIN หรือรหัสผ่าน)</string>
+    <string name="un1ca_iris_preview_title">แสดงภาพตัวอย่างจากกล้อง</string>
+    <string name="un1ca_iris_preview_summary">แสดงภาพตัวอย่างจากกล้องที่ด้านบนของหน้าจอขณะสแกนม่านตาของคุณ</string>
 </resources>

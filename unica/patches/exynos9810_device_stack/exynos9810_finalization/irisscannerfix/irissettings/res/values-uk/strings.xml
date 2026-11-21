@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Розпізнавання обличчя та райдужок автоматично вимикається після вимкнення інтелектуального сканування.</string>
     <string name="iris_backup_lock_type_helptext_2">Перш ніж зареєструвати райдужки, потрібно встановити захищений тип блокування екрана (ключ розблокування, PIN-код чи пароль).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Перш ніж зареєструвати обличчя й райдужки, потрібно встановити захищений тип блокування екрана (ключ розблокування, PIN-код чи пароль).</string>
+    <string name="un1ca_iris_preview_title">Показувати попередній перегляд камери</string>
+    <string name="un1ca_iris_preview_summary">Показувати попередній перегляд камери вгорі екрана під час сканування райдужних оболонок.</string>
 </resources>

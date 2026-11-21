@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Fōnkcyje Gymba i Tynczōwka sōm z autōmatu wyłōnczane, kej Inteligyntne skanowanie je wyłōnczōne.</string>
     <string name="iris_backup_lock_type_helptext_2">Podwiela zaregistrujesz tynczōwki, musisz nastawić bezpiecznŏ blokada ekranu (muster, PIN abo hasło).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Podwiela zaregistrujesz gymba i tynczōwki, trza nastawić bezpiecznŏ blokada ekranu (muster, PIN abo hasło).</string>
+    <string name="un1ca_iris_preview_title">Pokaż podgląd aparatu</string>
+    <string name="un1ca_iris_preview_summary">Pokaż podgląd aparatu u góry ekranu podczas skanowania tęczówek.</string>
 </resources>

@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Při vypnutí Inteligentního skenování se automaticky vypne detekce obličeje a duhovky.</string>
     <string name="iris_backup_lock_type_helptext_2">Než zaregistrujete duhovky, musíte nastavit zabezpečený zámek displeje (znak, PIN kód nebo heslo).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Než zaregistrujete obličej a duhovky, musíte nastavit zabezpečený zámek displeje (znak, PIN kód nebo heslo).</string>
+    <string name="un1ca_iris_preview_title">Zobrazit náhled fotoaparátu</string>
+    <string name="un1ca_iris_preview_summary">Zobrazit náhled fotoaparátu v horní části obrazovky během skenování duhovek.</string>
 </resources>

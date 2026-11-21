@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">"S'han desactivat les opcions Cara i Iris automàticament quan s'ha desactivat l'Escaneig intel·ligent."</string>
     <string name="iris_backup_lock_type_helptext_2">Abans de registrar l\'iris, has d\'establir un bloqueig de pantalla segur (patró, PIN o contrasenya).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Abans de registrar la cara i l\'iris, has d\'establir un bloqueig de pantalla segur (patró, PIN o contrasenya).</string>
+    <string name="un1ca_iris_preview_title">Mostra la previsualització de la càmera</string>
+    <string name="un1ca_iris_preview_summary">Mostra la previsualització de la càmera a la part superior de la pantalla mentre s\'escanegen els iris.</string>
 </resources>

@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">وقتی اسکن هوشمند خاموش است، چهره و چشم به طور خودکار خاموش می‌شوند.</string>
     <string name="iris_backup_lock_type_helptext_2">پیش از آنکه چشم‌های خود را ثبت کنید، باید یک قفل صفحه امن (الگو، پین یا رمزعبور) تنظیم کنید.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">پیش از آنکه صورت و چشم‌های خود را ثبت کنید، باید یک قفل صفحه امن (الگو، پین یا رمزعبور) تنظیم کنید.</string>
+    <string name="un1ca_iris_preview_title">نمایش پیش‌نمایش دوربین</string>
+    <string name="un1ca_iris_preview_summary">نمایش پیش‌نمایش دوربین در بالای صفحه هنگام اسکن عنبیه‌های شما.</string>
 </resources>

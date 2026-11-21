@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Az Intelligens azonosítás kikapcsolásakor automatikusan kikapcsolt az arc- és az íriszfelismerés is.</string>
     <string name="iris_backup_lock_type_helptext_2">Íriszei regisztrálása előtt be kell állítani egy biztonságos zártípust (mintát, PIN-kódot vagy jelszót).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Arca és íriszei regisztrálása előtt be kell állítani egy biztonságos zártípust (mintát, PIN-kódot vagy jelszót).</string>
+    <string name="un1ca_iris_preview_title">Kamera előnézetének megjelenítése</string>
+    <string name="un1ca_iris_preview_summary">A kamera előnézetének megjelenítése a képernyő tetején, amíg az íriszeit beolvassa a készülék.</string>
 </resources>

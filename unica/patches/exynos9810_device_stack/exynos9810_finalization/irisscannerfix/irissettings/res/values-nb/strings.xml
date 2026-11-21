@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Ansikt og Iris slås av automatisk når Intelligent skanning slås av.</string>
     <string name="iris_backup_lock_type_helptext_2">Før du kan registrere irisene, må du angi en skjermlåstype (mønster, PIN-kode eller passord).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Før du kan registrere ansiktet og irisene, må du angi en skjermlåstype (mønster, PIN-kode eller passord).</string>
+    <string name="un1ca_iris_preview_title">Vis forhåndsvisning fra kameraet</string>
+    <string name="un1ca_iris_preview_summary">Vis forhåndsvisningen fra kameraet øverst på skjermen mens irisene dine skannes.</string>
 </resources>

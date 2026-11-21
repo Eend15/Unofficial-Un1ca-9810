@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Лицето и Зениците се исклучени автоматски кога е исклучено Интелигентно скенирање.</string>
     <string name="iris_backup_lock_type_helptext_2">Пред да можете да ги регистрирате Вашите зеници, треба да поставите безбедно заклучување на екран (шара, PIN или лозинка).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Пред да можете да ги регистрирате Вашето лице и зениците, треба да поставите безбедно заклучување на екран (шара, PIN или лозинка).</string>
+    <string name="un1ca_iris_preview_title">Прикажи преглед на камерата</string>
+    <string name="un1ca_iris_preview_summary">Прикажи преглед на камерата на врвот на екранот додека се скенираат вашите ириси.</string>
 </resources>

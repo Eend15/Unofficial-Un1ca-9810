@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan sönən zaman Üz və Göz qüzehi avtomatik söndü.</string>
     <string name="iris_backup_lock_type_helptext_2">Göz qüzehlərinizi əlavə etməzdən əvvəl siz təhlükəsiz ekran kilidi təyin etməlisiniz (naxış, PIN-kod və ya şifrə).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Üzünüzü və göz qüzehlərinizi əlavə etməzdən əvvəl siz təhlükəsiz ekran kilidi təyin etməlisiniz (naxış, PIN-kod və ya şifrə).</string>
+    <string name="un1ca_iris_preview_title">Kamera önizləməsini göstər</string>
+    <string name="un1ca_iris_preview_summary">İrisləriniz skan edilərkən ekranın yuxarısında kamera önizləməsini göstər.</string>
 </resources>

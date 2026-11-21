@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">நுண்ணறிவு ஸ்கேன் ஆஃப் செய்யப்பட்டுள்ள போது, முகம் மற்றும் கருவிழித் தானாகவே ஆஃப் செய்யப்பட்டது.</string>
     <string name="iris_backup_lock_type_helptext_2">உங்கள் கருவிழிகளைப் பதிவு செய்வதற்கு முன்னர், பாதுகாப்பான திரைப் பூட்டை நீங்கள் அமைக்க வேண்டும் (பேட்டர்ன், PIN அல்லது கடவுச்சொல்).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">உங்கள் முகம் அல்லது கருவிழிகளைப் பதிவு செய்வதற்கு முன்னர், பாதுகாப்பான திரைப் பூட்டை நீங்கள் அமைக்க வேண்டும் (பேட்டர்ன், PIN அல்லது கடவுச்சொல்).</string>
+    <string name="un1ca_iris_preview_title">கேமரா மாதிரிக்காட்சியைக் காட்டு</string>
+    <string name="un1ca_iris_preview_summary">உங்கள் கருவிழிகள் ஸ்கேன் செய்யப்படும்போது திரையின் மேலே கேமரா மாதிரிக்காட்சியைக் காட்டு.</string>
 </resources>

@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ಇಂಟೆಲಿಜೆಂಟ್ ಸ್ಕ್ಯಾನ್ ಆಫ್ ಮಾಡಿರುವಾಗ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಮುಖ ಮತ್ತು ಐರಿಸ್ ಆಫ್ ಅಗಿದೆ.</string>
     <string name="iris_backup_lock_type_helptext_2">ನಿಮ್ಮ ಐರಿಸ್‌ಗಳನ್ನು ನೀವು ನೋಂದಾಯಿಸುವ ಮೊದಲು, ನೀವು ಸುರಕ್ಷಿತ ಸ್ಕ್ರೀನ್ ಲಾಕ್ (ನಮೂನೆ, PIN ಅಥವಾ ಪಾಸ್‌ವರ್ಡ್) ಹೊಂದಿಸಬೇಕಾಗುತ್ತದೆ.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">ನಿಮ್ಮ ಮುಖ ಮತ್ತು ಐರಿಸ್‌ಗಳನ್ನು ನೀವು ನೋಂದಾಯಿಸುವ ಮೊದಲು, ನೀವು ಸುರಕ್ಷಿತ ಸ್ಕ್ರೀನ್ ಲಾಕ್ (ನಮೂನೆ, PIN ಅಥವಾ ಪಾಸ್‌ವರ್ಡ್) ಹೊಂದಿಸಬೇಕಾಗುತ್ತದೆ.</string>
+    <string name="un1ca_iris_preview_title">ಕ್ಯಾಮರಾ ಪೂರ್ವವೀಕ್ಷಣೆ ತೋರಿಸಿ</string>
+    <string name="un1ca_iris_preview_summary">ನಿಮ್ಮ ಐರಿಸ್‌ಗಳನ್ನು ಸ್ಕ್ಯಾನ್ ಮಾಡುವಾಗ ಸ್ಕ್ರೀನ್‌ನ ಮೇಲ್ಭಾಗದಲ್ಲಿ ಕ್ಯಾಮರಾ ಪೂರ್ವವೀಕ್ಷಣೆ ತೋರಿಸಿ.</string>
 </resources>

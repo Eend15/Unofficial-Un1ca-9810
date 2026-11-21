@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Viso e Iride disattivati automaticamente quando Scansione intelligente è disattivata.</string>
     <string name="iris_backup_lock_type_helptext_2">Prima di registrare le iridi, occorre impostare un blocco schermo sicuro (segno, PIN o password).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Prima di registrare il viso e le iridi, occorre impostare un blocco schermo sicuro (segno, PIN o password).</string>
+    <string name="un1ca_iris_preview_title">Mostra anteprima fotocamera</string>
+    <string name="un1ca_iris_preview_summary">Mostra l\'anteprima della fotocamera nella parte superiore dello schermo durante la scansione delle iridi.</string>
 </resources>

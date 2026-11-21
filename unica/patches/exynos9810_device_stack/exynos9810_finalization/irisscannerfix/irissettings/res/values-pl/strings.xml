@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Funkcje Twarz i Tęczówka są automatycznie wyłączane, gdy Inteligentne skanowanie jest wyłączone.</string>
     <string name="iris_backup_lock_type_helptext_2">Zanim zarejestrujesz tęczówki, musisz ustawić bezpieczną blokadę ekranu (wzór, kod PIN lub hasło).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Zanim zarejestrujesz twarz i tęczówki, musisz ustawić bezpieczną blokadę ekranu (wzór, kod PIN lub hasło).</string>
+    <string name="un1ca_iris_preview_title">Pokaż podgląd aparatu</string>
+    <string name="un1ca_iris_preview_summary">Pokaż podgląd aparatu u góry ekranu podczas skanowania tęczówek.</string>
 </resources>

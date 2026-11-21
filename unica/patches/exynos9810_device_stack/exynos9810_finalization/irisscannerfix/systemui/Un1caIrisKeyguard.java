@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.Log;
@@ -54,11 +55,6 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
     private static final String KEY_INTELLIGENT_SCREEN_ON = "un1ca_intelligent_scan_screen_on";
     private static final String KEY_STAY = "un1ca_iris_stay_on_lockscreen";
     private static final String KEY_FACE_STAY = "face_stay_on_lock_screen";
-    // Iris settings "Show camera preview" (default on). SecIrisService always opens its
-    // preview on the lock screen (IRIS_AUTH_TYPE_UI_NO_PREVIEW is ignored there), so with
-    // the option off the anchor it attaches the preview to is transparent: the camera
-    // session and the face share run as usual, the preview is just never seen.
-    private static final String KEY_PREVIEW = "un1ca_iris_preview";
     // WindowManager.LayoutParams.TYPE_SECURE_SYSTEM_OVERLAY (hidden): stacks above the bouncer.
     private static final int TYPE_SECURE_SYSTEM_OVERLAY = 2015;
 
@@ -99,6 +95,11 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
     private static final long FACE_JOIN_DELAY_MS = 10;
     private static final int TX_EXPECT_FACE = 0x00ff5503;
     private int mRetriesLeft;
+    // Uptime until which no scan may start: an app (the camera) is being launched from the
+    // lock screen and needs the cameras the iris scan holds (IR 90 + front 1 use the full
+    // camera cost budget, and the iris service outranks the app, so it got CAMERA_IN_USE).
+    private long mLaunchBlockUntil;
+    private static final long LAUNCH_BLOCK_MS = 5000;
     // Face is running on the iris front stream (Intelligent Scan), not on its own camera.
     private boolean mFaceShared;
     // Placeholder the iris service positions its preview window on.
@@ -188,6 +189,24 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
         }
     }
 
+    /**
+     * Injected at the top of CameraGestureHelper.launchCamera and of the lock screen shortcut
+     * launch (KeyguardSecAffordanceView.launchShortcut). Releases the cameras before the app
+     * opens them and keeps scans from restarting while it comes up.
+     */
+    public static void onLaunchFromLockscreen() {
+        try {
+            Un1caIrisKeyguard inst = sInstance;
+            if (inst == null) return;
+            inst.mLaunchBlockUntil = SystemClock.uptimeMillis() + LAUNCH_BLOCK_MS;
+            inst.stop("app launched from lock screen");
+            inst.stopFaceAuth();
+            inst.hidePreviewAnchor();
+        } catch (Throwable t) {
+            Log.w(TAG, "launch hook failed", t);
+        }
+    }
+
     private void ensureServiceBound() {
         if (mServiceBound) return;
         try {
@@ -251,13 +270,43 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
         }
     }
 
-    @Override public void onStartedGoingToSleep(int why) { stop("going to sleep"); }
+    @Override public void onStartedGoingToSleep(int why) {
+        mLaunchBlockUntil = 0;
+        mWasOccluded = false;
+        mHandler.removeCallbacks(mResumeRunnable);
+        stop("going to sleep");
+    }
     @Override public void onKeyguardGoingAway() { stop("keyguard going away"); }
     @Override public void onUserSwitching(int userId) { stop("user switching"); }
 
     @Override public void onKeyguardVisibilityChanged(boolean visible) {
-        if (!visible) stop("keyguard hidden");
+        if (!visible) {
+            // An app (the camera) shown over the still-locked lock screen.
+            if (mMonitor.mKeyguardShowing && mMonitor.mKeyguardOccluded) mWasOccluded = true;
+            stop("keyguard hidden");
+            return;
+        }
+        if (!mWasOccluded) return;
+        mWasOccluded = false;
+        mHandler.removeCallbacks(mResumeRunnable);
+        if (!mMonitor.mDeviceInteractive) return;
+        mLaunchBlockUntil = 0;
+        // Back on the lock screen from that app: scan again like on screen on. Wait for the
+        // app to close its camera first; a busy camera is retried anyway.
+        mHandler.postDelayed(mResumeRunnable, RESUME_DELAY_MS);
     }
+
+    private boolean mWasOccluded;
+    private static final long RESUME_DELAY_MS = 400;
+    private final Runnable mResumeRunnable = () -> {
+        if (mCancel != null || mFaceFallbackActive) return;
+        boolean shouldStart = isIntelligentScanActive()
+                ? (setting(KEY_INTELLIGENT_SCREEN_ON, 1) == 1)
+                : (setting(KEY_SCREEN_ON, 0) == 1);
+        if (!shouldStart) return;
+        mRetriesLeft = ATTEMPTS - 1;
+        start("back on lock screen");
+    };
 
     @Override public void onBiometricAuthenticated(int userId, BiometricSourceType type, boolean strong) {
         if (type != BiometricSourceType.IRIS) stop("unlocked by " + type);
@@ -334,6 +383,7 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
 
     private void start(String why) {
         if (mCancel != null) return;
+        if (SystemClock.uptimeMillis() < mLaunchBlockUntil) return;
         ensureServiceBound();
         int user = KeyguardUpdateMonitor.getCurrentUser();
         if (setting(KEY_UNLOCK, 1) != 1) return;
@@ -420,12 +470,6 @@ public final class Un1caIrisKeyguard extends KeyguardUpdateMonitorCallback {
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP;
-        if (setting(KEY_PREVIEW, 1) != 1) {
-            // Same size and place (the service sizes and positions its camera surface from
-            // it), but fully transparent: the service's preview window is a child layer of
-            // this one and inherits the alpha, so the camera runs while nothing is shown.
-            lp.alpha = 0f;
-        }
         lp.setTitle("IrisPreviewAnchor");
         View anchor = new FrameLayout(mMonitor.mContext);
         mMonitor.mContext.getSystemService(WindowManager.class).addView(anchor, lp);

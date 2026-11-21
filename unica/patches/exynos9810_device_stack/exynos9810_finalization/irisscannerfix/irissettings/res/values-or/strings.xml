@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ବୁଦ୍ଧିମତା ସ୍କାନ୍ ଟର୍ନ୍ ଅଫ୍ ହୋଇଥିବା ସମୟରେ ମୁହଁ ଏବଂ ଇରିସ୍ ସ୍ୱତଃସ୍ପୃତ ଭାବେ ଟର୍ନ୍ ଅଫ୍ ହୋଇଛି।</string>
     <string name="iris_backup_lock_type_helptext_2">ଆପଣ ଆପଣଙ୍କ ଇରିସଗୁଡିକ ପଞ୍ଜିକରଣ କରିବା ପୂର୍ବରୁ, ଆପଣଙ୍କୁ ଏକ ସୁରକ୍ଷିତ ସ୍କ୍ରିନ୍‌ ଲକ୍ (ଶୈଳୀ, PIN, କିମ୍ୱା ପାସୱାର୍ଡ୍) ସେଟ୍ କରିବା ଆବଶ୍ୟକ।</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">ଆପଣ ଆପଣଙ୍କ ମୁହଁ ଏବଂ ଇରିସଗୁଡିକ ପଞ୍ଜିକରଣ କରିବା ପୂର୍ବରୁ, ଆପଣଙ୍କୁ ଏକ ସୁରକ୍ଷିତ ସ୍କ୍ରିନ୍‌ ଲକ୍ (ଶୈଳୀ, PIN, କିମ୍ୱା ପାସୱାର୍ଡ୍) ସେଟ୍ କରିବା ଆବଶ୍ୟକ।</string>
+    <string name="un1ca_iris_preview_title">କ୍ୟାମେରା ପ୍ରିଭ୍ୟୁ ଦେଖାନ୍ତୁ</string>
+    <string name="un1ca_iris_preview_summary">ଆପଣଙ୍କ ଆଇରିସ ସ୍କାନ ହେଉଥିବା ସମୟରେ ସ୍କ୍ରିନର ଉପରେ କ୍ୟାମେରା ପ୍ରିଭ୍ୟୁ ଦେଖାନ୍ତୁ।</string>
 </resources>

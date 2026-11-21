@@ -3,9 +3,11 @@
 One UI 8 Settings still carries the English iris strings but dropped every
 translation, so the iris screens ship the Android 10 translations themselves.
 """
+import json
 import re
 import sys
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 KEYS = [
     "bio_iris_scanner_title", "my_irises", "register_irises", "iris_unlock", "iris_unlock_summary",
@@ -35,22 +37,27 @@ LINE = re.compile(r'^\s*<string name="([^"]+)"[^>]*>.*?</string>\s*$', re.M | re
 # Samsung never translated the iris section headings; the app hides a heading that has
 # no translation for the phone's language instead of showing English.
 EXTRA = {
-    # UN1CA's own iris option (no Samsung string exists for it).
-    "values": {
-        "un1ca_iris_preview_title": "Show camera preview",
-        "un1ca_iris_preview_summary":
-            "Show the camera preview at the top of the screen while your irises are scanned.",
-    },
     "values-nl": {
-        "un1ca_iris_preview_title": "Cameravoorbeeld tonen",
-        "un1ca_iris_preview_summary":
-            "Toon het cameravoorbeeld boven aan het scherm terwijl uw irissen worden gescand.",
         "manage_irises": "Irissen beheren",
         "iris_verification": "Irisverificatie",
         "sec_intelligentscan_lockscreen_biometric_not_registered_summary":
             "Combineer gezichts- en irisscan voor betere resultaten. Registreer uw gezicht en irissen om Intelligent Scan te gebruiken.",
     },
 }
+
+
+# UN1CA's own iris options (no Samsung string exists for them), translated per locale.
+def _android_text(value: str) -> str:
+    return escape(value).replace("'", "\\'")
+
+
+for _locale, (_title, _summary) in {
+        k: v for k, v in json.loads((Path(__file__).parent / "un1ca_iris_strings.json")
+                                    .read_text(encoding="utf-8")).items() if not k.startswith("_")}.items():
+    EXTRA.setdefault(_locale, {}).update({
+        "un1ca_iris_preview_title": _android_text(_title),
+        "un1ca_iris_preview_summary": _android_text(_summary),
+    })
 
 
 def main(src_res: Path, out_res: Path):

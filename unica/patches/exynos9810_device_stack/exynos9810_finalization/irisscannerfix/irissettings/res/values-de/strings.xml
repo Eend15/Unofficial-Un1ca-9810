@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Gesichts- und Irisscan werden beim Ausschalten des intelligenten Scans automatisch ausgeschaltet.</string>
     <string name="iris_backup_lock_type_helptext_2">Bevor Sie Ihre Iris registrieren können, müssen Sie eine sichere Bildschirmsperre (Muster, PIN oder Passwort) festlegen.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Bevor Sie Ihr Gesicht und Ihre Iris registrieren können, müssen Sie eine sichere Bildschirmsperre (Muster, PIN oder Passwort) festlegen.</string>
+    <string name="un1ca_iris_preview_title">Kameravorschau anzeigen</string>
+    <string name="un1ca_iris_preview_summary">Kameravorschau oben auf dem Bildschirm anzeigen, während Ihre Iris gescannt wird.</string>
 </resources>

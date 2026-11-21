@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Izslēdzot Intelligent Scan, funkcijas Seja un Varavīksnene tika automātiski izslēgtas.</string>
     <string name="iris_backup_lock_type_helptext_2">Lai reģistrētu savas varavīksnenes, vispirms iestatiet drošu ekrāna bloķēšanu (figūra, PIN kods vai parole).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Lai reģistrētu savu seju un varavīksnenes, vispirms iestatiet drošu ekrāna bloķēšanu (figūra, PIN kods vai parole).</string>
+    <string name="un1ca_iris_preview_title">Rādīt kameras priekšskatījumu</string>
+    <string name="un1ca_iris_preview_summary">Rādīt kameras priekšskatījumu ekrāna augšdaļā, kamēr tiek skenētas jūsu varavīksnenes.</string>
 </resources>

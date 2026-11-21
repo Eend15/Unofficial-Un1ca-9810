@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Les éléments Visage et Iris sont désactivés automatiquement lorsque la fonction Analyse intelligente est désactivée.</string>
     <string name="iris_backup_lock_type_helptext_2">Avant de pouvoir enregistrer vos iris, vous devez définir un verrouillage d\'écran sécurisé (modèle, code PIN ou mot de passe).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Avant de pouvoir enregistrer votre visage et vos iris, vous devez définir un verrouillage d\'écran sécurisé (modèle, code PIN ou mot de passe).</string>
+    <string name="un1ca_iris_preview_title">Afficher l\'aperçu de l\'appareil photo</string>
+    <string name="un1ca_iris_preview_summary">Afficher l\'aperçu de l\'appareil photo en haut de l\'écran pendant la numérisation de vos iris.</string>
 </resources>

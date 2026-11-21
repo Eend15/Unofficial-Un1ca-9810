@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Metodele Față și Iris sunt oprite automat atunci când este oprită funcția Scanare inteligentă.</string>
     <string name="iris_backup_lock_type_helptext_2">Înainte de a vă înregistra irisurile, este necesar să setați o metodă securizată de blocare a ecranului (model, cod PIN sau parolă).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Înainte de a vă înregistra fața și irisurile, este necesar să setați o metodă securizată de blocare a ecranului (model, cod PIN sau parolă).</string>
+    <string name="un1ca_iris_preview_title">Afișați previzualizarea camerei</string>
+    <string name="un1ca_iris_preview_summary">Afișați previzualizarea camerei în partea de sus a ecranului în timp ce irisurile sunt scanate.</string>
 </resources>

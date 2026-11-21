@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Akıllı Tarama kapatıldığında Yüz ve İris otomatik olarak kapatıldı.</string>
     <string name="iris_backup_lock_type_helptext_2">İrislerinizi kaydetmeden önce güvenli bir ekran kilidi (desen, PIN veya şifre) belirlemeniz gerekir.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Yüzünüzü ve irislerinizi kaydetmeden önce güvenli bir ekran kilidi (desen, PIN veya şifre) belirlemeniz gerekir.</string>
+    <string name="un1ca_iris_preview_title">Kamera önizlemesini göster</string>
+    <string name="un1ca_iris_preview_summary">İrisleriniz taranırken ekranın üst kısmında kamera önizlemesini göster.</string>
 </resources>

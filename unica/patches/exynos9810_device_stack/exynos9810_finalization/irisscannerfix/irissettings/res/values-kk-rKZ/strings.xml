@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan өшірілген кезде “Бет және көздің қабығы” функциясы да автоматты түрде өшіріледі.</string>
     <string name="iris_backup_lock_type_helptext_2">Көзіңіздің қабықтарын тіркемес бұрын, қауіпсіз экран құлпын (үлгі, PIN код немесе құпиясөз) орнатуыңыз қажет.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Бетіңіз бен көзіңіздің қабықтарын тіркемес бұрын, қауіпсіз экран құлпын (үлгі, PIN код немесе құпиясөз) орнатуыңыз қажет.</string>
+    <string name="un1ca_iris_preview_title">Камераны алдын ала қарауды көрсету</string>
+    <string name="un1ca_iris_preview_summary">Көздің нұрлы қабығы сканерленіп жатқанда экранның жоғарғы жағында камераны алдын ала қарауды көрсету.</string>
 </resources>

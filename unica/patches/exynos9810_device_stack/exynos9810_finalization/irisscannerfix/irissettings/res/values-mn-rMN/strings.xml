@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan-г унтраасан үед Нүүр болон Солонгон бүрхэвчийг автоматаар унтарсан.</string>
     <string name="iris_backup_lock_type_helptext_2">Нүдний солонгон бүрхэвчээ бүртгүүлэхээс өмнө та найдвартай дэлгэцийн түгжээ тохируулах хэрэгтэй (хээ, PIN, эсвэл нууц үг).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Нүүр болон нүдний солонгон бүрхэвчээ бүртгүүлэхээс өмнө та найдвартай дэлгэцийн түгжээ тохируулах хэрэгтэй (хээ, PIN, эсвэл нууц үг).</string>
+    <string name="un1ca_iris_preview_title">Камерын урьдчилан харагдацыг харуулах</string>
+    <string name="un1ca_iris_preview_summary">Таны солонгон бүрхэвчийг уншиж байх үед дэлгэцийн дээд хэсэгт камерын урьдчилан харагдацыг харуулах.</string>
 </resources>

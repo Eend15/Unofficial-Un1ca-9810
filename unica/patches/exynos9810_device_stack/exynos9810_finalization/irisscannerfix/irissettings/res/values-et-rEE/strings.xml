@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Nägu ja iiris lülitati automaatselt välja, kui funktsioon Intelligent Scan lülitati välja.</string>
     <string name="iris_backup_lock_type_helptext_2">Enne oma iiriste registreerimist peate määrama turvalise ekraaniluku (muster, PIN-kood või parool).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Enne oma näo ja iiriste registreerimist peate määrama turvalise ekraaniluku (muster, PIN-kood või parool).</string>
+    <string name="un1ca_iris_preview_title">Kuva kaamera eelvaade</string>
+    <string name="un1ca_iris_preview_summary">Kuva vikerkestade skannimise ajal ekraani ülaosas kaamera eelvaade.</string>
 </resources>

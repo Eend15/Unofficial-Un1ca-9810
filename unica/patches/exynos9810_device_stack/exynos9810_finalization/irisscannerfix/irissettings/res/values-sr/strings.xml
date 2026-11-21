@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Opcije Lice i Dužica se automatski isključuju kada se funkcija Inteligentno skeniranje isključi.</string>
     <string name="iris_backup_lock_type_helptext_2">Da biste mogli da registrujete dužice, prvo morate da podesite bezbedno zaključavanje ekrana (obrazac, PIN kod ili lozinku).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Da biste mogli da registrujete lice i dužice, prvo morate da podesite bezbedno zaključavanje ekrana (obrazac, PIN kod ili lozinku).</string>
+    <string name="un1ca_iris_preview_title">Прикажи преглед камере</string>
+    <string name="un1ca_iris_preview_summary">Прикажи преглед камере на врху екрана док се скенирају ваше шаренице.</string>
 </resources>

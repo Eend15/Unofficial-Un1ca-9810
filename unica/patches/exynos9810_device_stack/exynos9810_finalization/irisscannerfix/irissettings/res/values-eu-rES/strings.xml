@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Aurpegia eta irisa hautemateko eginbidea automatikoki desaktibatu da Eskaneatze adimenduna desaktibatu denean.</string>
     <string name="iris_backup_lock_type_helptext_2">Irisak erregistratu aurretik, pantailaren blokeo seguru bat (patroia, PINa edo pasahitza) ezarri behar duzu.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Aurpegia eta irisak erregistratu aurretik, pantailaren blokeo seguru bat (patroia, PINa edo pasahitza) ezarri behar duzu.</string>
+    <string name="un1ca_iris_preview_title">Erakutsi kameraren aurrebista</string>
+    <string name="un1ca_iris_preview_summary">Erakutsi kameraren aurrebista pantailaren goialdean irisak eskaneatzen diren bitartean.</string>
 </resources>

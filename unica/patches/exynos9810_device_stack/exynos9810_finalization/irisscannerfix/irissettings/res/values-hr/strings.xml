@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Lice i Šarenica automatski su isključeni kad je isključeno Inteligentno skeniranje.</string>
     <string name="iris_backup_lock_type_helptext_2">Prije nego što možete registrirati šarenice, morate postaviti sigurno zaključavanje zaslona (uzorak, PIN ili lozinku).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Prije nego što možete registrirati lice i šarenice, morate postaviti sigurno zaključavanje zaslona (uzorak, PIN ili lozinku).</string>
+    <string name="un1ca_iris_preview_title">Prikaži pregled kamere</string>
+    <string name="un1ca_iris_preview_summary">Prikaži pregled kamere na vrhu zaslona dok se skeniraju vaše šarenice.</string>
 </resources>

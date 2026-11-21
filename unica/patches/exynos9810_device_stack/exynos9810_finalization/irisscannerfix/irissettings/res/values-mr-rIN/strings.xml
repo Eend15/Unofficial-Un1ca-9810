@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">जेव्हा इंटेलिजेंट स्कॅन बंद झाले तेव्हा चेहरा आणि इरिस स्वयंचलित पणे बंद झाले.</string>
     <string name="iris_backup_lock_type_helptext_2">आपण आपल्या इरिसेसची नोंदणी करण्या पूर्वी, आपल्याला एक सुरक्षित स्क्रीन लॉक (पॅटर्न, PIN किंवा पासवर्ड) सेट करण्याची आवश्यकता आहे.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">आपण आपला चेहरा आणि इरिसेसची नोंदणी करण्या पूर्वी, आपल्याला एक सुरक्षित स्क्रीन लॉक (पॅटर्न, PIN किंवा पासवर्ड) सेट करण्याची आवश्यकता आहे.</string>
+    <string name="un1ca_iris_preview_title">कॅमेरा पूर्वावलोकन दाखवा</string>
+    <string name="un1ca_iris_preview_summary">तुमच्या आयरिस स्कॅन होत असताना स्क्रीनच्या वरच्या भागात कॅमेरा पूर्वावलोकन दाखवा.</string>
 </resources>

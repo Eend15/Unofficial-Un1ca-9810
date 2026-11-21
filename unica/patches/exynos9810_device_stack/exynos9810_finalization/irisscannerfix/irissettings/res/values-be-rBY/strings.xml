@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Твар і вясёлкавыя абалонкі аўтаматычна выключаны пры выключэнні Intelligent Scan.</string>
     <string name="iris_backup_lock_type_helptext_2">Перш чым зарэгістраваць вясёлкавыя абалонкі, трэба задаць тып бяспечнай блакіроўкі экрана (узор, PIN-код ці пароль).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Перш чым зарэгістраваць твар і вясёлкавыя абалонкі, трэба задаць тып бяспечнай блакіроўкі экрана (узор, PIN-код ці пароль).</string>
+    <string name="un1ca_iris_preview_title">Паказваць папярэдні прагляд камеры</string>
+    <string name="un1ca_iris_preview_summary">Паказваць папярэдні прагляд камеры ўверсе экрана падчас сканавання вясёлкавых абалонак.</string>
 </resources>

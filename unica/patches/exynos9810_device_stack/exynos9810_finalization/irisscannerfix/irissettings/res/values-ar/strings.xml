@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">يتم إيقاف تشغيل الوجه وبصمة العين تلقائياً عند إيقاف تشغيل المسح الذكي.</string>
     <string name="iris_backup_lock_type_helptext_2">لتتمكن من تسجيل بصمة عينيك، عليك ضبط قفل شاشة آمن (النمط أو رقم PIN أو كلمة المرور).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">لتتمكن من تسجيل وجهك وبصمة عينيك، عليك ضبط قفل شاشة آمن (النمط أو رقم PIN أو كلمة المرور).</string>
+    <string name="un1ca_iris_preview_title">إظهار معاينة الكاميرا</string>
+    <string name="un1ca_iris_preview_summary">إظهار معاينة الكاميرا أعلى الشاشة أثناء مسح قزحيتي العين.</string>
 </resources>

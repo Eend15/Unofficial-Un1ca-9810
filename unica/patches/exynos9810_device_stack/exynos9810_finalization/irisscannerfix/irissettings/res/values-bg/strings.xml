@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">„Лице“ и „Ириси“ се изключват автоматично, когато се изключи „Интелигентно сканиране“.</string>
     <string name="iris_backup_lock_type_helptext_2">Преди да регистрирате ирисите си, трябва да зададете защитено заключване на екрана (шаблон, PIN или парола).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Преди да регистрирате лицето и ирисите си, трябва да зададете защитено заключване на екрана (шаблон, PIN или парола).</string>
+    <string name="un1ca_iris_preview_title">Показване на визуализация от камерата</string>
+    <string name="un1ca_iris_preview_summary">Показване на визуализация от камерата в горната част на екрана, докато се сканират ирисите ви.</string>
 </resources>

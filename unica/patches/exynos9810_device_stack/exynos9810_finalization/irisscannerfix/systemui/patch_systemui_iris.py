@@ -152,6 +152,29 @@ def patch_collapse(text: str) -> str:
     return text.replace(body, new_body, 1)
 
 
+LAUNCH_MARKER = "# UN1CA: release the iris cameras before an app launches from the lock screen"
+LAUNCH_HOOK = ("    invoke-static {}, Lcom/android/keyguard/Un1caIrisKeyguard;"
+               "->onLaunchFromLockscreen()V\n")
+# CameraGestureHelper.launchCamera: lock screen camera (shortcut, double press power);
+# KeyguardSecAffordanceView.launchShortcut: One UI's lock screen shortcuts.
+LAUNCH_METHODS = {
+    "com/android/systemui/camera/CameraGestureHelper.smali": ".method public final launchCamera(I)V",
+    "com/android/systemui/statusbar/KeyguardSecAffordanceView.smali": ".method public final launchShortcut(FF)V",
+}
+
+
+def patch_launch(text: str, head: str) -> str:
+    if LAUNCH_MARKER in text:
+        return text
+    start = text.find(head + "\n")
+    if start < 0 or text.count(head + "\n") != 1:
+        raise ValueError(f"{head} does not match One UI 8")
+    m = re.compile(r"\n    \.locals \d+\n").search(text, start)
+    if not m or m.start() > text.find(".end method", start):
+        raise ValueError(f"{head} has no .locals line")
+    return text[:m.end()] + f"\n    {LAUNCH_MARKER}\n" + LAUNCH_HOOK + text[m.end():]
+
+
 HELPER_PKG = "com/android/keyguard"
 HELPER = HELPER_PKG + "/Un1caIrisKeyguard.smali"
 
@@ -186,6 +209,12 @@ def main(root: Path, helper_smali_root: Path):
     if patch_collapse(out) != out:
         raise ValueError("not idempotent")
     buc.write_text(out)
+    for rel, head in LAUNCH_METHODS.items():
+        path = one(root, rel)
+        out = patch_launch(path.read_text(), head)
+        if patch_launch(out, head) != out:
+            raise ValueError("not idempotent")
+        path.write_text(out)
     # The helper gets its own dex so no existing dex grows past the method limit.
     found_helper = list(root.glob("smali*/" + HELPER))
     if found_helper:
@@ -201,7 +230,7 @@ def main(root: Path, helper_smali_root: Path):
     for f in (helper_smali_root / HELPER_PKG).glob("Un1caIrisKeyguard*.smali"):
         shutil.copyfile(f, dst / f.name)
     print("SystemUI: KeyguardUpdateMonitor wake hook, Face/Iris Camera 1 guard, privacy dot exemption "
-          "and iris unlock-collapsing added")
+          "iris unlock-collapsing and lock screen launch release added")
 
 
 if __name__ == "__main__":

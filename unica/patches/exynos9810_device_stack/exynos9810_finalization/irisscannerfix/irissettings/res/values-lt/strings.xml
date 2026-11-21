@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Veido ir rainelės skenavimai automatiškai išjungiami, kai išjungiamas „Intelligent Scan“.</string>
     <string name="iris_backup_lock_type_helptext_2">Kad galėtumėte užregistruoti raineles, būtina nustatyti saugų ekrano užraktą (šabloną, PIN arba slaptažodį).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Kad galėtumėte užregistruoti veidą ir raineles, būtina nustatyti saugų ekrano užraktą (šabloną, PIN arba slaptažodį).</string>
+    <string name="un1ca_iris_preview_title">Rodyti fotoaparato peržiūrą</string>
+    <string name="un1ca_iris_preview_summary">Rodyti fotoaparato peržiūrą ekrano viršuje, kol nuskaitomos jūsų rainelės.</string>
 </resources>

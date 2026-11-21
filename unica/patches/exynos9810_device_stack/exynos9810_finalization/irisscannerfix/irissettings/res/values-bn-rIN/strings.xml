@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ইন্টেলিজেন্ট স্ক্যান বন্ধ থাকলে মুখ ও আইরিশ স্বয়ংক্রিয়ভাবে বন্ধ হয়েছে।</string>
     <string name="iris_backup_lock_type_helptext_2">আপনি আপনার আইরিশগুলি নিবন্ধন করার আগে আপনাকে একটি নিরাপদ স্ক্রিনের লক (প্যাটার্ন, PIN বা পাসওয়ার্ড) সেট করতে হবে।</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">আপনি আপনার মুখ ও আইরিশগুলি নিবন্ধন করার আগে আপনাকে একটি নিরাপদ স্ক্রিনের লক (প্যাটার্ন, PIN বা পাসওয়ার্ড) সেট করতে হবে।</string>
+    <string name="un1ca_iris_preview_title">ক্যামেরার প্রিভিউ দেখান</string>
+    <string name="un1ca_iris_preview_summary">আপনার আইরিস স্ক্যান করার সময় স্ক্রিনের উপরে ক্যামেরার প্রিভিউ দেখান।</string>
 </resources>

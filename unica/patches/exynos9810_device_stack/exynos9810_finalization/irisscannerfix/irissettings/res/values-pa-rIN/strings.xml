@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ਜਦੋਂ ਸੂਝਵਾਨ ਸਕੈਨ ਨੂੰ ਬੰਦ ਕੀਤਾ ਜਾਂਦਾ ਹੈ ਤਾਂ ਚਿਹਰੇ ਅਤੇ ਆਈਰਿਸ ਨੂੰ ਵੀ ਸਵੈਚਲਿਤ ਬੰਦ ਕਰ ਦਿੱਤਾ ਜਾਂਦਾ ਹੈ।</string>
     <string name="iris_backup_lock_type_helptext_2">ਆਪਣੇ ਆਈਰਿਸਜ਼ ਰਜਿਸਟਰ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ, ਤੁਹਾਨੂੰ ਇੱਕ ਸੁਰੱਖਿਅਤ ਸਕ੍ਰੀਨ ਲੌਕ (ਸ਼ੈਲੀ, PIN, ਜਾਂ ਪਾਸਵਰਡ) ਸੈੱਟ ਕਰਨ ਦੀ ਲੋੜ ਹੈ।</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">ਆਪਣੇ ਚਿਹਰੇ ਅਤੇ ਆਈਰਿਸਜ਼ ਨੂੰ ਰਜਿਸਟਰ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ, ਤੁਹਾਨੂੰ ਇੱਕ ਸੁਰੱਖਿਅਤ ਸਕ੍ਰੀਨ ਲੌਕ (ਸ਼ੈਲੀ, PIN, ਜਾਂ ਪਾਸਵਰਡ) ਸੈੱਟ ਕਰਨ ਦੀ ਲੋੜ ਹੈ।</string>
+    <string name="un1ca_iris_preview_title">ਕੈਮਰਾ ਪੂਰਵ-ਝਲਕ ਦਿਖਾਓ</string>
+    <string name="un1ca_iris_preview_summary">ਤੁਹਾਡੀਆਂ ਆਇਰਿਸ ਸਕੈਨ ਹੋਣ ਸਮੇਂ ਸਕ੍ਰੀਨ ਦੇ ਸਿਖਰ \'ਤੇ ਕੈਮਰਾ ਪੂਰਵ-ਝਲਕ ਦਿਖਾਓ।</string>
 </resources>

@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Funkcie Tvár a Dúhovka sa pri vypnutí funkcie Inteligentné skenovanie automaticky vypnú.</string>
     <string name="iris_backup_lock_type_helptext_2">Pred zaregistrovaním dúhoviek musíte nastaviť bezpečný zámok obrazovky (vzor, kód PIN alebo heslo).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Pred zaregistrovaním tváre a dúhoviek musíte nastaviť bezpečný zámok obrazovky (vzor, kód PIN alebo heslo).</string>
+    <string name="un1ca_iris_preview_title">Zobraziť ukážku fotoaparátu</string>
+    <string name="un1ca_iris_preview_summary">Zobraziť ukážku fotoaparátu v hornej časti obrazovky počas skenovania dúhoviek.</string>
 </resources>

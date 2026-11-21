@@ -30,7 +30,7 @@
     .line 0
     iget-object v0, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda1;->f$0:Lcom/android/keyguard/Un1caIrisKeyguard;
 
-    invoke-virtual {v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$onFaceFallbackTimeout$14$com-android-keyguard-Un1caIrisKeyguard()V
+    invoke-virtual {v0}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$onFaceFallbackTimeout$15$com-android-keyguard-Un1caIrisKeyguard()V
 
     return-void
 .end method

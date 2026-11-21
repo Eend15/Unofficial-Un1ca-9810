@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">关闭【智能扫描】时，自动关闭面部和虹膜扫描。</string>
     <string name="iris_backup_lock_type_helptext_2">在注册您的虹膜之前，您需要设置安全的屏幕锁定 (图案、数字密码或混合密码)。</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">在注册您的面部和虹膜之前，您需要设置安全的屏幕锁定 (图案、数字密码或混合密码)。</string>
+    <string name="un1ca_iris_preview_title">显示相机预览</string>
+    <string name="un1ca_iris_preview_summary">扫描虹膜时在屏幕顶部显示相机预览。</string>
 </resources>

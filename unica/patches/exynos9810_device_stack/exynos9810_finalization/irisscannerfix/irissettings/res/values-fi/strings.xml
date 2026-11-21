@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Kasvot ja Iiris poistetaan automaattisesti käytöstä, kun Älykäs skannaus poistetaan käytöstä.</string>
     <string name="iris_backup_lock_type_helptext_2">Ennen kuin voit rekisteröidä iiriksesi, sinun on asetettava suojattu näytön lukitustapa (kuvio, PIN-koodi tai salasana).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Ennen kuin voit rekisteröidä kasvosi ja iiriksesi, sinun on asetettava suojattu näytön lukitustapa (kuvio, PIN-koodi tai salasana).</string>
+    <string name="un1ca_iris_preview_title">Näytä kameran esikatselu</string>
+    <string name="un1ca_iris_preview_summary">Näytä kameran esikatselu näytön yläreunassa, kun iiriksiäsi skannataan.</string>
 </resources>

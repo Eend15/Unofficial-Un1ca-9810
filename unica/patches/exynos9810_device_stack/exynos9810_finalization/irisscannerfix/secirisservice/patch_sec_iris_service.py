@@ -354,6 +354,36 @@ def patch_face_share_session(text: str) -> str:
 """ + FACE_SESSION_CALL, 1)
 
 
+PREVIEW_MARKER = "# UN1CA: Show camera preview setting for the lock screen"
+PREVIEW_ADD = """    :cond_6
+    :try_start_3
+    iget-object v3, p0, Lcom/samsung/android/server/iris/ui/IrisViewManager;->mWindowManager:Landroid/view/WindowManager;
+"""
+PREVIEW_HOOK = f"""    :cond_6
+    :try_start_3
+    {PREVIEW_MARKER}
+    iget-object v3, p0, Lcom/samsung/android/server/iris/ui/IrisViewManager;->mContext:Landroid/content/Context;
+
+    invoke-static {{v3, v0, p1}}, {GRACE_CLASS}->applyPreviewSetting(Landroid/content/Context;Landroid/view/WindowManager$LayoutParams;Ljava/lang/Object;)V
+
+    iget-object v3, p0, Lcom/samsung/android/server/iris/ui/IrisViewManager;->mWindowManager:Landroid/view/WindowManager;
+"""
+
+
+def patch_preview(text: str) -> str:
+    """IrisViewManager.addAuthenticateView: let the iris settings hide the lock screen
+    preview (transparent window, same size) right before it is added."""
+    if PREVIEW_MARKER in text:
+        return text
+    head = ".method public declared-synchronized addAuthenticateView(Lcom/samsung/android/server/iris/ClientMonitor;Landroid/os/IBinder;IIII)V"
+    start = text.find(head)
+    end = text.find(".end method", start)
+    body = text[start:end] if start >= 0 else ""
+    if body.count(PREVIEW_ADD) != 1 or "invoke-interface {v3, v4, v0}, Landroid/view/WindowManager;->addView" not in body:
+        raise ValueError("IrisViewManager.addAuthenticateView does not match the Android 10 code")
+    return text[:start] + body.replace(PREVIEW_ADD, PREVIEW_HOOK, 1) + text[end:]
+
+
 GRACE_SMALI = "com/samsung/android/server/iris/Un1caIrisGrace.smali"
 FACE_SHARE_SMALI = "com/samsung/android/server/iris/Un1caIrisFaceShare.smali"
 
@@ -389,10 +419,16 @@ def main(root: Path, helper_smali_root: Path):
         if patch_open_order(out) != out:
             raise ValueError("not idempotent")
         path.write_text(out)
+    ivm = svc.parent / "ui/IrisViewManager.smali"
+    out = patch_preview(ivm.read_text())
+    if patch_preview(out) != out:
+        raise ValueError("not idempotent")
+    ivm.write_text(out)
     print("SecIrisService: keyguard component resolved by name, Surface parcel rebuilt for Android 16, "
           "camera characteristics loaded before openCamera, CPU boost, registration window, "
           "exposure cap, KeyStoreAuthorization, LockPatternUtils.getBiometricState and "
-          "One UI 8 auto brightness limit hooked, front camera shared with face unlock")
+          "One UI 8 auto brightness limit hooked, front camera shared with face unlock, "
+          "lock screen preview setting")
 
 
 if __name__ == "__main__":

@@ -147,6 +147,11 @@ class SystemUiTest(unittest.TestCase):
         (d / "smali/com/android/systemui/appops/AppOpsControllerImpl.smali").write_text(OPS)
         (d / "smali/com/android/systemui/statusbar/phone").mkdir(parents=True)
         (d / "smali/com/android/systemui/statusbar/phone/BiometricUnlockController.smali").write_text(BUC)
+        (d / "smali/com/android/systemui/camera").mkdir(parents=True)
+        (d / "smali/com/android/systemui/camera/CameraGestureHelper.smali").write_text(
+            ".method public final launchCamera(I)V\n    .locals 4\n\n    return-void\n.end method\n")
+        (d / "smali/com/android/systemui/statusbar/KeyguardSecAffordanceView.smali").write_text(
+            ".method public final launchShortcut(FF)V\n    .locals 9\n\n    return-void\n.end method\n")
         systemui.main(d, FIX / "systemui" / "smali")
         systemui.main(d, FIX / "systemui" / "smali")
         buc = (d / "smali/com/android/systemui/statusbar/phone/BiometricUnlockController.smali").read_text()
@@ -154,6 +159,10 @@ class SystemUiTest(unittest.TestCase):
         self.assertLess(buc.index("BiometricSourceType;->IRIS"), buc.index("BiometricSourceType;->FACE"))
         self.assertIn("if-eqz p1, :cond_a", buc)
         self.assertIn("goto :cond_a", buc)
+        for rel in ("camera/CameraGestureHelper.smali", "statusbar/KeyguardSecAffordanceView.smali"):
+            src = (d / "smali/com/android/systemui" / rel).read_text()
+            self.assertEqual(src.count("Un1caIrisKeyguard;->onLaunchFromLockscreen()V"), 1, rel)
+            self.assertLess(src.index(".locals"), src.index("onLaunchFromLockscreen"), rel)
         kum = (d / "smali/com/android/keyguard/KeyguardUpdateMonitor.smali").read_text()
         self.assertEqual(kum.count("Un1caIrisKeyguard;->onStartedWakingUp"), 1)
         self.assertLess(kum.index("onStartedWakingUp"), kum.index("return-void"))
@@ -324,6 +333,15 @@ class SecIrisServiceFirmwareTest(unittest.TestCase):
                 self.assertEqual(before.count("Un1caIrisGrace;->setAutoBrightnessLimit"), 2)
                 self.assertNotIn("getBiometricLockscreen(II)I", before_wrapper)
                 self.assertEqual(before_wrapper.count("LockPatternUtils;->getBiometricState(II)I"), 2)
+                grace = (Path(tmp) / "smali/com/samsung/android/server/iris/Un1caIrisGrace.smali").read_text()
+                # Called from the ui sub-package: class and method must be public (else IllegalAccessError).
+                self.assertIn(".class public final Lcom/samsung/android/server/iris/Un1caIrisGrace;", grace)
+                self.assertIn(".method public static applyPreviewSetting(", grace)
+                ivm = (Path(tmp) / "smali/com/samsung/android/server/iris/ui/IrisViewManager.smali").read_text()
+                hook = ivm.index("Un1caIrisGrace;->applyPreviewSetting")
+                self.assertEqual(ivm.count("Un1caIrisGrace;->applyPreviewSetting"), 1, m)
+                self.assertLess(hook, ivm.index("invoke-interface {v3, v4, v0}, Landroid/view/WindowManager;->addView",
+                                                hook), m)
 
 
 if __name__ == "__main__":

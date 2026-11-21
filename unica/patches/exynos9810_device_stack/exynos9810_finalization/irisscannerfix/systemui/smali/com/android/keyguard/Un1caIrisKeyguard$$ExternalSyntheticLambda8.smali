@@ -36,7 +36,7 @@
 
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda8;->f$1:Landroid/os/CancellationSignal;
 
-    invoke-virtual {v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$start$6$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;)V
+    invoke-virtual {v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$start$7$com-android-keyguard-Un1caIrisKeyguard(Landroid/os/CancellationSignal;)V
 
     return-void
 .end method

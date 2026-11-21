@@ -1,9 +1,12 @@
 package com.samsung.android.server.iris;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Log;
+import android.view.WindowManager;
 
 /**
  * Longer IR window for iris registration.
@@ -13,7 +16,8 @@ import android.util.Log;
  * in time. During registration only, the timer is moved to ENROLL_IR_MS after it started;
  * unlock scans keep the stock 9 s.
  */
-final class Un1caIrisGrace {
+// Public: ui.IrisViewManager (another package) calls applyPreviewSetting.
+public final class Un1caIrisGrace {
     private static final String TAG = "UN1CA-IrisGrace";
     // IrisService.mHandler message for IRIS_ERROR_EYE_SAFETY_TIMEOUT (startInactivityTimer).
     private static final int MSG_EYE_SAFETY_TIMEOUT = 1;
@@ -83,5 +87,25 @@ final class Un1caIrisGrace {
         handler.removeMessages(MSG_EYE_SAFETY_TIMEOUT);
         handler.sendEmptyMessageDelayed(MSG_EYE_SAFETY_TIMEOUT, delay);
         Log.i(TAG, "registration scan window extended to " + ENROLL_IR_MS + " ms");
+    }
+
+    /**
+     * Iris settings "Show camera preview" (un1ca_iris_preview, default on). Called by
+     * IrisViewManager.addAuthenticateView right before it adds the preview window. With the
+     * option off, the lock screen's window is still added at its normal size (its
+     * TextureView receives the colour stream the scan and the face share use) but fully
+     * transparent, so nothing is seen. Other clients keep their preview.
+     */
+    public static void applyPreviewSetting(Context ctx, WindowManager.LayoutParams lp, Object client) {
+        try {
+            if (ctx == null || lp == null || client == null) return;
+            Object owner = client.getClass().getMethod("getOwnerString").invoke(client);
+            if (!"com.android.systemui".equals(owner)) return;
+            if (Settings.Secure.getInt(ctx.getContentResolver(), "un1ca_iris_preview", 1) == 1) return;
+            lp.alpha = 0f;
+            Log.i(TAG, "lock screen iris preview hidden");
+        } catch (Throwable t) {
+            Log.w(TAG, "iris preview setting not applied", t);
+        }
     }
 }

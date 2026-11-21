@@ -36,7 +36,7 @@
 
     iget-object v1, p0, Lcom/android/keyguard/Un1caIrisKeyguard$$ExternalSyntheticLambda7;->f$1:Ljava/lang/String;
 
-    invoke-virtual {v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$start$4$com-android-keyguard-Un1caIrisKeyguard(Ljava/lang/String;)V
+    invoke-virtual {v0, v1}, Lcom/android/keyguard/Un1caIrisKeyguard;->lambda$start$5$com-android-keyguard-Un1caIrisKeyguard(Ljava/lang/String;)V
 
     return-void
 .end method

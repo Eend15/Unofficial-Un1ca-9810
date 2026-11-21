@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">ഇന്‍റലിജന്‍റ് സ്കാൻ ഓഫ് ചെയ്തപ്പോൾ മുഖവും മിഴിപടലവും ഓട്ടോമാറ്റിക്കായി ഓഫ് ചെയ്തു.</string>
     <string name="iris_backup_lock_type_helptext_2">നിങ്ങളുടെ മിഴിപടലങ്ങൾ രജിസ്റ്റർ ചെയ്യുന്നതിന് മുമ്പ്, നിങ്ങൾ ഒരു സുരക്ഷിത സ്ക്രീൻ ലോക്ക് (പാറ്റേൺ, PIN അല്ലെങ്കിൽ പാസ്‌വേഡ്) സജ്ജമാക്കേണ്ടതുണ്ട്.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">നിങ്ങളുടെ മുഖവും മിഴിപടലങ്ങളും രജിസ്റ്റർ ചെയ്യുന്നതിന് മുമ്പ്, നിങ്ങൾ ഒരു സുരക്ഷിത സ്ക്രീൻ ലോക്ക് (പാറ്റേൺ, PIN അല്ലെങ്കിൽ പാസ്‌വേഡ്) സജ്ജമാക്കേണ്ടതുണ്ട്.</string>
+    <string name="un1ca_iris_preview_title">ക്യാമറ പ്രിവ്യൂ കാണിക്കുക</string>
+    <string name="un1ca_iris_preview_summary">നിങ്ങളുടെ ഐറിസുകൾ സ്കാൻ ചെയ്യുമ്പോൾ സ്ക്രീനിന്റെ മുകളിൽ ക്യാമറ പ്രിവ്യൂ കാണിക്കുക.</string>
 </resources>

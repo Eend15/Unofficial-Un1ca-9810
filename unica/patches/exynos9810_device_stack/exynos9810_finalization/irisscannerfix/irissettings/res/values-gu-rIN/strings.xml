@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">જ્યારે ઇન્ટેલિજન્ટ સ્કેન બંધ થશે ત્યારે ચહેરો અને આઇરિસ સ્વચાલિત રીતે બંધ થશે.</string>
     <string name="iris_backup_lock_type_helptext_2">તમે તમારી આઇરિસિઝની નોંધણી કરાવી શકો તે પહેલાં, તમારે એક સુરક્ષિત સ્ક્રીન લૉક (પૅટર્ન, PIN અથવા પાસવર્ડ) સેટ કરવું જરૂરી છે.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">તમે તમારા ચહેરા અને આઇરિસિઝની નોંધણી કરાવી શકો તે પહેલાં, તમારે એક સુરક્ષિત સ્ક્રીન લૉક (પૅટર્ન, PIN અથવા પાસવર્ડ) સેટ કરવું જરૂરી છે.</string>
+    <string name="un1ca_iris_preview_title">કૅમેરા પ્રિવ્યૂ બતાવો</string>
+    <string name="un1ca_iris_preview_summary">તમારી આઇરિસ સ્કેન થતી હોય ત્યારે સ્ક્રીનની ટોચ પર કૅમેરા પ્રિવ્યૂ બતાવો.</string>
 </resources>

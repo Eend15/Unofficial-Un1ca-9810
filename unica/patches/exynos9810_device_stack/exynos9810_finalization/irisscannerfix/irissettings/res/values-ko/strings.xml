@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">인텔리전트 스캔을 꺼서 얼굴 인식 및 홍채 인식이 자동으로 꺼졌어요.</string>
     <string name="iris_backup_lock_type_helptext_2">홍채를 등록하기 전에, 먼저 패턴, PIN, 비밀번호 중 하나로 화면 보안 잠금을 설정해 주세요.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">얼굴과 홍채를 등록하기 전에, 먼저 패턴, PIN, 비밀번호 중 하나로 화면 보안 잠금을 설정해 주세요.</string>
+    <string name="un1ca_iris_preview_title">카메라 미리보기 표시</string>
+    <string name="un1ca_iris_preview_summary">홍채를 인식하는 동안 화면 상단에 카메라 미리보기를 표시합니다.</string>
 </resources>

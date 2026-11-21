@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Castar as Aghaidh agus Inteachán go huathoibríoch nuair a chastar as Scanadh Cliste.</string>
     <string name="iris_backup_lock_type_helptext_2">Sula mbeidh tú in ann d\'inteacháin a chlárú, beidh ort glas scáileáin slán (patrún, PIN, nó pasfhocal) a shocrú.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Sula mbeidh tú in ann d\'aghaidh agus d\'inteacháin a chlárú, beidh ort glas scáileáin slán (patrún, PIN, nó pasfhocal) a shocrú.</string>
+    <string name="un1ca_iris_preview_title">Taispeáin réamhamharc an cheamara</string>
+    <string name="un1ca_iris_preview_summary">Taispeáin réamhamharc an cheamara ag barr an scáileáin agus do shúile á scanadh.</string>
 </resources>

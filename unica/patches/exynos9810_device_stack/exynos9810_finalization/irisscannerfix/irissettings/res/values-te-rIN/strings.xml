@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">తెలివైన స్కాన్ ఆఫ్ చేయబడినప్పుడు ముఖం మరియు కనుపాప స్వయంచాలకంగా ఆఫ్ చేయబడతాయి.</string>
     <string name="iris_backup_lock_type_helptext_2">మీరు మీ కనుపాపలను నమోదు చేయడానికి ముందు, మీరు భద్రతా స్క్రీన్ లాక్‌ని సెట్ చేయాల్సి ఉంటుంది (నమూనా, PIN లేదా పాస్‌వర్డ్).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">మీరు మీ ముఖం మరియు కనుపాపలను నమోదు చేయడానికి ముందు, మీరు భద్రతా స్క్రీన్ లాక్‌ని సెట్ చేయాల్సి ఉంటుంది (నమూనా, PIN లేదా పాస్‌వర్డ్).</string>
+    <string name="un1ca_iris_preview_title">కెమెరా ప్రివ్యూ చూపించు</string>
+    <string name="un1ca_iris_preview_summary">మీ ఐరిస్‌లను స్కాన్ చేస్తున్నప్పుడు స్క్రీన్ పైభాగంలో కెమెరా ప్రివ్యూ చూపించు.</string>
 </resources>

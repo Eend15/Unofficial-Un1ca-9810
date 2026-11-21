@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Intelligent Scan ýapylan wagty Ýüz we Göz awtomatiki ýapylýar.</string>
     <string name="iris_backup_lock_type_helptext_2">Gözleriňizi bellige almak üçin, siz howpsuz ekran gulpuny (şablon, PIN ýa-da parol) bellemeli.</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Ýüzüňizi we gözleriňizi bellige almak üçin, siz howpsuz ekran gulpuny (şablon, PIN ýa-da parol) bellemeli.</string>
+    <string name="un1ca_iris_preview_title">Kameranyň deslapky görnüşini görkez</string>
+    <string name="un1ca_iris_preview_summary">Göz perdeleriňiz skanirlenýän wagty ekranyň ýokarsynda kameranyň deslapky görnüşini görkez.</string>
 </resources>

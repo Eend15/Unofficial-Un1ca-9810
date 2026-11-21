@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">انٹیلیجنٹ اسکین آف ہونے پر چہرہ اور آئریس خودکار طورپر آف ہوجاتے ہیں۔</string>
     <string name="iris_backup_lock_type_helptext_2">آپ کا اپنا آئریسز رجسٹر کرنے سے قبل، آپ کو ایک محفوظ اسکرین لاک (نمونہ، پن، یا پاس ورڈ) سیٹ کرنا ہوگا۔</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">آپ کا اپنا چہرہ اور آئریسز رجسٹر کرنے سے قبل، آپ کو ایک محفوظ اسکرین لاک (نمونہ، پن، یا پاس ورڈ) سیٹ کرنا ہوگا۔</string>
+    <string name="un1ca_iris_preview_title">کیمرے کا پیش منظر دکھائیں</string>
+    <string name="un1ca_iris_preview_summary">آپ کی آئرس اسکین ہونے کے دوران اسکرین کے اوپر کیمرے کا پیش منظر دکھائیں۔</string>
 </resources>

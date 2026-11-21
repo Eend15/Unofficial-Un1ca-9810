@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">智慧掃描關閉時將自動關閉臉部與虹膜選項。</string>
     <string name="iris_backup_lock_type_helptext_2">虹膜可供註冊前，需先設定安全螢幕鎖定類型 (圖形、數字密碼或密碼)。</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">臉部與虹膜可供註冊前，需先設定安全螢幕鎖定類型 (圖形、數字密碼或密碼)。</string>
+    <string name="un1ca_iris_preview_title">顯示相機預覽</string>
+    <string name="un1ca_iris_preview_summary">掃描虹膜時在螢幕頂端顯示相機預覽。</string>
 </resources>

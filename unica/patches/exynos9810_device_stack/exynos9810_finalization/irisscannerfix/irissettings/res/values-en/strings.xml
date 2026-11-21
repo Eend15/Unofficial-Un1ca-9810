@@ -39,4 +39,6 @@
     <string name="sec_intelligentscan_turn_off_toast_message_intelligentscan">Face and Iris turned off automatically when Intelligent Scan turned off.</string>
     <string name="iris_backup_lock_type_helptext_2">Before you can register your irises, you need to set a secure screen lock (pattern, PIN, or password).</string>
     <string name="sec_intelligentscan_chooselock_help_text_1">Before you can register your face and irises, you need to set a secure screen lock (pattern, PIN, or password).</string>
+    <string name="un1ca_iris_preview_title">Show camera preview</string>
+    <string name="un1ca_iris_preview_summary">Show the camera preview at the top of the screen while your irises are scanned.</string>
 </resources>
