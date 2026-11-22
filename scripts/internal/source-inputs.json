@@ -89,6 +89,8 @@
     "platform/exynos9810/prebuilt/DS-ACK-V1.13-11.11.2026-Enforcing-KernelSU-Next-v3.4.2-runtime49-AOT-touchlpm-dt2wtap-SuSFS-ext4-dtb.zip",
     "platform/exynos9810/prebuilt/DS-ACK-V1.14-14.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-erofs-dtb.zip",
     "platform/exynos9810/prebuilt/DS-ACK-V1.14-14.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-ext4-dtb.zip",
+    "platform/exynos9810/prebuilt/DS-ACK-V1.14-21.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-erofs-dtb.zip",
+    "platform/exynos9810/prebuilt/DS-ACK-V1.14-21.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-ext4-dtb.zip",
     "platform/exynos9810/prebuilt/README.md",
     "platform/exynos9810/tools/__pycache__/patch_semwifi_p2p_callback.cpython-312.pyc",
     "platform/exynos9810/tools/patch_semwifi_p2p_callback.py",

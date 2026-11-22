@@ -3,11 +3,19 @@
 The ROM defaults to the enforcing KernelSU-Next DS-ACK V1.14 release in this
 directory:
 - EROFS builds (`TARGET_OS_FILE_SYSTEM_TYPE=erofs`, default):
-  `DS-ACK-V1.14-14.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-erofs-dtb.zip`
-  Expected SHA-256: `768981b1bc670bf22f8fa8555aad2b2a7a684a5b572099a63bbbb22ba9972acc`
+  `DS-ACK-V1.14-21.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-erofs-dtb.zip`
+  Expected SHA-256: `c49ef67e4b4761cd957e67bc0624d0ba2d103bbf1932e146ec55b7d450b8b51b`
 - EXT4 builds (`TARGET_OS_FILE_SYSTEM_TYPE=ext4`):
-  `DS-ACK-V1.14-14.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-ext4-dtb.zip`
-  Expected SHA-256: `f5c1227a4681f85cada0b37b1db2fc6f8600e1d01712b5b663b405aba4854782`
+  `DS-ACK-V1.14-21.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-ext4-dtb.zip`
+  Expected SHA-256: `86057280f250d535e7480ff82f868d6a80c0848a09e2c555a9a259fda78b762c`
+
+November21 V1.14 (kernel a58f635): the November14 V1.14 kernel plus an HBM
+request clamp in the panel brightness fixup. One UI 8 sends high-brightness
+values above the UI maximum (449-895 on a 448 scale); those were rejected as
+out of range, so outdoor/HBM brightness did nothing. They are now clamped to
+the panel maximum (720 nits). Same version name, toolchain, KernelSU-Next
+v3.4.0-legacy, SuSFS v1.5.5 and six-model family; the November14 archives are
+retained.
 
 November14 V1.14: rebuilt on KernelSU-Next v3.4.0-legacy (UAPI 4) so the
 kernel matches the bundled v3.4.0 manager and ksud, with SuSFS v1.5.5, EROFS,

@@ -89,17 +89,17 @@ chmod 0755 "$TMP_DIR/exynos9810/sgdisk"
 # ext4 package carries the non-EROFS DTBs; the EROFS package remains the
 # repository's EROFS-specific payload.
 DS_ACK_KERNEL_VARIANT="${DS_ACK_KERNEL_VARIANT:-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS}"
-DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.14-14.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-erofs-dtb.zip"
-DS_ACK_EROFS_PREBUILT_SHA256="768981b1bc670bf22f8fa8555aad2b2a7a684a5b572099a63bbbb22ba9972acc"
-DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.14-14.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-ext4-dtb.zip"
-# These November14 V1.14 archives are built on KernelSU-Next v3.4.0-legacy
+DS_ACK_EROFS_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.14-21.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-erofs-dtb.zip"
+DS_ACK_EROFS_PREBUILT_SHA256="c49ef67e4b4761cd957e67bc0624d0ba2d103bbf1932e146ec55b7d450b8b51b"
+DS_ACK_EXT4_PREBUILT_ZIP="$SRC_DIR/platform/exynos9810/prebuilt/DS-ACK-V1.14-21.11.2026-Enforcing-KernelSU-Next-v3.4.0-legacy-SuSFS-ext4-dtb.zip"
+# These November21 V1.14 archives are built on KernelSU-Next v3.4.0-legacy
 # (UAPI 4, matching the bundled manager/ksud) with SuSFS v1.5.5, the
-# double-tap-to-wake tap window fix and the panel brightness ceiling fix, for
-# the complete six-model family.
+# double-tap-to-wake tap window fix, the panel brightness ceiling fix and the
+# HBM request clamp, for the complete six-model family.
 # Filesystem-specific DTBs/tools/installer remain from their proven baselines.
 # A missing package must fail, not silently fall back to
 # the older OneUI7 kernel or a differently signed same-name archive.
-DS_ACK_EXT4_PREBUILT_SHA256="f5c1227a4681f85cada0b37b1db2fc6f8600e1d01712b5b663b405aba4854782"
+DS_ACK_EXT4_PREBUILT_SHA256="86057280f250d535e7480ff82f868d6a80c0848a09e2c555a9a259fda78b762c"
 case "${TARGET_OS_FILE_SYSTEM_TYPE:-}" in
     ext4)
         DS_ACK_PREBUILT_ZIP="$DS_ACK_EXT4_PREBUILT_ZIP"
