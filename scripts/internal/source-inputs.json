@@ -12452,6 +12452,7 @@
     "unica/patches/miscs/module.prop",
     "unica/patches/miscs/smali/system/framework/services.jar/0001-Disable-vendor-mismatch-warning.patch",
     "unica/patches/miscs/smali/system/framework/services.jar/0002-Add-UN1CA-Bixby-key-remap.patch",
+    "unica/patches/miscs/smali/system/framework/services.jar/0003-Let-Samsung-cloud-services-query-users.patch",
     "unica/patches/miscs/system.prop",
     "unica/patches/nfc/customize.sh",
     "unica/patches/nfc/module.prop",

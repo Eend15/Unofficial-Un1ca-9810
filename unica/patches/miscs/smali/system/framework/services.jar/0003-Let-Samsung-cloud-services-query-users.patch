@@ -1,0 +1,26 @@
+diff --git a/smali_classes2/com/android/server/pm/UserManagerService.smali b/smali_classes2/com/android/server/pm/UserManagerService.smali
+index ac93431..1cd34fe 100644
+--- a/smali_classes2/com/android/server/pm/UserManagerService.smali
++++ b/smali_classes2/com/android/server/pm/UserManagerService.smali
+@@ -1961,6 +1961,21 @@
+     return-void
+ 
+     :cond_0
++    invoke-static {}, Landroid/os/Binder;->getCallingUid()I
++
++    move-result v0
++
++    invoke-static {v0}, Landroid/os/UserHandle;->getAppId(I)I
++
++    move-result v0
++
++    const/16 v1, 0x1391
++
++    if-ne v0, v1, :cond_un1ca_deny
++
++    return-void
++
++    :cond_un1ca_deny
+     new-instance v0, Ljava/lang/SecurityException;
+ 
+     const-string/jumbo v1, "You either need MANAGE_USERS, CREATE_USERS, or QUERY_USERS permission to: "
