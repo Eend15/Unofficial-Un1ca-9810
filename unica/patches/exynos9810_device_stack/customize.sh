@@ -2186,6 +2186,27 @@ _EXYNOS9810_APPLY_AUDIO6_BRIDGE()
     fi
 }
 
+# The Exynos9810 voice-trigger HAL advertises "OK Google and SVoice", so the Google app loads
+# its current "Hey Google" keyphrase model into it. load_modelbinary() memcpy()s the model
+# into the 0xb500-byte VTS buffer before checking its size; today's model is larger, so the
+# copy runs off the buffer and android.hardware.audio.service crashes (SIGSEGV), every few
+# seconds while the Google app retries. Reject oversized models in stdev_load_sound_model()
+# instead, using the bytes of the debug log call right before load_modelbinary():
+#   ldr r0,[sp,#0x30]; cmp.w r0,#0xb500; bls load; mvn r0,#0x25 (-ENOSYS, a recoverable "not supported" for the middleware); b error; nop; nop
+_EXYNOS9810_PATCH_SOUND_TRIGGER_MODEL_SIZE()
+{
+    local LIB="$WORK_DIR/vendor/lib/hw/sound_trigger.primary.exynos9810.so"
+    local FROM="cdf800900b9002202b492c4a2c4b79447a447b4400f038eb"
+    local TO="cdf800900b900c98b0f5354f04d96ff0250008e000bf00bf"
+
+    [ -f "$LIB" ] || return 0
+    if xxd -p -c 0 "$LIB" | grep -q "$TO"; then
+        return 0
+    fi
+    LOG "- Rejecting oversized voice-trigger models in sound_trigger.primary.exynos9810"
+    HEX_PATCH "$LIB" "$FROM" "$TO" || return 1
+}
+
 _EXYNOS9810_PATCH_AUDIO_INIT_SERVICES()
 {
     local RC="$WORK_DIR/system/system/etc/init/audioserver.rc"
@@ -4691,6 +4712,7 @@ _EXYNOS9810_APPLY_KEYMASTER3
 _EXYNOS9810_APPLY_PANEL_WAKE_FIX
 _EXYNOS9810_PATCH_RT_CGROUPS
 _EXYNOS9810_APPLY_AUDIO6_BRIDGE
+_EXYNOS9810_PATCH_SOUND_TRIGGER_MODEL_SIZE
 _EXYNOS9810_PATCH_AUDIO_INIT_SERVICES
 _EXYNOS9810_APPLY_HEALTH21
 _EXYNOS9810_TARGET_IDENTITY
