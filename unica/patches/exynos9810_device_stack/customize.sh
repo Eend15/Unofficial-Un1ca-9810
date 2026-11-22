@@ -1771,6 +1771,68 @@ PY
     if ! grep -q "legacy Exynos9810 donor: ignore stale camera error -20" "$SMALI"; then
         EVAL "sed -i '0,/    const v0, 0x7f13083d/{s|    const v0, 0x7f13083d|    const/16 v0, -0x14\\n\\n    if-ne p1, v0, :exynos9810_keep_camera_error\\n\\n    const-string p0, \"legacy Exynos9810 donor: ignore stale camera error -20\"\\n\\n    invoke-static {p0, p0}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I\\n\\n    return-void\\n\\n    :exynos9810_keep_camera_error\\n    const v0, 0x7f13083d|}' \"$SMALI\"" || return 1
     fi
+
+    # Portrait runs on the single rear camera here (see ShootingModeMap above), but a camera
+    # ID saved by an older build or restored after a crash can still be a dual-portrait
+    # logical camera (21 = BACK_TELE_DUAL_PORTRAIT). The S9 has no such camera device, so the
+    # app crashed on start ("unknown device 21"). Hand out the plain rear camera instead.
+    SMALI="$(find "$APKTOOL_DIR/system/priv-app/SamsungCamera/SamsungCamera.apk" \
+        -path "*/com/sec/android/app/camera/setting/repository/CameraSettingsImpl.smali" | head -n 1)"
+    if [ ! -f "$SMALI" ]; then
+        LOGE "CameraSettingsImpl.smali not found in SamsungCamera.apk"
+        return 1
+    fi
+
+    LOG "- Mapping stale dual-portrait camera IDs to the rear camera"
+    _EXYNOS9810_REPLACE_SMALI_METHOD "$SMALI" \
+        "getCameraId()Lcom/sec/android/app/camera/interfaces/CameraId;" \
+        "$(cat <<'EOF'
+    .locals 3
+
+    sget-object v0, Lcom/sec/android/app/camera/interfaces/CameraSettings$Key;->CAMERA_ID:Lcom/sec/android/app/camera/interfaces/CameraSettings$Key;
+
+    invoke-virtual {p0, v0}, Lcom/sec/android/app/camera/setting/repository/CameraSettingsImpl;->getValue(Lcom/sec/android/app/camera/interfaces/CameraSettings$Key;)I
+
+    move-result v1
+
+    const/high16 v2, -0x80000000
+
+    if-eq v1, v2, :cond_0
+
+    invoke-static {v1}, Lcom/sec/android/app/camera/interfaces/CameraId;->getCameraId(I)Lcom/sec/android/app/camera/interfaces/CameraId;
+
+    move-result-object p0
+
+    # UN1CA: no dual-portrait logical cameras on exynos9810
+    sget-object v0, Lcom/sec/android/app/camera/interfaces/CameraId;->BACK_TELE_DUAL_PORTRAIT:Lcom/sec/android/app/camera/interfaces/CameraId;
+
+    if-eq p0, v0, :unica_rear_camera
+
+    sget-object v0, Lcom/sec/android/app/camera/interfaces/CameraId;->BACK_NORMAL_DUAL_PORTRAIT:Lcom/sec/android/app/camera/interfaces/CameraId;
+
+    if-eq p0, v0, :unica_rear_camera
+
+    sget-object v0, Lcom/sec/android/app/camera/interfaces/CameraId;->BACK_SECOND_TELE_DUAL_PORTRAIT:Lcom/sec/android/app/camera/interfaces/CameraId;
+
+    if-eq p0, v0, :unica_rear_camera
+
+    return-object p0
+
+    :unica_rear_camera
+    sget-object p0, Lcom/sec/android/app/camera/interfaces/CameraId;->BACK:Lcom/sec/android/app/camera/interfaces/CameraId;
+
+    return-object p0
+
+    :cond_0
+    new-instance p0, Ljava/lang/UnsupportedOperationException;
+
+    const-string v0, "CameraId has not been set yet."
+
+    invoke-direct {p0, v0}, Ljava/lang/UnsupportedOperationException;-><init>(Ljava/lang/String;)V
+
+    throw p0
+EOF
+)" || return 1
 }
 
 _EXYNOS9810_SET_FLOATING_FEATURE()
