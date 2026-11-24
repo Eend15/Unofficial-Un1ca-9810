@@ -13,10 +13,10 @@ EXPECTED_FS="${2:?expected filesystem is required}"
 }
 case "$EXPECTED_FS" in
     erofs)
-        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-768981b1bc670bf22f8fa8555aad2b2a7a684a5b572099a63bbbb22ba9972acc}"
+        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-c49ef67e4b4761cd957e67bc0624d0ba2d103bbf1932e146ec55b7d450b8b51b}"
         ;;
     ext4)
-        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-f5c1227a4681f85cada0b37b1db2fc6f8600e1d01712b5b663b405aba4854782}"
+        EXPECTED_KERNEL_SHA256="${EXYNOS9810_EXPECTED_KERNEL_SHA256:-86057280f250d535e7480ff82f868d6a80c0848a09e2c555a9a259fda78b762c}"
         ;;
     *)
         echo "Exynos9810 flashable verification: invalid filesystem $EXPECTED_FS" >&2
@@ -41,6 +41,10 @@ for ENTRY in \
     exynos9810/verify_package.sh \
     exynos9810/check_battery.sh \
     exynos9810/installer_ui.sh \
+    exynos9810/preflight.sh \
+    exynos9810/prepare_layout.sh \
+    exynos9810/repartition.sh \
+    exynos9810/sgdisk \
     META-INF/com/google/android/updater-script; do
     grep -Fxq "$ENTRY" "$VERIFY_TMP/outer.list" || {
         echo "Exynos9810 flashable verification: missing $ENTRY" >&2

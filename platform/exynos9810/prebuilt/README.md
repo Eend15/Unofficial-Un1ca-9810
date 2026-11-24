@@ -14,8 +14,8 @@ request clamp in the panel brightness fixup. One UI 8 sends high-brightness
 values above the UI maximum (449-895 on a 448 scale); those were rejected as
 out of range, so outdoor/HBM brightness did nothing. They are now clamped to
 the panel maximum (720 nits). Same version name, toolchain, KernelSU-Next
-v3.4.0-legacy, SuSFS v1.5.5 and six-model family; the November14 archives are
-retained.
+v3.4.0-legacy, SuSFS v1.5.5 and six-model family; older archives were
+removed from the tree (still in git history).
 
 November14 V1.14: rebuilt on KernelSU-Next v3.4.0-legacy (UAPI 4) so the
 kernel matches the bundled v3.4.0 manager and ksud, with SuSFS v1.5.5, EROFS,
@@ -23,7 +23,7 @@ the double-tap-to-wake tap window fix and a panel brightness fix: brightness
 values above 420 no longer turn the panel black, the maximum now follows the
 panel's real ceiling. Built with Google Clang 20 r547379 for six models. Both
 archives carry the same kernels; only the DTB fstab type (system, vendor, odm)
-differs. The November11 V1.13 archives are retained.
+differs.
 
 November11 V1.13: the November7 family plus
 `exynos9810_finalization/input/patch_dt2w_tap_coords.py` in wake_gestures.c.
@@ -33,7 +33,7 @@ negative X and was ignored: double-tap wake needed several taps. The offset is
 now removed only where it was added. Built from 0f2d01d plus both touch
 patches with Google Clang 20 r547379; DTBs/tools unchanged from the
 November7/October24 archives. Archive-verified for six models; not yet
-physically accepted. The November7 V1.12 archives are retained.
+physically accepted.
 
 November7 touch freeze fix: the October24 family plus
 `exynos9810_finalization/input/patch_touch_lpm_exit.py` in both sec_ts drivers.
@@ -61,7 +61,7 @@ Permanent manager registration is provided by the source-shipped,
 certificate-verified system companion. It no longer replays module boot hooks
 when registering the manager at boot-completed/CE unlock; the built-in kernel's
 ordered init actions handle module startup. Kernel archives alone do not add
-that system service update to older ROMs. Previous archives are retained.
+that system service update to older ROMs.
 
 October23 AOT integration: the new enforcing KernelSU family also exposes
 Samsung's `aot_enable` command and AOT feature bit using DS-ACK's existing

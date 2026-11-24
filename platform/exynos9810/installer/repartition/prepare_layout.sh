@@ -66,9 +66,27 @@ wait_for_layout()
 
 echo "E9810: checking partition layout"
 write_state 0
-if /sbin/sh "$SELF_DIR/preflight.sh" "$TARGET"; then
-    echo "E9810: partition layout is ready"
-    exit 0
+# Repartitioning erases data, so only do it when the layout is really too
+# small. Recovery can expose by-name nodes or sizes late; re-read the table
+# and check again before deciding, and never repartition on an unreadable size.
+attempt=0
+while :; do
+    /sbin/sh "$SELF_DIR/preflight.sh" "$TARGET"
+    rc=$?
+    if [ "$rc" -eq 0 ]; then
+        echo "E9810: partition layout is ready, no repartition needed"
+        exit 0
+    fi
+    attempt=$((attempt + 1))
+    [ "$attempt" -ge 3 ] && break
+    echo "E9810: layout check failed ($rc), re-reading partition table"
+    refresh_partitions
+done
+
+if [ "$rc" -ne 1 ]; then
+    ui_print "E9810: cannot read the partition sizes; nothing was changed."
+    ui_print "E9810: reboot recovery and flash again."
+    exit 1
 fi
 
 ui_print "E9810: partition layout is too small for this ROM (first install)."

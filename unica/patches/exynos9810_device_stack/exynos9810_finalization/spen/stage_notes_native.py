@@ -30,7 +30,7 @@ def stage(apk,output,verify=False):
     from recognizer_diagnostics import patch
     # FBR ink only reached the panel on pen-up on Exynos9810 (screen-off memo);
     # the normal renderer fallback was field-accepted on 2026-10-27.
-    from build_notes_ink_v7 import patch as normal_renderer
+    from patch_notes_ink import patch as normal_renderer
     payload=libraries(apk)
     payload['libSPenRecognizer.so']=patch(payload['libSPenRecognizer.so'])
     payload['libSPenEngine.so']=normal_renderer(payload['libSPenEngine.so'])

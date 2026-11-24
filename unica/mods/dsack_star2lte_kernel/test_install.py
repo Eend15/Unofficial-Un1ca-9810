@@ -5,13 +5,11 @@ import os
 import subprocess
 import tempfile
 import unittest
-import zipfile
 
 
 MODULE = Path(__file__).resolve().parent
 EXPECTED_EROFS = "82978b09e838c8df365b17836ee3c77f75b4a86f1a747aa2c3f8ee57f762cd89"
 EXPECTED_EXT4 = "a7989f68e03ac12aa0514c6ae5c925c2682fbf7f1581993842c3894684699030"
-EXPECTED_USER_EXT4_ZIP = "b9a020882b695bc762cd3f1b63534626f8bf32432d45be5450b8ff939456e67e"
 ROOT = MODULE.parents[2]
 
 
@@ -44,17 +42,6 @@ class DSACKKernelTests(unittest.TestCase):
 
     def test_real_star2lte_ext4_stages_exact_ext4_enforcing_boot(self) -> None:
         self.assert_stages("ext4", EXPECTED_EXT4)
-
-    def test_default_ext4_installer_zip_matches_user_archive(self) -> None:
-        prebuilt = (ROOT / "platform/exynos9810/prebuilt/"
-                    "DS-ACK-V1.12-30.09.2026-Enforcing-KernelSU-Next-v3.4.0-SuSFS-ext4-dtb.zip")
-        with prebuilt.open("rb") as file:
-            self.assertEqual(hashlib.file_digest(file, "sha256").hexdigest(),
-                             EXPECTED_USER_EXT4_ZIP)
-        with zipfile.ZipFile(prebuilt) as archive:
-            self.assertIsNone(archive.testzip())
-            self.assertIn(b"ext4", archive.read("floyd/G960F-dtb"))
-            self.assertNotIn(b"erofs", archive.read("floyd/G960F-dtb"))
 
     def test_other_targets_are_not_modified(self) -> None:
         for codename in ("starlte", "crownlte"):

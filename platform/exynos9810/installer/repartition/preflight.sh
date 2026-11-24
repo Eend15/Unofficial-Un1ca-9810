@@ -52,8 +52,10 @@ check_partition()
     fi
 
     actual_mib="$(size_mib_of "$node")" || {
+        # Unknown is not "too small": never repartition (and wipe) on a
+        # size we could not read.
         echo "E9810: cannot read $name partition size"
-        return 1
+        return 2
     }
 
     minimum_mib=$((required_mib - TOLERANCE_MIB))
@@ -77,10 +79,18 @@ if [ "$target" = "crownlte" ]; then
     cache_size_mib=520
 fi
 
+# Exit codes: 0 = layout ready, 1 = a partition is missing or too small
+# (repartition needed), 2 = a size could not be read (do not repartition).
 ok=0
-check_partition SYSTEM "$system_size_mib" || ok=1
-check_partition VENDOR "$vendor_size_mib" || ok=1
-check_partition ODM "$odm_size_mib" || ok=1
-check_partition CACHE "$cache_size_mib" || ok=1
+for spec in "SYSTEM $system_size_mib" "VENDOR $vendor_size_mib" "ODM $odm_size_mib" "CACHE $cache_size_mib"; do
+    # shellcheck disable=SC2086
+    check_partition $spec
+    rc=$?
+    if [ "$rc" -eq 2 ]; then
+        ok=2
+    elif [ "$rc" -ne 0 ] && [ "$ok" -eq 0 ]; then
+        ok=1
+    fi
+done
 
 exit "$ok"

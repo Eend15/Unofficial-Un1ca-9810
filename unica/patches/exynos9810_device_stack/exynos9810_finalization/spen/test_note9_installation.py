@@ -98,7 +98,10 @@ _EXYNOS9810_FINAL_ENABLE_NOTE9_SPEN
             work = Path(td)
             notes = work / "system/system/app/Notes33/Notes33.apk"
             notes.parent.mkdir(parents=True)
-            shutil.copyfile(FINAL.parent / "spen/notes/Notes33.apk", notes)
+            stock = ROOT / "out/fw/SM-N960F_PHN/system/system/app/Notes33/Notes33.apk"
+            if not stock.is_file():
+                self.skipTest("stock SM-N960F firmware not extracted")
+            shutil.copyfile(stock, notes)
             result = self.run_real_factory_stager(work, ROOT / "out/tools")
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
             self.assertEqual(hashlib.sha256(notes.read_bytes()).hexdigest(), NOTES_SHA)
