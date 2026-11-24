@@ -143,7 +143,7 @@ public final class IslandItem {
     public float progress = -1.0f;
     /** Chronometer base time in ms (start, or end when counting down); 0 = no chronometer. */
     public long chronoBase;
-    /** Recorder-only clock domain: immune to wall-clock changes; other sources keep their old path. */
+    /** Monotonic clock domain: elapsed time is immune to wall-clock changes. */
     public boolean chronoUsesElapsedRealtime;
     public long chronoElapsedBase;
     /** The chronometer counts down to {@link #chronoBase}. */
@@ -185,6 +185,8 @@ public final class IslandItem {
     public int[] actionBgColors;
     /** Index in {@link #actions} of the emphasised button, -1 = none. */
     public int primaryActionIndex = -1;
+    /** The buttons wait for a pull down ("Pull down for buttons"). Set by the peek source, cleared by the view. */
+    public boolean actionsHidden;
     /** Opens the owning app / notification when the card is tapped. */
     public PendingIntent contentIntent;
 
@@ -288,6 +290,8 @@ public final class IslandItem {
      * comes before everything else on the island, calls included, and what was on the island returns when it is gone.
      */
     public boolean transientPopup;
+    /** A ringing call, announced as a persistent banner independently of ordinary card auto-open. */
+    public boolean incomingCall;
 
     /** The pill takes the widest size it may have, e.g. to cover an animation that plays under it (the charging popup). */
     public boolean fullWidth;
@@ -316,6 +320,7 @@ public final class IslandItem {
 
     /** Short feedback has its own tier: charging, other system feedback, notification peeks, ongoing activities. */
     public int popupPriority() {
+        if (incomingCall) return 2;
         if (!transientPopup) return 0;
         if ("event:charging".equals(key)) return 3;
         return kind == Kind.EVENT ? 2 : 1;

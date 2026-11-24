@@ -44,6 +44,7 @@ public final class ProgressSource {
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
+            lastNotify = SystemClock.uptimeMillis();
             onChange.run();
         }
     };
@@ -77,8 +78,7 @@ public final class ProgressSource {
         if (!changed) {
             for (Map.Entry<String, IslandItem> e : fresh.entrySet()) {
                 IslandItem old = items.get(e.getKey());
-                if (old == null || old.progressIndeterminate != e.getValue().progressIndeterminate || old.progress != e.getValue().progress || !String.valueOf(old.title).equals(String.valueOf(e.getValue().title))
-                        || !String.valueOf(old.subtitle).equals(String.valueOf(e.getValue().subtitle))) {
+                if (old == null || !sameCard(old, e.getValue())) {
                     changed = true;
                     break;
                 }
@@ -95,16 +95,28 @@ public final class ProgressSource {
         notifyChanged();
     }
 
+    private static boolean sameCard(IslandItem a, IslandItem b) {
+        if (a.progressIndeterminate != b.progressIndeterminate || Float.compare(a.progress, b.progress) != 0
+                || !String.valueOf(a.title).equals(String.valueOf(b.title))
+                || !String.valueOf(a.subtitle).equals(String.valueOf(b.subtitle)) || a.accent != b.accent
+                || !java.util.Objects.equals(a.contentIntent, b.contentIntent) || a.actions.size() != b.actions.size()) return false;
+        for (int i = 0; i < a.actions.size(); i++) {
+            IslandItem.Action x = a.actions.get(i), y = b.actions.get(i);
+            if (!String.valueOf(x.title).equals(String.valueOf(y.title)) || x.destructive != y.destructive
+                    || !java.util.Objects.equals(x.intent, y.intent)) return false;
+        }
+        return true;
+    }
+
     /** Refreshes the island, but at most every {@link #NOTIFY_INTERVAL_MS}: apps report progress very often. */
     private void notifyChanged() {
         long now = SystemClock.uptimeMillis();
         long wait = lastNotify + NOTIFY_INTERVAL_MS - now;
+        main.removeCallbacks(tick);
         if (wait <= 0) {
             lastNotify = now;
             onChange.run();
         } else {
-            main.removeCallbacks(tick);
-            lastNotify = now + wait;
             main.postDelayed(tick, wait);
         }
     }

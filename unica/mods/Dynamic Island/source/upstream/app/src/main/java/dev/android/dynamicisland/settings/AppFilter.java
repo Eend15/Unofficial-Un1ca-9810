@@ -16,7 +16,7 @@ public final class AppFilter {
 
     public AppFilter(boolean onlyListed, Set<String> packages) {
         this.onlyListed = onlyListed;
-        this.packages = packages == null ? Collections.<String>emptySet() : packages;
+        this.packages = packages == null ? Collections.<String>emptySet() : Set.copyOf(packages);
     }
 
     /** True when the island may show something that belongs to {@code packageName} (null = not an app). */
@@ -34,4 +34,11 @@ public final class AppFilter {
     public int size() {
         return packages.size();
     }
+
+    @Override public boolean equals(Object other) {
+        return other instanceof AppFilter && onlyListed == ((AppFilter) other).onlyListed
+                && packages.equals(((AppFilter) other).packages);
+    }
+
+    @Override public int hashCode() { return 31 * Boolean.hashCode(onlyListed) + packages.hashCode(); }
 }

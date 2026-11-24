@@ -1,5 +1,7 @@
 package dev.android.dynamicisland.island.source;
 
+import static org.junit.Assert.assertFalse;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotEquals;
@@ -62,6 +64,27 @@ public class RecorderNotificationSourceTest {
                 .setUsesChronometer(usesChronometer).setWhen(when)
                 .setContentIntent(withIntent ? android.app.PendingIntent.getBroadcast(app, 1, new android.content.Intent("stop"), android.app.PendingIntent.FLAG_IMMUTABLE) : null).build();
         return new StatusBarNotification(pkg, pkg, id, tag, 1, 1, 0, n, android.os.Process.myUserHandle(), postTime);
+    }
+
+    @Test
+    public void screenRecordingOffGivesNoCardAndKeepsTheRecordersNotification() {
+        dev.android.dynamicisland.settings.ModuleSettings.ensureStarted();
+        RecorderNotificationSource source = source();
+        StatusBarNotification recorder = note("com.android.systemui", "screen_record", true);
+        source.update(List.of(recorder));
+        assertTrue(card(source).key.startsWith("rec:"));
+        assertTrue(source.isShownOnIsland(recorder.getKey()));
+        org.robolectric.util.ReflectionHelpers.setStaticField(dev.android.dynamicisland.settings.ModuleSettings.class, "screenRecordingCard", false);
+        try {
+            List<IslandItem> out = new ArrayList<>();
+            source.collect(out);
+            assertTrue(out.isEmpty());
+            assertFalse("the original notification is not hidden without a card", source.isShownOnIsland(recorder.getKey()));
+        } finally {
+            org.robolectric.util.ReflectionHelpers.setStaticField(dev.android.dynamicisland.settings.ModuleSettings.class, "screenRecordingCard", true);
+        }
+        card(source);
+        assertTrue(source.isShownOnIsland(recorder.getKey()));
     }
 
     @Test
@@ -146,6 +169,34 @@ public class RecorderNotificationSourceTest {
     private StatusBarNotification recording(int id, long post, long when, boolean systemClock) {
         return note("com.samsung.android.app.smartcapture", "CHANNEL_ID_RECORDING_SCREEN", true,
                 false, systemClock, id, null, post, when);
+    }
+
+    @Test public void aChipHidesOnlyItsMatchingRecordingNotificationAcrossIdsAndTags() {
+        RecorderNotificationSource source=source();
+        StatusBarNotification recording=recording(1332,10000,1000,true);
+        StatusBarNotification upload=note("com.samsung.android.app.smartcapture","upload_failure",false,
+                false,false,999,"upload",10000);
+        source.update(List.of(recording,upload));
+        IslandItem chip=new IslandItem("cast:share");chip.kind=IslandItem.Kind.RECORDING;
+        chip.packageName="com.samsung.android.app.smartcapture";
+        List<IslandItem> out=new java.util.ArrayList<>(List.of(chip));source.collect(out);
+        assertEquals("the chip covers the fallback",1,out.size());
+        assertTrue(source.isShownOnIsland(recording.getKey()));
+        assertFalse(source.isShownOnIsland(upload.getKey()));
+        StatusBarNotification ongoingUpload=note(chip.packageName,"uploads",true);
+        source.update(List.of(ongoingUpload));source.collect(new java.util.ArrayList<>(List.of(chip)));
+        assertFalse("a package-only compatibility guess must not hide an unrelated chip-side notification",
+                source.isShownOnIsland(ongoingUpload.getKey()));
+        source.update(List.of(upload));source.collect(new java.util.ArrayList<>(List.of(chip)));
+        assertFalse("removing the recording notification clears its exact hide key",source.isShownOnIsland(recording.getKey()));
+        assertFalse(source.isShownOnIsland(upload.getKey()));
+    }
+
+    @Test public void contentIntentThatOnlyOpensTheRecorderIsNotOfferedAsAStopButton() {
+        var source=source();var n=note("com.android.systemui","screen_record",true,true);
+        n.getNotification().extras.putCharSequence(Notification.EXTRA_TEXT,"Recording in progress");
+        var open=n.getNotification().contentIntent;source.update(List.of(n));var card=card(source);
+        assertTrue(card.actions.isEmpty());assertEquals(open,card.contentIntent);
     }
 
 }

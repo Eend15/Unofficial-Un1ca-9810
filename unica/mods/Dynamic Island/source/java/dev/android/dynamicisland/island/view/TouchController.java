@@ -446,7 +446,7 @@ final class TouchController {
         }
         stackDragging = true;
         if (axis == Axis.HORIZONTAL) {
-            if(scene.iMode!=null) { scene.iMode.dragPage(dx);return; }
+            if(scene.iMode!=null && !incomingPopup()) { scene.iMode.dragPage(dx);return; }
             float pull = rubber(dx, downCard.body.w * 0.55f);
             downCard.dx.snapTo(pull);
             for (Card other : scene.cards) {
@@ -559,6 +559,11 @@ final class TouchController {
     }
 
     private void dragReleased(boolean horizontal, float dx, float dy) {
+        if (incomingPopup() && scene.mode == Mode.EXPANDED && axis == Axis.HORIZONTAL) {
+            releaseStack();
+            if (horizontal) director.collapse();
+            return;
+        }
         if(scene.iMode!=null && scene.iMode.hasCompactDrag()) {
             float speed=0;
             if(velocity!=null) { velocity.computeCurrentVelocity(1000,m.dp(5000));speed=velocity.getXVelocity(pointerId); }
@@ -591,6 +596,17 @@ final class TouchController {
                 && dy - (upwardSpeed() * RELEASE_LOOKAHEAD_S) < -m.dp(SWIPE_UP_DISMISS_DP)) {
             // let go: far enough, counting where the finger was heading, folds the cards; otherwise they spring back
             foldCards(upwardSpeed());
+        } else if (scene.mode == Mode.EXPANDED && axis == Axis.VERTICAL && dy > m.dp(SWIPE_MIN_DP) && popupHidesButtons()) {
+            // pulled down: the popup shows its buttons, as a banner does on iOS, and stays at least a while for them
+            long now = SystemClock.uptimeMillis();
+            downCard.item.actionsHidden = false;
+            downCard.item.expiresAtUptime = Math.max(downCard.item.expiresAtUptime, now + ModuleSettings.autoCollapseMs());
+            Haptics.perform(view, HAPTIC_CONFIRM);
+            releaseStack();
+            director.refreshFontLayouts(); // the same remeasure as a font change: the open card takes its new height
+            downCard.h.snapTo(downCard.targetH); // at once: growing would squash the open content on the way
+            downCard.cy.snapTo(downCard.targetCy);
+            director.scheduleAutoCollapse(downCard.item.expiresAtUptime - now);
         } else if (scene.mode == Mode.EXPANDED) {
             releaseStack();
             director.postAutoCollapse();
@@ -601,6 +617,16 @@ final class TouchController {
     private void foldCards(float upwardSpeed) {
         releaseStack();
         if(scene.iMode!=null) scene.iMode.collapse(upwardSpeed);else director.collapse();
+    }
+
+    /** A ringing banner can be put away without rejecting the call or paging to another activity. */
+    private boolean incomingPopup() {
+        return downCardAlive() && downCard.item.incomingCall;
+    }
+
+    /** A notification popup whose buttons wait for a pull down. */
+    private boolean popupHidesButtons() {
+        return downCardAlive() && downCard.item.actionsHidden;
     }
 
     private void cancel(MotionEvent e) {

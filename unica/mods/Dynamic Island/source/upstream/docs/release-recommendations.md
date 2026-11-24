@@ -19,6 +19,10 @@ switch. Wide charging points to the Samsung charging-effect option and explicitl
 describes the off state. Automatic fixes and maintenance actions are kept in the
 release notes rather than presented as settings to enable.
 
+The 0.1.17 list contains six cards: system pop-ups with island styling (the fourth notification choice), incoming call
+cards on/off, the screen recording card on/off, pull down for buttons, the wide charging popup option and showing the island in
+landscape and in games. Each opens its existing setting; none changes it. The wide charging card reuses the charging picture.
+
 Candidates are chosen randomly without replacement. After every candidate has been shown, a new
 cycle starts without immediately repeating the last feature. A normal home-page redraw, navigation
 back from settings or activity recreation preserves the current card. There is no automatic timer.

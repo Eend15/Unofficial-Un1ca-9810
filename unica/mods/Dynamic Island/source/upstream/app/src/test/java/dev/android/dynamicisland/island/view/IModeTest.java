@@ -261,6 +261,20 @@ public class IModeTest {
         }
     }
 
+    @Test public void aRingingBannerSwipesAwayInEitherDirectionWithoutPagingOrRejectingTheCall() {
+        for(int direction:new int[]{-1,1}) try(Fixture f=new Fixture(3)) {
+            IslandItem incoming=f.items.get(0);incoming.incomingCall=true;incoming.transientPopup=true;
+            f.view.setItems(f.items);f.view.peek(incoming,1000);f.step(16,70);
+            RectF start=f.bounds(f.active());
+            f.event(MotionEvent.ACTION_DOWN,start.centerX(),start.centerY());
+            f.event(MotionEvent.ACTION_MOVE,start.centerX()+direction*110,start.centerY());
+            assertFalse("incoming calls dismiss; they do not start the activity pager",f.scene.iMode.hasPageDrag());
+            f.event(MotionEvent.ACTION_UP,start.centerX()+direction*110,start.centerY());
+            f.step(16,70);assertFalse(f.view.isExpanded());
+            assertTrue("the unanswered call is still available as a pill",f.scene.items.contains(incoming));
+        }
+    }
+
     @Test public void aSharedVectorIconRemainsVisibleWhenTheBubbleBecomesTheMainPill() {
         try(Fixture f=new Fixture(3)) {
             f.items.get(1).icon=f.context.getDrawable(dev.android.dynamicisland.R.drawable.ic_battery_pill_39);

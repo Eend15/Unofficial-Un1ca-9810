@@ -12,25 +12,39 @@ final class AutoOpenCards {
     private final Set<String> seen = new HashSet<>();
     private final Map<String, Long> waiting = new LinkedHashMap<>();
     private boolean enabledBefore;
+    private Set<String> notifications = Set.of();
+
+    /** Main thread: only a real removal, not foreground suppression or minimization, ends an announcement. */
+    void notifications(Set<String> live) {
+        for (String key : notifications) if (!live.contains(key)) {
+            seen.remove(key);
+            waiting.remove(key);
+        }
+        notifications = Set.copyOf(live);
+    }
 
     IslandItem next(List<IslandItem> shown, boolean enabled, long now) {
         Set<String> live = new HashSet<>();
-        for (IslandItem item : shown) if (eligible(item)) live.add(item.key);
+        for (IslandItem item : shown) if (eligible(item)) live.add(identity(item));
         if (!enabled || !enabledBefore) {
             seen.clear();
             waiting.clear();
             seen.addAll(live); // Enabling never opens the whole backlog.
+            seen.addAll(notifications);
             enabledBefore = enabled;
             return null;
         }
-        seen.retainAll(live);
-        waiting.entrySet().removeIf(e -> !live.contains(e.getKey()) || now > e.getValue());
+        waiting.entrySet().removeIf(e -> now > e.getValue());
         for (String key : live) if (seen.add(key) && waiting.size() < 32) waiting.put(key, now + 8000);
-        for (IslandItem item : shown) if (waiting.containsKey(item.key)) return item;
+        for (IslandItem item : shown) if (eligible(item) && waiting.containsKey(identity(item))) return item;
         return null;
     }
 
-    void opened(IslandItem item) { waiting.remove(item.key); }
+    void opened(IslandItem item) { waiting.remove(identity(item)); }
+
+    private static String identity(IslandItem item) {
+        return item.sourceKey != null ? item.sourceKey : item.key.substring(item.key.indexOf(':') + 1);
+    }
 
     private static boolean eligible(IslandItem item) {
         return item != null && (item.key.startsWith("task:") || item.key.startsWith("oa:")

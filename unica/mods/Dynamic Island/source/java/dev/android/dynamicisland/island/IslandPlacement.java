@@ -15,6 +15,7 @@ import dev.android.dynamicisland.island.window.StatusBarIconFader;
 import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Diagnostics;
 import dev.android.dynamicisland.xposed.XLog;
+import dev.android.dynamicisland.xposed.hooks.HideDuplicated;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -75,6 +76,7 @@ final class IslandPlacement {
     private boolean dozing;
     private boolean sleeping, sleepExitVisible, sleepFinished, wakefulnessKnown;
     private boolean lastSuppressed;
+    private boolean lastOriginalHiding;
     private int statusBarWindowState;
     private boolean landscapeSuppressed;
     private boolean portrait;
@@ -276,6 +278,7 @@ final class IslandPlacement {
             if (view != null) view.setSleeping(false);
             if (revealPending && !dozing && barState == BAR_STATE_SHADE) main.postDelayed(revealTimer, UNLOCK_REVEAL_DELAY_MS);
         }
+        updateOriginalVisibility();
     }
 
     void finishSleeping() {
@@ -307,17 +310,28 @@ final class IslandPlacement {
             return;
         }
         boolean locked = barState == BAR_STATE_KEYGUARD || barState == BAR_STATE_SHADE_LOCKED;
-        boolean fullscreen = statusBarWindowState != 0 && !(portrait && ModuleSettings.showInFullscreen());
+        boolean landscapeShown = ModuleSettings.showInLandscape();
+        boolean fullscreen = statusBarWindowState != 0
+                && !(portrait ? ModuleSettings.showInFullscreen() : landscapeShown);
         boolean suppressed = !dev.android.dynamicisland.nativebridge.NativeRuntime.enabled
                 || ((locked || dozing) && !(sleeping && sleepExitVisible))
-                || (fullscreen && !(sleeping && sleepExitVisible)) || landscapeSuppressed || revealPending;
+                || (fullscreen && !(sleeping && sleepExitVisible)) || (landscapeSuppressed && !landscapeShown) || revealPending;
         if (suppressed != lastSuppressed) {
             lastSuppressed = suppressed;
             XLog.event("island " + (suppressed ? "hidden" : "shown") + " (keyguard=" + locked + " dozing=" + dozing + " sleeping=" + sleeping + " fullscreen=" + fullscreen
                     + " landscape=" + landscapeSuppressed + " unlockReveal=" + revealPending + ")");
         }
         view.setSuppressed(suppressed);
+        updateOriginalVisibility();
         onFrame();
+    }
+
+    private void updateOriginalVisibility() {
+        boolean hiding = view != null && !view.isSuppressedNow();
+        if (hiding != lastOriginalHiding) {
+            lastOriginalHiding = hiding;
+            main.post(HideDuplicated::rebuild);
+        }
     }
 
     // ---- geometry ------------------------------------------------------------------------------

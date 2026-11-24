@@ -71,13 +71,17 @@ public class NotificationRepeatTest {
     @Test public void aRepostOfTheSameMessageGetsNoSecondCard() {
         IslandSources[] sources = new IslandSources[1];
         HeadsUpTakeover takeover = takeover(sources);
-        StatusBarNotification first = note(5, chat("on my way"), System.currentTimeMillis());
+        long sent = System.currentTimeMillis();
+        StatusBarNotification first = note(5, chat("on my way").setStyle(new Notification.MessagingStyle("Me")
+                .addMessage("on my way", sent, "Sender")), sent);
         takeover.setSnapshot(List.of(first));
         assertTrue(takeover.take(first));
         assertNotNull(sources[0].peeks.showing());
         sources[0].peeks.dismiss(sources[0].peeks.showing());
 
-        StatusBarNotification again = note(5, chat("on my way"), System.currentTimeMillis() + 4000);
+        // A new notification post time with the same actual message timestamp is a refresh of that message.
+        StatusBarNotification again = note(5, chat("on my way").setStyle(new Notification.MessagingStyle("Me")
+                .addMessage("on my way", sent, "Sender")), sent + 4000);
         takeover.setSnapshot(List.of(again));
         assertTrue("the banner stays away", takeover.take(again));
         assertNull("but no second card", sources[0].peeks.showing());
@@ -107,11 +111,95 @@ public class NotificationRepeatTest {
         assertTrue(takeover.take(first));
         sources[0].peeks.dismiss(sources[0].peeks.showing());
 
-        // the same last words again, but the conversation now holds one more message
+        // The app retains only the newest message: same words and message count, but a new message timestamp.
         StatusBarNotification second = note(7, chat("ok").setStyle(new Notification.MessagingStyle("Me")
-                .addMessage("ok", now, "Sender").addMessage("ok", now + 5000, "Sender")), now + 5000);
+                .addMessage("ok", now + 5000, "Sender")), now + 5000);
         takeover.setSnapshot(List.of(second));
         assertTrue(takeover.take(second));
         assertNotNull("a new message with the same words is still news", sources[0].peeks.showing());
+    }
+
+    private boolean scannedCardFor(Notification.Builder builder, long postTime, HeadsUpTakeover takeover, IslandSources[] sources) {
+        StatusBarNotification sbn = note(9, builder, postTime);
+        takeover.setSnapshot(List.of(sbn));
+        takeover.scanAll(List.of(sbn));
+        boolean shown = sources[0].peeks.showing() != null;
+        if (shown) sources[0].peeks.dismiss(sources[0].peeks.showing());
+        return shown;
+    }
+
+    @Test public void aNumberChangedInAnAlertOnceNotificationIsNotAnotherCard() {
+        ReflectionHelpers.setStaticField(ModuleSettings.class, "allNotifications", true);
+        IslandSources[] sources = new IslandSources[1];
+        HeadsUpTakeover takeover = takeover(sources);
+        long now = System.currentTimeMillis();
+        assertTrue("the first posting gets its card",
+                scannedCardFor(chat("Battery power 11%").setOnlyAlertOnce(true), now, takeover, sources));
+        assertFalse("the level dropping is not announced again",
+                scannedCardFor(chat("Battery power 10%").setOnlyAlertOnce(true), now + 2000, takeover, sources));
+    }
+
+    @Test public void anUpdateThatDoesNotAskToAlertOnlyOnceStillGetsItsCard() {
+        ReflectionHelpers.setStaticField(ModuleSettings.class, "allNotifications", true);
+        IslandSources[] sources = new IslandSources[1];
+        HeadsUpTakeover takeover = takeover(sources);
+        long now = System.currentTimeMillis();
+        assertTrue(scannedCardFor(chat("Parcel on its way"), now, takeover, sources));
+        assertTrue("an ordinary update is news", scannedCardFor(chat("Parcel delivered"), now + 2000, takeover, sources));
+    }
+
+    @Test public void aSilentNotificationGetsNoCardAndOneThatMakesASoundDoes() {
+        ReflectionHelpers.setStaticField(ModuleSettings.class, "allNotifications", true);
+        long now = System.currentTimeMillis();
+        for (int[] c : new int[][] {{android.app.NotificationManager.IMPORTANCE_LOW, 0}, {android.app.NotificationManager.IMPORTANCE_DEFAULT, 1}}) {
+            IslandSources[] sources = new IslandSources[1];
+            HeadsUpTakeover takeover = takeover(sources);
+            StatusBarNotification sbn = note(40 + c[0], chat("Hello " + c[0]), now);
+            takeover.setImportance(java.util.Map.of(sbn.getKey(), c[0]));
+            takeover.setSnapshot(List.of(sbn));
+            takeover.scanAll(List.of(sbn));
+            assertEquals("importance " + c[0], c[1] == 1, sources[0].peeks.showing() != null);
+        }
+    }
+
+    @Test public void theIslandClaimsWhatItWillTakeFromTheStockBannerAndNothingElse() {
+        ReflectionHelpers.setStaticField(ModuleSettings.class, "allNotifications", true);
+        IslandSources[] sources = new IslandSources[1];
+        HeadsUpTakeover takeover = takeover(sources);
+        long now = System.currentTimeMillis();
+        StatusBarNotification message = note(61, chat("Hello"), now);
+        assertTrue("an ordinary message is the island's", takeover.claims(message));
+        StatusBarNotification ongoing = note(62, chat("Syncing").setOngoing(true), now);
+        assertFalse("an ongoing one stays with the system", takeover.claims(ongoing));
+        assertEquals("claiming shows nothing", null, sources[0].peeks.showing());
+    }
+
+    @Test public void aNotificationDoNotDisturbBlocksGetsNoCard() {
+        ReflectionHelpers.setStaticField(ModuleSettings.class, "allNotifications", true);
+        long now = System.currentTimeMillis();
+        for (boolean blocked : new boolean[] {true, false}) {
+            IslandSources[] sources = new IslandSources[1];
+            HeadsUpTakeover takeover = takeover(sources);
+            StatusBarNotification sbn = note(blocked ? 71 : 72, chat("Hello " + blocked), now);
+            takeover.setBlocked(blocked ? java.util.Set.of(sbn.getKey()) : java.util.Set.of());
+            takeover.setSnapshot(List.of(sbn));
+            takeover.scanAll(List.of(sbn));
+            assertEquals("blocked " + blocked, !blocked, sources[0].peeks.showing() != null);
+        }
+    }
+
+    @Test public void theIslandClaimsABannerOnlyForANotificationTheSystemWouldPopUp() {
+        long now = System.currentTimeMillis();
+        IslandSources[] sources = new IslandSources[1];
+        HeadsUpTakeover takeover = takeover(sources);
+        StatusBarNotification message = note(81, chat("Hello"), now);
+        assertTrue("rated high: the system makes a banner and the island takes it",
+                takeover.claims(message, android.app.NotificationManager.IMPORTANCE_HIGH));
+        assertFalse("rated default: the system makes no banner, so there is nothing to take over",
+                takeover.claims(message, android.app.NotificationManager.IMPORTANCE_DEFAULT));
+        assertTrue("not known: as before", takeover.claims(message, null));
+        ReflectionHelpers.setStaticField(ModuleSettings.class, "allNotifications", true);
+        assertTrue("All notifications shows the quieter ones as well",
+                takeover.claims(message, android.app.NotificationManager.IMPORTANCE_DEFAULT));
     }
 }

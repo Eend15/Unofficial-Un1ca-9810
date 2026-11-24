@@ -29,11 +29,21 @@ public final class Rx {
     static final int MAX_INPUT = 3000;
 
     private final Pattern pattern;
+    private final Rx[] alternatives;
     private volatile int timeouts;
 
     private Rx(Pattern pattern) {
         this.pattern = pattern;
+        this.alternatives = null;
     }
+
+    private Rx(Rx a, Rx b) {
+        pattern = null;
+        alternatives = new Rx[]{a, b};
+    }
+
+    /** Match independent expressions without renumbering captures or changing backreferences. */
+    public static Rx either(Rx a, Rx b) { return new Rx(a, b); }
 
     /** Compiles {@code source}; null when it is empty, too long or not a valid expression. */
     public static Rx compile(String source, boolean ignoreCase) {
@@ -84,6 +94,7 @@ public final class Rx {
                 if (!groups.isEmpty()) {
                     // what a group holds counts for the group around it as well
                     groups.peek()[0] |= group[0] || repeatedWithoutLimit;
+                    groups.peek()[1] |= group[1];
                 }
             } else if (!groups.isEmpty() && unboundedQuantifierAt(p, i) && i > 0) {
                 groups.peek()[0] = true;
@@ -109,11 +120,17 @@ public final class Rx {
     }
 
     public String source() {
-        return pattern.pattern();
+        return alternatives == null ? pattern.pattern() : "(?:" + alternatives[0].source() + ")|(?:" + alternatives[1].source() + ")";
     }
 
     /** The first match in {@code text}, or null when there is none or the pattern ran out of time. */
     public Matcher find(CharSequence text) {
+        if (alternatives != null) {
+            Matcher a = alternatives[0].find(text);
+            if (a != null && a.start() == 0) return a;
+            Matcher b = alternatives[1].find(text);
+            return a == null ? b : b == null || a.start() <= b.start() ? a : b;
+        }
         if (timeouts >= MAX_TIMEOUTS || text == null) {
             return null;
         }
@@ -133,6 +150,12 @@ public final class Rx {
     /** Up to {@code limit} matches of the pattern in {@code text}, empty when it ran out of time. */
     public java.util.List<java.util.regex.MatchResult> findAll(CharSequence text, int limit) {
         java.util.List<java.util.regex.MatchResult> out = new java.util.ArrayList<>();
+        if (limit <= 0) return out;
+        if (alternatives != null) {
+            for (Rx alternative : alternatives) out.addAll(alternative.findAll(text, limit));
+            out.sort(java.util.Comparator.comparingInt(java.util.regex.MatchResult::start));
+            return out.size() <= limit ? out : new java.util.ArrayList<>(out.subList(0, limit));
+        }
         if (timeouts >= MAX_TIMEOUTS || text == null) {
             return out;
         }
@@ -153,12 +176,12 @@ public final class Rx {
     }
 
     public boolean matches(CharSequence text) {
-        return find(text) != null;
+        return alternatives == null ? find(text) != null : alternatives[0].matches(text) || alternatives[1].matches(text);
     }
 
     /** True when the pattern was switched off after repeated time-outs. */
     public boolean disabled() {
-        return timeouts >= MAX_TIMEOUTS;
+        return alternatives == null ? timeouts >= MAX_TIMEOUTS : alternatives[0].disabled() && alternatives[1].disabled();
     }
 
     private static CharSequence clip(CharSequence text) {

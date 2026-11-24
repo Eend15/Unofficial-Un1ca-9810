@@ -39,6 +39,32 @@ public class AospChipsTest {
     }
 
     @Test
+    public void screenRecordChipStaysWhenTheIslandShowsNoRecording() {
+        Class<?> settings = dev.android.dynamicisland.settings.ModuleSettings.class;
+        boolean started = org.robolectric.util.ReflectionHelpers.getStaticField(settings, "started");
+        org.robolectric.util.ReflectionHelpers.setStaticField(settings, "started", true);
+        org.robolectric.util.ReflectionHelpers.setStaticField(settings, "screenRecordingCard", false);
+        try {
+            AospChips.reset(empty);
+            Bundle bundle = new Bundle();
+            Active record = new Active();
+            Active share = new Active();
+            bundle.screenRecord = record;
+            bundle.shareToApp = share;
+
+            AospChips.takeOut(bundle, true, true);
+
+            assertSame("the stock recording chip is left alone", record, bundle.screenRecord);
+            assertSame(null, feed.screenRecord);
+            assertSame("sharing still goes to the island", empty, bundle.shareToApp);
+            assertSame(share, feed.shareToApp);
+        } finally {
+            org.robolectric.util.ReflectionHelpers.setStaticField(settings, "screenRecordingCard", true);
+            org.robolectric.util.ReflectionHelpers.setStaticField(settings, "started", started);
+        }
+    }
+
+    @Test
     public void callChipStaysWhenTheIslandHasNoCallCard() {
         AospChips.reset(empty);
         Bundle bundle = new Bundle();

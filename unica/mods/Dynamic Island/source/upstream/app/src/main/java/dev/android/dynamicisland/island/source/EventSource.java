@@ -211,15 +211,19 @@ public final class EventSource {
     /** The callback reports every camera once on registration: those first values are only a baseline. */
     void onTorch(String cameraId, boolean enabled) {
         Boolean before = torchState.put(cameraId, enabled);
-        if (before == null || before == enabled) {
-            return;
-        }
         boolean any = false;
         for (Boolean on : torchState.values()) {
             any |= on;
         }
+        if (before == null) {
+            toggleState.put("torch", any);
+            return;
+        }
+        if (before == enabled) return;
         if (!TorchSource.handlesTorch()) {
             onToggle("torch", any); // with a brightness card the flashlight needs no extra popup
+        } else {
+            toggleState.put("torch", any);
         }
     }
 
@@ -432,9 +436,9 @@ public final class EventSource {
         it.trailingText = percent + "%";
         // with Samsung's own charging effect switched off here the pill covers the whole width it may have,
         // so that no part of that effect shows beside it
-        it.fullWidth = !ModuleSettings.stockChargingAnimation();
+        it.fullWidth = !ModuleSettings.stockChargingAnimation() && ModuleSettings.wideChargingPopup();
         dev.android.dynamicisland.xposed.Diagnostics.fact("charging popup", "wide=" + it.fullWidth
-                + " samsungEffect=" + ModuleSettings.stockChargingAnimation() + " detailsCardOn=" + ModuleSettings.chargingInfo());
+                + " samsungEffect=" + ModuleSettings.stockChargingAnimation() + " widePopupOption=" + ModuleSettings.wideChargingPopup() + " detailsCardOn=" + ModuleSettings.chargingInfo());
         if (it.fullWidth) {
             it.compactLabel = it.title; // the wide pill has room for the word on its left, the percentage stays on its right
         }
@@ -658,7 +662,7 @@ public final class EventSource {
         it.eventLayout = IslandItem.EventLayout.DEVICE;
         it.batteryPercent = battery;
         it.accent = BLUE;
-        it.icon = GlyphIcon.of(GlyphIcon.Kind.HEADPHONES);
+        it.icon = GlyphIcon.of(BluetoothIcon.of(device));
         if (battery >= 0) {
             it.progress = battery / 100f;
             it.trailing = IslandItem.Trailing.TEXT;

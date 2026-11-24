@@ -109,17 +109,33 @@ public final class HideDuplicated {
 
     private static void takeSnapshot(Collection<?> entries) {
         List<StatusBarNotification> snapshot = new ArrayList<>();
+        Map<String, Integer> importance = new HashMap<>();
+        Set<String> blocked = new HashSet<>();
         for (Object entry : entries) {
             StatusBarNotification sbn = entryClass.isInstance(entry) ? sbn(entry) : null;
             if (sbn != null) {
                 snapshot.add(sbn);
+                Object ranking = Refl.get(entry, "mRanking");
+                if (ranking instanceof android.service.notification.NotificationListenerService.Ranking) {
+                    android.service.notification.NotificationListenerService.Ranking rated =
+                            (android.service.notification.NotificationListenerService.Ranking) ranking;
+                    importance.put(sbn.getKey(), rated.getImportance());
+                    if (blockedByDoNotDisturb(rated)) blocked.add(sbn.getKey());
+                }
             }
         }
         refresh(snapshot);
         IslandController island = IslandController.get();
         if (island != null) {
-            island.onNotificationsSnapshot(snapshot);
+            island.onNotificationsSnapshot(snapshot, importance, blocked);
         }
+    }
+
+    /** Do Not Disturb keeps this notification from sounding or popping up (it is blocked, or its pop-up is hidden). */
+    @SuppressWarnings("deprecation")
+    static boolean blockedByDoNotDisturb(android.service.notification.NotificationListenerService.Ranking ranking) {
+        return !ranking.matchesInterruptionFilter()
+                || (ranking.getSuppressedVisualEffects() & android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK) != 0;
     }
 
     // ---- matching originals to copies ----------------------------------------------------------

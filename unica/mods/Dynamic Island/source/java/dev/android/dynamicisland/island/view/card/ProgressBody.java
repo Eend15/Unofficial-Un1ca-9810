@@ -50,7 +50,7 @@ public final class ProgressBody extends CardBody {
         boolean hasBar = item.progress >= 0.0f || item.progressIndeterminate;
         float contentBottom = hasBar ? progressTop + barBoxH : progressTop - owner.dp(14.0f);
         actionsTop = owner.dp(12.0f) + contentBottom;
-        h = pad + (item.actions.isEmpty() ? contentBottom : actionsTop + layoutTextButtons(actionsTop, pad));
+        h = pad + (item.actions.isEmpty() || item.actionsHidden ? contentBottom : actionsTop + layoutTextButtons(actionsTop, pad));
     }
 
     private void drawSegmentedBar(Canvas c, float left, float right, float top, float alpha) {

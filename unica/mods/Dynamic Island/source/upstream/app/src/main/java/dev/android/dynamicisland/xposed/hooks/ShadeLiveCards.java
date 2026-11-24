@@ -202,7 +202,9 @@ public final class ShadeLiveCards {
         // AsyncInflationTask reconciles the row after the reapply scope has finished.
         if (previous == null && CardRowState.exposedIn(layout) != null) return;
         IslandController controller = IslandController.get();
-        boolean show = item != null && (controller == null || !controller.isShownAsCard(item));
+        boolean show = item != null && (controller == null || !controller.isShownAsCard(item))
+                && !(dev.android.dynamicisland.settings.ModuleSettings.systemPopupStyle()
+                    && Boolean.TRUE.equals(Refl.get(layout, "mIsHeadsUp")));
         if (show && !settingsChanged && previous != null && previous.canReuse(key)) {
             previous.refresh(item);
             return;

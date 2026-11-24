@@ -28,11 +28,16 @@ final class ChargeRate {
         Sample last = samples.peekLast();
         if (last != null && (now < last.at || counter < last.microAmpHours)) samples.clear(); // a counter that fell is not charging
         samples.addLast(new Sample(now, counter));
-        while (samples.size() > 2 && now - samples.peekFirst().at > KEEP_MS) samples.removeFirst();
+        discardOld(now);
+    }
+
+    private void discardOld(long now) {
+        while (!samples.isEmpty() && now - samples.peekFirst().at > KEEP_MS) samples.removeFirst();
     }
 
     /** The current in mA, or NaN while there is not enough to say. */
     double estimateMa(long now) {
+        discardOld(now);
         Sample first = samples.peekFirst(), last = samples.peekLast();
         if (first == null || first == last) return Double.NaN;
         long span = last.at - first.at;

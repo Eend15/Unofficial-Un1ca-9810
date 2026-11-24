@@ -28,6 +28,21 @@ def body(owner,sig,static=False,ctor=False):
 
 SPECS={'com.android.systemui.statusbar.events.SystemStatusAnimationSchedulerImpl': ['onStatusEvent'], 'com.android.systemui.statusbar.notification.row.ExpandableNotificationRow': ['isActionButtonLongClick', 'doLongClickCallback'], 'com.android.systemui.statusbar.notification.headsup.HeadsUpManagerImpl': ['addListener', 'updateNotificationInternal', 'setEntryPinned'], 'com.android.wm.shell.common.TaskStackListenerImpl': ['onActivityPinned', 'onActivityUnpinned']}
 SPECS['com.android.keyguard.KeyguardUpdateMonitor'] = ['handleStartedGoingToSleep', 'handleStartedWakingUp', 'handleFinishedGoingToSleep', 'dispatchStartedWakingUp']
+# Foreground-task, face-unlock and multitasking-handle hooks the island installs at
+# runtime: without a static call-site they failed ("No static call-site"), so the
+# island did not follow app switches.
+SPECS['com.android.wm.shell.common.TaskStackListenerImpl'] += ['onTaskStackChanged', 'onTaskMovedToFront']
+SPECS['com.android.systemui.shared.system.TaskStackChangeListeners$Impl'] = ['onTaskStackChanged', 'onTaskMovedToFront', 'onTaskFocusChanged', 'onActivityPinned', 'onActivityUnpinned']
+SPECS['com.android.keyguard.KeyguardUpdateMonitor'] += ['onFaceAuthenticated', 'onFingerprintAuthenticated']
+SPECS['com.android.wm.shell.windowdecor.viewholder.AppHandleViewHolder$createStatusBarInputLayer$2'] = ['onTouch']
+# 0.1.17 hooks: Now Brief pop-up bridge, stock pop-up style, biometric unlock.
+SPECS['com.android.systemui.edgelighting.SystemUIConditionListenerService$1'] = ['isRowPinned']
+SPECS['com.android.systemui.statusbar.notification.row.NotificationContentView'] = ['onAttachedToWindow', 'onDetachedFromWindow']
+SPECS['com.android.systemui.statusbar.notification.interruption.VisualInterruptionDecisionProviderImpl'] = ['makeAndLogHeadsUpDecision', 'makeUnloggedHeadsUpDecision']
+SPECS['com.android.systemui.edgelighting.EdgeLightingService'] = ['onCreate', 'onDestroy']
+SPECS['com.android.systemui.edgelighting.scheduler.EdgeLightingScheduler'] = ['-$$Nest$mstartNotiEffect']
+SPECS['com.android.systemui.statusbar.phone.BiometricUnlockController'] = ['onBiometricAuthenticated']
+SPECS['com.android.wm.shell.windowdecor.viewholder.MultiTaskingHandleViewHolder$createStatusBarInputLayer$2'] = ['onTouch']
 METHOD=re.compile(r'(?ms)^\.method (?P<flags>[^\n]*?) (?P<sig>[^\s]+\([^\n]+)\n(?P<body>.*?)^\.end method')
 def transform(text,owner,names):
  existing={m.group('sig') for m in METHOD.finditer(text)};changed=[]

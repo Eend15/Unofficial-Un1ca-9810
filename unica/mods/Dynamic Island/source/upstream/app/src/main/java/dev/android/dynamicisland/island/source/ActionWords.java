@@ -52,6 +52,11 @@ final class ActionWords {
         return false;
     }
 
+    static boolean isAnswer(CharSequence title) {
+        return title != null && !isDestructive(title) && mentionsAny(lower(title),
+                new String[]{"answer", "accept", "받기", "수락", "응답", "ответ", "принять", "応答", "接听", "接聽", "atender", "aceitar", "yanıtla", "kabul"});
+    }
+
     static boolean isSpeaker(CharSequence title) {
         return title != null && (mentionsAny(lower(title), SPEAKER)
                 || mentionsWholeWord(turkishLower(title), TURKISH_SPEAKER));

@@ -70,6 +70,10 @@ final class RulesScreen {
     }
 
     void save(UserRules rules) {
+        if (rules.ruleIds().size() > RuleDictionary.MAX_RULES) {
+            Toast.makeText(activity, R.string.rules_limit_reached, Toast.LENGTH_LONG).show();
+            return;
+        }
         String json = rules.toJson();
         SharedPreferences.Editor edit = prefs.edit();
         if (json == null) {
@@ -482,7 +486,7 @@ final class RulesScreen {
         ClipData clip = clipboard == null ? null : clipboard.getPrimaryClip();
         CharSequence text = clip == null || clip.getItemCount() == 0 ? null : clip.getItemAt(0).coerceToText(activity);
         RuleDictionary parsed = text == null ? null : RuleDictionary.fromJson(text.toString());
-        if (parsed == null || parsed.isEmpty()) {
+        if (parsed == null || parsed.isEmpty() || UserRules.parse(text.toString()).ruleIds().size() > RuleDictionary.MAX_RULES) {
             Toast.makeText(activity, R.string.rules_import_bad, Toast.LENGTH_LONG).show();
             return;
         }

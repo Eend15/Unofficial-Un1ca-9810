@@ -44,7 +44,7 @@
     <string name="setting_progress_any_desc">진행 바가 있는 일반 알림도 진행 카드로 보여 줍니다.</string>
     <string name="setting_heads_up">알림을 아일랜드로</string>
     <string name="setting_all_notifications">모든 알림을 아일랜드로</string>
-    <string name="setting_all_notifications_desc">배너로 뜨지 않는 조용한 알림까지, 새 알림마다 아일랜드 카드를 띄웁니다. 진행 중 알림, 전화, 알람과 지금 쓰는 앱의 알림은 제외합니다. 실험 기능이라 기기나 앱에 따라 잘 작동하지 않을 수 있습니다.</string>
+    <string name="setting_all_notifications_desc">소리가 나는 새 알림마다, 시스템이 배너로 띄우지 않는 경우에도 아일랜드 카드를 띄웁니다. 무음, 진행 중 알림, 전화, 알람과 지금 쓰는 앱의 알림은 제외합니다. 실험 기능이라 기기나 앱에 따라 잘 작동하지 않을 수 있습니다.</string>
     <string name="setting_heads_up_desc">메시지 등 상단 배너 알림을 기본 배너 대신 아일랜드 카드로 보여줍니다. 전화와 알람은 기본 배너를 유지합니다.</string>
     <string name="setting_otp">인증번호 카드</string>
     <string name="setting_otp_desc">인증번호가 담긴 문자가 오면 번호와 복사 버튼이 있는 카드를 보여줍니다.</string>
@@ -549,6 +549,8 @@
     <string name="glow_theme_colour">테마 색상 설정</string>
     <string name="show_in_fullscreen">세로 전체 화면에서도 표시</string>
     <string name="show_in_fullscreen_desc">카메라처럼 상태 표시줄을 숨기는 앱에서도 진행 중인 활동을 표시합니다. 잠금 화면·AOD에서는 숨기며, 표시할 활동이 없을 때도 숨깁니다.</string>
+    <string name="show_in_landscape">가로 모드·게임에서도 표시</string>
+    <string name="show_in_landscape_desc">휴대폰을 가로로 돌렸을 때와 게임 같은 전체 화면 앱에서도 아일랜드를 표시합니다. 잠금 화면·AOD에서는 숨깁니다. 가로 화면 배치는 세로보다 덜 다듬어져 있습니다.</string>
     <string name="setting_charging_info">충전 상세 카드</string>
     <string name="setting_charging_info_desc">충전기를 연결한 동안 배터리 전류·추정 전력·온도를 계속 표시합니다.</string>
     <string name="setting_charging_stats">충전 통계</string>
@@ -574,6 +576,8 @@
     <string name="island_charge_seconds">%1$d초</string>
     <string name="setting_stock_charging_animation">삼성 배터리 충전 효과 표시</string>
     <string name="setting_stock_charging_animation_desc">충전 시작 시 상태표시줄 배터리가 커지며 색이 흐르는 효과를 표시합니다. 기본 꺼짐입니다.</string>
+    <string name="setting_wide_charging">넓은 충전 팝업</string>
+    <string name="setting_wide_charging_desc">충전기를 꽂으면 상태 표시줄 전체에 걸친 긴 알약으로 충전 팝업을 보여 줍니다. 끄면 보통 크기로 보여 줍니다. 삼성 충전 효과가 꺼져 있을 때만 적용됩니다.</string>
     <string name="concurrent_recording_input">동시 마이크 파형 (실험적)</string>
     <string name="concurrent_recording_input_desc">녹음기를 LSPosed 스코프에 추가하지 않고 삼성 음성 녹음의 실제 음량을 표시합니다. 기본 꺼짐입니다. 기기에 따라 동작이 다르며, 녹음에 영향이 있으면 꺼주세요.</string>
     <string name="card_roundness">카드 모서리</string>
@@ -610,6 +614,8 @@
     <string name="search_terms_music">노래 음악 뮤직 오디오 앨범 커버 아트 재생 플레이어 소리</string>
     <string name="search_terms_battery">충전 충전기 배터리 밧데리 잔량 전류 전압 와트 전력 온도 퍼센트</string>
     <string name="search_terms_charging_effect">삼성 기본 원래 충전 애니메이션 효과 번개 번쩍 배터리</string>
+    <string name="search_terms_landscape">가로 가로모드 옆으로 회전 게임 게이밍 전체화면 전체 화면 영상</string>
+    <string name="search_terms_wide_charging">넓은 긴 큰 작은 크기 충전 팝업 알약 너비</string>
     <string name="search_terms_notifications">알림 팝업 배너 헤드업 메시지 통지 채팅 무음 기본 카드 소리</string>
     <string name="search_terms_download">다운로드 전송 업로드 진행률 파일 받기</string>
     <string name="search_terms_calls">전화 통화 다이얼러 보이스톡 음성</string>
@@ -733,4 +739,28 @@
     <string name="recommend16_charging_text">충전 상세 정보를 켜면 게이지 대신 글자 줄을 고를 수 있어요. 화면 켜짐·꺼짐 통계도 지원해요.</string>
     <string name="recommend16_privacy_title">사용 중인 앱의 카메라·마이크도</string>
     <string name="recommend16_privacy">지금 쓰는 앱의 카메라·마이크 사용도 표시할 수 있어요. 개인정보 사용 표시를 먼저 켜 주세요.</string>
+    <string name="recommend17_popup_title">시스템 팝업, 아일랜드 모양</string>
+    <string name="recommend17_popup">알림 카드의 네 번째 선택지예요. 시스템 팝업의 표시 시간, 스와이프, 답장은 그대로 두고 아일랜드의 모양만 입혀요.</string>
+    <string name="recommend17_call_title">통화는 내 방식대로</string>
+    <string name="recommend17_call">수신 전화 카드를 끄면 울리는 전화를 시스템 통화 화면에 맡겨요. 통화 카드는 전화를 받은 뒤에 나타나요.</string>
+    <string name="recommend17_recording_title">녹화는 아일랜드 밖에서</string>
+    <string name="recommend17_recording">화면 녹화 카드를 끄면 시스템의 녹화 표시와 알림을 그대로 써요.</string>
+    <string name="recommend17_pull_title">버튼은 필요할 때만</string>
+    <string name="recommend17_pull">알림 카드가 버튼 없이 열리게 할 수 있어요. 카드를 아래로 당기면 버튼이 나타나요.</string>
+    <string name="recommend17_wide_title">충전 팝업 크기</string>
+    <string name="recommend17_wide">넓은 충전 팝업을 끄면 충전기를 꽂을 때 보통 크기의 팝업이 나와요.</string>
+    <string name="recommend17_landscape_title">가로 모드와 게임에서도</string>
+    <string name="recommend17_landscape">휴대폰을 가로로 돌렸을 때와 전체 화면 게임에서도 아일랜드를 유지해요.</string>
+    <string name="island_reply_failed">답장을 보내지 못했습니다. 작성한 내용은 유지됩니다.</string>
+    <string name="rules_limit_reached">사용자 규칙은 최대 40개까지 추가할 수 있어요. 기존 규칙을 수정하거나 삭제해 주세요.</string>
+    <string name="ui_notification_system_style">시스템 팝업에 아일랜드 스타일 적용</string>
+    <string name="ui_notification_system_style_desc">시스템의 표시 시간, 스와이프, 답장, 전체화면 동작을 유지합니다. 사용 중인 앱의 알림도 시스템 판단에 따라 표시합니다. 삼성 간략 팝업은 상세 배너로 바뀝니다. 아일랜드의 전면 앱·전체화면 설정은 적용하지 않습니다. 전화는 전용 조작 기능을 유지합니다.</string>
+    <string name="setting_incoming_calls">수신 전화 카드</string>
+    <string name="setting_incoming_calls_desc">걸려 오는 전화를 발신자와 받기·거절 버튼이 있는 아일랜드 카드로 보여 줍니다. 끄면 모든 수신 전화를 시스템의 통화 화면에 맡기고, 통화 카드는 전화를 받은 뒤에 나타납니다.</string>
+    <string name="search_terms_incoming_calls">수신 전화 걸려오는 벨 발신자 받기 거절 통화 카드 끄기 해제</string>
+    <string name="setting_screen_recording">화면 녹화</string>
+    <string name="setting_screen_recording_desc">화면 녹화를 타이머와 중지 버튼과 함께 아일랜드에 보여 줍니다. 끄면 시스템의 표시와 알림에 맡깁니다.</string>
+    <string name="search_terms_screen_recording">화면 녹화 녹화기 캡처 타이머 중지 칩 끄기 해제</string>
+    <string name="setting_peek_pull_buttons">아래로 당겨 버튼 보기</string>
+    <string name="setting_peek_pull_buttons_desc">알림 카드를 버튼 없이 엽니다. 카드를 아래로 당기면 버튼을 보여 줍니다.</string>
 </resources>

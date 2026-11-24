@@ -45,13 +45,14 @@ public class IslandTextTest {
         assertSame(loader, text.getClassLoader());
         var get = text.getMethod("get", Locale.class, String.class, Object[].class);
         String[][] expected = {{"en", "On", "Off"}, {"ko", "켜짐", "꺼짐"}, {"ja", "オン", "オフ"},
-                {"zh", "开启", "关闭"}, {"ru", "Вкл.", "Выкл."}, {"tr", "Açık", "Kapalı"}};
+                {"zh", "开启", "关闭"}, {"ru", "Вкл.", "Выкл."}, {"tr", "Açık", "Kapalı"}, {"pt-BR", "Ligado", "Desligado"}};
         for (String[] row : expected) {
             Locale locale = Locale.forLanguageTag(row[0]);
             assertEquals(row[0], row[1], get.invoke(null, locale, "island_on", new Object[0]));
             assertEquals(row[0], row[2], get.invoke(null, locale, "island_off", new Object[0]));
         }
-        assertEquals("On", get.invoke(null, Locale.forLanguageTag("pt-BR"), "island_on", new Object[0]));
+        // a language that is not registered shows English
+        assertEquals("On", get.invoke(null, Locale.forLanguageTag("de"), "island_on", new Object[0]));
         assertEquals("54% remaining", get.invoke(null, Locale.ENGLISH, "island_battery_remaining", new Object[]{54}));
         assertEquals("unknown_key", get.invoke(null, Locale.ENGLISH, "unknown_key", new Object[0]));
         assertEquals(IslandText.languages(), text.getMethod("languages").invoke(null));

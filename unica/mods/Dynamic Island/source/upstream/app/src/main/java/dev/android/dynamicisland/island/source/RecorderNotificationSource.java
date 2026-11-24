@@ -45,6 +45,8 @@ public final class RecorderNotificationSource {
     private long lastSeen;
     private int sessionGeneration;
     private boolean present;
+    /** Package-only compatibility guesses may render a fallback, but cannot identify a chip's hidden original. */
+    private boolean notificationIdentified;
 
     public RecorderNotificationSource(Context ctx, Runnable onChange) {
         this(ctx, onChange, System::currentTimeMillis, SystemClock::elapsedRealtime);
@@ -130,6 +132,9 @@ public final class RecorderNotificationSource {
             // Unknown observations must not erase the last positively observed start generation.
             if (startToken > 0L) lifecycleStartToken = startToken;
             selectedKey = recorder.getKey();
+            String channel = n.getChannelId() == null ? "" : n.getChannelId().toLowerCase(Locale.ROOT);
+            notificationIdentified = channel.contains("screen") && channel.contains("record")
+                    || (SMART_CAPTURE.equals(recorder.getPackageName()) && channel.equals("capture"));
             present = true;
             lastSeen = elapsed;
             fresh = build(recorder, activeCardKey, clock.base(wall, elapsed));
@@ -143,6 +148,7 @@ public final class RecorderNotificationSource {
             // Hide missing content immediately; never keep a stale Stop PendingIntent alive.
             // A short gap is bridged only with a matching system start or observed lifecycle token.
             present = false;
+            notificationIdentified = false;
         }
         IslandItem old = item;
         item = fresh;
@@ -169,16 +175,22 @@ public final class RecorderNotificationSource {
 
     /** Adds the card unless a recording card is already there. */
     public synchronized void collect(List<IslandItem> out) {
+        if (!ModuleSettings.screenRecordingCard()) {
+            publish(Collections.emptySet()); // no card: the recorder's own notification stays in the panel
+            return;
+        }
         IslandItem card = item;
         boolean covered = false;
+        boolean represented = false;
         for (IslandItem it : out) {
             if (it.kind == IslandItem.Kind.RECORDING && !it.key.startsWith("rec:")) {
                 covered = true;
-                break;
+                represented |= card != null && notificationIdentified && java.util.Objects.equals(it.packageName, card.packageName);
             }
         }
         if (card == null || covered) {
-            publish(Collections.emptySet());
+            // A chip can replace the fallback card, but only this exact notification is represented by it.
+            publish(card != null && represented ? Collections.singleton(card.sourceKey) : Collections.emptySet());
             return;
         }
         card.chronoBase = clock.base(wallTime.getAsLong(), elapsedTime.getAsLong());
@@ -234,7 +246,7 @@ public final class RecorderNotificationSource {
                 }
             }
         }
-        if (it.actions.isEmpty() && n.contentIntent != null) {
+        if (it.actions.isEmpty() && n.contentIntent != null && tapToStop(n)) {
             // the recorder stops when its notification is tapped ("tap to stop"): the card gets that as a stop button
             it.actions.add(new IslandItem.Action(IslandText.get(ctx, "island_stop"),
                     null, n.contentIntent, null, true));
@@ -243,4 +255,15 @@ public final class RecorderNotificationSource {
         }
         return it;
     }
+    private static boolean tapToStop(Notification notification) {
+        String text = dev.android.dynamicisland.island.detect.NotificationText.callStatus(notification).toString()
+                .toLowerCase(java.util.Locale.ROOT);
+        return java.util.regex.Pattern.compile("(?:tap|touch|click).{0,30}(?:stop|end)|"
+                + "(?:누르|눌러|터치).{0,30}(?:중지|종료)|(?:중지|종료).{0,30}(?:누르|눌러|터치)|"
+                + "(?:タップ|タッチ).{0,30}(?:停止|終了)|(?:停止|終了).{0,30}(?:タップ|タッチ)|"
+                + "(?:点[击擊]|轻触).{0,30}(?:停止|结束)|нажмите.{0,30}(?:останов|заверш)|"
+                + "(?:parar|encerrar).{0,30}toque|toque.{0,30}(?:parar|encerrar)|durdur.{0,30}dokun")
+                .matcher(text).find();
+    }
+
 }

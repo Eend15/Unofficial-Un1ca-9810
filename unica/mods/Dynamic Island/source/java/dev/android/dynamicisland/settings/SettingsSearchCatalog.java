@@ -96,14 +96,17 @@ final class SettingsSearchCatalog {
         add(Route.APPEARANCE,R.string.ui_event_icon_size,0,R.string.search_terms_shape,0,R.string.ui_size_large,R.string.ui_size_small);
         add(Route.APPEARANCE,R.string.ui_show_battery_icon,R.string.ui_show_battery_icon_summary,R.string.search_terms_battery,0);
         add(Route.BEHAVIOR,R.string.setting_shade_media,R.string.setting_shade_media_desc,R.string.search_terms_music,0);
-        add(Route.NOTIFICATIONS,R.string.ui_notification_mode,R.string.ui_notification_scope,R.string.search_terms_notifications,0,R.string.ui_notification_off,R.string.ui_notification_banners,R.string.ui_notification_all);
+        add(Route.NOTIFICATIONS,R.string.ui_notification_mode,R.string.ui_notification_scope,R.string.search_terms_notifications,0,R.string.ui_notification_off,R.string.ui_notification_banners,R.string.ui_notification_all,R.string.ui_notification_system_style,R.string.ui_notification_system_style_desc);
         add(Route.NOTIFICATIONS,R.string.foreground_notifications,R.string.foreground_notifications_desc,R.string.search_terms_notifications,0);
         add(Route.NOTIFICATIONS,R.string.setting_progress,R.string.setting_progress_desc,R.string.search_terms_download,0);
         add(Route.NOTIFICATIONS,R.string.setting_progress_foreground,R.string.setting_progress_foreground_desc,R.string.search_terms_download,R.string.setting_progress);
         add(Route.NOTIFICATIONS,R.string.setting_progress_any,R.string.setting_progress_any_desc,R.string.search_terms_download,R.string.setting_progress);
         add(Route.NOTIFICATIONS,R.string.setting_peek_progress,R.string.setting_peek_progress_desc,R.string.search_terms_download,R.string.ui_notification_mode);
+        add(Route.NOTIFICATIONS,R.string.setting_peek_pull_buttons,R.string.setting_peek_pull_buttons_desc,R.string.search_terms_notifications,R.string.ui_notification_mode);
         add(Route.NOTIFICATIONS,R.string.setting_hide_progress,R.string.setting_hide_progress_desc,R.string.search_terms_download,0);
+        add(Route.NOTIFICATIONS,R.string.setting_incoming_calls,R.string.setting_incoming_calls_desc,R.string.search_terms_incoming_calls,0);
         add(Route.NOTIFICATIONS,R.string.setting_calls,R.string.setting_calls_desc,R.string.search_terms_calls,0);
+        add(Route.NOTIFICATIONS,R.string.setting_screen_recording,R.string.setting_screen_recording_desc,R.string.search_terms_screen_recording,0);
         add(Route.NOTIFICATIONS,R.string.setting_otp,R.string.setting_otp_desc,R.string.search_terms_otp,0);
         add(Route.NOTIFICATIONS,R.string.setting_otp_copy,R.string.setting_otp_copy_desc,R.string.search_terms_otp,0);
         add(Route.EVENTS,R.string.setting_event_charging,R.string.setting_event_charging_desc,R.string.search_terms_battery,0);
@@ -111,6 +114,7 @@ final class SettingsSearchCatalog {
         add(Route.EVENTS,R.string.setting_charging_stats,R.string.setting_charging_stats_desc,R.string.search_terms_battery,R.string.setting_charging_info);
         add(Route.EVENTS,R.string.setting_charging_text,R.string.setting_charging_text_desc,R.string.search_terms_battery,R.string.setting_charging_info);
         add(Route.EVENTS,R.string.setting_stock_charging_animation,R.string.setting_stock_charging_animation_desc,R.string.search_terms_charging_effect,0);
+        add(Route.EVENTS,R.string.setting_wide_charging,R.string.setting_wide_charging_desc,R.string.search_terms_wide_charging,0);
         add(Route.EVENTS,R.string.popup_time,R.string.desc_popup_time,R.string.search_terms_popup,0,R.string.popup_time_3,R.string.popup_time_6);
         add(Route.EVENTS,R.string.setting_event_ringer,R.string.setting_event_ringer_desc,R.string.search_terms_sound,0);
         add(Route.EVENTS,R.string.setting_event_bluetooth,R.string.setting_event_bluetooth_desc,R.string.search_terms_bluetooth,0);
@@ -133,6 +137,7 @@ final class SettingsSearchCatalog {
         add(Route.BEHAVIOR,R.string.swipe_up_hides,R.string.swipe_up_hides_desc,0,0);
         add(Route.BEHAVIOR,R.string.swipe_down_opens,R.string.swipe_down_opens_desc,0,0);
         add(Route.BEHAVIOR,R.string.show_in_fullscreen,R.string.show_in_fullscreen_desc,0,0);
+        add(Route.BEHAVIOR,R.string.show_in_landscape,R.string.show_in_landscape_desc,R.string.search_terms_landscape,0);
         add(Route.PERFORMANCE,R.string.low_performance_mode,R.string.low_performance_desc,R.string.search_terms_performance,0);
         add(Route.PERFORMANCE,R.string.perf_still_music,R.string.perf_still_music_desc,R.string.search_terms_performance,R.string.low_performance_mode);
         add(Route.PERFORMANCE,R.string.perf_static_waveform,R.string.perf_static_waveform_desc,R.string.search_terms_performance,R.string.low_performance_mode);

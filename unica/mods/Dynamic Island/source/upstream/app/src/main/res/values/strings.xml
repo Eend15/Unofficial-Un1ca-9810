@@ -50,7 +50,7 @@
     <string name="setting_progress_any_desc">Also for ordinary notifications that have a progress bar.</string>
     <string name="setting_heads_up">Notifications in the island</string>
     <string name="setting_all_notifications">All notifications in the island</string>
-    <string name="setting_all_notifications_desc">Every new notification gets an island card, also the quiet ones that would not pop up as a banner. Ongoing, call and alarm notifications and the app you are in are left out. Experimental: it may not work on every phone or for every app.</string>
+    <string name="setting_all_notifications_desc">Every new notification that makes a sound gets an island card, also when the system would not show it as a banner. Silent, ongoing, call and alarm notifications and the app you are in are left out. Experimental: it may not work on every phone or for every app.</string>
     <string name="setting_heads_up_desc">Messages and other banner notifications appear as an island card instead of the heads-up banner. Calls and alarms keep the stock banner.</string>
     <string name="setting_otp">Verification code cards</string>
     <string name="setting_otp_desc">A text with a verification code opens a card with the code and a Copy button.</string>
@@ -558,6 +558,8 @@
     <string name="glow_theme_colour">Theme colour settings</string>
     <string name="show_in_fullscreen">Show in portrait full screen</string>
     <string name="show_in_fullscreen_desc">Keep active cards visible when apps such as Camera hide the status bar. The island still hides on the lock screen, Always On Display, or when there is no active content.</string>
+    <string name="show_in_landscape">Show in landscape and in games</string>
+    <string name="show_in_landscape_desc">Keep the island visible when the phone is turned sideways and in full-screen apps such as games. It still hides on the lock screen and Always On Display. Landscape layouts are less polished than portrait.</string>
     <string name="setting_charging_info">Live charging card</string>
     <string name="setting_charging_info_desc">Battery current, estimated power and temperature while plugged in.</string>
     <string name="setting_charging_stats">Charging statistics</string>
@@ -583,6 +585,8 @@
     <string name="island_charge_seconds">%1$d s</string>
     <string name="setting_stock_charging_animation">Show Samsung battery charging effect</string>
     <string name="setting_stock_charging_animation_desc">Show the coloured animation that expands the status bar battery when charging starts. Off by default.</string>
+    <string name="setting_wide_charging">Wide charging popup</string>
+    <string name="setting_wide_charging_desc">When plugged in, show the charging popup as a long pill across the status bar. Turn off for an ordinary-size popup. Only applies while Samsung\'s charging effect is off.</string>
     <string name="concurrent_recording_input">Concurrent microphone waveform (experimental)</string>
     <string name="concurrent_recording_input_desc">Show real input levels for Samsung Voice Recorder without adding the recorder to LSPosed scope. Off by default. Turn off if recording is affected; support depends on your device.</string>
     <string name="card_roundness">Card corners</string>
@@ -619,6 +623,8 @@
     <string name="search_terms_music">song songs music audio album artwork player media sound playback</string>
     <string name="search_terms_battery">charge charging charger battery current voltage watt power temperature percent</string>
     <string name="search_terms_charging_effect">Samsung stock original charging animation battery lightning flash bolt</string>
+    <string name="search_terms_landscape">landscape sideways horizontal rotate rotated game gaming full screen fullscreen video</string>
+    <string name="search_terms_wide_charging">wide long big large small size charging popup pill width</string>
     <string name="search_terms_notifications">notification notifications banner banners headsup alerts popup pop-up messages message chat silent stock card cards sound</string>
     <string name="search_terms_download">download transfer progress upload file</string>
     <string name="search_terms_calls">call calls phone dialer VoIP voice</string>
@@ -742,4 +748,28 @@
     <string name="recommend16_charging_text">With charging details on, switch from the battery gauge to text and optional screen-on and screen-off statistics.</string>
     <string name="recommend16_privacy_title">See camera and mic use</string>
     <string name="recommend16_privacy">Optionally show camera and microphone activity even for the app you are using. Turn on privacy indicators first.</string>
+    <string name="recommend17_popup_title">System pop-ups, island look</string>
+    <string name="recommend17_popup">A fourth choice for notification cards. The system\'s own pop-up keeps its timing, swipes and replies, and gets the island\'s look.</string>
+    <string name="recommend17_call_title">Calls your way</string>
+    <string name="recommend17_call">Turn incoming call cards off to leave a ringing call to the system\'s call screen. The call card appears once you answer.</string>
+    <string name="recommend17_recording_title">Recording off the island</string>
+    <string name="recommend17_recording">Switch off the screen recording card to keep the system\'s own indicator and notification.</string>
+    <string name="recommend17_pull_title">Buttons on demand</string>
+    <string name="recommend17_pull">Notification cards can open without their buttons. Pull a card down to show them.</string>
+    <string name="recommend17_wide_title">Charging popup size</string>
+    <string name="recommend17_wide">Turn off the wide charging popup to get an ordinary-size popup when you plug in.</string>
+    <string name="recommend17_landscape_title">Landscape and games</string>
+    <string name="recommend17_landscape">Keep the island visible when the phone is sideways and in full-screen games.</string>
+    <string name="island_reply_failed">Reply could not be sent. Your text is kept.</string>
+    <string name="rules_limit_reached">You can add up to 40 custom rules. Edit or remove an existing rule first.</string>
+    <string name="ui_notification_system_style">System pop-ups with island styling</string>
+    <string name="ui_notification_system_style_desc">Keep system pop-up timing, swipes, replies and full-screen behavior. Pop-ups can appear from the app you are using. Samsung brief pop-ups use the detailed banner instead. Island foreground and full-screen settings do not apply. Calls keep their dedicated controls.</string>
+    <string name="setting_incoming_calls">Incoming call cards</string>
+    <string name="setting_incoming_calls_desc">Show a ringing call as an island card with the caller and answer and decline buttons. Turn off to leave every incoming call to the system\'s own call screen; the call card appears once the call is answered.</string>
+    <string name="search_terms_incoming_calls">incoming call ringing ring caller answer decline phone card off disable</string>
+    <string name="setting_screen_recording">Screen recording</string>
+    <string name="setting_screen_recording_desc">Show screen recording on the island with the timer and a stop button. Turn off to leave it to the system\'s own indicator and notification.</string>
+    <string name="search_terms_screen_recording">screen recording record recorder capture timer stop chip off disable</string>
+    <string name="setting_peek_pull_buttons">Pull down for buttons</string>
+    <string name="setting_peek_pull_buttons_desc">Notification cards open without their buttons. Pull a card down to show them.</string>
 </resources>

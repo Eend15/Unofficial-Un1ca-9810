@@ -104,7 +104,7 @@ final class SettingChangeFeedback implements SharedPreferences.OnSharedPreferenc
 
     /** These settings wait for an event, rather than requiring a SystemUI restart. */
     static int messageFor(String key,Object value) {
-        if(ModuleSettings.KEY_STOCK_CHARGING_ANIMATION.equals(key))return R.string.setting_apply_next_charge;
+        if(ModuleSettings.KEY_STOCK_CHARGING_ANIMATION.equals(key)||ModuleSettings.KEY_WIDE_CHARGING_POPUP.equals(key))return R.string.setting_apply_next_charge;
         if(ModuleSettings.KEY_AUTO_COLLAPSE_S.equals(key)||ModuleSettings.KEY_PAUSED_TIMEOUT_S.equals(key)
                 ||ModuleSettings.KEY_AUTO_OPEN_S.equals(key))return R.string.setting_apply_next_card;
         if(Boolean.TRUE.equals(value)) {

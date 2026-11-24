@@ -56,7 +56,7 @@ public class RuleSourceTest {
     public void deliveryStageBecomesAProgressCard() throws Exception {
         IslandItem it = source().build(sbn("com.coupang.mobile.eats", 1, "쿠팡이츠", "라이더님이 곧 도착해요!"), ko, Locale.KOREAN);
         assertNotNull(it);
-        assertEquals("rule:com.coupang.mobile.eats:food", it.key);
+        assertEquals("rule:"+it.sourceKey+":food", it.key);
         assertEquals(3, it.stage);
         assertEquals(0.75f, it.progress, 0.001f);
         assertEquals("곧 도착", it.trailingText.toString()); // the status of stage 3 is the pill text
@@ -82,18 +82,18 @@ public class RuleSourceTest {
     }
 
     @Test
-    public void updateKeepsTheHighestStageOfADelivery() throws Exception {
+    public void updateKeepsEachNotificationsDeliveryStage() throws Exception {
         RuleSource s = source();
         List<StatusBarNotification> list = new ArrayList<>();
         list.add(sbn("com.coupang.mobile.eats", 11, "쿠팡이츠", "라이더님이 배달을 시작했어요"));
         list.add(sbn("com.coupang.mobile.eats", 12, "쿠팡이츠", "라이더님이 곧 도착해요!"));
         s.update(list);
         List<IslandItem> shown = s.snapshot();
-        assertEquals(1, shown.size());
-        assertEquals(3, shown.get(0).stage);
+        assertEquals(2, shown.size());
+        assertEquals(3, shown.stream().filter(item->list.get(1).getKey().equals(item.sourceKey)).findFirst().orElseThrow().stage);
         List<IslandItem> out = new ArrayList<>();
         s.collect(out, "com.example.other");
-        assertEquals(1, out.size());
+        assertEquals(2, out.size());
         out.clear();
         s.collect(out, "com.coupang.mobile.eats"); // the app is on screen
         assertTrue(out.isEmpty());
@@ -136,6 +136,31 @@ public class RuleSourceTest {
         assertNull(card("com.google.android.gm", "쿠팡", "배송 완료 로켓배송 1박스 문 앞(으)로 배송완료했습니다."));
         assertNull(card("fork.risin42.nagramx", "채널", "라이더님이 곧 도착해요! 배달을 받을 수 있게 준비해주세요"));
         assertNull(card("com.discord", "x", "길안내를 종료합니다. 롯데마트 부산점 주변 도착"));
+    }
+
+    @Test public void separateOrderNotificationsDoNotCompeteByStage() throws Exception {
+        RuleSource s=source();long now=System.currentTimeMillis();
+        StatusBarNotification old=sbnAt("com.coupang.mobile.eats",201,new Notification.Builder(app,"orders")
+                .setSmallIcon(android.R.drawable.stat_notify_chat).setContentTitle("Old order").setContentText("라이더님이 곧 도착해요!"),now-10000);
+        StatusBarNotification fresh=sbnAt("com.coupang.mobile.eats",202,new Notification.Builder(app,"orders")
+                .setSmallIcon(android.R.drawable.stat_notify_chat).setContentTitle("New order").setContentText("조리 중"),now);
+        assertEquals(3,s.build(old,ko,Locale.KOREAN).stage);assertEquals(1,s.build(fresh,ko,Locale.KOREAN).stage);
+        s.update(List.of(old,fresh));assertEquals("separate notification keys identify separate orders",2,s.snapshot().size());
+        assertEquals(1,s.snapshot().stream().filter(item->fresh.getKey().equals(item.sourceKey)).findFirst().orElseThrow().stage);
+        StatusBarNotification update=sbnAt("com.coupang.mobile.eats",202,new Notification.Builder(app,"orders")
+                .setSmallIcon(android.R.drawable.stat_notify_chat).setContentTitle("New order").setContentText("라이더님이 배달을 시작했어요"),now+1000);
+        s.update(List.of(old,update));assertEquals("a stage update keeps the same order card",2,s.snapshot().size());
+        assertEquals(2,s.snapshot().stream().filter(item->update.getKey().equals(item.sourceKey)).findFirst().orElseThrow().stage);
+        List<StatusBarNotification> many=new ArrayList<>(List.of(old,update));
+        for(int id=203;id<=207;id++) many.add(sbnAt("com.coupang.mobile.eats",id,new Notification.Builder(app,"orders")
+                .setSmallIcon(android.R.drawable.stat_notify_chat).setContentTitle("Order "+id).setContentText("조리 중"),now+id*1000));
+        s.update(many);assertEquals("retain the existing source card limit",3,s.snapshot().size());
+        assertTrue("the newest order is retained when the limit is reached",s.snapshot().stream().anyMatch(item->item.sourceKey.equals(many.get(many.size()-1).getKey())));
+        many.add(sbnAt("com.nhn.android.nmap",301,new Notification.Builder(app,"navigation")
+                .setSmallIcon(android.R.drawable.stat_notify_chat).setContentTitle("길안내").setContentText("이번 정류장에서 하차 300m"),now-20000));
+        s.update(many);
+        assertTrue("existing navigation priority is preserved when selecting the limited cards",
+                s.snapshot().stream().anyMatch(item->item.kind==IslandItem.Kind.NAVIGATION));
     }
 
 }

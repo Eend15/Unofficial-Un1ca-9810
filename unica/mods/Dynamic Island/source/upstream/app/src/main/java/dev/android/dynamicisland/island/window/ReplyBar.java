@@ -77,8 +77,14 @@ final class ReplyBar extends LinearLayout {
     private void send() {
         CharSequence text = field.getText();
         if (text != null && text.toString().trim().length() > 0) {
+            field.setError(null);
             listener.onSend(text.toString().trim());
         }
+    }
+
+    void showError(CharSequence message) {
+        field.setError(message);
+        field.requestFocus();
     }
 
     /** Puts the cursor in the field and brings up the keyboard. */

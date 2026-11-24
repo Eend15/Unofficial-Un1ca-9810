@@ -44,7 +44,7 @@
     <string name="setting_progress_any_desc">進捗バーのある通常の通知もカードで表示します。</string>
     <string name="setting_heads_up">アイランド内の通知</string>
     <string name="setting_all_notifications">すべての通知をアイランドに表示</string>
-    <string name="setting_all_notifications_desc">ポップアップしないサイレント通知も含め、新しい通知をカードで表示します。継続通知・通話・アラームと使用中アプリの通知は除きます。実験機能のため、端末やアプリによっては動作しない場合があります。</string>
+    <string name="setting_all_notifications_desc">音の鳴る新しい通知を、システムがバナーで表示しない場合でもカードで表示します。サイレント通知・継続通知・通話・アラームと使用中アプリの通知は除きます。実験機能のため、端末やアプリによっては動作しない場合があります。</string>
     <string name="setting_heads_up_desc">メッセージなどのバナー通知を、標準ポップアップの代わりにアイランドで表示します。通話とアラームは標準表示を保ちます。</string>
     <string name="setting_otp">認証コードカード</string>
     <string name="setting_otp_desc">認証コードを含む通知が届くと、コードとコピーボタンのあるカードを開きます。</string>
@@ -549,6 +549,8 @@
     <string name="glow_theme_colour">テーマ色の設定</string>
     <string name="show_in_fullscreen">縦向きの全画面でも表示</string>
     <string name="show_in_fullscreen_desc">カメラなどステータスバーを隠すアプリでも進行中のアクティビティを表示します。ロック画面、常時表示ディスプレイ、表示する内容がないときは非表示になります。</string>
+    <string name="show_in_landscape">横向き・ゲーム中も表示</string>
+    <string name="show_in_landscape_desc">端末を横向きにしたときや、ゲームなどの全画面アプリでもアイランドを表示し続けます。ロック画面と Always On Display では非表示のままです。横向きのレイアウトは縦向きほど作り込まれていません。</string>
     <string name="setting_charging_info">充電詳細カード</string>
     <string name="setting_charging_info_desc">充電中のバッテリー電流・推定電力・温度を表示します。</string>
     <string name="setting_charging_stats">充電統計</string>
@@ -574,6 +576,8 @@
     <string name="island_charge_seconds">%1$d秒</string>
     <string name="setting_stock_charging_animation">Samsungのバッテリー充電エフェクトを表示</string>
     <string name="setting_stock_charging_animation_desc">充電開始時にステータスバーのバッテリーが拡大し、色が流れる効果を表示します。初期値はオフです。</string>
+    <string name="setting_wide_charging">ワイド充電ポップアップ</string>
+    <string name="setting_wide_charging_desc">充電を始めるとステータスバー全体に広がる細長いカプセルで充電ポップアップを表示します。オフにすると通常サイズで表示します。Samsung の充電エフェクトがオフのときのみ有効です。</string>
     <string name="concurrent_recording_input">同時マイク波形（実験的）</string>
     <string name="concurrent_recording_input_desc">録音アプリをLSPosedの対象に追加せず、Samsungボイスレコーダーの実際の音量を表示します。初期値はオフです。対応は端末によって異なります。録音に影響がある場合はオフにしてください。</string>
     <string name="card_roundness">カードの角</string>
@@ -610,6 +614,8 @@
     <string name="search_terms_music">曲 音楽 オーディオ アルバム ジャケット 再生 プレーヤー</string>
     <string name="search_terms_battery">充電 充電器 バッテリー 電池 残量 電流 電圧 電力 温度</string>
     <string name="search_terms_charging_effect">Samsung サムスン 標準 充電 アニメーション 電池 稲妻 点滅</string>
+    <string name="search_terms_landscape">横向き 横 回転 ゲーム 全画面 フルスクリーン 動画</string>
+    <string name="search_terms_wide_charging">ワイド 長い 大きい 小さい サイズ 充電 ポップアップ カプセル 幅</string>
     <string name="search_terms_notifications">通知 バナー ポップアップ ヘッドアップ メッセージ サイレント カード 標準 音 チャット</string>
     <string name="search_terms_download">ダウンロード 転送 進捗 アップロード ファイル</string>
     <string name="search_terms_calls">電話 通話 ダイヤル 音声 VoIP</string>
@@ -733,4 +739,28 @@
     <string name="recommend16_charging_text">充電の詳細をオンにすると、ゲージの代わりにテキストを選べます。画面オン・オフ時の統計も表示できます。</string>
     <string name="recommend16_privacy_title">使用中のアプリのカメラとマイクも</string>
     <string name="recommend16_privacy">使用中のアプリのカメラとマイクの動作も表示できます。先にプライバシー使用表示をオンにしてください。</string>
+    <string name="recommend17_popup_title">システムポップアップをアイランド風に</string>
+    <string name="recommend17_popup">通知カードの4つ目の選択肢です。システムのポップアップは表示時間、スワイプ、返信をそのままに、アイランドの見た目になります。</string>
+    <string name="recommend17_call_title">通話は好きなように</string>
+    <string name="recommend17_call">着信カードをオフにすると、着信中の通話をシステムの通話画面に任せます。通話カードは応答後に表示されます。</string>
+    <string name="recommend17_recording_title">録画はアイランドの外で</string>
+    <string name="recommend17_recording">画面録画カードをオフにすると、システム標準のインジケーターと通知をそのまま使います。</string>
+    <string name="recommend17_pull_title">ボタンは必要なときだけ</string>
+    <string name="recommend17_pull">通知カードをボタンなしで開けます。カードを下に引くとボタンが表示されます。</string>
+    <string name="recommend17_wide_title">充電ポップアップの大きさ</string>
+    <string name="recommend17_wide">ワイド充電ポップアップをオフにすると、充電開始時に通常サイズのポップアップが表示されます。</string>
+    <string name="recommend17_landscape_title">横向きとゲームでも</string>
+    <string name="recommend17_landscape">端末を横向きにしたときや全画面のゲーム中も、アイランドを表示し続けます。</string>
+    <string name="island_reply_failed">返信を送信できませんでした。入力した内容は保持されています。</string>
+    <string name="rules_limit_reached">カスタムルールは40件まで追加できます。既存のルールを編集または削除してください。</string>
+    <string name="ui_notification_system_style">システムポップアップにアイランドのスタイルを適用</string>
+    <string name="ui_notification_system_style_desc">システムの表示時間、スワイプ、返信、全画面での動作を維持します。使用中のアプリの通知もシステムの判断で表示します。Samsungの簡易ポップアップは詳細バナーになります。アイランドの前面アプリ・全画面設定は適用されません。通話専用の操作は維持します。</string>
+    <string name="setting_incoming_calls">着信カード</string>
+    <string name="setting_incoming_calls_desc">着信を、発信者と応答・拒否ボタン付きのアイランドのカードで表示します。オフにすると、すべての着信をシステムの通話画面に任せ、通話カードは応答した後に表示されます。</string>
+    <string name="search_terms_incoming_calls">着信 電話 呼び出し 発信者 応答 拒否 通話 カード オフ 無効</string>
+    <string name="setting_screen_recording">画面録画</string>
+    <string name="setting_screen_recording_desc">画面録画をタイマーと停止ボタン付きでアイランドに表示します。オフにすると、システムの表示と通知に任せます。</string>
+    <string name="search_terms_screen_recording">画面録画 録画 レコーダー キャプチャ タイマー 停止 チップ オフ 無効</string>
+    <string name="setting_peek_pull_buttons">下に引いてボタンを表示</string>
+    <string name="setting_peek_pull_buttons_desc">通知カードをボタンなしで開きます。カードを下に引くとボタンを表示します。</string>
 </resources>

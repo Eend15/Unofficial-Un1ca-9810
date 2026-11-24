@@ -28,7 +28,8 @@ public final class RuleDictionary {
     static final int MAX_JSON_CHARS = 400_000;
     /** The same limit in bytes (a character takes up to 3 bytes in UTF-8 for the scripts used here). */
     public static final int MAX_JSON_BYTES = 1_200_000;
-    static final int MAX_RULES = 40;
+    public static final int MAX_RULES = 40;
+    public static final int MAX_STAGE = 9;
     static final int MAX_SIGNALS_PER_RULE = 60;
     static final int MAX_WORDS = 4000;
     static final int MAX_PATTERNS = 400;
@@ -146,7 +147,7 @@ public final class RuleDictionary {
 
     public boolean isEmpty() {
         return this == EMPTY || (smartRules.isEmpty() && otpStrongTriggers.isEmpty() && otpCodePatterns.isEmpty()
-                && textProgressIncludeContextPattern == null && textProgressExcludeContextPattern == null);
+                && textProgressIncludeContextPattern == null && textProgressExcludeContextPattern == null && statusLabels.isEmpty());
     }
 
     /** The rule with this id, or null. */
@@ -242,11 +243,11 @@ public final class RuleDictionary {
                 }
                 Rx rx = Rx.compile(signal.optString("pattern"), true);
                 if (rx != null) {
-                    signals.add(new Signal(signal.optInt("stage"), rx, Math.max(0, signal.optInt("percent_group", 0))));
+                    signals.add(new Signal(Math.max(0, Math.min(MAX_STAGE, signal.optInt("stage"))), rx, Math.max(0, signal.optInt("percent_group", 0))));
                 }
             }
             // a rule without signals reads nothing yet, but its apps and words still join the rule of the same id
-            out.add(new SmartRule(id, Math.max(Math.max(1, item.optInt("max_stage", 1)), highestStage(signals)), words(item, "package_hints"),
+            out.add(new SmartRule(id, Math.min(MAX_STAGE, Math.max(Math.max(1, item.optInt("max_stage", 1)), highestStage(signals))), words(item, "package_hints"),
                     words(item, "text_triggers"), patterns(item.optJSONArray("exclude_patterns"), true), signals,
                     Math.max(0, item.optInt("ttl_min", 0)), Math.max(0, item.optInt("final_ttl_min", 0)),
                     Math.max(0, item.optInt("cooldown_min", 0)), Options.parse(item)));
@@ -417,8 +418,7 @@ public final class RuleDictionary {
         if (b == null || a.source().equals(b.source())) {
             return a;
         }
-        Rx joined = Rx.compile("(?:" + a.source() + ")|(?:" + b.source() + ")", true);
-        return joined != null ? joined : a;
+        return Rx.either(a, b);
     }
 
     private static List<Rx> unionPatterns(List<Rx> a, List<Rx> b) {
@@ -531,7 +531,9 @@ public final class RuleDictionary {
             this.packageHints = packageHints;
             this.textTriggers = textTriggers;
             this.excludePatterns = excludePatterns;
-            this.signals = signals;
+            List<Signal> ordered = new ArrayList<>(signals);
+            ordered.sort((a, b) -> Integer.compare(b.stage, a.stage));
+            this.signals = Collections.unmodifiableList(ordered);
         }
 
         /** The app is one of the rule's apps, or the text holds one of its trigger words. {@code *Lower} are lower-case. */

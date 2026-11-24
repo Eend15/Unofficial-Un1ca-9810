@@ -4,19 +4,14 @@ import android.app.Notification;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
-import android.service.notification.StatusBarNotification;
 import android.widget.RemoteViews;
 import dev.android.dynamicisland.island.detect.IconContrast;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.model.IslandItem;
-import dev.android.dynamicisland.island.view.IslandView;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.hooks.HideDuplicated;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
@@ -24,18 +19,15 @@ import java.util.WeakHashMap;
  * items are kept per data object, so a refresh that changed nothing reuses the same item.
  */
 final class OaCardBuilder {
+    private final ChronometerClock chronometers = new ChronometerClock();
     /** {@code mChronometerPosition} value that puts the clock on the secondary line. */
     private static final int CLOCK_ON_SECONDARY_LINE = 2;
     private static final int MAX_BUTTONS = 3;
-    /** Stopwatch bases are only pruned once the map grows past this many entries. */
-    private static final int STOPWATCH_PRUNE_SIZE = 16;
 
     private final IconLoader icons;
     private final OaViews views;
     private final ProgressBinder progress;
     private final Map<Object, IslandItem> built = new WeakHashMap<>();
-    /** Chronometer base per item key, so a paused stopwatch can still show its exact elapsed time. */
-    private final Map<String, Long> stopwatchBases = new HashMap<>();
 
     OaCardBuilder(IconLoader icons, OaViews views, ProgressBinder progress) {
         this.icons = icons;
@@ -51,17 +43,6 @@ final class OaCardBuilder {
             built.put(activity.data, item);
         }
         return item;
-    }
-
-    /** Forgets the stopwatch bases of items that are no longer on the island. */
-    void pruneStopwatches(List<IslandItem> liveItems) {
-        if (stopwatchBases.size() > STOPWATCH_PRUNE_SIZE) {
-            Set<String> keys = new HashSet<>();
-            for (IslandItem item : liveItems) {
-                keys.add(item.key);
-            }
-            stopwatchBases.keySet().retainAll(keys);
-        }
     }
 
     static IslandItem.Kind kindOf(Notification n, String pkg) {
@@ -138,6 +119,7 @@ final class OaCardBuilder {
         it.primaryActionIndex = Refl.getObjectInt(data, "mPrimaryActionIndex", -1);
         bindButtonColors(it, data);
         bindButtons(it, data, pkg);
+        chronometers.bind(it);
         return it;
     }
 
@@ -187,12 +169,13 @@ final class OaCardBuilder {
         if (chrono != null && !frozen) {
             // recorded whatever the pill shows, so cards can place a live clock
             it.chronoBase = chrono.base;
+            if (chrono.elapsedBase != null) {
+                it.chronoUsesElapsedRealtime = true;
+                it.chronoElapsedBase = chrono.elapsedBase;
+            }
             it.chronoCountDown = chrono.countDown;
             it.chronoPosition = Refl.getObjectInt(a.data, "mChronometerPosition", 0);
             it.chronoMillis = !it.chronoCountDown && isStopwatch(n);
-            if (it.chronoMillis) {
-                stopwatchBases.put(it.key, it.chronoBase);
-            }
         }
         if (hasText(chipScore)) {
             showText(it, chipScore);
@@ -200,7 +183,7 @@ final class OaCardBuilder {
             showText(it, chipText);
         } else if (frozen) {
             // a paused clock must not keep counting: freeze on the text System UI shows
-            showText(it, frozenClockText(it.key, n, a.sbn, chrono));
+            showText(it, chrono.frozenText);
         } else if (chrono != null) {
             it.trailing = IslandItem.Trailing.CHRONOMETER;
         } else if (hasText(criticalText)) {
@@ -218,15 +201,6 @@ final class OaCardBuilder {
     private static void showText(IslandItem it, CharSequence text) {
         it.trailing = IslandItem.Trailing.TEXT;
         it.trailingText = text;
-    }
-
-    /** A stopwatch that was paused shows the time elapsed when it was stopped, to the hundredth. */
-    private CharSequence frozenClockText(String key, Notification n, StatusBarNotification sbn, OaViews.Chrono chrono) {
-        Long base = isStopwatch(n) ? stopwatchBases.get(key) : null;
-        if (base != null && sbn != null && sbn.getPostTime() >= base) {
-            return IslandView.formatTimeCentis(sbn.getPostTime() - base);
-        }
-        return chrono.frozenText;
     }
 
     private void bindDescription(IslandItem it, Object data, String subtitle, String pkg) {

@@ -17,6 +17,7 @@ import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.graphics.Colors;
 import dev.android.dynamicisland.island.graphics.Glyphs;
 import dev.android.dynamicisland.island.model.IslandItem;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Refl;
 import dev.android.dynamicisland.xposed.XLog;
 import java.util.Arrays;
@@ -32,6 +33,7 @@ import java.util.function.BooleanSupplier;
  * end-call button that work even though the real call notification is hidden by the island.
  */
 final class CallCardBuilder {
+    private final ChronometerClock chronometers = new ChronometerClock();
     private static final String SPEAKER_TOGGLE = "com.samsung.rcs.intent.action.SPEAKER_TOGGLE";
     private static final String INCALLUI = "com.samsung.android.incallui";
     /** Apps whose calls Telecom can end and whose speaker the in-call UI can toggle. */
@@ -89,6 +91,8 @@ final class CallCardBuilder {
                 hiddenByForeground.add("call:" + key);
                 return;
             default:
+                // Incoming-call cards off: while the phone rings, the call is the system's; the card comes once it is answered.
+                if (!ModuleSettings.incomingCallCards() && isRinging(info, pkg)) return;
                 out.add(card(info, key, pkg));
         }
     }
@@ -151,6 +155,7 @@ final class CallCardBuilder {
     private IslandItem card(Object info, String key, String pkg) {
         IslandItem it = new IslandItem("call:" + key);
         it.kind = IslandItem.Kind.CALL;
+        it.sourceKey = key;
         it.packageName = pkg;
         it.accent = Colors.CALL_GREEN;
 
@@ -176,9 +181,14 @@ final class CallCardBuilder {
             Drawable photo = icons.load((Icon) Refl.get(nowBar, "mNowbarIcon"));
             if (photo != null) {
                 it.cardImage = photo;
+                it.cardImageRound = true;
             }
         }
         boolean ringing = isRinging(info, pkg);
+        // The legacy Samsung call feed can precede (or omit) a CallStyle notification.
+        // It still needs the same persistent caller/answer banner as the notification feed.
+        it.incomingCall = ringing;
+        it.transientPopup = ringing;
         addButtons(it, nowBar, pkg, ringing);
         if (ringing) {
             // nobody has answered: say so instead of a clock, and offer answer / decline instead of speaker / end
@@ -188,6 +198,7 @@ final class CallCardBuilder {
             startClock(it, info, key);
         }
         it.postTime = Long.MAX_VALUE;
+        chronometers.bind(it);
         return it;
     }
 
@@ -226,8 +237,8 @@ final class CallCardBuilder {
     /** Speaker toggle, at most one extra app button and the end-call button. */
     private void addButtons(IslandItem it, Object nowBar, String pkg, boolean ringing) {
         PendingIntent hangUp = null;
-        Drawable hangUpIcon = null;
         PendingIntent speaker = null;
+        PendingIntent answer = null;
         Notification.Action extra = null;
         Object actions = nowBar == null ? null : Refl.get(nowBar, "mActions");
         if (actions instanceof List) {
@@ -239,10 +250,10 @@ final class CallCardBuilder {
                 if (action.actionIntent == null || action.title == null) {
                     continue;
                 }
-                if (hangUp == null) {
-                    // a call notification lists its hang-up first
+                if (ActionWords.isDestructive(action.title) && !ActionWords.isMute(action.title) && !ActionWords.isSpeaker(action.title)) {
                     hangUp = action.actionIntent;
-                    hangUpIcon = icons.load(action.getIcon(), pkg);
+                } else if (ActionWords.isAnswer(action.title)) {
+                    answer = action.actionIntent;
                 } else if (ActionWords.isSpeaker(action.title)) {
                     speaker = action.actionIntent;
                 } else if (extra == null && !ActionWords.isMute(action.title)) {
@@ -253,13 +264,13 @@ final class CallCardBuilder {
 
         boolean telecom = pkg == null || TELECOM_PACKAGES.contains(pkg);
         if (ringing) {
-            addRingingButtons(it, telecom, hangUp, extra == null ? null : extra.actionIntent);
+            addRingingButtons(it, telecom, hangUp, answer);
             return;
         }
         AudioManager audio = ctx.getSystemService(AudioManager.class);
         if (audio != null && (telecom || speaker != null)) {
             PendingIntent viaAction = speaker;
-            IslandItem.Action toggle = new IslandItem.Action(IslandText.get(ctx, "island_speaker"), null, null, () -> toggleSpeaker(viaAction, telecom), false);
+            IslandItem.Action toggle = new IslandItem.Action(IslandText.get(ctx, "island_speaker"), null, null, () -> toggleSpeaker(viaAction, pkg != null && pkg.startsWith("com.samsung.")), false);
             toggle.glyph = GLYPH_SPEAKER;
             toggle.active = isSpeakerRoute(audio);
             it.actions.add(toggle);
@@ -269,10 +280,8 @@ final class CallCardBuilder {
         }
         if (telecom || hangUp != null) {
             PendingIntent viaAction = hangUp;
-            IslandItem.Action end = new IslandItem.Action(IslandText.get(ctx, "island_end_call"), hangUpIcon, null, () -> endCall(telecom, viaAction), true);
-            if (hangUpIcon == null) {
-                end.glyph = GLYPH_END_CALL;
-            }
+            IslandItem.Action end = new IslandItem.Action(IslandText.get(ctx, "island_end_call"), null, null, () -> endCall(telecom, viaAction), true);
+            end.glyph = GLYPH_END_CALL;
             it.actions.add(end);
         }
     }
@@ -362,14 +371,23 @@ final class CallCardBuilder {
         }
     }
 
-    private void toggleSpeaker(PendingIntent viaAction, boolean telecom) {
+    private void toggleSpeaker(PendingIntent viaAction, boolean samsung) {
         try {
-            if (telecom) {
-                ctx.sendBroadcast(new Intent(SPEAKER_TOGGLE).setPackage(INCALLUI));
-                XLog.i("speaker toggled via incallui");
-            } else if (viaAction != null) {
+            if (viaAction != null) {
                 sendFromBackground(viaAction);
                 XLog.i("speaker toggled via call action");
+            } else if (samsung) {
+                ctx.sendBroadcast(new Intent(SPEAKER_TOGGLE).setPackage(INCALLUI));
+                XLog.i("speaker toggled via incallui");
+            } else {
+                AudioManager audio = ctx.getSystemService(AudioManager.class);
+                if (audio != null && isSpeakerRoute(audio)) audio.clearCommunicationDevice();
+                else if (audio != null) for (AudioDeviceInfo device : audio.getAvailableCommunicationDevices()) {
+                    if (device.getType() == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) {
+                        audio.setCommunicationDevice(device);
+                        break;
+                    }
+                }
             }
         } catch (Throwable t) {
             XLog.e("speaker toggle failed", t);

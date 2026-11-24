@@ -103,12 +103,17 @@ final class ShadeMaterialAppearance {
     }
 
     void sync(View host, boolean painted) {
+        sync(host, painted, false);
+    }
+
+    /** A stock popup paints its material as the original child's background, rather than in onDraw. */
+    void sync(View host, boolean painted, boolean keepHostBackground) {
         View next = painted ? MediaRowBackground.findRow(host) : null;
         if (row != next) { clear(); row = next; owner = host; }
         if (row == null) return;
         State state = ROWS.computeIfAbsent(row, State::new);
         state.owners.put(host, Boolean.TRUE);
-        state.hide(host);
+        state.hide(host, keepHostBackground);
     }
 
     void clear() {
@@ -140,7 +145,7 @@ final class ShadeMaterialAppearance {
         final RectF clipBounds = new RectF();
         State(View row) { this.row = new WeakReference<>(row); }
 
-        void hide(View host) {
+        void hide(View host, boolean keepHostBackground) {
             View row = this.row.get();
             if (row == null) return;
             for (String name : new String[]{"mBackgroundNormal", "mBackgroundDimmed"}) {
@@ -170,7 +175,7 @@ final class ShadeMaterialAppearance {
                 if (node == row) break;
             }
             // View.draw paints the player's own background before our dispatchDraw hook.
-            if (host.getBackground() != null) {
+            if (!keepHostBackground && host.getBackground() != null) {
                 hostBackgrounds.put(host, host.getBackground());
                 host.setBackground(null);
             }

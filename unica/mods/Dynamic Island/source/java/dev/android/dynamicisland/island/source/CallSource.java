@@ -27,6 +27,7 @@ import java.util.Map;
  * "in call" notification. They get the same call card (caller, running time, end button).
  */
 public final class CallSource {
+    private final ChronometerClock chronometers = new ChronometerClock();
     private static final int CALL_GREEN = 0xFF30D158;
 
     private final Context ctx;
@@ -144,7 +145,7 @@ public final class CallSource {
         boolean discord = CallDetector.DISCORD_PACKAGES.contains(pkg.toLowerCase(Locale.ROOT));
         boolean voiceChannel = discord && "mediaConnections".equalsIgnoreCase(n.getChannelId());
         CallDetector.Verdict verdict = CallDetector.classify(true, Notification.CATEGORY_CALL.equals(n.category), voiceChannel, discord,
-                NotificationText.parts(n), actionTitles, chronometer);
+                NotificationText.callStatus(n), actionTitles, chronometer);
         if (verdict == null) {
             return null;
         }
@@ -241,6 +242,7 @@ public final class CallSource {
             b.glyph = Glyphs.HANGUP;
             it.actions.add(b);
         }
+        chronometers.bind(it);
         return it;
     }
 

@@ -43,6 +43,7 @@ final class OaViews {
     /** A chronometer: wall-clock base, direction, whether it ticks and, if frozen, the text it shows. */
     static final class Chrono {
         final long base;
+        Long elapsedBase;
         final boolean countDown;
         final boolean running;
         /** What a stopped chronometer displays; null while running. */
@@ -67,31 +68,87 @@ final class OaViews {
             return null;
         }
         try {
-            List<Drawable> images = new ArrayList<>();
-            List<String> texts = new ArrayList<>();
-            gather(views.apply(ctx, new FrameLayout(ctx)), images, texts);
-            if (texts.isEmpty()) {
-                return null;
-            }
-            if (images.size() >= 2) {
-                String score = texts.size() == 2 ? texts.get(0) + "-" + texts.get(1) : String.join(" ", texts);
-                return new Chip(images.get(0), images.get(images.size() - 1), score);
-            }
-            return new Chip(null, null, String.join(" ", texts));
+            List<Object> parts = new ArrayList<>();
+            gather(views.apply(ctx, new FrameLayout(ctx)), parts);
+            return chipOf(parts);
         } catch (Throwable t) {
             XLog.e("score chip failed", t);
             return null;
         }
     }
 
-    private static void gather(View view, List<Drawable> images, List<String> texts) {
+    /**
+     * The chip from what its layout holds, in layout order: a {@link Drawable} for each image and a String for each
+     * text. A team without a logo is a letter in the layout instead of an image: two scores and one short letter
+     * beside a single logo make a pill with that team's letter on a tile.
+     */
+    static Chip chipOf(List<Object> parts) {
+        List<Drawable> images = new ArrayList<>();
+        List<String> texts = new ArrayList<>();
+        for (Object part : parts) {
+            if (part instanceof Drawable) {
+                images.add((Drawable) part);
+            } else {
+                texts.add((String) part);
+            }
+        }
+        if (texts.isEmpty()) {
+            return null;
+        }
+        if (images.size() >= 2) {
+            String score = texts.size() == 2 ? texts.get(0) + "-" + texts.get(1) : String.join(" ", texts);
+            return new Chip(images.get(0), images.get(images.size() - 1), score);
+        }
+        Chip lettered = oneLogoMissing(parts, images, texts);
+        return lettered != null ? lettered : new Chip(null, null, String.join(" ", texts));
+    }
+
+    private static Chip oneLogoMissing(List<Object> parts, List<Drawable> images, List<String> texts) {
+        // Some providers leave the image empty instead of supplying the team's initial.
+        if (images.size() == 1 && texts.size() == 2 && parts.size() == 3
+                && texts.get(0).matches("\\d{1,3}") && texts.get(1).matches("\\d{1,3}")) {
+            int imageAt = parts.indexOf(images.get(0));
+            Drawable missing = new dev.android.dynamicisland.island.graphics.TeamBadge("?");
+            String score = texts.get(0) + "-" + texts.get(1);
+            if (imageAt == 0) return new Chip(images.get(0), missing, score);
+            if (imageAt == 2) return new Chip(missing, images.get(0), score);
+        }
+        if (images.size() != 1 || texts.size() != 3) {
+            return null;
+        }
+        List<String> scores = new ArrayList<>();
+        String letter = null;
+        int letterAt = -1;
+        int at = 0;
+        for (Object part : parts) {
+            if (part instanceof String) {
+                String text = (String) part;
+                if (text.matches("\\d{1,3}")) {
+                    scores.add(text);
+                } else if (text.length() <= 4 && letter == null) {
+                    letter = text;
+                    letterAt = at;
+                }
+            }
+            at++;
+        }
+        if (scores.size() != 2 || letter == null) {
+            return null;
+        }
+        int imageAt = parts.indexOf(images.get(0));
+        Drawable badge = new dev.android.dynamicisland.island.graphics.TeamBadge(letter);
+        String score = scores.get(0) + "-" + scores.get(1);
+        return letterAt < imageAt ? new Chip(badge, images.get(0), score) : new Chip(images.get(0), badge, score);
+    }
+
+    private static void gather(View view, List<Object> parts) {
         if (view.getVisibility() != View.VISIBLE) {
             return;
         }
         if (view instanceof ImageView) {
             Drawable shown = ((ImageView) view).getDrawable();
             if (shown != null) {
-                images.add(shown);
+                parts.add(shown);
             }
         } else if (view instanceof Chronometer) {
             // a running clock is neither score nor label; the live chronometer shows it
@@ -99,12 +156,12 @@ final class OaViews {
             CharSequence text = ((TextView) view).getText();
             String trimmed = text == null ? "" : text.toString().trim();
             if (!trimmed.isEmpty()) {
-                texts.add(trimmed);
+                parts.add(trimmed);
             }
         } else if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
-                gather(group.getChildAt(i), images, texts);
+                gather(group.getChildAt(i), parts);
             }
         }
     }
@@ -125,7 +182,9 @@ final class OaViews {
             }
             long wallBase = System.currentTimeMillis() - (SystemClock.elapsedRealtime() - clock.getBase());
             boolean ticking = Refl.getBool(clock, "mStarted", true);
-            return new Chrono(wallBase, clock.isCountDown(), ticking, ticking ? null : clock.getText());
+            Chrono result = new Chrono(wallBase, clock.isCountDown(), ticking, ticking ? null : clock.getText());
+            result.elapsedBase = clock.getBase();
+            return result;
         } catch (Throwable t) {
             XLog.e("chronometer RemoteViews", t);
             return null;

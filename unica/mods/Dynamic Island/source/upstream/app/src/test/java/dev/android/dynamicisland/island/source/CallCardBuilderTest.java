@@ -56,6 +56,25 @@ public class CallCardBuilderTest {
     }
 
     @Test
+    public void incomingCallCardsOffSkipsTheRingingCallAndKeepsTheAnsweredOne() {
+        dev.android.dynamicisland.settings.ModuleSettings.ensureStarted();
+        org.robolectric.util.ReflectionHelpers.setStaticField(dev.android.dynamicisland.settings.ModuleSettings.class, "incomingCallCards", false);
+        try {
+            controller.chipShown = true;
+            builder.setPhoneRinging(() -> true);
+            collect(null, false);
+            assertTrue("a ringing call is left to the system's call screen", out.isEmpty());
+
+            builder.setPhoneRinging(() -> false);
+            collect(null, false);
+            assertEquals("the answered call still gets its card", 1, out.size());
+            assertFalse(out.get(0).incomingCall);
+        } finally {
+            org.robolectric.util.ReflectionHelpers.setStaticField(dev.android.dynamicisland.settings.ModuleSettings.class, "incomingCallCards", true);
+        }
+    }
+
+    @Test
     public void aRingingCallOffersAnswerAndDeclineAndNoSpeaker() {
         controller.chipShown = true;
         builder.setPhoneRinging(() -> true);
@@ -63,6 +82,9 @@ public class CallCardBuilderTest {
 
         assertEquals(1, out.size());
         IslandItem card = out.get(0);
+        assertTrue("legacy ringing calls also need a persistent banner", card.incomingCall);
+        assertTrue(card.transientPopup);
+        assertEquals(controller.callNotificationInfo.key, card.sourceKey);
         assertEquals(IslandItem.Trailing.TEXT, card.trailing);
         assertEquals("Incoming call", String.valueOf(card.trailingText));
         assertEquals(2, card.actions.size());
@@ -142,4 +164,39 @@ public class CallCardBuilderTest {
         assertFalse(CallCardBuilder.isCallApp("com.whatsapp", INCALLUI));
         assertNull(null);
     }
+    public static class Actions { public List<android.app.Notification.Action> mActions; }
+    private android.app.Notification.Action action(String name,String intent) {
+        return new android.app.Notification.Action.Builder(null,name,
+                android.app.PendingIntent.getBroadcast(ctx,0,new android.content.Intent(intent),android.app.PendingIntent.FLAG_IMMUTABLE)).build();
+    }
+    private IslandItem actionCard(String pkg,boolean ringing,android.app.Notification.Action... actions) throws Exception {
+        Actions bar=new Actions();bar.mActions=List.of(actions);var item=new IslandItem("call:actions");
+        var bind=CallCardBuilder.class.getDeclaredMethod("addButtons",IslandItem.class,Object.class,String.class,boolean.class);
+        bind.setAccessible(true);bind.invoke(builder,item,bar,pkg,ringing);return item;
+    }
+    @Test public void hangupIsChosenByMeaningInsteadOfTheFirstActionPosition() throws Exception {
+        var card=actionCard("example.voip",false,action("Mute","audit.mute"),action("End call","audit.end"));
+        assertEquals(1,card.actions.size());card.actions.get(0).runnable.run();
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        var sent=org.robolectric.Shadows.shadowOf((android.app.Application)ctx).getBroadcastIntents();
+        assertTrue(sent.stream().anyMatch(intent->"audit.end".equals(intent.getAction())));
+        assertFalse(sent.stream().anyMatch(intent->"audit.mute".equals(intent.getAction())));
+    }
+    @Test public void otherDialersUseTheirProvidedSpeakerAction() throws Exception {
+        var card=actionCard("com.google.android.dialer",false,action("Speaker","audit.google.speaker"),action("End call","audit.google.end"));
+        card.actions.get(0).runnable.run();org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        var sent=org.robolectric.Shadows.shadowOf((android.app.Application)ctx).getBroadcastIntents();
+        assertTrue(sent.stream().anyMatch(intent->"audit.google.speaker".equals(intent.getAction())));
+        assertFalse(sent.stream().anyMatch(intent->"com.samsung.rcs.intent.action.SPEAKER_TOGGLE".equals(intent.getAction())));
+    }
+    @Test public void ringingAnswerAndDeclineDoNotDependOnActionOrderEither() throws Exception {
+        var card=actionCard("example.voip",true,action("Mute","audit.ring.mute"),action("Answer","audit.ring.answer"),action("Decline","audit.ring.decline"));
+        assertEquals(2,card.actions.size());card.actions.get(0).runnable.run();card.actions.get(1).runnable.run();
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        var sent=org.robolectric.Shadows.shadowOf((android.app.Application)ctx).getBroadcastIntents();
+        assertTrue(sent.stream().anyMatch(intent->"audit.ring.answer".equals(intent.getAction())));
+        assertTrue(sent.stream().anyMatch(intent->"audit.ring.decline".equals(intent.getAction())));
+        assertFalse(sent.stream().anyMatch(intent->"audit.ring.mute".equals(intent.getAction())));
+    }
+
 }

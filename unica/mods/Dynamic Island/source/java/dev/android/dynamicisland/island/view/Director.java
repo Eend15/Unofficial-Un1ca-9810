@@ -112,8 +112,10 @@ final class Director {
     private void collapseIfExpanded() {
         if (scene.mode == Mode.EXPANDED) {
             long remaining=0, now=IslandView.now();
-            for(Card card:scene.cards) if(!card.leaving)
+            for(Card card:scene.cards) if(!card.leaving) {
+                if (card.item.incomingCall) return; // Ringing is a lifecycle, not a three-second popup.
                 remaining=Math.max(remaining,card.item.keepExpandedUntilUptime-now);
+            }
             if(remaining>0) {
                 scheduleAutoCollapse(remaining);
                 return;
@@ -174,8 +176,8 @@ final class Director {
             return;
         }
         if (scene.mode == Mode.EXPANDED) {
-            // An already open notification peek must not conceal short system feedback behind its single card.
-            if (scene.peekOpen && primary.popupPriority() >= 2 && !primary.key.equals(peekKey)) collapse();
+            // System feedback can replace a peek, but typing a reply keeps its card and editor attached.
+            if (!scene.held && scene.peekOpen && primary.popupPriority() >= 2 && !primary.key.equals(peekKey)) collapse();
             else rebuildStack();
         } else if (scene.mode == Mode.HIDDEN) {
             appear(primary, hint == IslandView.HINT_FROM_LEFT);

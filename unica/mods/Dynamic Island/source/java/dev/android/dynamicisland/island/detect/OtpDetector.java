@@ -95,7 +95,7 @@ public final class OtpDetector {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern AD_MARKER = Pattern.compile("[(\\[]\\s*광고\\s*[)\\]]");
 
-    /** A detected code: digits only; {@link #display()} adds the grouping. */
+    /** A detected code: letters and digits; {@link #display()} adds the grouping. */
     public static final class Match {
         public final String code;
 
@@ -106,10 +106,10 @@ public final class OtpDetector {
         /** 482913 -> "482 913": easier to read and to type. */
         public String display() {
             int n = code.length();
-            if (n == 6) {
+            if (n == 6 && code.chars().allMatch(Character::isDigit)) {
                 return code.substring(0, 3) + " " + code.substring(3);
             }
-            if (n == 8) {
+            if (n == 8 && code.chars().allMatch(Character::isDigit)) {
                 return code.substring(0, 4) + " " + code.substring(4);
             }
             return code;
@@ -190,11 +190,11 @@ public final class OtpDetector {
             int end = grouped ? m.end(1) : m.end();
             StringBuilder digits = new StringBuilder();
             for (int i = 0; i < raw.length(); i++) {
-                if (Character.isDigit(raw.charAt(i))) {
+                if (Character.isLetterOrDigit(raw.charAt(i))) {
                     digits.append(raw.charAt(i));
                 }
             }
-            if (digits.length() < MIN_DIGITS || digits.length() > MAX_DIGITS) {
+            if (digits.length() < MIN_DIGITS || digits.length() > MAX_DIGITS || raw.chars().noneMatch(Character::isDigit)) {
                 continue;
             }
             if (!hasTokenBoundaries(text, start, end)) {

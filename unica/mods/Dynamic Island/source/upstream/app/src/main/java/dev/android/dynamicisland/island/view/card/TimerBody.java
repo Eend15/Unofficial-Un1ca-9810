@@ -28,6 +28,8 @@ public final class TimerBody extends CardBody {
     private static final int MAX_BUTTONS = 3;
     /** Glyph id of the "stop" square (Glyphs.STOP, not public) used for actions that only have a callback. */
     private static final int GLYPH_STOP = 6;
+    /** Corner radius of an app's icon on a call card, as a share of its size (the same as an icon in the pill). */
+    private static final float APP_ICON_CORNER = 0.26f;
 
     final boolean call;
     final float iconSize;
@@ -124,7 +126,9 @@ public final class TimerBody extends CardBody {
         float midY = y + (stacked ? stackedMiddle : h / 2.0f) + dy;
         float iconX = x + pad;
         if (call && item.cardImage != null) {
-            owner.drawDrawable(c, item.cardImage, true, 0, iconX, midY - (iconSize / 2.0f), iconSize, a, iconSize / 2.0f);
+            // a caller's photo is round; an app's own icon keeps the shape its icon pack gave it
+            owner.drawDrawable(c, item.cardImage, true, 0, iconX, midY - (iconSize / 2.0f), iconSize, a,
+                    item.cardImageRound ? iconSize / 2.0f : iconSize * APP_ICON_CORNER);
         } else {
             owner.drawLeading(c, item, iconX, midY, iconSize, a);
         }

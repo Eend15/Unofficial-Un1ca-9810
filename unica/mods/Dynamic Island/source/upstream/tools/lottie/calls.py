@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 """Generate rounded call controls in the existing 72 px / 60 fps Lottie style.
 
-The receiver ends widen into a single closed cubic outline, without overlapping
-strokes. Playback is a brief entrance rather than a continuous loop.
+The receiver outlines are converted directly from the SF-style SVG sources in
+tools/lottie/svg/ with independent uniform optical scale factors, preserving
+their native aspect ratios and Bézier curves. Playback is a brief entrance
+rather than a continuous loop.
 """
 import json
 from pathlib import Path
+import re
 import mk
+
+SVG_DIR = Path(__file__).resolve().parent / "svg"
+
+ANSWER_SCALE = 1.08
+DECLINE_SCALE = 0.98
 
 
 class Outline:
@@ -15,36 +23,87 @@ class Outline:
 
     def curve(self, x1, y1, x2, y2, x, y):
         previous = self.points[-1]
-        previous[2] = [x1 - previous[0][0], y1 - previous[0][1]]
-        self.points.append([[x, y], [x2 - x, y2 - y], [0, 0]])
+        previous[2] = [round(x1 - previous[0][0], 2), round(y1 - previous[0][1], 2)]
+        start = self.points[0][0]
+        if [x, y] == start:
+            self.points[0][1] = [round(x2 - start[0], 2), round(y2 - start[1], 2)]
+        else:
+            self.points.append([[x, y], [round(x2 - x, 2), round(y2 - y, 2)], [0, 0]])
         return self
 
     def line(self, x, y):
-        self.points.append([[x, y], [0, 0], [0, 0]])
+        if [x, y] != self.points[0][0]:
+            self.points.append([[x, y], [0, 0], [0, 0]])
         return self
 
     def shape(self):
         return mk.bez(self.points)
 
 
+def svg_contours(filename, scale, center=(36.0, 36.0)):
+    text = (SVG_DIR / filename).read_text(encoding="utf-8")
+    w = float(re.search(r"width='([0-9.]+)px'", text).group(1))
+    h = float(re.search(r"height='([0-9.]+)px'", text).group(1))
+    d = re.search(r"\bd='([^']+)'", text).group(1)
+    cx_src, cy_src = w / 2.0, h / 2.0
+    cx_dst, cy_dst = center
+
+    def tx(x_raw, y_raw):
+        x_svg = float(x_raw)
+        y_svg = h - float(y_raw)
+        return (
+            round(cx_dst + (x_svg - cx_src) * scale, 2),
+            round(cy_dst + (y_svg - cy_src) * scale, 2),
+        )
+
+    tokens = re.findall(r"[MQLZ]|-?\d+(?:\.\d+)?", d)
+    i = 0
+    outlines = []
+    current = None
+    cur_pt = (0.0, 0.0)
+    while i < len(tokens):
+        cmd = tokens[i]
+        i += 1
+        if cmd == "M":
+            cur_pt = tx(tokens[i], tokens[i + 1])
+            i += 2
+            current = Outline(cur_pt[0], cur_pt[1])
+        elif cmd == "L":
+            nxt = tx(tokens[i], tokens[i + 1])
+            i += 2
+            current.line(nxt[0], nxt[1])
+            cur_pt = nxt
+        elif cmd == "Q":
+            qx = float(tokens[i])
+            qy = h - float(tokens[i + 1])
+            ex = float(tokens[i + 2])
+            ey = h - float(tokens[i + 3])
+            i += 4
+            qx_t = cx_dst + (qx - cx_src) * scale
+            qy_t = cy_dst + (qy - cy_src) * scale
+            ex_t = cx_dst + (ex - cx_src) * scale
+            ey_t = cy_dst + (ey - cy_src) * scale
+            p0x, p0y = cur_pt
+            c1x = round(p0x + (2.0 / 3.0) * (qx_t - p0x), 2)
+            c1y = round(p0y + (2.0 / 3.0) * (qy_t - p0y), 2)
+            c2x = round(ex_t + (2.0 / 3.0) * (qx_t - ex_t), 2)
+            c2y = round(ey_t + (2.0 / 3.0) * (qy_t - ey_t), 2)
+            end_pt = (round(ex_t, 2), round(ey_t, 2))
+            current.curve(c1x, c1y, c2x, c2y, end_pt[0], end_pt[1])
+            cur_pt = end_pt
+        elif cmd == "Z":
+            if current is not None:
+                outlines.append(current.shape())
+                current = None
+    return outlines
+
+
 def answer():
-    return (Outline(16, 8).curve(12, 8, 9, 11, 9, 15)
-            .curve(10, 40, 32, 62, 57, 63).curve(61, 63, 64, 60, 64, 56)
-            .line(64, 49).curve(64, 46, 62.5, 44.5, 60, 44)
-            .line(51, 42).curve(49, 41.5, 47.5, 42.2, 46, 43.8)
-            .line(42, 48).curve(33.5, 44.3, 27.7, 38.5, 24, 30)
-            .line(28.2, 26).curve(29.8, 24.5, 30.5, 23, 30, 21)
-            .line(28, 12).curve(27.5, 9.5, 26, 8, 23, 8).shape())
+    return svg_contours("phone.fill.svg", ANSWER_SCALE)[0]
 
 
 def end():
-    return (Outline(6, 37).curve(6, 33, 9, 30, 13, 27)
-            .curve(26, 17, 46, 17, 59, 27).curve(63, 30, 66, 33, 66, 37)
-            .line(66, 44).curve(66, 48, 64, 50, 60, 50)
-            .line(54, 50).curve(51, 50, 49, 48, 49, 45)
-            .line(49, 37).curve(41, 33, 31, 33, 23, 37)
-            .line(23, 45).curve(23, 48, 21, 50, 18, 50)
-            .line(12, 50).curve(8, 50, 6, 48, 6, 44).shape())
+    return svg_contours("phone.down.fill.svg", DECLINE_SCALE)[0]
 
 
 def build():

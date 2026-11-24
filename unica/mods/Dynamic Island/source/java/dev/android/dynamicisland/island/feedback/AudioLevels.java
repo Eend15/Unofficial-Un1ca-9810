@@ -38,7 +38,8 @@ public final class AudioLevels {
     private final Handler bg;
     private final Band[] bands = new Band[BANDS];
     private final float[] levels = new float[BANDS];
-    private boolean wanted;
+    private volatile boolean wanted;
+    private final Runnable retry = () -> applyActive(wanted);
     private boolean primed;
     private long failedAt;
     private long lastFft;
@@ -79,7 +80,8 @@ public final class AudioLevels {
 
     /** Runs on the background thread. */
     private void applyActive(boolean active) {
-        if (active) {
+        bg.removeCallbacks(retry);
+        if (active && wanted) {
             if (viz == null) {
                 start();
             }
@@ -90,8 +92,9 @@ public final class AudioLevels {
 
     private void start() {
         if (failedAt == 0 || SystemClock.uptimeMillis() - failedAt >= RETRY_MS) {
+            Visualizer visualizer = null;
             try {
-                Visualizer visualizer = new Visualizer(0);
+                visualizer = new Visualizer(0);
                 visualizer.setEnabled(false);
                 int[] range = Visualizer.getCaptureSizeRange();
                 visualizer.setCaptureSize(Math.max(range[0], Math.min(1024, range[1])));
@@ -112,19 +115,25 @@ public final class AudioLevels {
                 failedAt = 0L;
                 XLog.d("visualizer started, rate=" + rate);
             } catch (Throwable t) {
+                if (visualizer != null) {
+                    try { visualizer.release(); } catch (Throwable ignored) { }
+                }
                 failedAt = SystemClock.uptimeMillis();
                 viz = null;
                 XLog.e("visualizer unavailable", t);
             }
         }
+        if (viz == null && wanted) bg.postDelayed(retry, Math.max(1L, RETRY_MS - (SystemClock.uptimeMillis() - failedAt)));
     }
 
     private void stop() {
         try {
             viz.setEnabled(false);
-            viz.release();
         } catch (Throwable ignored) {
             // already released or never started
+        }
+        if (viz != null) {
+            try { viz.release(); } catch (Throwable ignored) { }
         }
         viz = null;
         for (int i = 0; i < BANDS; i++) {

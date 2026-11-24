@@ -24,6 +24,7 @@ import java.util.Set;
  * ongoing-activity list: the stock status bar chip for them is taken out, the island replaces it.
  */
 public final class PromotedSource {
+    private final ChronometerClock chronometers = new ChronometerClock();
     private static final String PREFIX = "live:";
     private static final int MAX_ITEMS = 3;
     private static final int MAX_ACTIONS = 3;
@@ -95,7 +96,7 @@ public final class PromotedSource {
         for (Map.Entry<String, IslandItem> e : fresh.entrySet()) {
             IslandItem old = items.get(e.getKey());
             IslandItem now = e.getValue();
-            if (old == null || old.progress != now.progress || old.chronoBase != now.chronoBase
+            if (old == null || old.progress != now.progress || old.progressIndeterminate != now.progressIndeterminate || old.chronoBase != now.chronoBase
                     || !String.valueOf(old.title).equals(String.valueOf(now.title))
                     || !String.valueOf(old.subtitle).equals(String.valueOf(now.subtitle))
                     || !String.valueOf(old.trailingText).equals(String.valueOf(now.trailingText))) {
@@ -175,6 +176,7 @@ public final class PromotedSource {
         it.actionType = 1;
         int max = extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0);
         int progress = extras.getInt(Notification.EXTRA_PROGRESS, 0);
+        it.progressIndeterminate = extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE, false);
         if (max > 0 && !extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE, false)) {
             it.progress = Math.max(0.0f, Math.min(1.0f, progress / (float) max));
         }
@@ -185,7 +187,7 @@ public final class PromotedSource {
         } else if (critical != null) {
             it.trailing = IslandItem.Trailing.TEXT;
             it.trailingText = critical;
-        } else if (it.progress >= 0.0f) {
+        } else if (it.progress >= 0.0f || it.progressIndeterminate) {
             it.trailing = IslandItem.Trailing.PROGRESS_RING;
         }
         if (n.actions != null) {
@@ -195,6 +197,7 @@ public final class PromotedSource {
                 }
             }
         }
+        chronometers.bind(it);
         return it;
     }
 

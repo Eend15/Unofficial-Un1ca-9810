@@ -134,13 +134,13 @@ public final class ChargingSource {
                 double reported = Double.NaN;
                 if (current != Integer.MIN_VALUE && charging) {
                     double magnitude = Math.abs((double) current) / 1000;
-                    if (magnitude <= 50_000) reported = magnitude;
+                    if (magnitude <= 50_000) reported = current / 1000.0;
                 }
                 long reading = manager.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER);
                 if (statistics) counter = reading;
                 if (charging) rate.add(SystemClock.elapsedRealtime(), reading); else rate.clear();
                 // Some phones keep the current at 0 while they charge: the rise of the charge counter says more.
-                currentMa = reported >= 1.0 ? reported : charging ? rate.estimateMa(SystemClock.elapsedRealtime()) : reported;
+                currentMa = Double.isFinite(reported) && reported != 0.0 ? reported : charging ? rate.estimateMa(SystemClock.elapsedRealtime()) : reported;
             }
         } catch (RuntimeException error) { XLog.once("ChargingSource.sample", error); }
         if (statistics) {

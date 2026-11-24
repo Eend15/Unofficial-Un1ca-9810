@@ -9,6 +9,7 @@
   "smali_classes2/com/android/systemui/qs/SecQSPanelResourcePicker.smali",
   "smali_classes2/com/android/systemui/qs/panelresource/SecQSPanelResourceNormalPicker.smali",
   "smali_classes3/com/android/systemui/shade/ShadeExpansionStateManager.smali",
+  "smali_classes3/com/android/systemui/shared/system/TaskStackChangeListeners$Impl.smali",
   "smali_classes3/com/android/systemui/statusbar/StatusBarStateControllerImpl.smali",
   "smali_classes3/com/android/systemui/statusbar/events/SystemStatusAnimationSchedulerImpl.smali",
   "smali_classes3/com/android/systemui/statusbar/notification/collection/NotificationEntry.smali",
@@ -30,5 +31,12 @@
   "smali_classes3/com/android/systemui/statusbar/pipeline/shared/ui/binder/HomeStatusBarViewBinderImpl.smali",
   "smali_classes3/com/android/systemui/statusbar/policy/SecFlashlightControllerImpl.smali",
   "smali_classes3/com/android/systemui/statusbar/window/StatusBarWindowStateController.smali",
-  "smali_classes3/com/android/wm/shell/common/TaskStackListenerImpl.smali"
+  "smali_classes3/com/android/wm/shell/common/TaskStackListenerImpl.smali",
+  "smali_classes3/com/android/wm/shell/windowdecor/viewholder/MultiTaskingHandleViewHolder$createStatusBarInputLayer$2.smali",
+  "smali_classes3/com/android/wm/shell/windowdecor/viewholder/AppHandleViewHolder$createStatusBarInputLayer$2.smali",
+  "smali_classes2/com/android/systemui/edgelighting/SystemUIConditionListenerService$1.smali",
+  "smali_classes3/com/android/systemui/statusbar/phone/BiometricUnlockController.smali",
+  "smali_classes3/com/android/systemui/statusbar/notification/interruption/VisualInterruptionDecisionProviderImpl.smali",
+  "smali_classes2/com/android/systemui/edgelighting/EdgeLightingService.smali",
+  "smali_classes2/com/android/systemui/edgelighting/scheduler/EdgeLightingScheduler.smali"
 ]

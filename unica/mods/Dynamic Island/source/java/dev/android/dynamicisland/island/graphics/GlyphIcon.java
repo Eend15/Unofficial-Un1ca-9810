@@ -21,7 +21,7 @@ import dev.android.dynamicisland.settings.ModuleSettings;
  */
 public final class GlyphIcon extends Drawable {
     /** Which pictogram to draw. {@code POWER_SAVE} is drawn as a battery with a plus cut out. */
-    public enum Kind { BATTERY, BATTERY_CHARGING, BELL, BELL_OFF, VIBRATE, HEADPHONES, CAMERA, MIC, LOCATION, MOON, PLANE, TORCH, HOTSPOT, ROTATE_LOCK, POWER_SAVE, DOWNLOAD, SPEAKER, FINGERPRINT, FACE, PIN, CALL_ANSWER, CALL_END }
+    public enum Kind { BATTERY, BATTERY_CHARGING, BELL, BELL_OFF, VIBRATE, HEADPHONES, CAMERA, MIC, LOCATION, MOON, PLANE, TORCH, HOTSPOT, ROTATE_LOCK, POWER_SAVE, DOWNLOAD, SPEAKER, FINGERPRINT, FACE, PIN, CALL_ANSWER, CALL_END, CAR, BLUETOOTH }
 
     private static final int INTRINSIC_SIZE_PX = 96;
     /** An icon drawn again after this long without a draw plays from the start, like a fresh island. */
@@ -74,7 +74,16 @@ public final class GlyphIcon extends Drawable {
             return false;
         }
         long[] state = PLAYBACK.get(kind);
-        return state == null || SystemClock.uptimeMillis() - state[0] < p.durationMillis();
+        if (state == null) return true;
+        long now = SystemClock.uptimeMillis();
+        if (now - state[1] > REPLAY_GAP_MS) {
+            // Not drawn for a while: the next draw plays it from the start. The frame loop asks before that draw, so
+            // it has to be told now, or the draw lands on the first frame (no rays on the torch) and no more come.
+            state[0] = now;
+            state[1] = now;
+            return true;
+        }
+        return now - state[0] < p.durationMillis();
     }
 
     private static String animationName(Kind kind) {
@@ -203,6 +212,12 @@ public final class GlyphIcon extends Drawable {
             case HEADPHONES:
                 drawHeadphones(c, cx, cy, s);
                 break;
+            case CAR:
+                drawCar(c, cx, cy, s);
+                break;
+            case BLUETOOTH:
+                drawBluetooth(c, cx, cy, s);
+                break;
             case CAMERA:
                 drawCamera(c, cx, cy, s);
                 break;
@@ -249,6 +264,37 @@ public final class GlyphIcon extends Drawable {
             default:
                 break;
         }
+    }
+
+    private void drawCar(Canvas c, float cx, float cy, float s) {
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(s * .065f);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+        rect.set(cx-s*.38f, cy-s*.03f, cx+s*.38f, cy+s*.25f);
+        c.drawRoundRect(rect, s*.07f, s*.07f, paint);
+        path.reset();
+        path.moveTo(cx-s*.32f,cy-s*.03f); path.lineTo(cx-s*.23f,cy-s*.28f);
+        path.lineTo(cx+s*.23f,cy-s*.28f); path.lineTo(cx+s*.32f,cy-s*.03f);
+        c.drawPath(path,paint);
+        c.drawLine(cx-s*.27f,cy+s*.25f,cx-s*.27f,cy+s*.34f,paint);
+        c.drawLine(cx+s*.27f,cy+s*.25f,cx+s*.27f,cy+s*.34f,paint);
+        c.drawLine(cx-s*.26f,cy+s*.1f,cx-s*.16f,cy+s*.1f,paint);
+        c.drawLine(cx+s*.16f,cy+s*.1f,cx+s*.26f,cy+s*.1f,paint);
+        paint.setStyle(Paint.Style.FILL);
+    }
+
+    private void drawBluetooth(Canvas c, float cx, float cy, float s) {
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(s*.065f);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+        path.reset();
+        path.moveTo(cx-s*.22f,cy-s*.24f); path.lineTo(cx+s*.21f,cy+s*.22f);
+        path.lineTo(cx,cy+s*.42f); path.lineTo(cx,cy-s*.42f);
+        path.lineTo(cx+s*.21f,cy-s*.22f); path.lineTo(cx-s*.22f,cy+s*.24f);
+        c.drawPath(path,paint);
+        paint.setStyle(Paint.Style.FILL);
     }
 
     private void drawBattery(Canvas c, float cx, float cy, float s) {

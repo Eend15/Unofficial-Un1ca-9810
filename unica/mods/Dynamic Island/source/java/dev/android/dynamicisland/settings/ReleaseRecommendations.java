@@ -129,6 +129,11 @@ final class ReleaseRecommendations {
         Illustration(Context context,ReleaseHighlights.Art art,OneUi ui) {
             super(context);this.art=art;this.ui=ui;setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         }
+        /** A telephone handset: an arch with its two ends turned down, centred on ({@code cx}, {@code cy}); stroke style set by the caller. */
+        private void handset(Canvas canvas,float cx,float cy) {
+            canvas.drawArc(cx-5,cy-4,cx+5,cy+6,205,130,false,paint);
+            canvas.drawLine(cx-4.53f,cy-1.1f,cx-5,cy+2,paint);canvas.drawLine(cx+4.53f,cy-1.1f,cx+5,cy+2,paint);
+        }
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);int save=canvas.save();canvas.scale(getWidth()/72f,getHeight()/72f);
             paint.setColor(ui.dark ? 0xff254369 : 0xffd0e2ff);canvas.drawCircle(36,36,33,paint);
@@ -280,6 +285,51 @@ final class ReleaseRecommendations {
                     paint.setColor(0xff94c2ff);canvas.drawRoundRect(27,33,42,45,3,3,paint);
                     path.reset();path.moveTo(42,36);path.lineTo(47,33);path.lineTo(47,45);path.lineTo(42,42);path.close();canvas.drawPath(path,paint);
                     paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawCircle(34.5f,39,2.5f,paint);
+                }
+                case SYSTEM_POPUP -> {
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(21,8,51,17,4.5f,4.5f,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawCircle(27,12.5f,1.8f,paint);
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(9,24,63,54,11,11,paint);
+                    paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.8f);paint.setColor(ui.accent);canvas.drawRoundRect(9,24,63,54,11,11,paint);
+                    paint.setStyle(Paint.Style.FILL);paint.setColor(0xff94c2ff);canvas.drawCircle(22,39,6,paint);
+                    paint.setColor(ui.dark ? 0xffcfe0ff : 0xffe6f0ff);canvas.drawRoundRect(33,32.5f,54,36,1.7f,1.7f,paint);
+                    paint.setColor(ui.dark ? 0xff7f9fcf : 0xff9db9e4);canvas.drawRoundRect(33,41,50,44.5f,1.7f,1.7f,paint);
+                }
+                case CALL -> {
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(7,20,65,52,15,15,paint);
+                    paint.setColor(0xff7fd6a6);canvas.drawCircle(23,36,9,paint);
+                    paint.setColor(0xffff8f86);canvas.drawCircle(49,36,9,paint);
+                    paint.setColor(0xffffffff);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(2.6f);paint.setStrokeCap(Paint.Cap.ROUND);
+                    canvas.save();canvas.rotate(-45,23,36);handset(canvas,23,37);canvas.restore();
+                    handset(canvas,49,37);
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(ui.dark ? 0xff4372ac : 0xff98bceb);canvas.drawRoundRect(22,57,50,61,2,2,paint);
+                }
+                case RECORDING -> {
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(8,12,64,34,11,11,paint);
+                    paint.setColor(0xffff6b63);canvas.drawCircle(21,23,4.2f,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawRoundRect(31,21,53,25,2,2,paint);
+                    paint.setColor(ui.dark ? 0xff3a5f90 : 0xffa9c6ee);canvas.drawRoundRect(22,43,50,59,8,8,paint);
+                    paint.setColor(ui.dark ? 0xffeaf3ff : 0xffffffff);canvas.drawCircle(32,51,5,paint);
+                }
+                case PULL_BUTTONS -> {
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(9,8,63,32,10,10,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawCircle(21,20,5,paint);
+                    paint.setColor(ui.dark ? 0xffcfe0ff : 0xffe6f0ff);canvas.drawRoundRect(31,15,52,18.5f,1.7f,1.7f,paint);
+                    paint.setColor(ui.dark ? 0xff7f9fcf : 0xff9db9e4);canvas.drawRoundRect(31,23,46,26.5f,1.7f,1.7f,paint);
+                    paint.setColor(ui.accent);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(3);paint.setStrokeCap(Paint.Cap.ROUND);
+                    canvas.drawLine(30,36,36,40,paint);canvas.drawLine(42,36,36,40,paint);paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(ui.dark ? 0xff4372ac : 0xff98bceb);canvas.drawRoundRect(11,46,34,58,6,6,paint);
+                    paint.setColor(ui.accent);canvas.drawRoundRect(38,46,61,58,6,6,paint);
+                }
+                case LANDSCAPE -> {
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(6,22,66,52,7,7,paint);
+                    paint.setColor(ui.dark ? 0xff3a5f90 : 0xffa9c6ee);canvas.drawRoundRect(10,26,62,48,3.5f,3.5f,paint);
+                    paint.setColor(ui.dark ? 0xff080e19 : 0xff2b4b78);canvas.drawRoundRect(27,28.5f,45,33.5f,2.5f,2.5f,paint);
+                    paint.setColor(0xff94c2ff);canvas.drawCircle(31,31,1.2f,paint);
+                    paint.setColor(ui.accent);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(3);paint.setStrokeCap(Paint.Cap.ROUND);
+                    canvas.drawArc(20,5,52,31,210,120,false,paint);canvas.drawLine(49.9f,11.5f,49.8f,5.5f,paint);canvas.drawLine(49.9f,11.5f,44.3f,9.5f,paint);
+                    paint.setStyle(Paint.Style.FILL);
                 }
                 case GLASS -> {
                     paint.setColor(0xff699cf0);canvas.drawCircle(25,29,18,paint);paint.setColor(0xffa98be3);canvas.drawCircle(48,47,18,paint);

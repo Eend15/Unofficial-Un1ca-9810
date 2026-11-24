@@ -3,6 +3,7 @@ package dev.android.dynamicisland.island.source;
 import dev.android.dynamicisland.testutil.RenderCapture;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -164,6 +165,26 @@ public class EventSourceTest {
     }
 
     @Test
+    public void theWidePopupCanBeSwitchedOffAndTheChargingPopupIsThenAnOrdinaryPill() throws Exception {
+        android.content.SharedPreferences prefs = RuntimeEnvironment.getApplication().getSharedPreferences("charging-narrow", 0);
+        try {
+            prefs.edit().clear().putBoolean(ModuleSettings.KEY_WIDE_CHARGING_POPUP, false).commit();
+            ModuleSettings.configurePreview(prefs);
+            EventSource s = source(new int[1]);
+            List<IslandItem> out = new ArrayList<>();
+            s.onBattery(battery(54, 0));
+            s.onBattery(battery(54, BatteryManager.BATTERY_PLUGGED_AC));
+            s.collect(out);
+            assertEquals(1, out.size());
+            assertFalse(out.get(0).fullWidth);
+            assertNull(out.get(0).compactLabel);
+        } finally {
+            prefs.edit().clear().commit();
+            ModuleSettings.configurePreview(prefs);
+        }
+    }
+
+    @Test
     public void theChargingPopupTakesTheFullWidthWhileSamsungsOwnEffectIsOff() throws Exception {
         android.content.SharedPreferences prefs = RuntimeEnvironment.getApplication().getSharedPreferences("charging-width", 0);
         try {
@@ -249,4 +270,18 @@ public class EventSourceTest {
         s.collect(out);
         assertTrue(out.isEmpty());
     }
+    @Test public void closingTheShadeRestartsAnAlreadyVisiblePopupForItsFullTimeByDesign() {
+        EventSource s=source(new int[1]);List<IslandItem> out=new ArrayList<>();
+        s.onBattery(battery(54,0));s.onBattery(battery(54,BatteryManager.BATTERY_PLUGGED_AC));
+        s.collect(out);assertEquals(1,out.size());
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(3));
+        s.setShadeOpen(true);
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(2));
+        s.setShadeOpen(false);
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(3));
+        out.clear();s.collect(out);
+        assertEquals("an existing popup receives its full duration again, not just its old remainder",1,out.size());
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(2));out.clear();s.collect(out);assertTrue(out.isEmpty());
+    }
+
 }

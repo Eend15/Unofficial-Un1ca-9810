@@ -42,7 +42,7 @@
     <string name="setting_progress_any_desc">İlerleme çubuğu olan sıradan bildirimleri de gösterir.</string>
     <string name="setting_heads_up">Adada bildirimler</string>
     <string name="setting_all_notifications">Tüm bildirimler adada</string>
-    <string name="setting_all_notifications_desc">Bant olarak açılmayan sessiz bildirimler dahil her yeni bildirim için adada bir kart gösterir. Devam eden bildirimler, aramalar, alarmlar ve o anda kullandığınız uygulamanın bildirimleri hariç tutulur. Deneysel bir özelliktir; her telefonda veya uygulamada çalışmayabilir.</string>
+    <string name="setting_all_notifications_desc">Ses çıkaran her yeni bildirim için, sistem bant olarak göstermese bile adada bir kart gösterir. Sessiz bildirimler, devam eden bildirimler, aramalar, alarmlar ve o anda kullandığınız uygulamanın bildirimleri hariç tutulur. Deneysel bir özelliktir; her telefonda veya uygulamada çalışmayabilir.</string>
     <string name="setting_heads_up_desc">Mesajları ve diğer açılır bildirimleri üstteki bildirim bandı yerine ada kartı olarak gösterir. Aramalar ve alarmlar varsayılan bildirim bandını kullanmaya devam eder.</string>
     <string name="setting_otp">Doğrulama kodu kartları</string>
     <string name="setting_otp_desc">Doğrulama kodu içeren bir mesaj geldiğinde kodun ve Kopyala düğmesinin bulunduğu bir kart açar.</string>
@@ -535,6 +535,8 @@
     <string name="glow_theme_colour">Tema rengi ayarları</string>
     <string name="show_in_fullscreen">Dikey tam ekranda göster</string>
     <string name="show_in_fullscreen_desc">Kamera gibi durum çubuğunu gizleyen uygulamalarda devam eden etkinlikleri gösterir. Kilit ekranında, Always On Display sırasında veya etkin içerik olmadığında ada gizlenir.</string>
+    <string name="show_in_landscape">Yatay modda ve oyunlarda göster</string>
+    <string name="show_in_landscape_desc">Telefon yan çevrildiğinde ve oyun gibi tam ekran uygulamalarda adayı görünür tutar. Kilit ekranında ve Always On Display\'de yine gizlenir. Yatay düzen dikey kadar özenli değildir.</string>
     <string name="setting_charging_info">Ayrıntılı şarj kartı</string>
     <string name="setting_charging_info_desc">Şarja bağlıyken pil akımını, tahmini gücü ve sıcaklığı gösterir.</string>
     <string name="setting_charging_stats">Şarj istatistikleri</string>
@@ -560,6 +562,8 @@
     <string name="island_charge_seconds">%1$d sn</string>
     <string name="setting_stock_charging_animation">Samsung pil şarj efektini göster</string>
     <string name="setting_stock_charging_animation_desc">Şarj başladığında durum çubuğundaki pili genişleten renkli animasyonu gösterir. Varsayılan olarak kapalıdır.</string>
+    <string name="setting_wide_charging">Geniş şarj açılır penceresi</string>
+    <string name="setting_wide_charging_desc">Şarj başladığında şarj penceresini durum çubuğu boyunca uzanan uzun bir hap olarak gösterir. Kapatırsanız normal boyutta görünür. Yalnızca Samsung şarj efekti kapalıyken geçerlidir.</string>
     <string name="concurrent_recording_input">Eşzamanlı mikrofon dalgası (deneysel)</string>
     <string name="concurrent_recording_input_desc">Kaydediciyi LSPosed kapsamına eklemeden Samsung Ses Kaydedici için gerçek ses düzeyini gösterir. Varsayılan olarak kapalıdır. Destek cihaza bağlıdır; kaydı etkilerse kapatın.</string>
     <string name="card_roundness">Kart köşeleri</string>
@@ -595,6 +599,8 @@
     <string name="search_terms_music">şarkı müzik ses albüm kapak oynatıcı medya çalma</string>
     <string name="search_terms_battery">şarj batarya pil akım voltaj güç sıcaklık yüzde</string>
     <string name="search_terms_charging_effect">Samsung sistem varsayılan şarj animasyon pil şimşek yanıp sönme</string>
+    <string name="search_terms_landscape">yatay döndür oyun tam ekran video</string>
+    <string name="search_terms_wide_charging">geniş uzun büyük küçük boyut şarj pencere hap genişlik</string>
     <string name="search_terms_notifications">bildirim bildirimler afiş açılır pencere mesaj uyarı sessiz kart standart ses sohbet</string>
     <string name="search_terms_download">indirme aktarım ilerleme yükleme dosya</string>
     <string name="search_terms_calls">arama çağrı telefon çevirici ses VoIP</string>
@@ -695,6 +701,18 @@
     <string name="recommend16_charging_text">Şarj ayrıntılarını açın ve pil göstergesi yerine metin satırlarını seçin. Ekran açık ve kapalı istatistikleri de eklenebilir.</string>
     <string name="recommend16_privacy_title">Kamera ve mikrofon</string>
     <string name="recommend16_privacy">Açık uygulamadaki kamera ve mikrofon kullanımını da gösterin. Önce gizlilik göstergelerini açın.</string>
+    <string name="recommend17_popup_title">Sistem pencereleri, ada görünümü</string>
+    <string name="recommend17_popup">Bildirim kartları için dördüncü seçenek. Sistem penceresi kendi süresini, kaydırmalarını ve yanıtlarını korur, adanın görünümünü alır.</string>
+    <string name="recommend17_call_title">Aramalar sizin istediğiniz gibi</string>
+    <string name="recommend17_call">Gelen arama kartlarını kapatırsanız çalan arama sistemin arama ekranında kalır. Arama kartı yanıtladıktan sonra görünür.</string>
+    <string name="recommend17_recording_title">Kayıt adanın dışında</string>
+    <string name="recommend17_recording">Ekran kaydı kartını kapatırsanız sistemin kendi göstergesi ve bildirimi kullanılır.</string>
+    <string name="recommend17_pull_title">Düğmeler isteğe bağlı</string>
+    <string name="recommend17_pull">Bildirim kartları düğmeler olmadan açılabilir. Düğmeleri göstermek için kartı aşağı çekin.</string>
+    <string name="recommend17_wide_title">Şarj penceresinin boyutu</string>
+    <string name="recommend17_wide">Geniş şarj penceresini kapatırsanız şarj takıldığında normal boyutlu bir pencere görünür.</string>
+    <string name="recommend17_landscape_title">Yatay mod ve oyunlar</string>
+    <string name="recommend17_landscape">Telefon yan çevrildiğinde ve tam ekran oyunlarda ada görünür kalır.</string>
     <string name="recommend16_hide">iMotion modunda küçük kapsülü basılı tutarak gizleyin. Yukarı kaydırarak gizlemeyi ayrıca kapatabilirsiniz.</string>
     <string name="recommend16_idle_title">Ada hep burada</string>
     <string name="recommend16_idle">Hiçbir etkinlik yokken bile kameranın çevresinde boş bir kapsül kalsın. İlk etkinlik bu kapsülden büyüyerek çıkar.</string>
@@ -703,4 +721,6 @@
     <string name="recommend16_perf">Yeni Performans sayfasından müzik parıltısını, dalga hareketini ve simge animasyonlarını ayrı ayrı kapatın.</string>
     <string name="recommend16_colour_title">Duvar kâğıdınızın renkleri</string>
     <string name="recommend16_colour">İlerleme çubukları ve düğmeler duvar kâğıdınızın Material rengini izler ve duvar kâğıdıyla birlikte değişir.</string>
+    <string name="island_reply_failed">Yanıt gönderilemedi. Yazdığınız metin korundu.</string>
+    <string name="rules_limit_reached">En fazla 40 özel kural ekleyebilirsiniz. Önce mevcut bir kuralı düzenleyin veya silin.</string>
 </resources>

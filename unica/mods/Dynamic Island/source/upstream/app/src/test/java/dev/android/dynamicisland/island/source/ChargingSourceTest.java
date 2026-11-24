@@ -118,7 +118,8 @@ public class ChargingSourceTest {
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(5));
         cards.clear();
         source.collect(cards);
-        assertEquals("a real reading wins: 0.9 A at 4.0 V", "4W", cards.get(0).trailingText.toString());
+        assertEquals("a real net-discharge reading wins over a positive estimate", "-4W", cards.get(0).trailingText.toString());
+        assertTrue(cards.get(0).subtitle.toString().contains("-900 mA"));
     }
 
     private ArrayList<IslandItem> collect(SharedPreferences prefs, boolean stats, boolean text, int currentMicro) {

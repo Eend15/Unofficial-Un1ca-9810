@@ -58,6 +58,8 @@ public final class PeekSource {
     public void show(IslandItem item, long ms) {
         item.expiresAtUptime = SystemClock.uptimeMillis() + ms;
         item.transientPopup = true;
+        // a newer message of the same conversation keeps the buttons its card was pulled open to
+        if (current != null && current.key.equals(item.key)) item.actionsHidden &= current.actionsHidden;
         current = item;
         main.removeCallbacks(tick);
         main.postDelayed(tick, ms + 40);
@@ -84,6 +86,9 @@ public final class PeekSource {
             current = null;
             return;
         }
+        // the card may have been given longer since it was shown (its buttons were pulled into view)
+        main.removeCallbacks(tick);
+        main.postDelayed(tick, current.expiresAtUptime - SystemClock.uptimeMillis() + 40);
         out.add(current);
     }
 
@@ -284,6 +289,7 @@ public final class PeekSource {
             }
         }
         addWearableReply(n, it);
+        it.actionsHidden = ModuleSettings.peekPullButtons() && !it.actions.isEmpty();
         return it;
     }
 
@@ -359,7 +365,7 @@ public final class PeekSource {
         it.otpCode = otp.code;
         final String code = otp.code;
         IslandItem.Action copy = new IslandItem.Action(copied ? IslandText.get(ctx, "island_copied") : IslandText.get(ctx, "island_copy"), null, null, () -> {
-            copy(code);
+            if (!copy(code)) return;
             show(otpItem(sbn, otp, true), OTP_COPIED_MS);
             onChange.run();
         }, false);
@@ -370,19 +376,21 @@ public final class PeekSource {
     }
 
     /** Copies the code to the clipboard, flagged as sensitive so no preview is shown. */
-    public void copy(String code) {
+    public boolean copy(String code) {
         try {
             ClipboardManager cm = ctx.getSystemService(ClipboardManager.class);
             if (cm == null) {
-                return;
+                return false;
             }
             ClipData clip = ClipData.newPlainText(IslandText.get(ctx, "island_otp"), code);
             PersistableBundle extras = new PersistableBundle();
             extras.putBoolean("android.content.extra.IS_SENSITIVE", true); // keeps the code out of the clipboard preview
             clip.getDescription().setExtras(extras);
             cm.setPrimaryClip(clip);
+            return true;
         } catch (Throwable t) {
             XLog.once("PeekSource.copy", t);
+            return false;
         }
     }
 

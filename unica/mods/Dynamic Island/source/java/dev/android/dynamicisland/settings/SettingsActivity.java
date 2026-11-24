@@ -411,8 +411,8 @@ public final class SettingsActivity extends Activity {
         subPage(getString(R.string.ui_appearance));
         showPreview();
         radios(R.string.anim_title, R.string.desc_animation, new int[]{R.string.anim_new, R.string.anim_legacy, R.string.imode_title},
-                new int[]{OneUi.TAG_DEFAULT, 0, OneUi.TAG_RECOMMENDED},
-                flag(ModuleSettings.KEY_I_MODE, false) ? 2 : flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? 1 : 0, LivePreview.RING,
+                new int[]{0, 0, OneUi.TAG_DEFAULT | OneUi.TAG_RECOMMENDED},
+                flag(ModuleSettings.KEY_I_MODE, true) ? 2 : flag(ModuleSettings.KEY_LEGACY_ANIMATION, false) ? 1 : 0, LivePreview.RING,
                 selected -> prefs.edit().putBoolean(ModuleSettings.KEY_LEGACY_ANIMATION, selected == 1)
                         .putBoolean(ModuleSettings.KEY_I_MODE, selected == 2).apply());
         ui.note(page, getString(R.string.imode_desc));
@@ -421,7 +421,7 @@ public final class SettingsActivity extends Activity {
                 ModuleSettings.readTransitionBlurMode(prefs), LivePreview.RING,
                 selected -> prefs.edit().putInt(ModuleSettings.KEY_TRANSITION_BLUR, selected).apply());
         radios(R.string.material_style, R.string.desc_material, new int[]{R.string.material_frosted, R.string.material_classic},
-                new int[]{OneUi.TAG_RECOMMENDED, OneUi.TAG_DEFAULT},
+                new int[]{OneUi.TAG_DEFAULT | OneUi.TAG_RECOMMENDED, 0},
                 ModuleSettings.readMaterialStyle(prefs), LivePreview.MUSIC,
                 selected -> prefs.edit().putInt(ModuleSettings.KEY_MATERIAL_STYLE, selected).apply());
         radios(R.string.pill_outline, R.string.desc_outline, new int[]{R.string.pill_outline_auto, R.string.pill_outline_always, R.string.pill_outline_none},
@@ -437,8 +437,8 @@ public final class SettingsActivity extends Activity {
                 flag(ModuleSettings.KEY_COMPACT_EVENT_ICONS, false) ? 1 : 0, LivePreview.RING,
                 selected -> prefs.edit().putBoolean(ModuleSettings.KEY_COMPACT_EVENT_ICONS, selected == 1).apply());
         radios(R.string.torch_style, R.string.desc_torch, new int[]{R.string.torch_style_classic, R.string.torch_style_beam},
-                new int[]{OneUi.TAG_DEFAULT, OneUi.TAG_RECOMMENDED},
-                prefs.getInt(ModuleSettings.KEY_TORCH_STYLE, 0) == 1 ? 1 : 0, LivePreview.TORCH,
+                new int[]{0, OneUi.TAG_DEFAULT | OneUi.TAG_RECOMMENDED},
+                prefs.getInt(ModuleSettings.KEY_TORCH_STYLE, 1) == 1 ? 1 : 0, LivePreview.TORCH,
                 style -> prefs.edit().putInt(ModuleSettings.KEY_TORCH_STYLE, style).apply());
         ui.note(page, getString(R.string.torch_style_desc));
         LinearLayout look = ui.card(page);
@@ -475,6 +475,8 @@ public final class SettingsActivity extends Activity {
                 ModuleSettings.KEY_SWIPE_DOWN_OPENS, true);
         toggle(visibility, R.string.show_in_fullscreen, R.string.show_in_fullscreen_desc,
                 ModuleSettings.KEY_SHOW_IN_FULLSCREEN, false);
+        toggle(visibility, R.string.show_in_landscape, R.string.show_in_landscape_desc,
+                ModuleSettings.KEY_SHOW_IN_LANDSCAPE, false);
         boolean still = flag(ModuleSettings.KEY_LOW_PERFORMANCE, false) || flag(ModuleSettings.KEY_STATIC_WAVEFORM, false);
         LinearLayout motion = ui.card(page);
         toggle(motion, R.string.setting_haptics, R.string.setting_haptics_desc, ModuleSettings.KEY_HAPTICS, true);
@@ -524,13 +526,16 @@ public final class SettingsActivity extends Activity {
     private void notificationsPage() {
         subPage(getString(R.string.ui_notifications));
         LinearLayout banners = ui.card(page);
-        int mode = flag(ModuleSettings.KEY_ALL_NOTIFICATIONS, false) ? 2 : flag(ModuleSettings.KEY_HEADS_UP_ISLAND, true) ? 1 : 0;
-        choice(banners, R.string.ui_notification_mode, new int[]{R.string.ui_notification_off, R.string.ui_notification_banners, R.string.ui_notification_all}, mode,
-                selected -> prefs.edit().putBoolean(ModuleSettings.KEY_HEADS_UP_ISLAND, selected > 0)
+        int mode = flag(ModuleSettings.KEY_SYSTEM_POPUP_STYLE, false) ? 3 : flag(ModuleSettings.KEY_ALL_NOTIFICATIONS, false) ? 2 : flag(ModuleSettings.KEY_HEADS_UP_ISLAND, true) ? 1 : 0;
+        choice(banners, R.string.ui_notification_mode, new int[]{R.string.ui_notification_off, R.string.ui_notification_banners, R.string.ui_notification_all, R.string.ui_notification_system_style}, mode,
+                selected -> prefs.edit().putBoolean(ModuleSettings.KEY_SYSTEM_POPUP_STYLE, selected == 3)
+                        .putBoolean(ModuleSettings.KEY_HEADS_UP_ISLAND, selected == 1 || selected == 2)
                         .putBoolean(ModuleSettings.KEY_ALL_NOTIFICATIONS, selected == 2).apply());
+        if (mode == 3) ui.note(page, getString(R.string.ui_notification_system_style_desc));
         Switch foreground = toggle(banners, R.string.foreground_notifications, R.string.foreground_notifications_desc, ModuleSettings.KEY_FOREGROUND_NOTIFICATIONS, false);
         toggle(banners, R.string.setting_peek_progress, R.string.setting_peek_progress_desc, ModuleSettings.KEY_PEEK_PROGRESS, false);
-        OneUi.setDependentsEnabled(mode > 0 || flag(ModuleSettings.KEY_OTP_CARD, true), OneUi.rowOf(foreground));
+        toggle(banners, R.string.setting_peek_pull_buttons, R.string.setting_peek_pull_buttons_desc, ModuleSettings.KEY_PEEK_PULL_BUTTONS, false);
+        OneUi.setDependentsEnabled(mode != 3 && (mode > 0 || flag(ModuleSettings.KEY_OTP_CARD, true)), OneUi.rowOf(foreground));
         ui.linkRow(banners, getString(R.string.apps_title), appsSummary(), () -> open(this::appsPage));
         ui.note(page, getString(R.string.ui_notification_scope));
         ui.category(page, getString(R.string.ui_activity_types), getString(R.string.desc_activity_types));
@@ -542,7 +547,9 @@ public final class SettingsActivity extends Activity {
         Switch progressAny = toggle(activity, R.string.setting_progress_any, R.string.setting_progress_any_desc, ModuleSettings.KEY_PROGRESS_ANY, false);
         dependent(progress, OneUi.rowOf(progressForeground), OneUi.rowOf(progressAny));
         toggle(activity, R.string.setting_hide_progress, R.string.setting_hide_progress_desc, ModuleSettings.KEY_HIDE_PROGRESS_ORIGINALS, true);
+        toggle(activity, R.string.setting_incoming_calls, R.string.setting_incoming_calls_desc, ModuleSettings.KEY_INCOMING_CALL_CARDS, true);
         toggle(activity, R.string.setting_calls, R.string.setting_calls_desc, ModuleSettings.KEY_THIRD_PARTY_CALLS, true);
+        toggle(activity, R.string.setting_screen_recording, R.string.setting_screen_recording_desc, ModuleSettings.KEY_SCREEN_RECORDING_CARD, true);
         ui.category(page, getString(R.string.group_codes), getString(R.string.desc_codes));
         LinearLayout codes = ui.card(page);
         Switch otp = toggle(codes, R.string.setting_otp, R.string.setting_otp_desc, ModuleSettings.KEY_OTP_CARD, true);
@@ -570,6 +577,7 @@ public final class SettingsActivity extends Activity {
         OneUi.listen(chargingInfo, on -> chargingDependencies.run());
         chargingDependencies.run();
         toggle(device, R.string.setting_stock_charging_animation, R.string.setting_stock_charging_animation_desc, ModuleSettings.KEY_STOCK_CHARGING_ANIMATION, false);
+        toggle(device, R.string.setting_wide_charging, R.string.setting_wide_charging_desc, ModuleSettings.KEY_WIDE_CHARGING_POPUP, true);
         ui.details(page, getString(R.string.ui_details), getString(R.string.charging_statistics_note));
         ui.category(page, getString(R.string.group_events_audio), getString(R.string.desc_events_audio));
         device = ui.card(page);

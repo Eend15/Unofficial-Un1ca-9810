@@ -167,4 +167,18 @@ public class TorchSourceTest {
         dir.mkdirs();
         RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
+
+    @Test
+    public void theReportSaysWhetherSystemUisFlashlightNotificationIsThereAndHidden() throws Exception {
+        TorchSource s = source(5, 3, true);
+        android.service.notification.StatusBarNotification stock = new android.service.notification.StatusBarNotification(
+                "com.android.systemui", "com.android.systemui", 4660, "Flashlight", 1000, 1, 0,
+                new android.app.Notification.Builder(app, "flashlight").setSmallIcon(android.R.drawable.stat_notify_chat)
+                        .setContentTitle("Flashlight").build(), android.os.Process.myUserHandle(), System.currentTimeMillis());
+        s.noteStockNotification(List.of(stock), () -> false);
+        String report = dev.android.dynamicisland.xposed.Diagnostics.report();
+        assertTrue(report, report.contains("flashlight notification"));
+        assertTrue(report, report.contains("torchOn=true stockInList=true"));
+        assertTrue(report, report.contains("islandSuppressed=false"));
+    }
 }

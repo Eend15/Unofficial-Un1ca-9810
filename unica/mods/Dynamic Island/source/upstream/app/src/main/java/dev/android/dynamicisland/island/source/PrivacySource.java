@@ -66,6 +66,9 @@ public final class PrivacySource {
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
+            long now = SystemClock.uptimeMillis();
+            uses.values().removeIf(use -> !use.active && now - use.lastActive >= hold(use));
+            scheduleExpiry();
             onChange.run();
         }
     };
@@ -132,7 +135,7 @@ public final class PrivacySource {
         if (pkg == null || uid < FIRST_APP_UID || IGNORED.contains(pkg)) {
             return;
         }
-        String key = op + "|" + pkg;
+        String key = op + "|" + uid + "|" + pkg;
         Use use = uses.get(key);
         boolean fresh = use == null;
         if (fresh) {
@@ -141,11 +144,10 @@ public final class PrivacySource {
         }
         use.noted = true;
         use.lastActive = SystemClock.uptimeMillis();
+        scheduleExpiry();
         if (fresh) {
             onChange.run();
         }
-        main.removeCallbacks(tick);
-        main.postDelayed(tick, NOTED_HOLD_MS + 50);
     }
 
     /** A sensor use that has a start and an end (camera, microphone, long-running location). */
@@ -153,7 +155,7 @@ public final class PrivacySource {
         if (pkg == null || uid < FIRST_APP_UID || IGNORED.contains(pkg)) {
             return;
         }
-        String key = op + "|" + pkg;
+        String key = op + "|" + uid + "|" + pkg;
         Use use = uses.get(key);
         if (use == null) {
             if (!active) {
@@ -164,7 +166,18 @@ public final class PrivacySource {
         }
         use.active = active;
         use.lastActive = SystemClock.uptimeMillis();
+        scheduleExpiry();
         onChange.run();
+    }
+
+    private static long hold(Use use) { return use.noted ? NOTED_HOLD_MS : GRACE_MS; }
+
+    /** Every sensor shares one timer, always aimed at the earliest pending expiry. */
+    private void scheduleExpiry() {
+        long next = Long.MAX_VALUE;
+        for (Use use : uses.values()) if (!use.active) next = Math.min(next, use.lastActive + hold(use));
+        main.removeCallbacks(tick);
+        if (next != Long.MAX_VALUE) main.postDelayed(tick, Math.max(16L, next - SystemClock.uptimeMillis() + 20));
     }
 
     /** Adds the island while a sensor is (or was a moment ago) in use. */
@@ -178,17 +191,13 @@ public final class PrivacySource {
         boolean mic = false;
         boolean loc = false;
         List<String> packages = new ArrayList<>();
-        long next = Long.MAX_VALUE;
         for (Iterator<Use> it = uses.values().iterator(); it.hasNext(); ) {
             Use use = it.next();
-            long hold = use.noted ? NOTED_HOLD_MS : GRACE_MS;
+            long hold = hold(use);
             boolean visible = use.active || now - use.lastActive < hold;
             if (!visible) {
                 it.remove();
                 continue;
-            }
-            if (!use.active) {
-                next = Math.min(next, use.lastActive + hold);
             }
             boolean isLocation = AppOpsManager.OPSTR_FINE_LOCATION.equals(use.op)
                     || AppOpsManager.OPSTR_MONITOR_HIGH_POWER_LOCATION.equals(use.op);
@@ -206,10 +215,7 @@ public final class PrivacySource {
                 packages.add(use.pkg);
             }
         }
-        if (next != Long.MAX_VALUE) {
-            main.removeCallbacks(tick);
-            main.postDelayed(tick, Math.max(16L, next - now + 20));
-        }
+        scheduleExpiry();
         if (packages.isEmpty() || !(cam || mic || loc)) {
             return;
         }

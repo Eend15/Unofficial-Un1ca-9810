@@ -1,9 +1,9 @@
 # Dynamic Island — built into UN1CA
 
-Dynamic Island **0.1.16**, release commit
-`439f68116d910004505cea2dba65e58e3b1d1b0f`, MIT licensed by sampple-korea.
+Dynamic Island **0.1.17**, release commit
+`5efc58640a5e15960ab1e1828ea666bc59fa8df0`, MIT licensed by sampple-korea.
 `UPSTREAM.json` pins the source. `source/upstream` preserves the original project;
-`source/java` contains the native UN1CA adaptation, merging the v0.1.16 Java/resources while retaining native lifecycle and scheduler guards.
+`source/java` contains the native UN1CA adaptation, merging the v0.1.17 Java/resources while retaining native lifecycle and scheduler guards.
 
 Enabled for Exynos9810 **starlte, star2lte and crownlte**, Android 16 / One UI 8.
 Works with EXT4 and EROFS ROM builds; EXT4 is needed only for convenient live
@@ -50,7 +50,7 @@ ROM platform key. Editing Java/resources without rebuilding deliberately fails
 the fingerprint guard. D8 uses API 34 to emit supported 112-byte DEX 039 headers;
 the manifest still requires Android 16. Do not restore malformed DEX 041 output.
 
-The base static adapters are in the numbered SystemUI patch; source/extend_call_sites.py adds the v0.1.16 adapters transactionally through source/apply.py. Their
+The base static adapters are in the numbered SystemUI patch; source/extend_call_sites.py adds the v0.1.17 adapters transactionally through source/apply.py. Their
 bootstrap Java is also in `source/Bootstrap.java`; `source/weave-report.json`
 records the audited method/constructor coverage. Changes to hook sites require
 updating the patch and coverage together and repeating the ART checks.
@@ -99,6 +99,20 @@ participate in its lease.
 ## v0.1.14 native compatibility
 
 The hidden CompositionSamplingListener signature is compiled from upstream tools/framework-stubs as compile-only input, never shipped as an android.* class. Method-hook extras are per invocation, enabling the upstream long-press scope cleanup fix. Original release sources remain unmodified under source/upstream; UN1CA adaptations are under source/java. New framework hooks still require matching static SystemUI callsites; absent callsites remain explicitly unsupported and are not reported as installed. Physical S9/Note9 acceptance and all third-party app combinations remain pending.
+
+## v0.1.17 source update (2026-11-24)
+
+Pinned stable upstream v0.1.17 (`5efc58640a5e15960ab1e1828ea666bc59fa8df0`):
+incoming call banner, iMotion swipe gestures, flashlight beam, Bluetooth and
+timer cards, Now Brief pop-up bridge and stock pop-up style. Merged 3-way into
+`source/java`; conflicts kept the native-runtime guards (`IslandPlacement`,
+`Entry`, `MediaSource` pause-timer cancellation). `XposedBridge` gained
+`invokeOriginalMethod` (renamed call-site original). New static call-sites:
+task-stack listeners, face/fingerprint/biometric unlock, app and multitasking
+handles, heads-up decisions, `NotificationContentView` attach/detach and the
+edge-lighting service/scheduler. UN1CA defaults follow the Appearance tab's
+Recommended choices: iMotion animation, frosted material and the flashlight beam.
+Live S9+ check: no missing call-sites, no SystemUI crash, island windows shown.
 
 ## v0.1.16 source update (2026-11-11)
 

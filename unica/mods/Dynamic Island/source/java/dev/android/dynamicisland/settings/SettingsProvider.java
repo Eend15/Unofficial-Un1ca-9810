@@ -5,6 +5,8 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Binder;
+import android.os.Process;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +31,15 @@ public final class SettingsProvider extends ContentProvider {
         if (!METHOD_ALL.equals(method) || getContext() == null) {
             return null;
         }
+        int caller = Binder.getCallingUid();
+        boolean trusted = caller == Process.myUid();
+        if (!trusted) {
+            String[] packages = getContext().getPackageManager().getPackagesForUid(caller);
+            if (packages != null) for (String pkg : packages) {
+                if ("com.android.systemui".equals(pkg)) { trusted = true; break; }
+            }
+        }
+        if (!trusted) throw new SecurityException("Settings are only available to the module and SystemUI");
         Bundle out = new Bundle();
         for (Map.Entry<String, ?> entry : ModuleSettings.openStore(getContext()).getAll().entrySet()) {
             Object value = entry.getValue();

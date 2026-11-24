@@ -63,8 +63,8 @@ class IntegrationTest(unittest.TestCase):
             text=file.read_text()
             methods={m.group('sig'):m for m in hooks.METHOD.finditer(text)}
             for name in hooks.SPECS['com.android.keyguard.KeyguardUpdateMonitor']:
-                sig=name+'(I)V'
-                renamed=hooks.identity(sig)+'(I)V'
+                sig=next(s for s in original if s.startswith(name+'('))
+                renamed=hooks.identity(sig)+sig[len(name):]
                 self.assertEqual(methods[renamed].group('body'),original[sig])
                 self.assertIn(hooks.BRIDGE+'->invoke',methods[sig].group('body'))
             first=text;mod.apply(root,'star2lte');self.assertEqual(file.read_text(),first)

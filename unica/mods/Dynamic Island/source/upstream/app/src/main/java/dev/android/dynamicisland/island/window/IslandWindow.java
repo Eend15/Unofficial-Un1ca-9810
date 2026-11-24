@@ -242,6 +242,11 @@ public final class IslandWindow {
 
     private ReplyBar replyBar;
 
+    /** Keep the same field, text and held card when sending failed. */
+    public void replyFailed(CharSequence message) {
+        if (replyBar != null) replyBar.showError(message);
+    }
+
     /** What the reply bar reports; see {@link ReplyBar}. */
     public interface ReplyListener extends ReplyBar.Listener {
     }

@@ -47,6 +47,19 @@ public final class NotificationText {
         return new ArrayList<>(out);
     }
 
+    /** Call state fields, excluding contact names in title/titleBig. */
+    public static List<String> callStatus(Notification n) {
+        Set<String> out = new LinkedHashSet<>();
+        if (n != null && n.extras != null) {
+            for (String key : new String[]{Notification.EXTRA_TEXT, Notification.EXTRA_BIG_TEXT,
+                    Notification.EXTRA_SUB_TEXT, Notification.EXTRA_SUMMARY_TEXT, Notification.EXTRA_INFO_TEXT})
+                add(out, n.extras.getCharSequence(key));
+            CharSequence[] lines = n.extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES);
+            if (lines != null) for (CharSequence line : lines) add(out, line);
+        }
+        return new ArrayList<>(out);
+    }
+
     /** The visible texts joined into one line, the way people read the notification. */
     public static String joined(Notification n) {
         return String.join(" ", parts(n)).replaceAll("\\s+", " ").trim();

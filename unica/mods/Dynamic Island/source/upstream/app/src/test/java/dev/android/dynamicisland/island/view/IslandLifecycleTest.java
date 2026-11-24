@@ -125,6 +125,39 @@ public class IslandLifecycleTest {
     }
 
     @Test
+    public void aMessagePopupShowsItsButtonsWhenPulledDown() {
+        Context ctx = RuntimeEnvironment.getApplication();
+        IslandItem message = item(ctx, "peek:reply", IslandItem.Kind.PEEK);
+        message.actions.add(new IslandItem.Action("Reply", null, null, () -> { }, false));
+        message.actionsHidden = true;
+        IslandView view = new IslandView(ctx, host);
+        view.setGeometry(1080, 540f, 66f, 90f, false);
+        view.layout(0, 0, 1080, 900);
+        view.setItems(List.of(message));
+        org.junit.Assert.assertTrue(view.peek(message, 4000));
+        long nanos = SystemClock.uptimeMillis() * 1_000_000L;
+        for (int frame = 0; frame < 60; frame++) {
+            ShadowSystemClock.advanceBy(Duration.ofMillis(16));
+            nanos += 16_000_000L;
+            view.doFrame(nanos);
+        }
+        Card card = view.cards().get(0);
+        float hidden = card.body.h;
+        float y = card.cy.value();
+        long t = SystemClock.uptimeMillis();
+        view.dispatchTouchEvent(MotionEvent.obtain(t, t, MotionEvent.ACTION_DOWN, 540f, y, 0));
+        view.dispatchTouchEvent(MotionEvent.obtain(t, t + 40, MotionEvent.ACTION_MOVE, 540f, y + 120f, 0));
+        view.dispatchTouchEvent(MotionEvent.obtain(t, t + 80, MotionEvent.ACTION_UP, 540f, y + 120f, 0));
+        card = view.cards().get(0);
+        org.junit.Assert.assertFalse(message.actionsHidden);
+        org.junit.Assert.assertTrue("the card makes room for its buttons", card.body.h > hidden);
+        org.junit.Assert.assertEquals("at once, without squashing its content on the way", card.body.h, card.h.value(), 0.5f);
+        org.junit.Assert.assertTrue("it stays a while for a tap", message.expiresAtUptime > SystemClock.uptimeMillis());
+        view.collapse();
+        android.view.Choreographer.getInstance().removeFrameCallback(view);
+    }
+
+    @Test
     public void chargingReplacesAnOpenNotificationPeekAndBlocksLowerPriorityPeeks() {
         Context ctx = RuntimeEnvironment.getApplication();
         IslandItem message = item(ctx, "peek:message", IslandItem.Kind.PEEK);

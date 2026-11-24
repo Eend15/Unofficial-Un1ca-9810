@@ -62,10 +62,12 @@ public final class RuleSource {
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
+            lastNotify = SystemClock.uptimeMillis();
             onChange.run();
         }
     };
     private final Map<String, IslandItem> items = new LinkedHashMap<>();
+    private final Map<String, IslandItem> candidates = new LinkedHashMap<>();
     private long lastNotify;
     /** The notifications of the latest update, read again when the rules change. */
     private List<StatusBarNotification> lastSnapshot;
@@ -114,16 +116,33 @@ public final class RuleSource {
             }
             retire(present, now);
         }
+        candidates.clear();
+        candidates.putAll(fresh);
+        selectActive(clock.getAsLong());
+    }
+
+    private void selectActive(long now) { selectActive(now, true); }
+
+    private void selectActive(long now, boolean notify) {
+        Map<String, IslandItem> fresh = new LinkedHashMap<>();
+        List<IslandItem> newest = new ArrayList<>();
+        for (IslandItem item : candidates.values())
+            if (item.expiresAtWall == 0 || item.expiresAtWall > now) newest.add(item);
+        newest.sort((a, b) -> {
+            int priority = Integer.compare(b.priority(), a.priority());
+            return priority != 0 ? priority : Long.compare(b.postTime, a.postTime);
+        });
+        fresh.clear();
+        for (IslandItem item : newest) {
+            if (fresh.size() >= MAX_ITEMS) break;
+            fresh.put(item.key, item);
+        }
         if (sameCards(fresh)) {
             return;
         }
         items.clear();
-        for (IslandItem it : fresh.values()) {
-            if (items.size() < MAX_ITEMS) {
-                items.put(it.key, it);
-            }
-        }
-        notifyChanged();
+        items.putAll(fresh);
+        if (notify) notifyChanged();
     }
 
     /**
@@ -133,6 +152,12 @@ public final class RuleSource {
     private boolean admit(IslandItem it, long now, Set<String> present) {
         String stageKey = it.key + "#" + it.stage;
         Long since = shownSince.get(stageKey);
+        long lifetime = it.expiresAtWall - it.postTime;
+        if (since != null && since + lifetime <= now) {
+            endedAt.put(stageKey, since + lifetime);
+            shownSince.remove(stageKey);
+            since = null;
+        }
         if (since == null) {
             Long ended = endedAt.get(stageKey);
             if (ended != null && (it.postTime <= ended || now < ended + (it.cooldownMinutes * 60_000L))) {
@@ -142,7 +167,6 @@ public final class RuleSource {
             shownSince.put(stageKey, since);
         }
         present.add(stageKey);
-        long lifetime = it.expiresAtWall - it.postTime;
         it.expiresAtWall = since + lifetime;
         if (it.expiresAtWall <= now) {
             // the card's time is up although the notification stays: remember when it left
@@ -159,7 +183,11 @@ public final class RuleSource {
         for (java.util.Iterator<Map.Entry<String, Long>> it = shownSince.entrySet().iterator(); it.hasNext();) {
             Map.Entry<String, Long> entry = it.next();
             if (!present.contains(entry.getKey())) {
-                endedAt.put(entry.getKey(), now);
+                String stageKey = entry.getKey();
+                IslandItem previous = candidates.get(stageKey.substring(0, stageKey.lastIndexOf('#')));
+                long ended = previous != null && stageKey.equals(previous.key + "#" + previous.stage)
+                        && previous.expiresAtWall > 0 && previous.expiresAtWall <= now ? previous.expiresAtWall : now;
+                endedAt.put(stageKey, ended);
                 it.remove();
             }
         }
@@ -167,6 +195,13 @@ public final class RuleSource {
 
     /** Adds the cards, except for the foreground app's and those already shown another way. */
     public void collect(List<IslandItem> out, String foregroundPackage) {
+        long collectedAt = clock.getAsLong();
+        for (IslandItem item : items.values()) {
+            if (item.expiresAtWall != 0 && item.expiresAtWall <= collectedAt) {
+                selectActive(collectedAt, false);
+                break;
+            }
+        }
         if (items.isEmpty()) {
             publishHidden(Collections.emptySet());
             return;
@@ -305,7 +340,7 @@ public final class RuleSource {
         String title = clean(n.extras.getCharSequence(Notification.EXTRA_TITLE));
         String body = clean(n.extras.getCharSequence(Notification.EXTRA_TEXT));
         String status = rules.statusText(rule.id, hit.stage, locale);
-        IslandItem it = new IslandItem(KEY_PREFIX + pkg + ":" + rule.id);
+        IslandItem it = new IslandItem(KEY_PREFIX + sbn.getKey() + ":" + rule.id);
         it.sourceKey = sbn.getKey();
         it.kind = rule.id.equals("navigation") ? IslandItem.Kind.NAVIGATION : IslandItem.Kind.TASK;
         it.packageName = pkg;
@@ -376,7 +411,7 @@ public final class RuleSource {
     }
 
     private boolean sameCards(Map<String, IslandItem> fresh) {
-        if (fresh.size() != items.size() && !(fresh.size() > MAX_ITEMS && items.size() == MAX_ITEMS)) {
+        if (fresh.size() != items.size()) {
             return false;
         }
         for (Map.Entry<String, IslandItem> e : items.entrySet()) {
@@ -397,12 +432,11 @@ public final class RuleSource {
     private void notifyChanged() {
         long now = SystemClock.uptimeMillis();
         long wait = lastNotify + NOTIFY_INTERVAL_MS - now;
+        main.removeCallbacks(tick);
         if (wait <= 0) {
             lastNotify = now;
             onChange.run();
         } else {
-            main.removeCallbacks(tick);
-            lastNotify = now + wait;
             main.postDelayed(tick, wait);
         }
     }

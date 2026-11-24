@@ -5,14 +5,12 @@ import android.os.SystemClock;
 import android.view.View;
 import dev.android.dynamicisland.island.IslandText;
 import dev.android.dynamicisland.island.model.IslandItem;
+import dev.android.dynamicisland.settings.ModuleSettings;
 import dev.android.dynamicisland.xposed.Refl;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 /**
  * Screen recording, screen sharing and casting as island items, read from the chip model of System UI's
@@ -20,6 +18,7 @@ import java.util.Set;
  * {@code castToOtherDevice}). Only the {@code Active} states of those models are shown.
  */
 public final class CastSource {
+    private final ChronometerClock chronometers = new ChronometerClock();
     private static final int BLUE = 0xFF0A84FF;
     private static final int RED = -50384;
 
@@ -43,11 +42,6 @@ public final class CastSource {
             this.start = start;
         }
     }
-
-    /** {@code ctx} is accepted for symmetry with the other sources; the chip model needs no context. */
-    private volatile Set<String> recordingPackages = Collections.emptySet();
-    /** Told when the recorder whose notification is hidden starts or stops, so the shade list is built again. */
-    public volatile Runnable onRecordersChanged;
 
     private final Context ctx;
 
@@ -106,53 +100,26 @@ public final class CastSource {
         return model != null && model.getClass().getName().endsWith("$Inactive");
     }
 
-    /** True when {@code notificationKey} is the notification of the screen recorder that has a card on the island. */
-    public boolean hidesOriginal(String notificationKey) {
-        Set<String> recorders = recordingPackages;
-        if (recorders.isEmpty() || notificationKey == null) {
-            return false;
-        }
-        String[] parts = notificationKey.split("\\|", 3); // user|package|id|tag|uid
-        return parts.length > 1 && recorders.contains(parts[1]);
-    }
-
     public void collect(List<IslandItem> out) {
-        Set<String> recorders = new HashSet<>();
-        try {
-            collectInto(out, recorders);
-        } finally {
-            Set<String> now = recorders.isEmpty() ? Collections.emptySet() : recorders;
-            boolean changed = !now.equals(recordingPackages);
-            recordingPackages = now;
-            Runnable listener = onRecordersChanged;
-            if (changed && listener != null) {
-                listener.run();
-            }
-        }
-    }
-
-    private void collectInto(List<IslandItem> out, Set<String> recorders) {
         if (bundle == null) {
             return;
         }
         Object record = Refl.get(bundle, "screenRecord");
         Object share = Refl.get(bundle, "shareToApp");
         Object cast = Refl.get(bundle, "castToOtherDevice");
+        // Screen recording off: the recording is left to the system; sharing to an app and casting keep their cards.
+        boolean recording = ModuleSettings.screenRecordingCard();
         if (isActive(record)) {
-            IslandItem card = item("cast:record", record, IslandItem.Kind.RECORDING, RED, IslandText.get(ctx, "island_screen_recording"));
-            out.add(card);
-            if (card.packageName != null) {
-                recorders.add(card.packageName);
+            if (recording) {
+                out.add(item("cast:record", record, IslandItem.Kind.RECORDING, RED, IslandText.get(ctx, "island_screen_recording")));
             }
         } else if (isActive(share)) {
             String manager = (String) Refl.get(share, "managingPackageName");
             // Samsung's own recorder reports itself as a share
             boolean ownRecorder = "com.samsung.android.app.smartcapture".equals(manager);
-            String title = ownRecorder ? IslandText.get(ctx, "island_screen_recording") : IslandText.get(ctx, "island_sharing_screen");
-            IslandItem card = item("cast:share", share, IslandItem.Kind.RECORDING, RED, title);
-            out.add(card);
-            if (ownRecorder && card.packageName != null) {
-                recorders.add(card.packageName);
+            if (!ownRecorder || recording) {
+                String title = ownRecorder ? IslandText.get(ctx, "island_screen_recording") : IslandText.get(ctx, "island_sharing_screen");
+                out.add(item("cast:share", share, IslandItem.Kind.RECORDING, RED, title));
             }
         }
         if (isActive(cast)) {
@@ -182,6 +149,7 @@ public final class CastSource {
             it.actions.add(new IslandItem.Action(IslandText.get(ctx, "island_stop"), null, null, () -> clickStopChip((View) chip), true));
         }
         it.postTime = Long.MAX_VALUE - 1; // above everything else of its kind
+        chronometers.bind(it);
         return it;
     }
 

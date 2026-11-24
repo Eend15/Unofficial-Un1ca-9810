@@ -29,6 +29,7 @@ public final class ModuleSettings {
     public static final String KEY_SHADE_MEDIA = "shade_media_player";
     public static final String KEY_EVENT_CHARGING = "event_charging";
     public static final String KEY_STOCK_CHARGING_ANIMATION = "stock_charging_animation";
+    public static final String KEY_WIDE_CHARGING_POPUP = "wide_charging_popup";
     /** Experimental concurrent input; opt-in because vendor recording policies differ. */
     public static final String KEY_CONCURRENT_RECORDING_INPUT = "concurrent_recording_input";
     public static final String KEY_CHARGING_INFO = "charging_info";
@@ -38,6 +39,7 @@ public final class ModuleSettings {
     public static final String KEY_HOTSPOT_CARD = "hotspot_card";
     public static final String KEY_UNLOCK_NOTICE = "unlock_notice";
     public static final String KEY_PEEK_PROGRESS = "peek_progress";
+    public static final String KEY_PEEK_PULL_BUTTONS = "peek_pull_buttons";
     public static final String KEY_PROGRESS_FOREGROUND = "progress_foreground";
     public static final String KEY_PROGRESS_ANY = "progress_any";
     public static final String KEY_EVENT_RINGER = "event_ringer";
@@ -54,6 +56,7 @@ public final class ModuleSettings {
     public static final int MATERIAL_FROSTED = 0, MATERIAL_CLASSIC = 1;
     /** Keep active content visible when a portrait app hides the status bar. */
     public static final String KEY_SHOW_IN_FULLSCREEN = "show_in_fullscreen";
+    public static final String KEY_SHOW_IN_LANDSCAPE = "show_in_landscape";
     /** Plays the animations of version 0.1.3 and before instead of the smoothed ones. */
     public static final String KEY_LEGACY_ANIMATION = "legacy_animation";
     public static final String KEY_I_MODE = "i_mode";
@@ -146,6 +149,7 @@ public final class ModuleSettings {
     public static final int DEFAULT_GLOW_STRENGTH = 45;
     public static final int DEFAULT_GLOW_MOTION = 50;
     public static final String KEY_ALL_NOTIFICATIONS = "all_notifications_island";
+    public static final String KEY_SYSTEM_POPUP_STYLE = "system_popup_style";
     public static final String KEY_PROGRESS_NOTIFICATIONS = "progress_notifications";
     public static final String KEY_HIDE_PROGRESS_ORIGINALS = "hide_progress_originals";
     /** Cards for staged processes (delivery, taxi, route, connection) found by the rules. */
@@ -164,6 +168,8 @@ public final class ModuleSettings {
     public static final String KEY_OTP_CARD = "otp_card";
     public static final String KEY_OTP_AUTO_COPY = "otp_auto_copy";
     public static final String KEY_THIRD_PARTY_CALLS = "third_party_calls";
+    public static final String KEY_INCOMING_CALL_CARDS = "incoming_call_cards";
+    public static final String KEY_SCREEN_RECORDING_CARD = "screen_recording_card";
     /** true = only the listed apps are shown, false (default) = every app except the listed ones. */
     public static final String KEY_APPS_ONLY_LISTED = "apps_only_listed";
     /** Package names of the listed apps. */
@@ -195,6 +201,7 @@ public final class ModuleSettings {
     private static volatile boolean shadeMedia = true;
     private static volatile boolean eventCharging = true;
     private static volatile boolean stockChargingAnimation;
+    private static volatile boolean wideChargingPopup = true;
     private static volatile boolean concurrentRecordingInput;
     private static volatile boolean chargingInfo;
     private static volatile boolean chargingStats;
@@ -203,6 +210,7 @@ public final class ModuleSettings {
     private static volatile boolean hotspotCard;
     private static volatile boolean unlockNotice;
     private static volatile boolean peekProgress;
+    private static volatile boolean peekPullButtons;
     private static volatile boolean progressForeground;
     private static volatile boolean progressAny;
     private static volatile boolean eventRinger = true;
@@ -212,6 +220,7 @@ public final class ModuleSettings {
     private static volatile boolean stillMusic, staticWaveform, limitFrameRate, stillIcons;
     private static volatile int materialStyle = MATERIAL_CLASSIC;
     private static volatile boolean showInFullscreen;
+    private static volatile boolean showInLandscape;
     private static volatile boolean legacyAnimation;
     private static volatile boolean iMode;
     private static volatile boolean alwaysVisible;
@@ -222,6 +231,7 @@ public final class ModuleSettings {
     private static volatile boolean swipeDownOpens = true;
     private static volatile boolean headsUpIsland = true;
     private static volatile boolean allNotifications;
+    private static volatile boolean systemPopupStyle;
     private static volatile boolean foregroundNotifications;
     private static volatile boolean autoOpenCards;
     private static volatile int autoOpenS = 4;
@@ -278,6 +288,8 @@ public final class ModuleSettings {
     private static volatile boolean otpCard = true;
     private static volatile boolean otpAutoCopy = false;
     private static volatile boolean thirdPartyCalls = true;
+    private static volatile boolean incomingCallCards = true;
+    private static volatile boolean screenRecordingCard = true;
     private static volatile AppFilter appFilter = AppFilter.OFF;
 
     private static volatile boolean started;
@@ -550,10 +562,14 @@ public final class ModuleSettings {
             return fresh ? prefs : null;
         }
         Map<String, Object> remote = readProvider();
-        if (remote == null || remote.isEmpty()) {
-            boolean fresh = !loaded;
+        if (remote == null) {
+            // A failed provider read is not an empty settings snapshot. Keep the last good values unless
+            // the shared file itself is readable and authoritatively reports an empty store.
+            if (!prefs.getFile().canRead()) return null;
+            boolean fresh = !loaded || first || fileChanged || viaProvider;
             loaded = true;
             viaProvider = false;
+            lastRemote = null;
             return fresh ? prefs : null;
         }
         if (loaded && viaProvider && remote.equals(lastRemote)) {
@@ -642,7 +658,7 @@ public final class ModuleSettings {
             stillIcons = source.getBoolean(KEY_STILL_ICONS, false);
             materialStyle = readMaterialStyle(source);
             legacyAnimation = source.getBoolean(KEY_LEGACY_ANIMATION, false);
-            iMode = source.getBoolean(KEY_I_MODE, false);
+            iMode = source.getBoolean(KEY_I_MODE, true);
             alwaysVisible = source.getBoolean(KEY_ALWAYS_VISIBLE, false);
             notchStyle = source.getBoolean(KEY_NOTCH_STYLE, false);
             popupSeconds = readPopupSeconds(source);
@@ -654,6 +670,7 @@ public final class ModuleSettings {
             headsUpIsland = source.getBoolean(KEY_HEADS_UP_ISLAND, true);
             progressNotifications = source.getBoolean(KEY_PROGRESS_NOTIFICATIONS, true);
             allNotifications = source.getBoolean(KEY_ALL_NOTIFICATIONS, false);
+            systemPopupStyle = source.getBoolean(KEY_SYSTEM_POPUP_STYLE, false);
             hideProgressOriginals = source.getBoolean(KEY_HIDE_PROGRESS_ORIGINALS, true);
             smartRules = source.getBoolean(KEY_SMART_RULES, true);
             int sizeBefore = pillHPct * 1_000_000 + pillMinWDp * 1000 + pillMaxWDp + (keepPillWidth ? 1 : 0) * 100_000_000;
@@ -663,7 +680,9 @@ public final class ModuleSettings {
             int yBefore = pillYDp;
             int textPaddingBefore = holeTextPaddingDp;
             boolean fullscreenBefore = showInFullscreen;
+            boolean landscapeBefore = showInLandscape;
             showInFullscreen = source.getBoolean(KEY_SHOW_IN_FULLSCREEN, false);
+            showInLandscape = source.getBoolean(KEY_SHOW_IN_LANDSCAPE, false);
             boolean previewBefore = placementPreviewActive();
             previewWallUntil = source.getLong(KEY_PILL_PREVIEW_UNTIL, 0L);
             if (!placementPreviewActive()) {
@@ -682,7 +701,7 @@ public final class ModuleSettings {
             }
             Runnable placementListener = onPlacementChanged;
             if (placementListener != null && (anchorBefore != pillAnchor || xBefore != pillXDp || yBefore != pillYDp
-                    || fullscreenBefore != showInFullscreen
+                    || fullscreenBefore != showInFullscreen || landscapeBefore != showInLandscape
                     || textPaddingBefore != holeTextPaddingDp
                     || previewBefore != placementPreviewActive()
                     || sizeBefore != pillHPct * 1_000_000 + pillMinWDp * 1000 + pillMaxWDp + (keepPillWidth ? 1 : 0) * 100_000_000
@@ -707,18 +726,21 @@ public final class ModuleSettings {
             readGlow(source);
             eventToggles = source.getBoolean(KEY_EVENT_TOGGLES, true);
             torchPill = source.getBoolean(KEY_TORCH_PILL, true);
-            torchStyle = source.getInt(KEY_TORCH_STYLE, 0) == 1 ? 1 : 0;
+            torchStyle = source.getInt(KEY_TORCH_STYLE, 1) == 1 ? 1 : 0;
             privacyIndicator = source.getBoolean(KEY_PRIVACY, true);
             privacyLocation = source.getBoolean(KEY_PRIVACY_LOCATION, false);
             privacyInApp = source.getBoolean(KEY_PRIVACY_IN_APP, false);
             otpCard = source.getBoolean(KEY_OTP_CARD, true);
             otpAutoCopy = source.getBoolean(KEY_OTP_AUTO_COPY, false);
             thirdPartyCalls = source.getBoolean(KEY_THIRD_PARTY_CALLS, true);
+            incomingCallCards = source.getBoolean(KEY_INCOMING_CALL_CARDS, true);
+            screenRecordingCard = source.getBoolean(KEY_SCREEN_RECORDING_CARD, true);
             Set<String> listed = source.getStringSet(KEY_APPS_LISTED, null);
+            AppFilter previousFilter = appFilter;
             appFilter = new AppFilter(source.getBoolean(KEY_APPS_ONLY_LISTED, false),
                     listed == null ? null : new java.util.HashSet<>(listed));
             String switches = switchSignature();
-            boolean switchesChanged = lastSwitches != null && !switches.equals(lastSwitches);
+            boolean switchesChanged = lastSwitches != null && (!switches.equals(lastSwitches) || !previousFilter.equals(appFilter));
             lastSwitches = switches;
             logChanges(source);
             Runnable switchListener = onSwitchesChanged;
@@ -738,8 +760,9 @@ public final class ModuleSettings {
     /** Settings-process preview only; does not start the System UI preference reader. */
     public static void configurePreview(SharedPreferences settings) {
         previewProcess = true;
+        systemPopupStyle = settings.getBoolean(KEY_SYSTEM_POPUP_STYLE, false);
         legacyAnimation = settings.getBoolean(KEY_LEGACY_ANIMATION, false);
-        iMode = settings.getBoolean(KEY_I_MODE, false);
+        iMode = settings.getBoolean(KEY_I_MODE, true);
         alwaysVisible = settings.getBoolean(KEY_ALWAYS_VISIBLE, false);
         notchStyle = settings.getBoolean(KEY_NOTCH_STYLE, false);
         popupSeconds = readPopupSeconds(settings);
@@ -754,8 +777,9 @@ public final class ModuleSettings {
         limitFrameRate = settings.getBoolean(KEY_LIMIT_FRAME_RATE, false);
         stillIcons = settings.getBoolean(KEY_STILL_ICONS, false);
         materialStyle = readMaterialStyle(settings);
-        torchStyle = settings.getInt(KEY_TORCH_STYLE, 0) == 1 ? 1 : 0;
+        torchStyle = settings.getInt(KEY_TORCH_STYLE, 1) == 1 ? 1 : 0;
         showInFullscreen = settings.getBoolean(KEY_SHOW_IN_FULLSCREEN, false);
+        showInLandscape = settings.getBoolean(KEY_SHOW_IN_LANDSCAPE, false);
         eventCharging = settings.getBoolean(KEY_EVENT_CHARGING, true);
         readOptionalDeviceSettings(settings);
         holeTextPaddingDp = clampHoleTextPadding(settings.getInt(KEY_HOLE_TEXT_PADDING_DP, 0));
@@ -809,12 +833,14 @@ public final class ModuleSettings {
     /** Animated icons that show their settled frame (low-performance mode, or just this). */
     public static boolean stillIcons() { ensureStarted(); return lowPerformance || stillIcons; }
     public static int readMaterialStyle(SharedPreferences source) {
-        return source.getInt(KEY_MATERIAL_STYLE, MATERIAL_CLASSIC) == MATERIAL_FROSTED ? MATERIAL_FROSTED : MATERIAL_CLASSIC;
+        return source.getInt(KEY_MATERIAL_STYLE, MATERIAL_FROSTED) == MATERIAL_FROSTED ? MATERIAL_FROSTED : MATERIAL_CLASSIC;
     }
     public static boolean frostedMaterial() { ensureStarted(); return materialStyle == MATERIAL_FROSTED; }
     public static boolean showInFullscreen() { ensureStarted(); return showInFullscreen; }
+    public static boolean showInLandscape() { ensureStarted(); return showInLandscape; }
     public static boolean chargingInfo() { ensureStarted(); return eventCharging && chargingInfo; }
     public static boolean stockChargingAnimation() { ensureStarted(); return stockChargingAnimation; }
+    public static boolean wideChargingPopup() { ensureStarted(); return wideChargingPopup; }
     public static boolean concurrentRecordingInput() { ensureStarted(); return concurrentRecordingInput && !lowPerformance; }
     public static boolean chargingStats() { return chargingInfo() && chargingStats; }
     public static boolean eventHeadset() { ensureStarted(); return eventHeadset; }
@@ -823,6 +849,8 @@ public final class ModuleSettings {
     public static boolean unlockNotice() { ensureStarted(); return unlockNotice; }
     /** A notification card shows the notification's own progress bar. */
     public static boolean peekProgress() { ensureStarted(); return peekProgress; }
+    /** A notification card shows its buttons only once it is pulled down. */
+    public static boolean peekPullButtons() { ensureStarted(); return peekPullButtons; }
     /** Progress cards are also made for the app that is open (they are left out by default). */
     public static boolean progressForeground() { ensureStarted(); return progressForeground; }
     /** Ordinary (not ongoing) notifications with a progress bar also become progress cards, and a bar card beats a live card. */
@@ -840,6 +868,7 @@ public final class ModuleSettings {
         customCardRoundness = source.getBoolean(KEY_CUSTOM_CARD_ROUNDNESS, false);
         cardCornerRadiusDp = Math.max(0, Math.min(48, source.getInt(KEY_CARD_CORNER_RADIUS_DP, 28)));
         stockChargingAnimation = source.getBoolean(KEY_STOCK_CHARGING_ANIMATION, false);
+        wideChargingPopup = source.getBoolean(KEY_WIDE_CHARGING_POPUP, true);
         concurrentRecordingInput = source.getBoolean(KEY_CONCURRENT_RECORDING_INPUT, false);
         chargingInfo = source.getBoolean(KEY_CHARGING_INFO, false);
         chargingStats = source.getBoolean(KEY_CHARGING_STATS, false);
@@ -848,6 +877,7 @@ public final class ModuleSettings {
         hotspotCard = source.getBoolean(KEY_HOTSPOT_CARD, false);
         unlockNotice = source.getBoolean(KEY_UNLOCK_NOTICE, false);
         peekProgress = source.getBoolean(KEY_PEEK_PROGRESS, false);
+        peekPullButtons = source.getBoolean(KEY_PEEK_PULL_BUTTONS, false);
         progressForeground = source.getBoolean(KEY_PROGRESS_FOREGROUND, false);
         progressAny = source.getBoolean(KEY_PROGRESS_ANY, false);
     }
@@ -890,20 +920,20 @@ public final class ModuleSettings {
     private static String lastSwitches;
 
     private static String switchSignature() {
-        return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + "/light=" + stillMusic + staticWaveform + limitFrameRate + stillIcons + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + "/system=" + accentSystem + systemAccent + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + "/torchStyle=" + torchStyle + headsUpIsland + allNotifications + progressNotifications + hideProgressOriginals
-                + smartRules + privacyIndicator + privacyLocation + privacyInApp + otpCard + otpAutoCopy + thirdPartyCalls + visualizer + colorIcons + shadeMedia + cardHeader
-                + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/" + headsetStay + "/hotspot=" + hotspotCard + "/unlock=" + unlockNotice + "/peekProgress=" + peekProgress + "/progressForeground=" + progressForeground + "/progressAny=" + progressAny + "/stockCharging=" + stockChargingAnimation + "/recordingInput=" + concurrentRecordingInput
+        return "" + ambientGlow + glowAlbum + glowFollowTheme + glowStrength + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + "/" + glowColour + lowPerformance + "/light=" + stillMusic + staticWaveform + limitFrameRate + stillIcons + foregroundNotifications + autoOpenCards + autoOpenS + experimentalRecovery + compactEventIcons + hideBatteryIcon + accentCustom + accentColor + "/system=" + accentSystem + systemAccent + eventCharging + eventRinger + eventBluetooth + eventToggles + torchPill + "/torchStyle=" + torchStyle + headsUpIsland + allNotifications + systemPopupStyle + progressNotifications + hideProgressOriginals
+                + smartRules + privacyIndicator + privacyLocation + privacyInApp + otpCard + otpAutoCopy + thirdPartyCalls + "/incomingCalls=" + incomingCallCards + "/screenRecording=" + screenRecordingCard + visualizer + colorIcons + shadeMedia + cardHeader
+                + "/devices=" + chargingInfo + "/" + chargingStats + "/" + eventHeadset + "/" + headsetStay + "/hotspot=" + hotspotCard + "/unlock=" + unlockNotice + "/peekProgress=" + peekProgress + "/peekPullButtons=" + peekPullButtons + "/progressForeground=" + progressForeground + "/progressAny=" + progressAny + "/stockCharging=" + stockChargingAnimation + "/recordingInput=" + concurrentRecordingInput
                 + "/alwaysVisible=" + alwaysVisible + "/notch=" + notchStyle + "/popup=" + popupSeconds + "/chargingText=" + chargingText + "/swipeUpHides=" + swipeUpHides + "/swipeDownOpens=" + swipeDownOpens + "/iMotion=" + iMode + "/material=" + materialStyle + "/roundness=" + customCardRoundness + "/" + cardCornerRadiusDp + "/outline=" + pillOutlineMode + "/blur=" + transitionBlurMode + "/" + appFilter.onlyListed() + appFilter.size();
     }
 
     /** One line in the event log whenever the values the module runs on differ from the last read. */
     private static void logChanges(SharedPreferences source) {
         String now = "glow=" + ambientGlow + "/" + glowAlbum + "/" + glowFollowTheme + "/" + glowStrength + "/" + glowColour + "/motion=" + glowMotion + "/musicOnly=" + glowMusicOnly + " lowPerformance=" + lowPerformance + " haptics=" + haptics + " legacyAnimation=" + legacyAnimation + " visualizer=" + visualizer + " cardHeader=" + cardHeader
-                + " recovery=" + experimentalRecovery + " foregroundNotifications=" + foregroundNotifications + " autoOpen=" + autoOpenCards + " customAccent=" + accentCustom + " hideBattery=" + hideBatteryIcon + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
-                + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls
+                + " recovery=" + experimentalRecovery + " foregroundNotifications=" + foregroundNotifications + " autoOpen=" + autoOpenCards + " customAccent=" + accentCustom + " hideBattery=" + hideBatteryIcon + " systemPopupStyle=" + systemPopupStyle + " headsUpIsland=" + headsUpIsland + " progress=" + progressNotifications + " hideOriginals=" + hideProgressOriginals
+                + " smartRules=" + smartRules + " otp=" + otpCard + "/" + otpAutoCopy + " calls3p=" + thirdPartyCalls + " incomingCalls=" + incomingCallCards + " screenRecording=" + screenRecordingCard + " peekPullButtons=" + peekPullButtons
                 + " privacy=" + privacyIndicator + "/" + privacyLocation + " events=" + eventCharging + "/" + eventRinger + "/" + eventBluetooth
                 + " pill=" + pillAnchor + "/" + pillXDp + "/" + pillYDp + " size=" + pillHPct + "/" + pillMinWDp + "/" + pillMaxWDp + "/" + keepPillWidth + " hole=" + holeMode + "/" + holeDDp + "/" + holeXDp + "/" + holeYDp + " pausedS=" + pausedTimeoutS + " collapseS=" + autoCollapseS + " rules=" + rulesConfig.revision
-                + " pillOutline=" + pillOutlineMode + " showInFullscreen=" + showInFullscreen + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
+                + " pillOutline=" + pillOutlineMode + " showInFullscreen=" + showInFullscreen + " showInLandscape=" + showInLandscape + " appFilter=" + (appFilter.onlyListed() ? "only " : "except ") + appFilter.size();
         Diagnostics.fact("pill outline mode", Integer.toString(pillOutlineMode));
         Diagnostics.fact("island presentation", iMode ? "iMotion" : "stack");
         Diagnostics.fact("card material selected", materialStyle == MATERIAL_CLASSIC ? "classic" : "frosted");
@@ -919,9 +949,10 @@ public final class ModuleSettings {
     private static RuleConfig readRulesConfig(SharedPreferences source) {
         String custom = source.getString(KEY_RULES_CUSTOM, null);
         Set<String> off = source.getStringSet(KEY_RULES_DISABLED, null);
-        RuleConfig next = new RuleConfig(custom == null || custom.isEmpty() ? null : custom,
-                off == null ? null : new java.util.HashSet<>(off));
-        return next.revision == rulesConfig.revision ? rulesConfig : next;
+        custom = custom == null || custom.isEmpty() ? null : custom;
+        Set<String> disabled = off == null ? java.util.Collections.emptySet() : off;
+        return java.util.Objects.equals(custom, rulesConfig.custom) && disabled.equals(rulesConfig.disabled)
+                ? rulesConfig : new RuleConfig(custom, disabled);
     }
 
     /** Staged cards from the rules (delivery, taxi, route, device connection). */
@@ -996,6 +1027,12 @@ public final class ModuleSettings {
         return headsUpIsland;
     }
 
+    /** Style the system popup in place; stock alert decisions, input and lifetime remain authoritative. */
+    public static boolean systemPopupStyle() {
+        ensureStarted();
+        return systemPopupStyle;
+    }
+
     /** Drop the shade row of a progress notification while the island shows its card. */
     public static boolean hideProgressOriginals() {
         ensureStarted();
@@ -1030,6 +1067,18 @@ public final class ModuleSettings {
     public static boolean thirdPartyCalls() {
         ensureStarted();
         return thirdPartyCalls;
+    }
+
+    /** A ringing call gets the island's caller card; off leaves every incoming call to the system's own call UI. */
+    public static boolean incomingCallCards() {
+        ensureStarted();
+        return incomingCallCards;
+    }
+
+    /** Screen recording is shown on the island; off leaves it to the system's own chip and notification. */
+    public static boolean screenRecordingCard() {
+        ensureStarted();
+        return screenRecordingCard;
     }
 
     /** Do Not Disturb / airplane / power saving / flashlight / hotspot / auto-rotate feedback. */

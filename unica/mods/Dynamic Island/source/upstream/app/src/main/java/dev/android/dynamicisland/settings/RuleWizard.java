@@ -321,6 +321,10 @@ final class RuleWizard {
         }
         final String ruleId = unique;
         UserRules edited = rules.user();
+        if (!edited.canCreate(ruleId)) {
+            Toast.makeText(activity, R.string.rules_limit_reached, Toast.LENGTH_LONG).show();
+            return;
+        }
         edited.create(ruleId);
         edited.setText(ruleId, "name", name);
         int top = 0;

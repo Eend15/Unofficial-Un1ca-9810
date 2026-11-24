@@ -7,6 +7,7 @@ import dev.android.dynamicisland.xposed.hooks.SystemUiHooks;
 /**
  * LSPosed entry point (named in {@code assets/xposed_init}). Installs the hooks once, in the main
  * System UI process only, and not at all when {@link CrashGuard} has switched the module off.
+ * Samsung's separate brief-popup process receives only the optional native popup rendering bridge.
  */
 public final class Entry implements IXposedHookLoadPackage {
     private static final String SYSTEM_UI = "com.android.systemui";
@@ -29,6 +30,14 @@ public final class Entry implements IXposedHookLoadPackage {
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+        if (SYSTEM_UI.equals(lpparam.packageName) && (SYSTEM_UI + ":edgelighting").equals(lpparam.processName)) {
+            if (!installed) {
+                installed = true;
+                try { dev.android.dynamicisland.xposed.hooks.BriefPopupBridge.install(lpparam.classLoader); }
+                catch (Throwable failure) { XLog.e("brief popup bridge unavailable", failure); }
+            }
+            return;
+        }
         boolean mainSystemUi = SYSTEM_UI.equals(lpparam.packageName) && SYSTEM_UI.equals(lpparam.processName);
         if (!mainSystemUi || installed) {
             return;

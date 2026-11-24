@@ -79,6 +79,42 @@ public class FullscreenVisibilityTest {
         assertFalse(view.isSuppressedNow());
     }
 
+    @Test public void landscapeOptInKeepsTheIslandInLandscapeAndInFullScreenGamesButNotOnTheLockScreen() {
+        SettingsActivity activity = Robolectric.buildActivity(SettingsActivity.class).setup().get();
+        SharedPreferences prefs = ModuleSettings.openStore(activity);
+        ModuleSettings.configurePreview(prefs);
+        ReflectionHelpers.callInstanceMethod(activity, "behaviorPage");
+        Switch option = findSwitch(activity.findViewById(android.R.id.content), activity.getString(R.string.show_in_landscape));
+        assertNotNull(option);
+        assertFalse(option.isChecked());
+
+        IslandPlacement placement = new IslandPlacement(activity, new Handler(Looper.getMainLooper()),
+                getClass().getClassLoader(), IslandHost.NONE, new IslandWindow.Listener() {
+                    @Override public void onWindowConfigurationChanged() { }
+                    @Override public void onWindowInsetsChanged() { }
+                }, new AudioLevels());
+        placement.ensureWindow(true);
+        IslandView view = placement.view();
+        RuntimeEnvironment.setQualifiers("w800dp-h360dp-land-mdpi");
+        placement.updateGeometry();
+        assertTrue("hidden in landscape by default", view.isSuppressedNow());
+
+        option.performClick();
+        assertTrue(prefs.getBoolean(ModuleSettings.KEY_SHOW_IN_LANDSCAPE, false));
+        ModuleSettings.configurePreview(prefs);
+        placement.updateGeometry();
+        assertFalse("shown in landscape", view.isSuppressedNow());
+        placement.setStatusBarWindowState(2);
+        assertFalse("shown in a landscape full-screen game", view.isSuppressedNow());
+        placement.setBarState(1);
+        assertTrue("still hidden on the lock screen", view.isSuppressedNow());
+        placement.setBarState(0);
+
+        RuntimeEnvironment.setQualifiers("w360dp-h800dp-port-mdpi");
+        placement.updateGeometry();
+        assertTrue("portrait full screen still follows its own option", view.isSuppressedNow());
+    }
+
     private Switch findSwitch(View view, String title) {
         if (view instanceof Switch && title.contentEquals(view.getContentDescription())) return (Switch) view;
         if (view instanceof ViewGroup) {

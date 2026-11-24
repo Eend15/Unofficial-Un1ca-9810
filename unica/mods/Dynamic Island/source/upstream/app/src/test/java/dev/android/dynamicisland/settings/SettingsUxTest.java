@@ -93,6 +93,19 @@ public class SettingsUxTest {
         assertFalse(p.getBoolean(ModuleSettings.KEY_ALL_NOTIFICATIONS,true));
     }
 
+    @Test public void systemPopupStyleIsOptionalExclusiveAndIndependentOfIslandForegroundSettings() {
+        SettingsActivity a=activity();SharedPreferences p=prefs(a);open(a,"notificationsPage");
+        choose(a,R.string.ui_notification_mode,3);
+        assertTrue(p.getBoolean(ModuleSettings.KEY_SYSTEM_POPUP_STYLE,false));
+        assertFalse(p.getBoolean(ModuleSettings.KEY_HEADS_UP_ISLAND,true));
+        assertFalse(p.getBoolean(ModuleSettings.KEY_ALL_NOTIFICATIONS,true));
+        assertFalse(toggle(a,R.string.foreground_notifications).isEnabled());
+        assertNotNull(find(a.page(),a.getString(R.string.ui_notification_system_style_desc)));
+        choose(a,R.string.ui_notification_mode,1);
+        assertFalse(p.getBoolean(ModuleSettings.KEY_SYSTEM_POPUP_STYLE,true));
+        assertTrue(p.getBoolean(ModuleSettings.KEY_HEADS_UP_ISLAND,false));
+    }
+
     @Test public void searchableAppSelectionIsTransactionalAcrossFilterChanges() {
         SettingsActivity a=activity();OneUi ui=ReflectionHelpers.getField(a,"ui");
         List<Map.Entry<String,String>> rows=Arrays.asList(new AbstractMap.SimpleEntry<>("com.alpha","Alpha"),new AbstractMap.SimpleEntry<>("com.beta","Beta"));

@@ -61,9 +61,11 @@ final class ItemLauncher {
         try {
             Intent fill = new Intent();
             Bundle results = new Bundle();
+            if (action.remoteInputs == null || action.intent == null) return false;
             for (android.app.RemoteInput input : action.remoteInputs) {
-                results.putCharSequence(input.getResultKey(), text);
+                if (ReplyInputs.accepts(input, text)) results.putCharSequence(input.getResultKey(), text);
             }
+            if (results.isEmpty()) return false;
             android.app.RemoteInput.addResultsToIntent(action.remoteInputs, fill, results);
             action.intent.send(ctx, 0, fill, null, null, null, backgroundStartOptions().toBundle());
             haptics.click();

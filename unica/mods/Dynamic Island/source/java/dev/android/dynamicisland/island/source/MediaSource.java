@@ -12,7 +12,6 @@ import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
 import android.os.Handler;
 import android.os.SystemClock;
-import dev.android.dynamicisland.island.DeadlineGate;
 import dev.android.dynamicisland.island.graphics.ArtworkPalette;
 import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
@@ -35,8 +34,6 @@ import java.util.function.BiPredicate;
 public final class MediaSource {
     /** How long the previous cover stays while a player has dropped it for a new track. */
     private static final long ART_GRACE_MS = 1500;
-    /** Rapid track changes cannot retain the previous song's cover indefinitely. */
-    private static final long MAX_MISSING_ART_MS = ART_GRACE_MS * 2;
     /** At most this many custom playback actions (like, shuffle ...) are put on the card. */
     private static final int MAX_CUSTOM_ACTIONS = 2;
 
@@ -75,7 +72,6 @@ public final class MediaSource {
             return size() > MAX_RETIRED;
         }
     };
-    private final Map<String, Cover> covers = new HashMap<>();
     private final MediaSessionManager.OnActiveSessionsChangedListener sessionsListener = this::sync;
     private OutputSource output;
     private BiPredicate<String, Integer> recordingFilter = (pkg, userId) -> false;
@@ -110,12 +106,7 @@ public final class MediaSource {
     }
 
     public void start() {
-        output = new OutputSource(ctx, main, () -> {
-            for (Session s : sessions.values()) {
-                s.card = null; // rebuilt with the new output device
-            }
-            onChange.run();
-        });
+        output = new OutputSource(ctx, main, onChange);
         output.start();
         try {
             MediaSessionManager manager = ctx.getSystemService(MediaSessionManager.class);
@@ -156,8 +147,9 @@ public final class MediaSource {
     /** Cancel old pause/artwork deadlines before disabling this runtime. */
     public void cancelPending() {
         main.removeCallbacks(tick);
-        for (Cover cover : covers.values()) {
-            cover.cancelExpiry();
+        for (Session s : sessions.values()) {
+            // Pending art refreshes only rebuild while their track is still awaited.
+            s.cover.pendingTrack = null;
         }
     }
 
@@ -167,12 +159,6 @@ public final class MediaSource {
         for (Session s : sessions.values()) {
             live.add(s.controller.getPackageName());
         }
-        for (Map.Entry<String, Cover> entry : covers.entrySet()) {
-            if (!live.contains(entry.getKey())) {
-                entry.getValue().cancelExpiry();
-            }
-        }
-        covers.keySet().retainAll(live);
         assets.retainActionIconsOf(live);
     }
 
@@ -194,6 +180,7 @@ public final class MediaSource {
         }
         if (!shown.isPlaying()) {
             long remaining = ModuleSettings.pausedTimeoutMs() - (now - shown.lastActive);
+            main.removeCallbacks(tick);
             main.postDelayed(tick, Math.max(50L, remaining + 50));
         }
         String pkg = shown.controller.getPackageName();
@@ -262,10 +249,9 @@ public final class MediaSource {
      * Album art to show for a track. Some players briefly drop the bitmap while switching tracks, so
      * the previous art is kept for {@link #ART_GRACE_MS} before falling back to the app icon.
      */
-    public Bitmap resolveArt(String pkg, Bitmap art, String track) {
-        Cover cover = covers.computeIfAbsent(pkg, p -> new Cover(p));
+    private Bitmap resolveArt(Session session, Bitmap art, String track) {
+        Cover cover = session.cover;
         if (art != null) {
-            cover.cancelExpiry();
             if (cover.art != null && cover.art != art && looksIdentical(cover.art, art)) {
                 art = cover.art; // keep the instance already analysed
             }
@@ -275,53 +261,30 @@ public final class MediaSource {
             }
             cover.track = track;
             cover.pendingTrack = null;
-            cover.missingSince = 0L;
             return art;
         }
         if (cover.art == null) {
-            cover.cancelExpiry();
-            cover.missingSince = 0L;
             return null;
         }
         if (track.equals(cover.track)) {
-            cover.cancelExpiry();
-            cover.pendingTrack = null;
-            cover.missingSince = 0L;
             return cover.art;
         }
         long now = SystemClock.uptimeMillis();
-        if (cover.missingSince == 0L) {
-            cover.missingSince = now;
-        }
         if (!track.equals(cover.pendingTrack)) {
-            cover.cancelExpiry();
             cover.pendingTrack = track;
             cover.pendingSince = now;
         }
-        long deadline = Math.min(cover.pendingSince + ART_GRACE_MS,
-                cover.missingSince + MAX_MISSING_ART_MS);
-        long left = deadline - now;
+        long left = ART_GRACE_MS - (now - cover.pendingSince);
         if (left <= 0) {
-            cover.cancelExpiry();
-            cover.art = null;
-            cover.pendingTrack = null;
-            cover.missingSince = 0L;
             return null;
         }
-        // Repeated metadata callbacks in this 1.5s interval must not queue
-        // redundant refreshes for exactly the same pending artwork.
-        cover.expiry.scheduleLatest(deadline + 20);
-        return cover.art;
-    }
-
-    /** Drops the cached cards of a player so they are rebuilt (its art grace period is over). */
-    private void rebuildCards(String pkg) {
-        for (Session s : sessions.values()) {
-            if (s.controller.getPackageName().equals(pkg)) {
-                s.card = null;
+        main.postDelayed(() -> {
+            if (sessions.get(session.controller.getSessionToken()) == session && track.equals(cover.pendingTrack)) {
+                session.card = null;
+                onChange.run();
             }
-        }
-        onChange.run();
+        }, 20 + left);
+        return cover.art;
     }
 
     private static boolean looksIdentical(Bitmap a, Bitmap b) {
@@ -346,35 +309,19 @@ public final class MediaSource {
     }
 
     /** The last cover of one player and the track it belonged to. */
-    private final class Cover {
-        final DeadlineGate expiry;
+    private static final class Cover {
         Bitmap art;
         ArtworkPalette palette;
         String track;
         /** Track that arrived without art, and since when we have been waiting for it. */
         String pendingTrack;
         long pendingSince;
-        /** First artwork-free track in the current burst, not reset on each track switch. */
-        long missingSince;
-        Cover(String pkg) {
-            expiry = new DeadlineGate(new DeadlineGate.Scheduler() {
-                @Override public boolean postAtTime(Runnable r, long uptime) {
-                    return main.postAtTime(r, uptime);
-                }
-                @Override public void removeCallbacks(Runnable r) {
-                    main.removeCallbacks(r);
-                }
-            }, () -> rebuildCards(pkg));
-        }
-
-        void cancelExpiry() {
-            expiry.cancel();
-        }
     }
 
     /** One media session with the latest playback state and metadata it reported. */
     private final class Session extends MediaController.Callback {
         final MediaController controller;
+        final Cover cover = new Cover();
         final int userId;
         /** Cleared only by a fresh playback event after the raw recording activity goes away. */
         boolean recorded;
@@ -382,6 +329,7 @@ public final class MediaSource {
         boolean playbackPending;
         MediaMetadata meta;
         PlaybackState state;
+        MediaController.PlaybackInfo playbackInfo;
         long lastActive;
         /** The card for the current state; null when it must be rebuilt. */
         IslandItem card;
@@ -394,6 +342,7 @@ public final class MediaSource {
             userId = uid < 0 ? -1 : uid / 100_000;
             state = controller.getPlaybackState();
             meta = controller.getMetadata();
+            playbackInfo = controller.getPlaybackInfo();
             if (isPlaying()) {
                 lastActive = SystemClock.uptimeMillis();
             }
@@ -407,6 +356,9 @@ public final class MediaSource {
                 retiredRecordings.put(controller.getSessionToken(), Boolean.TRUE);
             } else if (hasContent()) {
                 IslandItem last = card();
+                long now = SystemClock.elapsedRealtime();
+                last.mediaPosition = last.currentMediaPosition(now);
+                last.mediaPositionUpdateTime = now;
                 last.playing = false;
                 retired.put(controller.getSessionToken(), last);
             }
@@ -516,7 +468,7 @@ public final class MediaSource {
 
         /** The card of this session, rebuilt only after the state, metadata or output device changed. */
         IslandItem card() {
-            if (card == null) {
+            if (card == null || !sameOutput(card)) {
                 card = buildCard();
             }
             return card;
@@ -566,11 +518,10 @@ public final class MediaSource {
                     break;
                 }
             }
-            Bitmap art = resolveArt(pkg, fromMeta, track);
+            Bitmap art = resolveArt(this, fromMeta, track);
             if (art != paletteArt) {
                 paletteArt = art;
-                Cover cover = covers.get(pkg);
-                palette = art == null ? null : (cover == null || cover.art != art)
+                palette = art == null ? null : (cover.art != art)
                         ? CoverAccent.palette(art) : cover.palette;
             }
             Drawable appIcon = assets.icon(pkg);
@@ -595,12 +546,38 @@ public final class MediaSource {
             }
         }
 
+        private GlyphIcon.Kind outputGlyph;
+
+        private OutputSource.Output sessionOutput() {
+            MediaController.PlaybackInfo info = playbackInfo;
+            return info != null && info.getPlaybackType() == MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE
+                    ? null : output == null ? null : output.current();
+        }
+
+        @Override public void onAudioInfoChanged(MediaController.PlaybackInfo info) {
+            playbackInfo = info;
+            card = null;
+            onChange.run();
+        }
+
+        private boolean sameOutput(IslandItem it) {
+            OutputSource.Output current = sessionOutput();
+            if (current == null || current.name == null) return it.mediaOutput == null && it.mediaOutputBattery == -1;
+            return java.util.Objects.equals(it.mediaOutput, current.name) && it.mediaOutputBattery == current.battery
+                    && outputGlyph == current.icon;
+        }
+
         private void bindOutput(IslandItem it) {
-            OutputSource.Output current = output == null ? null : output.current();
+            OutputSource.Output current = sessionOutput();
             if (current != null && current.name != null) {
                 it.mediaOutput = current.name;
-                it.mediaOutputIcon = GlyphIcon.of(current.icon);
+                if (it.mediaOutputIcon == null || outputGlyph != current.icon) it.mediaOutputIcon = GlyphIcon.of(current.icon);
+                outputGlyph = current.icon;
                 it.mediaOutputBattery = current.battery;
+            } else {
+                it.mediaOutput = null;
+                it.mediaOutputIcon = null;
+                it.mediaOutputBattery = -1;
             }
         }
 
@@ -622,7 +599,8 @@ public final class MediaSource {
             }
             it.mediaPosition = state.getPosition();
             it.mediaPositionUpdateTime = state.getLastPositionUpdateTime();
-            it.mediaSpeed = state.getPlaybackSpeed() == 0.0f ? 1.0f : state.getPlaybackSpeed();
+            float speed = state.getPlaybackSpeed();
+            it.mediaSpeed = Float.isFinite(speed) ? speed : 0.0f;
             if ((state.getActions() & PlaybackState.ACTION_SEEK_TO) != 0) {
                 it.mediaSeek = controls::seekTo;
             }

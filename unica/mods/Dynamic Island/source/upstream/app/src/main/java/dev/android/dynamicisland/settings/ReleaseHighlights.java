@@ -5,7 +5,7 @@ import java.util.List;
 
 /** Curated release content, independent of selection history and presentation. Add entries here at release time. */
 final class ReleaseHighlights {
-    enum Art { MOTION, FLASHLIGHT, SEARCH, GLASS, PREVIEW, SWIPE, BLUR, NOTIFY, PROGRESS, HOTSPOT, UNLOCK, HEADSET, IDLE, HOLD, PERFORMANCE, PALETTE, PULL, POPUP_TIME, CHARGING, CHARGING_TEXT, PRIVACY }
+    enum Art { MOTION, FLASHLIGHT, SEARCH, GLASS, PREVIEW, SWIPE, BLUR, NOTIFY, PROGRESS, HOTSPOT, UNLOCK, HEADSET, IDLE, HOLD, PERFORMANCE, PALETTE, PULL, POPUP_TIME, CHARGING, CHARGING_TEXT, PRIVACY, SYSTEM_POPUP, CALL, RECORDING, PULL_BUTTONS, LANDSCAPE }
     record Feature(String id,int title,int summary,Art art,SettingsSearchCatalog.Route route,int settingTitle) { }
     record Release(String family,List<Feature> features) { }
 
@@ -60,7 +60,20 @@ final class ReleaseHighlights {
                     new Feature("charging-text",R.string.recommend16_charging_text_title,R.string.recommend16_charging_text,Art.CHARGING_TEXT,
                             SettingsSearchCatalog.Route.EVENTS,R.string.setting_charging_text),
                     new Feature("privacy-in-app",R.string.recommend16_privacy_title,R.string.recommend16_privacy,Art.PRIVACY,
-                            SettingsSearchCatalog.Route.EVENTS,R.string.setting_privacy_in_app)))
+                            SettingsSearchCatalog.Route.EVENTS,R.string.setting_privacy_in_app))),
+            new Release("0.1.17",List.of(
+                    new Feature("system-popups",R.string.recommend17_popup_title,R.string.recommend17_popup,Art.SYSTEM_POPUP,
+                            SettingsSearchCatalog.Route.NOTIFICATIONS,R.string.ui_notification_mode),
+                    new Feature("incoming-calls",R.string.recommend17_call_title,R.string.recommend17_call,Art.CALL,
+                            SettingsSearchCatalog.Route.NOTIFICATIONS,R.string.setting_incoming_calls),
+                    new Feature("screen-recording",R.string.recommend17_recording_title,R.string.recommend17_recording,Art.RECORDING,
+                            SettingsSearchCatalog.Route.NOTIFICATIONS,R.string.setting_screen_recording),
+                    new Feature("pull-buttons",R.string.recommend17_pull_title,R.string.recommend17_pull,Art.PULL_BUTTONS,
+                            SettingsSearchCatalog.Route.NOTIFICATIONS,R.string.setting_peek_pull_buttons),
+                    new Feature("wide-charging-popup",R.string.recommend17_wide_title,R.string.recommend17_wide,Art.CHARGING,
+                            SettingsSearchCatalog.Route.EVENTS,R.string.setting_wide_charging),
+                    new Feature("landscape",R.string.recommend17_landscape_title,R.string.recommend17_landscape,Art.LANDSCAPE,
+                            SettingsSearchCatalog.Route.BEHAVIOR,R.string.show_in_landscape)))
     );
 
     static Release forVersion(String version) {

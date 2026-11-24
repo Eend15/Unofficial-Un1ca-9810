@@ -17,7 +17,8 @@ final class SystemUiRestarter {
 
     /** Blocks until the kill command finished; call off the main thread. @return true when root ran it. */
     static boolean restart() {
-        return run("killall " + PROCESS) || run("pkill -f " + PROCESS);
+        // Samsung's brief-popup renderer is a separate process in the same LSPosed scope.
+        return run("pkill -f '^" + PROCESS.replace(".", "[.]") + "(:edgelighting)?$'") || run("killall " + PROCESS);
     }
 
     private static boolean run(String command) {

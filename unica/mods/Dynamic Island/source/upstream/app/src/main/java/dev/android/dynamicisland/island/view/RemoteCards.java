@@ -77,6 +77,8 @@ final class RemoteCards {
         if (existing != null) {
             layer.removeView(existing);
             clearEffect(existing, true);
+            inflated.remove(item.key);
+            sources.remove(item.key);
         }
         Context context = inflationContext();
         View fresh = item.remoteView.apply(context, new FrameLayout(context));

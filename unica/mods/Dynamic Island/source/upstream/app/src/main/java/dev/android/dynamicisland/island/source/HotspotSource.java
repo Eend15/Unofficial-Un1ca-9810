@@ -42,6 +42,7 @@ public final class HotspotSource {
     private boolean registered;
     private boolean on;
     private long startedAt;
+    private long startedElapsed;
     private long baseBytes = -1;
     private long bytes;
     private int clients;
@@ -101,6 +102,7 @@ public final class HotspotSource {
         if (on) return;
         on = true;
         startedAt = SystemClock.uptimeMillis();
+        startedElapsed = SystemClock.elapsedRealtime();
         baseBytes = -1;
         bytes = 0;
         clients = 0;
@@ -187,7 +189,7 @@ public final class HotspotSource {
 
     public void collect(List<IslandItem> out) {
         if (!on || !registered || !ModuleSettings.hotspotCard()) return;
-        long seconds = Math.max(0, (SystemClock.uptimeMillis() - startedAt) / 1000);
+        long seconds = Math.max(0, (SystemClock.elapsedRealtime() - startedElapsed) / 1000);
         IslandItem item = new IslandItem("event:hotspot");
         item.kind = IslandItem.Kind.EVENT;
         item.eventLayout = IslandItem.EventLayout.STATUS;

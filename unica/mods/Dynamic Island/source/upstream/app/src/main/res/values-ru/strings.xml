@@ -44,7 +44,7 @@
     <string name="setting_progress_any_desc">Также для обычных уведомлений с полосой прогресса.</string>
     <string name="setting_heads_up">Уведомления на острове</string>
     <string name="setting_all_notifications">Все уведомления на острове</string>
-    <string name="setting_all_notifications_desc">Показывать карточку для каждого нового уведомления, включая тихие. Постоянные уведомления, звонки, будильники и открытое приложение исключены. Экспериментальная функция: может работать не на всех телефонах и приложениях.</string>
+    <string name="setting_all_notifications_desc">Показывать карточку для каждого нового уведомления со звуком, даже если система не показала бы его баннером. Беззвучные, постоянные уведомления, звонки, будильники и открытое приложение исключены. Экспериментальная функция: может работать не на всех телефонах и приложениях.</string>
     <string name="setting_heads_up_desc">Показывать сообщения и другие всплывающие уведомления карточками острова. Звонки и будильники остаются системными.</string>
     <string name="setting_otp">Карточки кодов подтверждения</string>
     <string name="setting_otp_desc">Текст с кодом подтверждения открывает карточку с кодом и кнопкой копирования.</string>
@@ -549,6 +549,8 @@
     <string name="glow_theme_colour">Настройки цвета темы</string>
     <string name="show_in_fullscreen">Показывать в портретном полноэкранном режиме</string>
     <string name="show_in_fullscreen_desc">Показывать текущие активности, когда камера или другое приложение скрывает строку состояния. На экране блокировки, Always On Display и при отсутствии активностей остров скрывается.</string>
+    <string name="show_in_landscape">Показывать в альбомной ориентации и в играх</string>
+    <string name="show_in_landscape_desc">Остров остаётся видимым, когда телефон повёрнут набок, и в полноэкранных приложениях, например в играх. На экране блокировки и в Always On Display он по-прежнему скрыт. Альбомная раскладка отточена хуже, чем портретная.</string>
     <string name="setting_charging_info">Подробная карточка зарядки</string>
     <string name="setting_charging_info_desc">Ток батареи, расчётная мощность и температура при зарядке.</string>
     <string name="setting_charging_stats">Статистика зарядки</string>
@@ -574,6 +576,8 @@
     <string name="island_charge_seconds">%1$d с</string>
     <string name="setting_stock_charging_animation">Эффект зарядки батареи Samsung</string>
     <string name="setting_stock_charging_animation_desc">Цветная анимация с расширением значка батареи в строке состояния при начале зарядки. По умолчанию выключена.</string>
+    <string name="setting_wide_charging">Широкое окно зарядки</string>
+    <string name="setting_wide_charging_desc">При подключении зарядки показывать окно зарядки длинной капсулой во всю строку состояния. Выключите, чтобы окно было обычного размера. Работает, только когда эффект зарядки Samsung выключен.</string>
     <string name="concurrent_recording_input">Параллельная запись для волны (эксперимент)</string>
     <string name="concurrent_recording_input_desc">Показывает реальную громкость Samsung Диктофона без добавления его в область LSPosed. По умолчанию выключено. Поддержка зависит от устройства; выключите, если влияет на запись.</string>
     <string name="card_roundness">Углы карточек</string>
@@ -610,6 +614,8 @@
     <string name="search_terms_music">песня музыка аудио альбом обложка плеер воспроизведение</string>
     <string name="search_terms_battery">зарядка заряд батарея аккумулятор ток напряжение мощность температура проценты</string>
     <string name="search_terms_charging_effect">Samsung стандартная системная зарядка анимация батарея молния мигание</string>
+    <string name="search_terms_landscape">альбомная горизонтальная поворот игра игры полный экран видео</string>
+    <string name="search_terms_wide_charging">широкое длинное большое маленькое размер зарядка окно капсула ширина</string>
     <string name="search_terms_notifications">уведомление уведомления баннер всплывающее сообщения оповещение беззвучные карточка стандартный звук чат</string>
     <string name="search_terms_download">загрузка скачивание передача прогресс отправка файл</string>
     <string name="search_terms_calls">звонок звонки телефон набор голос VoIP</string>
@@ -733,4 +739,28 @@
     <string name="recommend16_charging_text">Включите подробности зарядки и выберите строки текста вместо индикатора. Можно добавить статистику с включённым и выключенным экраном.</string>
     <string name="recommend16_privacy_title">Камера и микрофон</string>
     <string name="recommend16_privacy">Показывайте камеру и микрофон даже для открытого приложения. Сначала включите индикаторы приватности.</string>
+    <string name="recommend17_popup_title">Системные окна в стиле острова</string>
+    <string name="recommend17_popup">Четвёртый вариант для карточек уведомлений. Системное окно сохраняет своё время показа, свайпы и ответы, а получает внешний вид острова.</string>
+    <string name="recommend17_call_title">Звонки по-вашему</string>
+    <string name="recommend17_call">Выключите карточки входящих звонков, чтобы звонок обрабатывал системный экран вызова. Карточка звонка появится после ответа.</string>
+    <string name="recommend17_recording_title">Запись вне острова</string>
+    <string name="recommend17_recording">Выключите карточку записи экрана, чтобы остались системный индикатор и уведомление.</string>
+    <string name="recommend17_pull_title">Кнопки по требованию</string>
+    <string name="recommend17_pull">Карточки уведомлений могут открываться без кнопок. Потяните карточку вниз, чтобы показать их.</string>
+    <string name="recommend17_wide_title">Размер окна зарядки</string>
+    <string name="recommend17_wide">Выключите широкое окно зарядки, чтобы при подключении появлялось окно обычного размера.</string>
+    <string name="recommend17_landscape_title">Альбомный режим и игры</string>
+    <string name="recommend17_landscape">Остров остаётся на экране, когда телефон повёрнут набок и в полноэкранных играх.</string>
+    <string name="island_reply_failed">Не удалось отправить ответ. Введённый текст сохранён.</string>
+    <string name="rules_limit_reached">Можно добавить до 40 пользовательских правил. Сначала измените или удалите существующее правило.</string>
+    <string name="ui_notification_system_style">Системные всплывающие уведомления в стиле острова</string>
+    <string name="ui_notification_system_style_desc">Сохраняет системное время показа, жесты, ответы и поведение в полноэкранном режиме. Уведомления открытого приложения также определяются системой. Краткие окна Samsung заменяются подробными баннерами. Настройки острова для открытого приложения и полного экрана не применяются. Звонки сохраняют отдельные кнопки управления.</string>
+    <string name="setting_incoming_calls">Карточки входящих звонков</string>
+    <string name="setting_incoming_calls_desc">Показывать входящий звонок карточкой на острове с именем звонящего и кнопками ответа и отклонения. Если выключить, все входящие звонки остаются на системном экране вызова, а карточка звонка появится после ответа.</string>
+    <string name="search_terms_incoming_calls">входящий звонок вызов звонящий ответить отклонить телефон карточка выключить отключить</string>
+    <string name="setting_screen_recording">Запись экрана</string>
+    <string name="setting_screen_recording_desc">Показывать запись экрана на острове с таймером и кнопкой остановки. Если выключить, запись остаётся за системным индикатором и уведомлением.</string>
+    <string name="search_terms_screen_recording">запись экрана запись рекордер захват таймер остановить чип выключить отключить</string>
+    <string name="setting_peek_pull_buttons">Кнопки по свайпу вниз</string>
+    <string name="setting_peek_pull_buttons_desc">Карточки уведомлений открываются без кнопок. Потяните карточку вниз, чтобы их показать.</string>
 </resources>

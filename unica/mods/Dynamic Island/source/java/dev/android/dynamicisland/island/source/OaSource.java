@@ -102,7 +102,6 @@ public final class OaSource {
             order = collectOne(data, order, out, foreground, pip, hiddenByForeground, packages);
         }
         calls.collect(callController, out, packages, hiddenByForeground, foreground, foregroundConfirmed);
-        cards.pruneStopwatches(out);
     }
 
     /** Adds the card of one activity to {@code out}; returns the next sort order. */
@@ -160,13 +159,30 @@ public final class OaSource {
         if (a.isMedia() || a.pkg == null || (a.isNowBarStyle() && !ModuleSettings.experimentalRecovery())) {
             return null;
         }
+        // System UI no longer promotes it (the live activity ended): it is an ordinary notification again, and its own
+        // row has to show, not a card made from what is left of the activity
+        if (a.isDemoted()) {
+            return null;
+        }
         Notification n = a.notification;
         boolean handledElsewhere = n != null && (a.isGroupSummary() || a.isCallStyle()
                 || n.extras.containsKey("android.mediaSession"));
         if (handledElsewhere || OaCardBuilder.kindOf(n, a.pkg) == IslandItem.Kind.CALL) {
             return null;
         }
-        return cards.cardFor(a);
+        IslandItem card = cards.cardFor(a);
+        return hasNothingToShow(card) ? null : card; // an empty card would hide the row's own content behind a blank pill
+    }
+
+    /** A card with no text, no custom view, no progress, no buttons and no pictures to put on it. */
+    static boolean hasNothingToShow(IslandItem it) {
+        return it == null || (it.remoteView == null && isBlank(it.title) && isBlank(it.subtitle) && isBlank(it.trailingText)
+                && it.progress < 0.0f && !it.progressIndeterminate && it.actions.isEmpty() && !it.hasTeams()
+                && it.leftImage == null && it.rightImage == null && it.cardImage == null);
+    }
+
+    private static boolean isBlank(CharSequence text) {
+        return text == null || text.toString().trim().isEmpty();
     }
 
     /** Fills the segments, milestones and progress of an Android 16 ProgressStyle notification. */

@@ -93,6 +93,10 @@ final class AospChips {
             if (model == hidden) {
                 continue; // already taken out earlier in this pass; the island keeps the model it was given
             }
+            if ("screenRecord".equals(slot) && !ModuleSettings.screenRecordingCard()) {
+                changed |= setFeed(slot, null); // the island shows no recording: the stock chip stays
+                continue;
+            }
             Object live = isActive(model) ? model : null;
             changed |= setFeed(slot, live);
             if (live != null) {

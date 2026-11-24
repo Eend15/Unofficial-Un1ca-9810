@@ -6,6 +6,7 @@ import android.os.SystemClock;
 import dev.android.dynamicisland.island.graphics.GlyphIcon;
 import dev.android.dynamicisland.island.model.IslandItem;
 import dev.android.dynamicisland.island.source.CallSource;
+import dev.android.dynamicisland.island.source.IncomingCallSource;
 import dev.android.dynamicisland.island.source.WhatsAppCallClock;
 import dev.android.dynamicisland.island.source.CastSource;
 import dev.android.dynamicisland.island.source.EventSource;
@@ -65,6 +66,7 @@ final class IslandSources {
     final PromotedSource promoted;
     final RecorderNotificationSource recorder;
     final RuleSource rules;
+    final IncomingCallSource incoming;
     final CallSource calls;
     final PeekSource peeks;
 
@@ -94,8 +96,8 @@ final class IslandSources {
         rules = new RuleSource(ctx, main, onChange);
         progress.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
         rules.setOnShownChanged(() -> main.post(HideDuplicated::rebuild));
-        cast.onRecordersChanged = () -> main.post(HideDuplicated::rebuild);
         torch.onShownChanged = () -> main.post(HideDuplicated::rebuild);
+        incoming = new IncomingCallSource(ctx);
         calls = new CallSource(ctx, main, onChange, callClock);
         peeks = new PeekSource(ctx, main, onChange);
     }
@@ -163,6 +165,7 @@ final class IslandSources {
         guarded("progress", () -> progress.collect(items, foreground));
         guarded("rules", () -> rules.collect(items, foreground));
         guarded("calls", () -> calls.collect(items, foreground));
+        guarded("incoming calls", () -> incoming.collect(items, foreground));
         guarded("peeks", () -> peeks.collect(items));
         if (torch.replacesStockNotification()) {
             // System UI's own "flashlight in use" notification would show next to the brightness card

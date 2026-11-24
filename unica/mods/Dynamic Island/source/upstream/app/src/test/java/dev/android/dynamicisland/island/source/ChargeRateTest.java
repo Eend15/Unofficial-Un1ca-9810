@@ -45,4 +45,18 @@ public class ChargeRateTest {
         for (long t = 65_000; t <= 200_000; t += 5_000) { rate.add(t, counter); counter += 2_500; } // then 1.8 A
         assertEquals(1800, rate.estimateMa(200_000), 40);
     }
+    @Test public void aLongSamplingGapNeedsFreshEvidenceRatherThanATenMinuteAverage() {
+        ChargeRate rate=new ChargeRate();
+        rate.add(0,1_000_000);
+        rate.add(600_000,1_100_000);
+        assertTrue("a 600mA average over ten minutes is not a current reading",Double.isNaN(rate.estimateMa(600_000)));
+        rate.add(610_000,1_103_333);
+        assertEquals("fresh samples restore the estimate",1200,rate.estimateMa(610_000),1);
+        assertTrue("estimates also expire when no further sample arrives",Double.isNaN(rate.estimateMa(701_000)));
+        rate.add(702_000,1_200_000);
+        assertTrue(Double.isNaN(rate.estimateMa(702_000)));
+        rate.add(712_000,1_203_333);
+        assertEquals(1200,rate.estimateMa(712_000),1);
+    }
+
 }

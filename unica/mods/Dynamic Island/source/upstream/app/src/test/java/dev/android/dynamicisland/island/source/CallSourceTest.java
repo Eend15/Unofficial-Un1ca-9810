@@ -115,4 +115,14 @@ public class CallSourceTest {
         dir.mkdirs();
         RenderCapture.write(bmp, new File(dir, name + ".png"));
     }
+    @Test public void contactNamesCannotTurnAConnectedCallIntoADialingState() throws Exception {
+        for (String name : new String[]{"Calling Team", "Incoming Team", "Call ended Team", "Alice"}) {
+            Notification.Builder note = voiceCall(System.currentTimeMillis() - 30_000)
+                    .setContentTitle(name).setCategory(Notification.CATEGORY_CALL);
+            assertNotNull(name, source().build(sbn("example.voip", 50, note)));
+        }
+        assertNull(source().build(sbn("example.voip", 51, voiceCall(System.currentTimeMillis() - 30_000)
+                .setContentTitle("Alice").setContentText("Calling..."))));
+    }
+
 }

@@ -115,6 +115,7 @@ public final class SystemUiHooks {
             runGroup("shade media player", () -> ShadeMediaPlayer.install(cl));
         }
         runGroup("heads-up", () -> HeadsUpHooks.install(cl));
+        runGroup("system popup style", () -> StockPopupStyle.install(cl));
         reportUnattached();
     }
 

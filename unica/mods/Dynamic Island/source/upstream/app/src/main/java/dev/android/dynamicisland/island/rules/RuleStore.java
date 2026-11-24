@@ -17,7 +17,7 @@ public final class RuleStore {
             "/dev/android/dynamicisland/rules/builtin-translations.json"};
     private static final Object LOCK = new Object();
     private static volatile RuleDictionary current = RuleDictionary.empty();
-    private static volatile int builtFor = 0;
+    private static volatile long builtFor;
     private static volatile boolean built;
     private static volatile RuleDictionary forTesting;
 

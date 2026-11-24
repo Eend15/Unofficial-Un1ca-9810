@@ -71,7 +71,7 @@ public class ReleaseRecommendationsTest {
             controller.recreate();a=controller.get();rec=ReflectionHelpers.getField(a,"recommendations");assertEquals(0,countBanners(a.page()));
             var next=new ReleaseRecommendations(a,new OneUi(a),"0.1.14-dev999");LinearLayout other=new LinearLayout(a);next.addTo(other);
             assertFalse("the next release gets its own recommendations",next.dismissed());assertEquals(1,countBanners(other));
-            var unknown=new ReleaseRecommendations(a,new OneUi(a),"0.1.17");other.removeAllViews();unknown.addTo(other);
+            var unknown=new ReleaseRecommendations(a,new OneUi(a),"0.1.18");other.removeAllViews();unknown.addTo(other);
             assertEquals("unknown future releases never show stale feature lists",0,countBanners(other));
             a.openSetting(SettingsSearchCatalog.Route.ABOUT,R.string.hub_version,0);
             a.page().findViewWithTag(a.getString(R.string.recommend_about)).performClick();assertEquals(1,countBanners(a.page()));
@@ -162,6 +162,54 @@ public class ReleaseRecommendationsTest {
             assertEquals(release.features().size(),visited.size());
             assertEquals("the cards never change a setting",initial,settings.getAll());
         } finally { clearHistory(); }
+    }
+
+    @Test public void release0117CardsRotateAndOpenTheirRealSettingsWithoutChangingThem() throws Exception {
+        pin("0.1.17");clearHistory();
+        var release=ReleaseHighlights.forVersion("0.1.17");
+        assertNotNull("the stable release shows its cards",release);
+        assertSame("and so does a development build of the family",release,ReleaseHighlights.forVersion("0.1.17-dev3"));
+        assertEquals(java.util.Set.of("system-popups","incoming-calls","screen-recording","pull-buttons","wide-charging-popup","landscape"),
+                release.features().stream().map(ReleaseHighlights.Feature::id).collect(java.util.stream.Collectors.toSet()));
+        try(var controller=Robolectric.buildActivity(SettingsActivity.class).setup()) {
+            SettingsActivity a=controller.get();ReleaseRecommendations rec=ReflectionHelpers.getField(a,"recommendations");
+            assertTrue(rec.available());
+            SharedPreferences settings=ReflectionHelpers.getField(a,"prefs");Map<String,?> initial=Map.copyOf(settings.getAll());
+            HashSet<String> visited=new HashSet<>();
+            for(int i=0;i<release.features().size();i++) {
+                String id=rec.currentId();assertTrue("no card twice in a cycle: "+id,visited.add(id));
+                var feature=release.features().stream().filter(f->f.id().equals(id)).findFirst().orElseThrow();
+                assertFalse(a.getString(feature.title()).isEmpty());assertFalse(a.getString(feature.summary()).isEmpty());
+                a.page().findViewWithTag(ReleaseRecommendations.OPEN).performClick();
+                assertNotNull("the card '"+id+"' opens its real setting",a.page().findViewWithTag(a.getString(feature.settingTitle())));
+                a.goBack();
+                a.page().findViewWithTag(ReleaseRecommendations.NEXT).performClick();
+            }
+            assertEquals(release.features().size(),visited.size());
+            assertEquals("the cards never change a setting",initial,settings.getAll());
+        } finally { clearHistory(); }
+    }
+
+    @Test @Category(RenderCapture.class) public void capture0117Cards() throws Exception {
+        pin("0.1.17");clearHistory();
+        try {
+            for(String locale:new String[]{"en-rUS","ko-rKR","ja-rJP","zh-rCN","ru-rRU","tr-rTR","pt-rBR"}) {
+                RuntimeEnvironment.setQualifiers(locale+"-w360dp-h800dp-night-xxhdpi");
+                try(var controller=Robolectric.buildActivity(SettingsActivity.class).setup()) {
+                    SettingsActivity a=controller.get();ReleaseRecommendations rec=ReflectionHelpers.getField(a,"recommendations");
+                    for(var feature:ReleaseHighlights.forVersion("0.1.17").features()) {
+                        rec.restore(feature.id());a.refresh();
+                        View banner=a.page().findViewWithTag(ReleaseRecommendations.BANNER);assertNotNull(banner);
+                        banner.measure(View.MeasureSpec.makeMeasureSpec(984,View.MeasureSpec.EXACTLY),
+                                View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
+                        banner.layout(0,0,984,banner.getMeasuredHeight());
+                        android.graphics.Bitmap image=android.graphics.Bitmap.createBitmap(984,banner.getHeight(),android.graphics.Bitmap.Config.ARGB_8888);
+                        banner.draw(new android.graphics.Canvas(image));
+                        RenderCapture.write(image,new java.io.File("build/render/recommendation_0117_"+locale+"_"+feature.id()+".png"));image.recycle();
+                    }
+                }
+            }
+        } finally {RuntimeEnvironment.setQualifiers("ko-rKR-w360dp-h800dp-night-xxhdpi");clearHistory();}
     }
 
     @Test @Category(RenderCapture.class) public void capture0116Cards() throws Exception {

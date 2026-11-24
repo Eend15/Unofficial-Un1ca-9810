@@ -17,7 +17,7 @@ public final class UserRules {
     static final String LABEL_LANGUAGE = "en";
     /** Write user stage names for every shipped label language, ahead of the built-in translations. */
     private static final java.util.List<String> LABEL_LANGUAGES = dev.android.dynamicisland.island.IslandText.languages();
-    static final int MAX_STAGE = 9;
+    static final int MAX_STAGE = dev.android.dynamicisland.island.rules.RuleDictionary.MAX_STAGE;
 
     private JSONObject root;
 
@@ -139,7 +139,9 @@ public final class UserRules {
     /** The highest stage the user asked for, or 0. */
     public int maxStage(String id) {
         JSONObject rule = find(id, false);
-        return rule == null ? 0 : rule.optInt("max_stage", 0);
+        int maximum = rule == null ? 0 : rule.optInt("max_stage", 0);
+        for (Object[] signal : signals(id)) maximum = Math.max(maximum, (Integer) signal[0]);
+        return Math.max(0, Math.min(MAX_STAGE, maximum));
     }
 
     /** The name the user gave a stage, or null. */
@@ -175,7 +177,7 @@ public final class UserRules {
 
     /** Sets a number on the rule; 0 or less removes it (the rule's own value or the default applies again). */
     public void setNumber(String id, String key, int value) {
-        setKey(id, key, value > 0 ? Integer.valueOf(value) : null);
+        setKey(id, key, value > 0 ? Integer.valueOf("max_stage".equals(key) ? Math.min(MAX_STAGE, value) : value) : null);
     }
 
     /** Sets a yes / no on the rule; null removes it. */
@@ -237,6 +239,7 @@ public final class UserRules {
 
     /** {@code percentGroup} > 0 names the group of the pattern that holds a percentage, which then drives the card's bar. */
     public void addSignal(String id, int stage, String pattern, int percentGroup) {
+        stage = Math.max(0, Math.min(MAX_STAGE, stage));
         JSONObject rule = find(id, true);
         for (Object[] existing : signals(id)) {
             if ((Integer) existing[0] == stage && existing[1].equals(pattern.trim())) {
@@ -250,7 +253,6 @@ public final class UserRules {
                 signal.put("percent_group", percentGroup);
             }
             signals.put(signal);
-            rule.put("max_stage", Math.max(rule.optInt("max_stage", 1), stage));
         } catch (JSONException e) {
             throw new IllegalStateException(e);
         }
@@ -303,8 +305,14 @@ public final class UserRules {
         }
     }
 
+    /** Whether another editable rule fits within the runtime parser limit. */
+    public boolean canCreate(String id) {
+        return has(id) || ruleIds().size() < dev.android.dynamicisland.island.rules.RuleDictionary.MAX_RULES;
+    }
+
     /** Creates an empty rule of the user's own (or keeps the one that exists). */
     public void create(String id) {
+        if (!canCreate(id)) throw new IllegalStateException("Rule limit reached");
         find(id, true);
     }
 
@@ -326,7 +334,7 @@ public final class UserRules {
         }
         JSONObject labels = root.optJSONObject("status_labels");
         if (labels != null) {
-            labels.remove(id);
+            for (String key : jsonKeys(labels)) if (key.equalsIgnoreCase(id)) labels.remove(key);
             if (labels.length() == 0) {
                 root.remove("status_labels");
             }
@@ -372,6 +380,9 @@ public final class UserRules {
                 all = new JSONObject();
                 root.put("status_labels", all);
             }
+            if (all != null) {
+                for (String key : jsonKeys(all)) if (key.equalsIgnoreCase(id)) { id = key; break; }
+            }
             JSONObject byLanguage = all == null ? null : all.optJSONObject(id);
             if (byLanguage == null && create) {
                 byLanguage = new JSONObject();
@@ -407,7 +418,7 @@ public final class UserRules {
             java.util.Iterator<String> keys = rule.keys();
             while (keys.hasNext()) {
                 String key = keys.next();
-                if (!key.equals("id") && !key.equals("max_stage")) {
+                if (!key.equals("id")) {
                     onlyIdentity = false;
                 }
             }
@@ -417,19 +428,27 @@ public final class UserRules {
         }
         if (noLabels && root.optJSONObject("status_labels") != null) {
             JSONObject all = root.optJSONObject("status_labels");
-            JSONObject byLanguage = all.optJSONObject(id);
+            String storedId = id;
+            for (String key : jsonKeys(all)) if (key.equalsIgnoreCase(id)) { storedId = key; break; }
+            JSONObject byLanguage = all.optJSONObject(storedId);
             if (byLanguage != null) {
                 for (String language : LABEL_LANGUAGES) {
                     byLanguage.remove(language);
                 }
                 if (byLanguage.length() == 0) {
-                    all.remove(id);
+                    all.remove(storedId);
                 }
             }
             if (all.length() == 0) {
                 root.remove("status_labels");
             }
         }
+    }
+
+    private static List<String> jsonKeys(JSONObject object) {
+        List<String> out = new ArrayList<>();
+        object.keys().forEachRemaining(out::add);
+        return out;
     }
 
     private static JSONArray array(JSONObject rule, String key) throws JSONException {

@@ -53,8 +53,9 @@ public class SamsungCallPopupTakeoverTest {
         for (int i = 0; i < 500; i++) takeover.setNotifications(List.of(sbn));
         advance(149);assertEquals(1, requests.size());advance(1);assertEquals(2, requests.size());
         advance(850);assertEquals(4, requests.size());
+        advance(4000);assertEquals(7, requests.size());
         takeover.setNotifications(List.of(sbn));advance(10_000);
-        assertEquals("unchanged snapshots do not restart the retry burst", 4, requests.size());
+        assertEquals("unchanged snapshots do not restart the retry burst", 7, requests.size());
     }
 
     @Test public void removalAndRepostingCancelOldRequestsAndStartOnlyTheNewGeneration() {
@@ -107,5 +108,62 @@ public class SamsungCallPopupTakeoverTest {
         StatusBarNotification sbn = notification(1, 1000);
         rejected.setNotifications(List.of(sbn));advance(2000);assertEquals(1, requests.size());
         rejected.setNotifications(List.of(sbn));advance(2000);assertEquals(1, requests.size());
+    }
+    @Test public void aMiniWindowReceiverCreatedAfterThreeSecondsStillGetsTheHideRequest() {
+        long ready=android.os.SystemClock.uptimeMillis()+3000;List<Integer> delivered=new ArrayList<>();
+        var delayed=new SamsungCallPopupTakeover(main,user->{if(android.os.SystemClock.uptimeMillis()>=ready) delivered.add(user);});
+        delayed.setNotifications(List.of(notification(1,1000)));advance(3000);assertTrue(delivered.isEmpty());
+        advance(500);assertEquals(List.of(0),delivered);
+        delayed.setNotifications(List.of());advance(10000);assertEquals("ending the call cancels later attempts",1,delivered.size());
+    }
+
+
+    @Test public void samsungsWindowStaysWhileTheIslandCannotTakeTheCallAndGoesWhenItCan() {
+        StatusBarNotification sbn = notification(1, 1000);
+        takeover.setNotifications(List.of(sbn), n -> false);advance(5000);
+        assertTrue("the island cannot show the call: the stock window is left alone", requests.isEmpty());
+        takeover.setNotifications(List.of(sbn), n -> true);advance(0);
+        assertEquals("it goes once the island takes the call over", List.of(0), requests);
+        takeover.setNotifications(List.of(sbn), n -> false);advance(5000);
+        assertEquals("and the retries stop when the island lets go of it", 1, requests.size());
+    }
+
+    @Test public void aRingingCallNeedsACardAndACallInProgressOnlyAnIsland() {
+        Notification ringing = notification(1, 1000).getNotification();
+        assertFalse("no card could be built for it", SamsungCallPopupTakeover.replaceable(ringing, false, true));
+        assertFalse("the island is hidden", SamsungCallPopupTakeover.replaceable(ringing, true, false));
+        assertTrue(SamsungCallPopupTakeover.replaceable(ringing, true, true));
+        Notification ongoing = notification(SamsungCallPopupTakeover.PACKAGE, 2, 0, 1000, 2).getNotification();
+        assertTrue(SamsungCallPopupTakeover.replaceable(ongoing, false, true));
+        assertFalse(SamsungCallPopupTakeover.replaceable(ongoing, false, false));
+        Notification untyped = notification(SamsungCallPopupTakeover.PACKAGE, 3, 0, 1000, -1).getNotification();
+        assertFalse("an old-style ringing call without a card stays stock", SamsungCallPopupTakeover.replaceable(untyped, false, true));
+        untyped.extras.putBoolean(Notification.EXTRA_SHOW_CHRONOMETER, true);
+        assertTrue("one that runs a clock is in progress", SamsungCallPopupTakeover.replaceable(untyped, false, true));
+    }
+
+    @Test public void whileTheHoldIsOnSamsungsWindowStaysWhateverShapeTheRingingNotificationHas() {
+        // Notifications that look like a call in progress (type 2, or an untyped one with a clock) are replaceable on
+        // their own; only the state of the phone can tell that the call is in fact still ringing.
+        StatusBarNotification typedOngoing = notification(SamsungCallPopupTakeover.PACKAGE, 1, 0, 1000, 2);
+        StatusBarNotification untypedClock = notification(SamsungCallPopupTakeover.PACKAGE, 2, 0, 1000, -1);
+        untypedClock.getNotification().extras.putBoolean(Notification.EXTRA_SHOW_CHRONOMETER, true);
+        boolean[] ringingWithCardOff = {true};
+        takeover.holdWhile(() -> ringingWithCardOff[0]);
+
+        takeover.setNotifications(List.of(typedOngoing, untypedClock));
+        advance(5000);
+        assertTrue("ringing with the card switched off: Samsung's window is not touched", requests.isEmpty());
+
+        // answered: the phone stops ringing, the notification is reposted, the island takes over as before
+        ringingWithCardOff[0] = false;
+        takeover.setNotifications(List.of(notification(SamsungCallPopupTakeover.PACKAGE, 1, 0, 2000, 2)));
+        advance(0);
+        assertEquals(List.of(0), requests);
+
+        // a hold that starts while a burst is running drops the rest of that burst
+        ringingWithCardOff[0] = true;
+        advance(5000);
+        assertEquals("retries stop once the hold is on", 1, requests.size());
     }
 }

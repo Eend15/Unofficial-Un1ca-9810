@@ -44,7 +44,7 @@
     <string name="setting_progress_any_desc">带进度条的普通通知也显示为进度卡片。</string>
     <string name="setting_heads_up">岛内通知</string>
     <string name="setting_all_notifications">在岛内显示所有通知</string>
-    <string name="setting_all_notifications_desc">将所有新通知（包括不弹横幅的静默通知）显示为卡片。不包括持续通知、通话、闹钟和正在使用的应用。实验功能，部分设备或应用可能不适用。</string>
+    <string name="setting_all_notifications_desc">将所有会发出声音的新通知显示为卡片，即使系统不会弹出横幅。不包括静默通知、持续通知、通话、闹钟和正在使用的应用。实验功能，部分设备或应用可能不适用。</string>
     <string name="setting_heads_up_desc">将消息等横幅通知改为岛内卡片。通话和闹钟保留系统横幅。</string>
     <string name="setting_otp">验证码卡片</string>
     <string name="setting_otp_desc">收到包含验证码的文本时，展开显示验证码和复制按钮的卡片。</string>
@@ -549,6 +549,8 @@
     <string name="glow_theme_colour">主题色设置</string>
     <string name="show_in_fullscreen">竖屏全屏时仍然显示</string>
     <string name="show_in_fullscreen_desc">在相机等隐藏状态栏的应用中继续显示正在进行的活动。锁屏、息屏显示或没有活动内容时仍会隐藏。</string>
+    <string name="show_in_landscape">横屏和游戏中也显示</string>
+    <string name="show_in_landscape_desc">手机横置时以及在游戏等全屏应用中仍显示灵动岛。在锁屏和息屏显示上仍会隐藏。横屏布局不如竖屏精细。</string>
     <string name="setting_charging_info">充电详情卡片</string>
     <string name="setting_charging_info_desc">连接充电器时持续显示电池电流、估算功率和温度。</string>
     <string name="setting_charging_stats">充电统计</string>
@@ -574,6 +576,8 @@
     <string name="island_charge_seconds">%1$d秒</string>
     <string name="setting_stock_charging_animation">显示三星电池充电特效</string>
     <string name="setting_stock_charging_animation_desc">充电开始时，状态栏电池会展开并显示流动色彩。默认关闭。</string>
+    <string name="setting_wide_charging">宽充电弹窗</string>
+    <string name="setting_wide_charging_desc">接上充电器时，以横跨状态栏的长条胶囊显示充电弹窗。关闭后以普通大小显示。仅在三星充电效果关闭时生效。</string>
     <string name="concurrent_recording_input">并发麦克风波形（实验性）</string>
     <string name="concurrent_recording_input_desc">无需将录音机加入LSPosed作用域，即可显示三星录音机的实际音量。默认关闭，支持情况因设备而异。若影响录音，请关闭。</string>
     <string name="card_roundness">卡片圆角</string>
@@ -610,6 +614,8 @@
     <string name="search_terms_music">歌曲 音乐 音频 专辑 封面 播放 播放器</string>
     <string name="search_terms_battery">充电 充电器 电池 电量 电流 电压 功率 温度 百分比</string>
     <string name="search_terms_charging_effect">三星 原生 默认 充电 动画 电池 闪电 闪烁</string>
+    <string name="search_terms_landscape">横屏 横向 旋转 游戏 全屏 视频</string>
+    <string name="search_terms_wide_charging">宽 长 大 小 尺寸 充电 弹窗 胶囊 宽度</string>
     <string name="search_terms_notifications">通知 横幅 弹窗 消息 提醒 静默 卡片 系统 声音 聊天</string>
     <string name="search_terms_download">下载 传输 进度 上传 文件</string>
     <string name="search_terms_calls">电话 通话 拨号 语音 VoIP</string>
@@ -733,4 +739,28 @@
     <string name="recommend16_charging_text">开启充电详情后，可用文字行替代电池仪表，也可显示亮屏和息屏时的统计数据。</string>
     <string name="recommend16_privacy_title">也显示当前应用的相机和麦克风</string>
     <string name="recommend16_privacy">可选择显示当前使用的应用的相机和麦克风活动。请先开启隐私使用指示。</string>
+    <string name="recommend17_popup_title">系统弹窗，灵动岛外观</string>
+    <string name="recommend17_popup">通知卡片的第四个选项。系统弹窗保留自己的显示时间、滑动和回复，只换上灵动岛的外观。</string>
+    <string name="recommend17_call_title">通话由你决定</string>
+    <string name="recommend17_call">关闭来电卡片后，响铃的电话交给系统通话界面。接听后才会出现通话卡片。</string>
+    <string name="recommend17_recording_title">录屏留在岛外</string>
+    <string name="recommend17_recording">关闭录屏卡片，继续使用系统自带的指示器和通知。</string>
+    <string name="recommend17_pull_title">按钮按需显示</string>
+    <string name="recommend17_pull">通知卡片可以不带按钮打开，向下拉卡片即可显示按钮。</string>
+    <string name="recommend17_wide_title">充电弹窗大小</string>
+    <string name="recommend17_wide">关闭宽充电弹窗，插上充电器时会显示普通大小的弹窗。</string>
+    <string name="recommend17_landscape_title">横屏和游戏中也显示</string>
+    <string name="recommend17_landscape">手机横置以及在全屏游戏中，灵动岛依然保持显示。</string>
+    <string name="island_reply_failed">回复发送失败。已保留输入的内容。</string>
+    <string name="rules_limit_reached">最多可添加40条自定义规则。请先编辑或删除现有规则。</string>
+    <string name="ui_notification_system_style">系统弹窗使用灵动岛样式</string>
+    <string name="ui_notification_system_style_desc">保留系统的显示时长、滑动、回复和全屏行为。当前应用的通知也由系统决定是否显示。三星简洁弹窗改用详细横幅。灵动岛的前台应用和全屏设置不适用。通话保留专用操作。</string>
+    <string name="setting_incoming_calls">来电卡片</string>
+    <string name="setting_incoming_calls_desc">将来电显示为带有来电者以及接听和拒接按钮的灵动岛卡片。关闭后，所有来电都交给系统的通话界面，通话卡片在接听后才会出现。</string>
+    <string name="search_terms_incoming_calls">来电 电话 响铃 来电者 接听 拒接 通话 卡片 关闭 禁用</string>
+    <string name="setting_screen_recording">屏幕录制</string>
+    <string name="setting_screen_recording_desc">在灵动岛上显示屏幕录制的计时和停止按钮。关闭后，交给系统自带的指示和通知。</string>
+    <string name="search_terms_screen_recording">屏幕录制 录屏 录制 截取 计时 停止 胶囊 关闭 禁用</string>
+    <string name="setting_peek_pull_buttons">下拉显示按钮</string>
+    <string name="setting_peek_pull_buttons_desc">通知卡片打开时不显示按钮。向下拉动卡片即可显示。</string>
 </resources>
