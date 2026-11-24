@@ -2117,6 +2117,32 @@ _EXYNOS9810_FINAL_STAGE_GOOGLE_DATA_REPAIR()
     return 0
 }
 
+_EXYNOS9810_FINAL_ADD_HEALTH_SENSOR_SERVICE()
+{
+    # Samsung Health measures heart rate / SpO2 with the phone's MAX86915 sensor
+    # only through Samsung's HealthService (com.sec.android.service.health): it
+    # binds com.sec.android.sensor.framework.SensorService, which reports the
+    # sensor when HRM types 0x10019/0x1001a exist. The S22 base has no HealthService,
+    # so Samsung Health showed no measure option. Take it unmodified from each
+    # device's own stock firmware (same 2.1.4.009 on G960F/G965F/N960F).
+    [[ "$TARGET_CODENAME" =~ ^(starlte|star2lte|crownlte)$ ]] || return 0
+
+    if [ ! -d "$WORK_DIR/system/system/priv-app/HealthService" ]; then
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/priv-app/HealthService" || return 1
+    fi
+
+    install -D -m 755 "$MODPATH/health/unica_health_sensor_grant.sh" \
+        "$WORK_DIR/system/system/bin/unica_health_sensor_grant.sh" || return 1
+    install -D -m 644 "$MODPATH/health/unica_health_sensor_grant.rc" \
+        "$WORK_DIR/system/system/etc/init/unica_health_sensor_grant.rc" || return 1
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/bin/unica_health_sensor_grant.sh" \
+        0 2000 755 "u:object_r:system_file:s0"
+    _EXYNOS9810_FINAL_SET_METADATA "system" "system/etc/init/unica_health_sensor_grant.rc" \
+        0 0 644 "u:object_r:system_file:s0"
+
+    return 0
+}
+
 _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT()
 {
 
@@ -8338,6 +8364,7 @@ _EXYNOS9810_FINAL_ENABLE_CAMERA_UHD_60FPS
 _EXYNOS9810_FINAL_PATCH_CAMERA_FRONT_DYNAMIC_FOV
 _EXYNOS9810_FINAL_TUNE_AUDIO_VOLUME_CURVES
 _EXYNOS9810_FINAL_STAGE_GOOGLE_DATA_REPAIR
+_EXYNOS9810_FINAL_ADD_HEALTH_SENSOR_SERVICE || return 1
 _EXYNOS9810_FINAL_STAGE_KERNELSU_NEXT || return 1
 _EXYNOS9810_FINAL_ADD_VISUAL_CLOUD_CORE
 _EXYNOS9810_FINAL_VERIFY_PHOTO_EDITOR_STACK

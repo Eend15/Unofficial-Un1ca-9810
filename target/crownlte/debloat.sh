@@ -52,7 +52,6 @@ GalaxyWearable
 GearManager
 GearManagerStub
 GlobalGoals
-HealthService
 KidsHome_Installer
 LinkToWindowsService
 Members
