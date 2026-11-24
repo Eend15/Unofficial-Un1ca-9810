@@ -167,7 +167,12 @@ public final class NativeRuntime {
             return;
         }
         XC_LoadPackage.LoadPackageParam p = new XC_LoadPackage.LoadPackageParam();
-        p.packageName = p.processName = "com.android.systemui";
+        // SystemUI also runs in side processes (:screenshot, :edgelighting) that load the same
+        // code. The real process name keeps the island to the main process: the window lease is
+        // per process, so a second process would otherwise show a second island.
+        p.packageName = "com.android.systemui";
+        String processName = Application.getProcessName();
+        p.processName = processName != null ? processName : app.getPackageName();
         p.appInfo = app.getApplicationInfo();
         p.classLoader = systemLoader;
         new Entry().handleLoadPackage(p);

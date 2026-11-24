@@ -82,8 +82,15 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
     /** Key to "kind package" of the items of the last refresh, for the event log. */
     private Map<String, String> lastItems = new LinkedHashMap<>();
 
+    // Every size is fixed in pixels from the density the island was built with. Samsung's screen
+    // resolution switch (HD+/FHD+/WQHD+) and display zoom change the density without restarting
+    // SystemUI, which would leave the island drawn at the old scale (smaller on WQHD+).
+    private final int builtDensityDpi;
+    private boolean densityRestartPending;
+
     private IslandController(Context ctx, ClassLoader classLoader) {
         this.ctx = ctx;
+        builtDensityDpi = ctx.getResources().getConfiguration().densityDpi;
         recordingInput = new dev.android.dynamicisland.island.feedback.RecorderInput(ctx, () -> {
             IslandView current = placementView();
             if (current != null) current.onRecordingAudioFrame();
@@ -613,6 +620,17 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
 
     @Override
     public void onWindowConfigurationChanged() {
+        IslandWindow window = placement.window();
+        int dpi = (window != null ? window.view.getResources() : ctx.getResources())
+                .getConfiguration().densityDpi;
+        if (dpi != builtDensityDpi && dpi > 0 && !densityRestartPending) {
+            // Rebuild SystemUI once (as the settings toggle does) so every size, text and paint
+            // is made again for the new resolution; wait for the switch to settle first.
+            densityRestartPending = true;
+            XLog.i("display density " + builtDensityDpi + " -> " + dpi + ", recreating SystemUI");
+            main.postDelayed(() -> android.os.Process.killProcess(android.os.Process.myPid()), 1500);
+            return;
+        }
         main.post(placement::updateGeometry);
         // the wallpaper colours reach the island as a configuration change: the system accent may have moved
         main.post(() -> {

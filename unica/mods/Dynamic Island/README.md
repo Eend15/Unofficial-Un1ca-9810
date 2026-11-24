@@ -94,7 +94,9 @@ SingleWindowOwnerTest checks independent gates, independent class loaders,
 foreign release, clean handover and 32 simultaneous competing gates. The
 installed APK's same cross-loader behavior is also tested on Android ART.
 This covers the built-in integration; unrelated overlay applications do not
-participate in its lease.
+participate in its lease. The lease is per process, so the native runtime passes
+the real process name: SystemUI side processes (`:screenshot`, `:edgelighting`)
+never start an island (`:edgelighting` only gets the Now Brief pop-up bridge).
 
 ## v0.1.14 native compatibility
 
