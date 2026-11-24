@@ -18,7 +18,7 @@
 .method constructor <init>()V
     .registers 1
 
-    .line 384
+    .line 535
     invoke-direct {p0}, Lcom/samsung/android/camera/iris/SemIrisManager$RemovalCallback;-><init>()V
 
     return-void
@@ -29,7 +29,7 @@
 .method public onRemovalError(Lcom/samsung/android/camera/iris/Iris;ILjava/lang/CharSequence;)V
     .registers 5
 
-    .line 386
+    .line 537
     invoke-static {p3}, Ljava/lang/String;->valueOf(Ljava/lang/Object;)Ljava/lang/String;
 
     move-result-object p1
@@ -66,6 +66,6 @@
 
     invoke-static {p2, p1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I
 
-    .line 387
+    .line 538
     return-void
 .end method

@@ -102,6 +102,48 @@ def patch_chooser(text: str) -> str:
     return text[:pos] + f"    invoke-static {{p0}}, {VIEW_CREATED}\n" + text[pos:]
 
 
+SUW = "com/samsung/android/settings/biometrics/SuwBiometricsSetupActivity.smali"
+SUW_HOOK = f"{MENU}->onSetupBiometrics(Ljava/lang/Object;)V"
+SUW_CONTENT = re.compile(
+    r"\n    invoke-virtual \{p0, (p\d|v\d+)\}, Lcom/sec/android/secsetupwizardlib/SuwBaseActivity;"
+    r"->setContentView\(I\)V\n")
+
+
+def patch_setup_biometrics(text: str) -> str:
+    """First setup's "Set up biometrics" list: add Irises right after its layout is set."""
+    if SUW_HOOK in text:
+        return text
+    start, end = method_span(text, ".method public final onCreate(Landroid/os/Bundle;)V")
+    calls = list(SUW_CONTENT.finditer(text, start, end))
+    if len(calls) != 1:
+        raise ValueError(f"setup biometrics onCreate: expected 1 setContentView, found {len(calls)}")
+    if P0_WRITE.search(text, start, calls[0].start()):
+        raise ValueError("setup biometrics onCreate reassigns p0 before setContentView")
+    pos = calls[0].end()
+    return text[:pos] + f"    invoke-static {{p0}}, {SUW_HOOK}\n" + text[pos:]
+
+
+SETUP_LOCK = "com/android/settings/password/SetupChooseLockGeneric$SetupChooseLockGenericFragment.smali"
+SETUP_LOCK_HOOK = f"{MENU}->onSetupLockPicker(Ljava/lang/Object;)V"
+SETUP_LOCK_LOAD = re.compile(
+    r"\n    invoke-virtual \{p0, (p\d|v\d+)\}, Lcom/android/settings/SettingsPreferenceFragment;"
+    r"->addPreferencesFromResource\(I\)V\n")
+
+
+def patch_setup_lock(text: str) -> str:
+    """First setup's "Protect your phone" list: add Irises once its XML list is loaded."""
+    if SETUP_LOCK_HOOK in text:
+        return text
+    start, end = method_span(text, ".method public final addPreferences$2()V")
+    calls = list(SETUP_LOCK_LOAD.finditer(text, start, end))
+    if len(calls) != 1:
+        raise ValueError(f"setup lock addPreferences: expected 1 addPreferencesFromResource, found {len(calls)}")
+    if P0_WRITE.search(text, start, calls[0].start()):
+        raise ValueError("setup lock addPreferences reassigns p0")
+    pos = calls[0].end()
+    return text[:pos] + f"    invoke-static {{p0}}, {SETUP_LOCK_HOOK}\n" + text[pos:]
+
+
 def main(root: Path, helper_smali_root: Path):
     frags = list(root.glob("smali*/" + FRAGMENT))
     if len(frags) != 1:
@@ -117,6 +159,20 @@ def main(root: Path, helper_smali_root: Path):
     if patch_chooser(out) != out:
         raise ValueError("chooser patch not idempotent")
     choosers[0].write_text(out)
+    suw = list(root.glob("smali*/" + SUW))
+    if len(suw) != 1:
+        raise ValueError(f"expected one SuwBiometricsSetupActivity, found {len(suw)}")
+    out = patch_setup_biometrics(suw[0].read_text())
+    if patch_setup_biometrics(out) != out:
+        raise ValueError("setup biometrics patch not idempotent")
+    suw[0].write_text(out)
+    lock = list(root.glob("smali*/" + SETUP_LOCK))
+    if len(lock) != 1:
+        raise ValueError(f"expected one SetupChooseLockGenericFragment, found {len(lock)}")
+    out = patch_setup_lock(lock[0].read_text())
+    if patch_setup_lock(out) != out:
+        raise ValueError("setup lock patch not idempotent")
+    lock[0].write_text(out)
     # The helper gets its own dex so no existing dex grows past the method limit.
     pkg = Path(HELPER).parent
     found_helper = list(root.glob("smali*/" + HELPER))
@@ -130,7 +186,7 @@ def main(root: Path, helper_smali_root: Path):
         # Copy the whole package: D8 emits synthetic lambda classes next to the helper.
         shutil.copytree(helper_smali_root / pkg, root / f"smali_classes{n}" / pkg)
     print("SecSettings: Intelligent Scan and Irises entries hooked into Screen lock and biometrics"
-          " (refreshed on resume); secure lock chooser kept open for irises")
+          " (refreshed on resume); secure lock chooser kept open for irises; Irises offered in first setup")
 
 
 if __name__ == "__main__":

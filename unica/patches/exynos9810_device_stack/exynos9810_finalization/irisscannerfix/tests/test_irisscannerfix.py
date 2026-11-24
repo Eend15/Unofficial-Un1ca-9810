@@ -216,6 +216,35 @@ BCLG = """.method public final onCreate(Landroid/os/Bundle;)V
 """
 
 
+SUW = """.method public final onCreate(Landroid/os/Bundle;)V
+    .locals 4
+    invoke-super {p0, p1}, Lcom/sec/android/secsetupwizardlib/SuwBaseActivity;->onCreate(Landroid/os/Bundle;)V
+    const p1, 0x7f0d0872
+    invoke-virtual {p0, p1}, Lcom/sec/android/secsetupwizardlib/SuwBaseActivity;->setContentView(I)V
+    sget-boolean p1, Lcom/samsung/android/settings/Rune;->LOCKSCREEN_SECURITY_HIDE_SKIP_SUW_BUTTON:Z
+    const p1, 0x7f0a0f27
+    invoke-virtual {p0, p1}, Landroidx/appcompat/app/AppCompatActivity;->findViewById(I)Landroid/view/View;
+    move-result-object p0
+    return-void
+.end method
+"""
+
+
+SETUP_LOCK = """.method public final addPreferences$2()V
+    .locals 1
+    invoke-virtual {p0}, Lcom/android/settings/password/SetupChooseLockGeneric$SetupChooseLockGenericFragment;->isForBiometric()Z
+    move-result v0
+    if-eqz v0, :cond_0
+    invoke-super {p0}, Lcom/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment;->addPreferences$2()V
+    return-void
+    :cond_0
+    const v0, 0x7f170213
+    invoke-virtual {p0, v0}, Lcom/android/settings/SettingsPreferenceFragment;->addPreferencesFromResource(I)V
+    return-void
+.end method
+"""
+
+
 def write_secsettings(d: Path):
     frag = d / "smali" / settings.FRAGMENT
     frag.parent.mkdir(parents=True)
@@ -223,6 +252,12 @@ def write_secsettings(d: Path):
     chooser = d / "smali_classes2" / settings.CHOOSER
     chooser.parent.mkdir(parents=True)
     chooser.write_text(BCLG)
+    suw = d / "smali_classes2" / settings.SUW
+    suw.parent.mkdir(parents=True, exist_ok=True)
+    suw.write_text(SUW)
+    lock = d / "smali" / settings.SETUP_LOCK
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    lock.write_text(SETUP_LOCK)
     return frag, chooser
 
 
@@ -259,6 +294,26 @@ class SecSettingsTest(unittest.TestCase):
         self.assertIn(":cond_2\n    invoke-static {p0}, Lcom/samsung/android/settings/un1ca/IrisLockMenu;->onResume",
                       resume)
         self.assertTrue((d / "smali_classes3/com/samsung/android/settings/un1ca/IrisLockMenu.smali").is_file())
+
+    def test_setup_wizard_hook(self):
+        d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, d)
+        write_secsettings(d)
+        settings.main(d, FIX / "settings" / "smali")
+        settings.main(d, FIX / "settings" / "smali")
+        out = (d / "smali_classes2" / settings.SUW).read_text()
+        self.assertEqual(out.count(settings.SUW_HOOK), 1)
+        # Right after the stock layout is set, before onCreate reuses p0.
+        self.assertLess(out.index("setContentView(I)V"), out.index(settings.SUW_HOOK))
+        self.assertLess(out.index(settings.SUW_HOOK), out.index("move-result-object p0"))
+        helper = (d / "smali_classes3/com/samsung/android/settings/un1ca/IrisLockMenu.smali").read_text()
+        self.assertIn(".method public static onSetupBiometrics(Ljava/lang/Object;)V", helper)
+        self.assertIn(".method public static onSetupLockPicker(Ljava/lang/Object;)V", helper)
+        lock = (d / "smali" / settings.SETUP_LOCK).read_text()
+        self.assertEqual(lock.count(settings.SETUP_LOCK_HOOK), 1)
+        # Only in the setup list branch, after its XML is loaded; not in the biometric chooser.
+        self.assertLess(lock.index("addPreferencesFromResource(I)V"), lock.index(settings.SETUP_LOCK_HOOK))
+        self.assertLess(lock.index("->addPreferences$2()V\n"), lock.index(settings.SETUP_LOCK_HOOK))
 
     def test_refuses_resume_that_reassigns_p0(self):
         bad = CLG.replace("iget-object v0, p0, Lx;->mLockTypePolicy:Lx;",
@@ -299,7 +354,10 @@ class StringsTest(unittest.TestCase):
         # summary style, the lock chooser's stock suffix, header view and lock types).
         settings_own = {"comma", "sec_lockscreen_biometrics_summary_color", "biometrics",
                         "bio_face_recognition_title", "description_text",
-                        "unlock_set_pin", "unlock_set_password", "unlock_set_pattern"}
+                        "unlock_set_pin", "unlock_set_password", "unlock_set_pattern",
+                        "face_unlock", "content_layout", "sec_biometrics_setup_layout",
+                        "unlock_set_face", "fingerprint_category", "unlock_set_fingerprint",
+                        "switch_face", "switch_fingerprint"}
         missing = {k for k in used if k not in keys and k not in settings_own
                    and not k.startswith(("un1ca_", "gk_", "sys."))}
         self.assertFalse(missing, f"strings missing from irissettings: {sorted(missing)}")

@@ -9,6 +9,11 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.app.Activity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 import com.samsung.android.camera.iris.Iris;
 import com.samsung.android.camera.iris.SemIrisManager;
 import java.lang.reflect.Field;
@@ -37,6 +42,142 @@ public final class IrisLockMenu {
     private static final int ICON_VISIBLE = 0, ICON_GONE = 8;
 
     private IrisLockMenu() { }
+
+    static final String ARG_FROM_SETUP_WIZARD = "un1ca_from_setup_wizard";
+    private static final String SUW_ROW_TAG = "un1ca_suw_iris";
+
+    /**
+     * Called by SuwBiometricsSetupActivity.onCreate right after setContentView: the first
+     * setup's "Set up biometrics" screen only lists face and fingerprints. Adds "Irises"
+     * below face (a copy of the stock face row) that opens the iris page; it sets the
+     * screen lock, registers and returns RESULT_OK, so setup continues like after face.
+     */
+    public static void onSetupBiometrics(Object activityObj) {
+        try {
+            final Activity activity = (Activity) activityObj;
+            if (!activity.getPackageManager().hasSystemFeature(FEATURE)) return;
+            Resources res = activity.getResources();
+            String pkg = activity.getPackageName();
+            int faceId = res.getIdentifier("face_unlock", "id", pkg);
+            int contentId = res.getIdentifier("content_layout", "id", pkg);
+            int layoutId = res.getIdentifier("sec_biometrics_setup_layout", "layout", pkg);
+            if (faceId == 0 || contentId == 0 || layoutId == 0) return;
+            ViewGroup content = activity.findViewById(contentId);
+            if (content == null || content.findViewWithTag(SUW_ROW_TAG) != null) return;
+            View copy = LayoutInflater.from(activity).inflate(layoutId, null, false);
+            View row = copy.findViewById(faceId);
+            if (!(row instanceof ViewGroup)) return;
+            ((ViewGroup) row.getParent()).removeView(row);
+            row.setId(View.NO_ID);
+            row.setTag(SUW_ROW_TAG);
+            TextView label = firstTextView((ViewGroup) row);
+            if (label == null) return;
+            final String title = irisText(activity, "bio_iris_scanner_title", "Irises");
+            label.setText(title);
+            View face = activity.findViewById(faceId);
+            int at = face != null ? content.indexOfChild(face) + 1 : 0;
+            content.addView(row, Math.max(at, 0));
+            row.setOnClickListener(v -> openSetupIrisPage(activity, title));
+        } catch (Throwable t) {
+            Log.w(TAG, "cannot add the iris setup entry", t);
+        }
+    }
+
+    private static final String SETUP_FACE_KEY = "unlock_set_face";
+    private static final String SETUP_IRIS_KEY = "un1ca_unlock_set_iris";
+    // SetupChooseLockGenericFragment's request code for face and fingerprints: a result
+    // with a screen lock set finishes the step (setup moves on), otherwise the list stays.
+    private static final int SETUP_ENROLL_REQUEST = 0x2735;
+
+    /**
+     * Called by SetupChooseLockGenericFragment.addPreferences right after it loads the first
+     * setup's "Protect your phone" list (face, fingerprints, PIN, password, pattern). Adds
+     * "Irises" below face; the iris page sets the lock, registers and returns like face.
+     */
+    public static void onSetupLockPicker(Object fragment) {
+        try {
+            Context ctx = (Context) fragment.getClass().getMethod("getContext").invoke(fragment);
+            if (ctx == null || !ctx.getPackageManager().hasSystemFeature(FEATURE)) return;
+            Method find = fragment.getClass().getMethod("findPreference", CharSequence.class);
+            Object face = find.invoke(fragment, SETUP_FACE_KEY);
+            if (face == null || find.invoke(fragment, SETUP_IRIS_KEY) != null) return;
+            Object parent = invoke(face, "getParent");
+            if (parent == null) return;
+            ClassLoader cl = face.getClass().getClassLoader();
+            Class<?> prefClass = Class.forName("androidx.preference.Preference", false, cl);
+            int faceOrder = (Integer) invoke(face, "getOrder");
+            int count = (Integer) invoke(parent, "getPreferenceCount");
+            Method get = parent.getClass().getMethod("getPreference", int.class);
+            for (int n = 0; n < count; n++) {
+                Object p = get.invoke(parent, n);
+                int order = (Integer) invoke(p, "getOrder");
+                if (order > faceOrder) set(p, "setOrder", int.class, order + 1);
+            }
+            final String title = irisText(ctx, "bio_iris_scanner_title", "Irises");
+            Object pref = face.getClass().getConstructor(Context.class).newInstance(ctx);
+            set(pref, "setKey", String.class, SETUP_IRIS_KEY);
+            set(pref, "setTitle", CharSequence.class, title);
+            set(pref, "setPersistent", boolean.class, false);
+            set(pref, "setOrder", int.class, faceOrder + 1);
+            Class<?> listener = Class.forName("androidx.preference.Preference$OnPreferenceClickListener", false, cl);
+            Object onClick = Proxy.newProxyInstance(listener.getClassLoader(), new Class<?>[]{listener},
+                    (proxy, method, args) -> {
+                        if (!"onPreferenceClick".equals(method.getName())) return null;
+                        Intent i = setupIrisIntent(ctx, title, -1);
+                        fragment.getClass().getMethod("startActivityForResult", Intent.class, int.class)
+                                .invoke(fragment, i, SETUP_ENROLL_REQUEST);
+                        return Boolean.TRUE;
+                    });
+            set(pref, "setOnPreferenceClickListener", listener, onClick);
+            parent.getClass().getMethod("addPreference", prefClass).invoke(parent, pref);
+        } catch (Throwable t) {
+            Log.w(TAG, "cannot add the iris entry to the setup lock list", t);
+        }
+    }
+
+    private static Intent setupIrisIntent(Context ctx, String title, int userId) {
+        Bundle pageArgs = new Bundle();
+        if (userId >= 0) pageArgs.putInt("android.intent.extra.USER_ID", userId);
+        pageArgs.putBoolean(ARG_FROM_SETUP_WIZARD, true);
+        Intent i = new Intent().setClassName(ctx.getPackageName(), "com.android.settings.SubSettings");
+        i.putExtra(":settings:show_fragment", IRIS_FRAGMENT);
+        i.putExtra(":settings:show_fragment_title", title);
+        i.putExtra(":settings:show_fragment_args", pageArgs);
+        i.putExtra("fromSetupWizard", true);
+        return i;
+    }
+
+    private static void openSetupIrisPage(Activity activity, String title) {
+        int user = -1;
+        try {
+            Object userId = fieldValue(activity, "mUserId");
+            if (userId instanceof Integer) user = (Integer) userId;
+        } catch (Throwable ignored) { }
+        Intent i = setupIrisIntent(activity, title, user);
+        try {
+            // The activity's own result launcher: a non-zero result finishes the biometrics
+            // step with that code (setup moves on), RESULT_CANCELED shows the list again.
+            Object launcher = fieldValue(activity, "mSetLockResult");
+            launcher.getClass().getMethod("launch", Object.class).invoke(launcher, i);
+            Object root = fieldValue(activity, "mRootLayout");
+            if (root instanceof View) ((View) root).setVisibility(View.INVISIBLE);
+        } catch (Throwable t) {
+            Log.w(TAG, "setup result launcher unavailable, opening the iris page directly", t);
+            activity.startActivity(i);
+        }
+    }
+
+    private static TextView firstTextView(ViewGroup group) {
+        for (int n = 0; n < group.getChildCount(); n++) {
+            View child = group.getChildAt(n);
+            if (child instanceof TextView) return (TextView) child;
+            if (child instanceof ViewGroup) {
+                TextView found = firstTextView((ViewGroup) child);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
 
     /**
      * Called at the end of ChooseLockGenericFragment.onResume. Stock only refreshes the
@@ -206,6 +347,16 @@ public final class IrisLockMenu {
                         find.invoke(fragment, "biometrics_category"),
                         find.invoke(fragment, "pref_biometrics_description")}) {
                     if (p != null) removeFromParent(p);
+                }
+                // Opened for irises as a generic biometric (the first setup's chooser): stock
+                // hides the face and fingerprint entries only for face or fingerprints.
+                if (isIrisChooser(fragment)) {
+                    for (String k : new String[]{"fingerprint_category", "unlock_set_fingerprint",
+                            "switch_face", "switch_fingerprint", FACE_KEY, FINGERPRINT_KEY,
+                            "key_about_unlock_biometrics"}) {
+                        Object p = find.invoke(fragment, k);
+                        if (p != null) removeFromParent(p);
+                    }
                 }
                 return;
             }

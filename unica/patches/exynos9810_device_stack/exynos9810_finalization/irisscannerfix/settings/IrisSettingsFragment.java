@@ -55,6 +55,7 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     static final String FACE_STAGE = "lock_screen_face";
     static final String BIO_CHOOSE_LOCK = "com.samsung.android.settings.biometrics.BiometricsChooseLockGeneric";
     static final String CHOOSE_LOCK = "com.android.settings.password.ChooseLockGeneric";
+    static final String SETUP_BIO_CHOOSE_LOCK = "com.samsung.android.settings.biometrics.SetupBiometricsChooseLockGeneric";
     static final String EXTRA_GK_PW_HANDLE = "gk_pw_handle";
     // LockPatternUtils.CREDENTIAL_TYPE_*
     static final int CREDENTIAL_TYPE_NONE = -1, CREDENTIAL_TYPE_PATTERN = 1;
@@ -73,6 +74,8 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     private boolean mEnrollAfterConfirm;
     private boolean mRetriedStaleToken;
     private boolean mHadIrises;
+    // Opened from the first setup's biometrics screen: report the result and leave.
+    private boolean mFromSetupWizard;
 
     private PreferenceCategory mManage;
     private Preference mRemove, mRegister;
@@ -88,6 +91,7 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
         mUserId = myUserId();
         Bundle args = getArguments();
         mIntelligentScan = args != null && args.getBoolean(ARG_INTELLIGENT_SCAN, false);
+        mFromSetupWizard = args != null && args.getBoolean(IrisLockMenu.ARG_FROM_SETUP_WIZARD, false);
         try {
             mIris = SemIrisManager.getSemIrisManager(mContext);
             mLockUtils = Class.forName("com.android.internal.widget.LockPatternUtils")
@@ -262,6 +266,8 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
 
     private void refresh() {
         if (mRemove == null || mIris == null) return;
+        // Leaving with Back also reports the current state to setup.
+        if (mFromSetupWizard) reportSetupResult();
         boolean hasIris = !enrolled().isEmpty();
         boolean hasFace = hasEnrolledFace();
         if (mIntelligentScan) {
@@ -298,7 +304,18 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
 
     private void finish() {
         Activity a = getActivity();
-        if (a != null) a.finish();
+        if (a != null) {
+            if (mFromSetupWizard) reportSetupResult();
+            a.finish();
+        }
+    }
+
+    /** RESULT_OK once irises are registered (setup moves on), otherwise back to its list. */
+    private void reportSetupResult() {
+        Activity a = getActivity();
+        if (a != null && mIris != null) {
+            a.setResult(enrolled().isEmpty() ? Activity.RESULT_CANCELED : Activity.RESULT_OK);
+        }
     }
 
     // ---- credential confirmation (Settings' own lock screen activity) ----
@@ -333,7 +350,12 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
     }
 
     private boolean chooseLock() {
-        for (String cls : new String[]{BIO_CHOOSE_LOCK, CHOOSE_LOCK}) {
+        // During the first setup face uses the setup variant (it may run before the device
+        // is provisioned and has the setup layout); do the same.
+        String[] choosers = mFromSetupWizard
+                ? new String[]{SETUP_BIO_CHOOSE_LOCK, BIO_CHOOSE_LOCK, CHOOSE_LOCK}
+                : new String[]{BIO_CHOOSE_LOCK, CHOOSE_LOCK};
+        for (String cls : choosers) {
             Intent i = new Intent().setClassName(mContext.getPackageName(), cls);
             // Same extras as the stock face flow (FaceLockSettings.launchChooseLock); the
             // iris flag keeps the "Set a secure screen lock first" chooser open and gives
@@ -342,6 +364,9 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
             i.putExtra("hide_insecure_options", true);
             i.putExtra("set_biometric_lock", true);
             i.putExtra(IrisLockMenu.EXTRA_FOR_IRIS, true);
+            // The setup chooser only lists lock types (not the whole setup list with face,
+            // irises and fingerprints again) when it is for a biometric.
+            if (SETUP_BIO_CHOOSE_LOCK.equals(cls)) i.putExtra("for_biometrics", true);
             i.putExtra("requested_min_complexity", 0);
             i.putExtra("android.intent.extra.USER_ID", mUserId);
             try {
@@ -559,6 +584,12 @@ public final class IrisSettingsFragment extends SettingsPreferenceFragment {
                     // A new registration turns iris unlock on, like stock. Removal sets it
                     // to 0, so "only when unset" left it off after registering again.
                     Settings.Secure.putInt(mContext.getContentResolver(), KEY_UNLOCK, 1);
+                }
+                if (mFromSetupWizard) {
+                    // Setup continues like after registering a face.
+                    reportSetupResult();
+                    finish();
+                    return;
                 }
             }
             if (!showEnrollError(result)) leaveIfNothingEnrolled();
