@@ -1377,6 +1377,8 @@ _EXYNOS9810_FINAL_APPLY_CPU_GROUPS()
         etc/init/init.9810-cpuset.rc:vendor_configs_file \
         etc/init/init.9810-schedtune.rc:vendor_configs_file \
         etc/init/hyper-default-sec.rc:vendor_configs_file \
+        etc/hyper/config_chipset.json:vendor_configs_file \
+        etc/hyper/config_hyper_permission.json:vendor_configs_file \
         etc/hyper/config_vendor.json:vendor_configs_file; do
         F="${ENTRY%%:*}"
         L="${ENTRY##*:}"

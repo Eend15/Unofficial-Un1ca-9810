@@ -20,7 +20,7 @@ or new zram policy are introduced.
 
 ## CPU groups and HyPer (`vendor/`)
 
-`_EXYNOS9810_FINAL_APPLY_CPU_GROUPS` installs six vendor files (identical for
+`_EXYNOS9810_FINAL_APPLY_CPU_GROUPS` installs eight vendor files (identical for
 all three targets):
 
 | File | Why |
@@ -29,8 +29,10 @@ all three targets):
 | `etc/task_profiles.json` | Adds the schedtune joins (top-app/foreground/background/rt) to the profiles. |
 | `etc/init/init.9810-cpuset.rc` | Creates One UI's `moderate` (LITTLE 0-3) and `sf` cpusets. Without `sf`, GPIS wrote its boost mask into the root cpuset (permission denied). |
 | `etc/init/init.9810-schedtune.rc` | Creates/permissions the stune groups. |
-| `etc/init/hyper-default-sec.rc` | Gives HyPer (system uid) the 9810 cpufreq/hotplug/MIF nodes before the HAL starts. |
-| `etc/hyper/config_vendor.json` | 9810 HyPer hint table. |
+| `etc/init/hyper-default-sec.rc` | Gives HyPer (system uid) the 9810 cpufreq/hotplug/MIF nodes and the touch input booster before the HAL starts. |
+| `etc/hyper/config_vendor.json` | 9810 HyPer hint table. App switch and Home also hold MIF at 50%. |
+| `etc/hyper/config_chipset.json` | Chipset hint table. Touch, scroll and launcher hints raise the CPU floor (gesture/list 858 to 1469/1170 MHz, smooth scroll/launcher/gallery 1261 to 1469 MHz, resume 1794 MHz, badge 1924 MHz) and add a 40% GPU floor; app switch GPU 80%; wake boost 3 s. TOUCH_HEAD/TAIL/LEVEL point at `/sys/class/input_booster/touch/`, where the kernel creates them (the old `/sys/class/input_booster/head` never existed, so the touch booster was never driven). |
+| `etc/hyper/config_hyper_permission.json` | Lets three more UI processes request the touch/keyboard hints 3501/3511/3512. |
 
 Measured on star2lte: before, SystemUI and Home sat in the `restricted`
 cpuset (CPUs 0-1) while visible, `/dev/stune` was missing and 45 GPIS writes

@@ -12142,6 +12142,8 @@
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/performance/README.md",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/performance/performance_policy.py",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/performance/vendor/etc/cgroups.json",
+    "unica/patches/exynos9810_device_stack/exynos9810_finalization/performance/vendor/etc/hyper/config_chipset.json",
+    "unica/patches/exynos9810_device_stack/exynos9810_finalization/performance/vendor/etc/hyper/config_hyper_permission.json",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/performance/vendor/etc/hyper/config_vendor.json",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/performance/vendor/etc/init/hyper-default-sec.rc",
     "unica/patches/exynos9810_device_stack/exynos9810_finalization/performance/vendor/etc/init/init.9810-cpuset.rc",

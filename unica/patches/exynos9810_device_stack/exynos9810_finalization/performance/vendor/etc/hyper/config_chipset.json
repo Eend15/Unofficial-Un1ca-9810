@@ -1,0 +1,371 @@
+{
+  "Resources": [
+    {
+      "Name": "PCIE_PSM_DISABLE",
+      "Handler": "sysfs",
+      "BoostPath": "/sys/devices/platform/116a0000.pcie0/pcie_sysfs",
+      "DefaultValue": "11",
+      "Priority": "low",
+      "Values": [
+        "10"
+      ]
+    }
+  ],
+  "Hints": [
+    {
+      "Hint": "AMS_RESUME",
+      "ID": "1",
+      "Duration": "-1",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1794000"
+        }
+      ]
+    },
+    {
+      "Hint": "AMS_RELAUNCH_RESUME",
+      "ID": "2",
+      "Duration": "1000",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1794000"
+        }
+      ]
+    },
+    {
+      "Hint": "AMS_ACT_RESUME",
+      "ID": "3",
+      "Duration": "-1",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1794000"
+        }
+      ]
+    },
+    {
+      "Hint": "AMS_ACT_START",
+      "ID": "4",
+      "Duration": "-1",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "100#"
+        },
+        {
+          "Resource": "GPUMinFreq",
+          "Value": "70#"
+        }
+      ]
+    },
+    {
+      "Hint": "AMS_RESUME_TAIL",
+      "ID": "5",
+      "Duration": "300",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1794000"
+        }
+      ]
+    },
+    {
+      "Hint": "AMS_APP_SWITCH",
+      "ID": "7",
+      "Duration": "-1",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "100#"
+        },
+        {
+          "Resource": "GPUMinFreq",
+          "Value": "80#"
+        }
+      ]
+    },
+    {
+      "Hint": "AMS_APP_HOME",
+      "ID": "8",
+      "Duration": "800",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "100#"
+        }
+      ]
+    },
+    {
+      "Hint": "GALLERY_TOUCH",
+      "ID": "9",
+      "Duration": "500",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1469000"
+        }
+      ]
+    },
+    {
+      "Hint": "GALLERY_TOUCH_TAIL",
+      "ID": "10",
+      "Duration": "500",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1469000"
+        }
+      ]
+    },
+    {
+      "Hint": "GALLERY_SCROLL",
+      "ID": "11",
+      "Duration": "-1",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1469000"
+        },
+        {
+          "Resource": "GPUMinFreq",
+          "Value": "40#"
+        }
+      ]
+    },
+    {
+      "Hint": "LAUNCHER_TOUCH",
+      "ID": "12",
+      "Duration": "1000",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1469000"
+        },
+        {
+          "Resource": "GPUMinFreq",
+          "Value": "40#"
+        }
+      ]
+    },
+    {
+      "Hint": "LISTVIEW_SCROLL",
+      "ID": "16",
+      "Duration": "10000",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1170000"
+        },
+        {
+          "Resource": "GPUMinFreq",
+          "Value": "40#"
+        }
+      ]
+    },
+    {
+      "Hint": "APP_LAUNCH",
+      "ID": "18",
+      "Duration": "700",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "100#"
+        }
+      ]
+    },
+    {
+      "Hint": "AMS_APP_LAUNCH",
+      "Duration": "1000",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "100#"
+        }
+      ]
+    },
+    {
+      "Hint": "AMS_APP_LAUNCH_M",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "100#"
+        }
+      ]
+    },
+    {
+      "Hint": "AMS_APP_LAUNCH_LM",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "100#"
+        }
+      ]
+    },
+    {
+      "Hint": "DEVICE_WAKEUP",
+      "ID": "19",
+      "Duration": "3000",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1469000"
+        }
+      ]
+    },
+    {
+      "Hint": "CONTACT_SCROLL",
+      "ID": "20",
+      "Duration": "1000",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1261000"
+        }
+      ]
+    },
+    {
+      "Hint": "BADGE_UPDATE",
+      "ID": "26",
+      "Duration": "500",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1924000"
+        }
+      ]
+    },
+    {
+      "Hint": "SMOOTH_SCROLL",
+      "ID": "21",
+      "Duration": "10000",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1469000"
+        },
+        {
+          "Resource": "GPUMinFreq",
+          "Value": "40#"
+        }
+      ]
+    },
+    {
+      "Hint": "GESTURE_DETECTED",
+      "ID": "22",
+      "Duration": "500",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "1469000"
+        },
+        {
+          "Resource": "GPUMinFreq",
+          "Value": "40#"
+        }
+      ]
+    },
+    {
+      "Hint": "SMART_VIEW_NORMAL",
+      "ID": "1200",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "263250"
+        },
+        {
+          "Resource": "CoreNumBigMin",
+          "Value": "3"
+        }
+      ]
+    },
+    {
+      "Hint": "SMART_VIEW_SECURE",
+      "ID": "1201",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "364000"
+        },
+        {
+          "Resource": "CoreNumBigMin",
+          "Value": "3"
+        }
+      ]
+    },
+    {
+      "Hint": "DIALPAD_TAB_LAUCH",
+      "ID": "9999",
+      "Duration": "250",
+      "ResoureList": [
+        {
+          "Resource": "CPUMinFreq",
+          "Value": "50%"
+        }
+      ]
+    }
+  ],
+  "Sysfs": [
+    {
+      "SysfsId": "0x00302000",
+      "SysfsName": "MIGRATE_OS",
+      "Path": "/sys/devices/system/sec_os_ctrl/migrate_os"
+    },
+    {
+      "SysfsId": "0x00301904",
+      "SysfsName": "BIG_FREQAVR_UPSCALE_RATIO",
+      "Path": "/sys/devices/system/cpu/cpufreq/policy4/schedutil/freqvar_upscale_ratio"
+    },
+    {
+      "SysfsId": "0x00403500",
+      "SysfsName": "BOOST_FRT_THRESHOLD",
+      "Path": "/sys/kernel/ert/boost_frt_threshold"
+    },
+    {
+      "SysfsId": "0x00601400",
+      "SysfsName": "DUAL_CHANGE_MS",
+      "Path": "/sys/power/cpuhotplug/governor/dual_change_ms"
+    },
+    {
+      "SysfsId": "0x00601200",
+      "SysfsName": "BIG_IDLE_THR",
+      "Path": "/sys/power/cpuhotplug/governor/big_idle_thr"
+    },
+    {
+      "SysfsId": "0x00601100",
+      "SysfsName": "LIT_IDLE_THR",
+      "Path": "/sys/power/cpuhotplug/governor/lit_idle_thr"
+    },
+    {
+      "SysfsId": "0x00601700",
+      "SysfsName": "LDSUM_HEAVY_THR",
+      "Path": "/sys/power/cpuhotplug/governor/ldsum_heavy_thr"
+    },
+    {
+      "SysfsId": "0x00601600",
+      "SysfsName": "LDSUM_ENABLED",
+      "Path": "/sys/power/cpuhotplug/governor/ldsum_enabled"
+    },
+    {
+      "SysfsId": "0x00601800",
+      "SysfsName": "SKIP_LIT_ENABLED",
+      "Path": "/sys/power/cpuhotplug/governor/skip_lit_enabled"
+    },
+    {
+      "SysfsId": "0x00201000",
+      "SysfsName": "TOUCH_HEAD",
+      "Path": "/sys/class/input_booster/touch/head"
+    },
+    {
+      "SysfsId": "0x00201100",
+      "SysfsName": "TOUCH_TAIL",
+      "Path": "/sys/class/input_booster/touch/tail"
+    },
+    {
+      "SysfsId": "0x00201200",
+      "SysfsName": "TOUCH_LEVEL",
+      "Path": "/sys/class/input_booster/touch/level"
+    }
+  ]
+}

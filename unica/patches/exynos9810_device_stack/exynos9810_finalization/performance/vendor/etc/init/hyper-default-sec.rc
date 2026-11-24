@@ -26,6 +26,15 @@ on init
     chmod 0664 /sys/power/cpufreq_max_limit
     chown system system /sys/power/cstate_control
     chmod 0664 /sys/power/cstate_control
+    # Touch input booster (TOUCH_HEAD/TAIL/LEVEL). The 9810 kernel creates one
+    # device per booster label, so the nodes live under input_booster/touch/ and
+    # are root 0644 until handed to the system user here.
+    chown system system /sys/class/input_booster/touch/head
+    chmod 0664 /sys/class/input_booster/touch/head
+    chown system system /sys/class/input_booster/touch/tail
+    chmod 0664 /sys/class/input_booster/touch/tail
+    chown system system /sys/class/input_booster/touch/level
+    chmod 0664 /sys/class/input_booster/touch/level
 
 service vendor.samsung.hardware.hyper-default /vendor/bin/hw/vendor.samsung.hardware.hyper-service
     class hal

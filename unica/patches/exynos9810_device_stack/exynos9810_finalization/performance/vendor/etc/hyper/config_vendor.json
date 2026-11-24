@@ -383,7 +383,7 @@
         },
         {
           "Resource": "MIFMinFreq",
-          "Value": "NONE"
+          "Value": "50#"
         },
         {
           "Resource": "CoreNumMin",
@@ -414,7 +414,7 @@
         },
         {
           "Resource": "MIFMinFreq",
-          "Value": "NONE"
+          "Value": "50#"
         },
         {
           "Resource": "CoreNumMin",
