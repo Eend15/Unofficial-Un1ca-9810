@@ -60,7 +60,7 @@ Snapdragon models are not supported.
 - Automatic Exynos9810 repartition and clean install flow integrated into the installer
 - DS-ACK-compatible kernel installer support
 - Permissive and enforcing kernel package support
-- KernelSU-Next v3.4.2 with SuSFS v1.5.5 in the bundled enforcing kernels
+- KernelSU-Next v3.4.0 with SuSFS v1.5.5 in the bundled enforcing kernels
 - Large EROFS ZIP recovery workflow for modern recovery environments
 - Full EROFS support (system, vendor, odm as erofs)
 - EROFS-aware and large ZIP recovery workflow support when paired with a compatible recovery
