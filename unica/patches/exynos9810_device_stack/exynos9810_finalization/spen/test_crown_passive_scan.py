@@ -35,7 +35,9 @@ class CrownPassiveScanTests(unittest.TestCase):
         jar = ROOT / 'out/tools/bin/apktool.jar'
         if not source.exists() or not jar.exists():
             self.skipTest('real decoded donor and Apktool required')
-        result = patch(patch_crown_scan.patch(source.read_text()))
+        text = source.read_text()
+        # A tree decoded by a finished build already carries both patches; test that output.
+        result = text if patch_crown_scan.MARKER in text else patch(patch_crown_scan.patch(text))
         with tempfile.TemporaryDirectory(prefix='crown-passive-') as td:
             directory = Path(td)
             (directory / 'scanner.smali').write_text(result)

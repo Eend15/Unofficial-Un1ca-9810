@@ -39,7 +39,9 @@ class CrownDiscoveryTests(unittest.TestCase):
         if not source.exists() or not jar.exists():
             self.skipTest('real decoded donor and Apktool required')
         # Same chain as the build: the verifier also requires the passive filter.
-        result = patch_crown_passive_scan_v10.patch(patch(source.read_text()))
+        text = source.read_text()
+        # A tree decoded by a finished build already carries both patches; test that output.
+        result = text if MARKER in text else patch_crown_passive_scan_v10.patch(patch(text))
         with tempfile.TemporaryDirectory(prefix='crown-discovery-') as td:
             directory = Path(td)
             (directory / 'scanner.smali').write_text(result)

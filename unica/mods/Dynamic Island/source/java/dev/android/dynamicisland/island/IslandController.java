@@ -230,6 +230,7 @@ public final class IslandController implements IslandHost, IslandWindow.Listener
                     }
                     if (Diagnostics.ACTION_STATUS_PING.equals(intent.getAction())) {
                         Diagnostics.acknowledgeStatus(context, intent.getLongExtra("nonce", 0));
+                        Diagnostics.publishRequested(context);
                         return;
                     }
                     ModuleSettings.applyPlacementPreview(intent);

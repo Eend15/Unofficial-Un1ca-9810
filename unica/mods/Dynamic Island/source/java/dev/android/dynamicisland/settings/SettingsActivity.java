@@ -741,7 +741,11 @@ public final class SettingsActivity extends Activity {
         report.setPadding(ui.dp(22), ui.dp(16), ui.dp(22), ui.dp(16));
         card.addView(report);
         LinearLayout actions = ui.card(page);
-        ui.actionRow(actions, getString(R.string.diagnostics_refresh), null, this::render);
+        ui.actionRow(actions, getString(R.string.diagnostics_refresh), null, () -> {
+            // System UI writes a fresh report on request; show it once it has landed
+            Diagnostics.requestStatus(this);
+            page.postDelayed(this::render, 800);
+        });
         ui.actionRow(actions, getString(R.string.diagnostics_copy), null, () -> {
             ClipboardManager cm = getSystemService(ClipboardManager.class);
             cm.setPrimaryClip(ClipData.newPlainText("DynamicIsland", report.getText()));

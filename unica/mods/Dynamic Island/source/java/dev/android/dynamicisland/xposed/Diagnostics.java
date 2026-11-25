@@ -63,7 +63,6 @@ public final class Diagnostics {
     /** One fact never takes more than this: a list of attached hooks used to push the recent events out of the report. */
     private static final int MAX_FACT_CHARS = 400;
     private static final long PUBLISH_INTERVAL_MS = 15_000;
-    private static final long LIVE_REPUBLISH_MS = 60_000;
 
     private static final Map<String, String> FACTS = new LinkedHashMap<>();
     private static final Map<String, String> STAGES = new LinkedHashMap<>();
@@ -74,6 +73,11 @@ public final class Diagnostics {
     private static final SimpleDateFormat EVENT_TIME = new SimpleDateFormat("HH:mm:ss", Locale.US);
     private static long lastPublish;
     private static boolean dirty;
+    // Each publish rewrites the whole global settings file. Events, facts (many change in normal
+    // use) and the live memory figure only reach it when the settings app asks (status ping);
+    // start-up stages and errors are published by themselves, carrying the facts with them.
+    private static boolean important;
+    private static boolean requested;
     private static Context context;
 
     private Diagnostics() {
@@ -103,6 +107,7 @@ public final class Diagnostics {
         String state = ok ? "ok" : "FAILED" + (error == null ? "" : " " + error.getClass().getSimpleName() + ": " + error.getMessage());
         if (!state.equals(STAGES.put(name, state))) {
             dirty = true;
+            important = true;
         }
         if (error != null) {
             error(name, error);
@@ -134,6 +139,7 @@ public final class Diagnostics {
                 ERRORS.removeFirst();
             }
             dirty = true;
+            important = true;
         }
     }
 
@@ -193,15 +199,16 @@ public final class Diagnostics {
             context = ctx.getApplicationContext() != null ? ctx.getApplicationContext() : ctx;
         }
         long now = SystemClock.uptimeMillis();
-        // a live fact (memory) changes by itself: let the report be refreshed now and then even when nothing else moved
-        if (!dirty && !LIVE.isEmpty() && now - lastPublish >= LIVE_REPUBLISH_MS) {
-            dirty = true;
+        if (context == null) {
+            return;
         }
-        if (context == null || !dirty || now - lastPublish < PUBLISH_INTERVAL_MS) {
+        if (!requested && (!important || !dirty || now - lastPublish < PUBLISH_INTERVAL_MS)) {
             return;
         }
         lastPublish = now;
         dirty = false;
+        important = false;
+        requested = false;
         final String text = report();
         final Context c = context;
         new Thread(() -> {
@@ -211,6 +218,14 @@ public final class Diagnostics {
                 // no permission on this build: the module log still has everything
             }
         }, "dynamicisland-report").start();
+    }
+
+    /** The settings app asked for the status: write the full report now, with the live facts. */
+    public static void publishRequested(Context ctx) {
+        synchronized (Diagnostics.class) {
+            requested = true;
+        }
+        publish(ctx);
     }
 
     /** For the settings app: the report System UI left, or null when the module has not run there. */
