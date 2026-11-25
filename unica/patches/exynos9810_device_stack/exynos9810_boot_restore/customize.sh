@@ -1763,6 +1763,54 @@ _EXYNOS9810_APPLY_FINAL_SECURITY_STACK()
             /@4\.0::IKeymasterDevice\/default/d
         }' "$MANIFEST"
     fi
+
+    # The libraries above were just restored from stock firmware, which undoes the
+    # device stack's Keymaster patch-level pin; apply it again on the final files.
+    _EXYNOS9810_REPIN_KEYMASTER_PATCHLEVEL || return 1
+}
+
+# Same pin as the device stack (_EXYNOS9810_PIN_KEYMASTER_PATCHLEVEL): Keymaster 3.0
+# must read a ROM-owned patch level, not ro.build.version.security_patch, which
+# integrity modules spoof; otherwise keys fail with INVALID_KEY_BLOB (Samsung Account).
+_EXYNOS9810_REPIN_KEYMASTER_PATCHLEVEL()
+{
+    local OLD="ro.build.version.security_patch"
+    local NEW="ro.vendor.keymaster.os_patchlvl"
+    local LEVEL CONTEXTS REL
+
+    LEVEL="$(sed -n "s/^${OLD//./\\.}=//p" "$WORK_DIR/system/system/build.prop" | tail -n 1)"
+    if ! [[ "$LEVEL" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+        LOGE "Cannot pin the Keymaster patch level: no $OLD in system build.prop"
+        return 1
+    fi
+    LOG "- Re-pinning the restored Keymaster 3.0 OS patch level to $LEVEL ($NEW)"
+
+    for REL in \
+        "lib/libkeymaster3device.so" \
+        "lib64/libkeymaster3device.so" \
+        "lib64/libkeymaster_helper_vendor.so" \
+        "lib64/libsoftkeymasterdevice.so" \
+        "lib64/libpuresoftkeymasterdevice.so"; do
+        python3 - "$WORK_DIR/vendor/$REL" "$OLD" "$NEW" <<'PY' || { LOGE "Keymaster patch-level pin failed: $REL"; return 1; }
+import sys
+path, old, new = sys.argv[1], sys.argv[2].encode() + b"\0", sys.argv[3].encode() + b"\0"
+assert len(old) == len(new)
+data = open(path, "rb").read()
+if data.count(new) == 1 and data.count(old) == 0:
+    sys.exit(0)
+if data.count(old) != 1:
+    sys.exit(f"{path}: expected one {old!r}, found {data.count(old)}")
+open(path, "wb").write(data.replace(old, new, 1))
+PY
+    done
+
+    _EXYNOS9810_SET_BUILD_PROP "$WORK_DIR/vendor/build.prop" "$NEW" "$LEVEL"
+
+    CONTEXTS="$WORK_DIR/vendor/etc/selinux/vendor_property_contexts"
+    [ -f "$CONTEXTS" ] || { LOGE "Missing $CONTEXTS"; return 1; }
+    sed -i "\|^${NEW//./\\.}[[:space:]]|d" "$CONTEXTS"
+    [ -z "$(tail -c 1 "$CONTEXTS")" ] || echo >> "$CONTEXTS"
+    printf '%s u:object_r:vendor_security_patch_level_prop:s0 exact string\n' "$NEW" >> "$CONTEXTS"
 }
 
 _EXYNOS9810_VERIFY_FINAL_SECURITY_STACK()
@@ -1833,8 +1881,15 @@ _EXYNOS9810_VERIFY_FINAL_SECURITY_STACK()
     fi
     for ENTRY in libkeymaster_portable.so libkeymaster_messages.so libpuresoftkeymasterdevice.so \
             libsoftkeymasterdevice.so android.hardware.keymaster@3.0.so; do
-        cmp -s "$WORK_DIR/vendor/lib64/$ENTRY" \
-            "$FW_DIR/$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")/system/system/lib64/vndk-29/$ENTRY" || {
+        # Stock VNDK-29 bytes; the Keymaster patch-level pin (same-length property
+        # name) is the only difference allowed.
+        python3 - "$WORK_DIR/vendor/lib64/$ENTRY" \
+            "$FW_DIR/$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")/system/system/lib64/vndk-29/$ENTRY" <<'PY' || {
+import sys
+built, stock = (open(p, "rb").read() for p in sys.argv[1:3])
+pinned = b"ro.vendor.keymaster.os_patchlvl\0"
+sys.exit(0 if built.replace(pinned, b"ro.build.version.security_patch\0") == stock else 1)
+PY
             LOGE "vendor/lib64/$ENTRY is not the stock VNDK-29 build the Keymaster 3.0 HAL needs"
             return 1
         }
