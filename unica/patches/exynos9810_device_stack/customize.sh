@@ -2419,6 +2419,25 @@ _EXYNOS9810_REMOVE_N770_INIT_COLLISIONS()
     _EXYNOS9810_DELETE_VENDOR_ENTRY "etc/init/init.exynos9810.rc"
 }
 
+_EXYNOS9810_KEEP_ONLY_CORTEXM4_HOTWORD()
+{
+    # The donor's "OK/Hey Google" enrollment apps target its Cortex-M55 voice DSP and
+    # outrank (higher versionCode, same package) the Cortex-M4 ones for this hardware.
+    # The Google app then keeps offering a model the 9810 DSP rejects: a failed
+    # startRecognition every 5 s, each leaking an fd in system_server, all night.
+    local DIR NAME
+    for DIR in "$WORK_DIR/product/priv-app" "$WORK_DIR/system/product/priv-app"; do
+        [ -d "$DIR" ] || continue
+        for NAME in $(ls "$DIR" | grep '^HotwordEnrollment' | grep -v 'CORTEXM4$'); do
+            LOG "- Removing donor hotword enrollment $NAME"
+            rm -rf "$DIR/$NAME"
+            _EXYNOS9810_DELETE_METADATA_PREFIX "system" "product/priv-app/$NAME" "/product/priv-app/$NAME"
+            _EXYNOS9810_DELETE_METADATA_PREFIX "system" "system/product/priv-app/$NAME" "/system/product/priv-app/$NAME"
+            _EXYNOS9810_DELETE_METADATA_PREFIX "product" "product/priv-app/$NAME" "/product/priv-app/$NAME"
+        done
+    done
+}
+
 _EXYNOS9810_DISABLE_SETUP_WIZARDS()
 {
     if [ "$EXYNOS9810_DISABLE_SETUP_WIZARDS" != "true" ]; then
@@ -4614,6 +4633,7 @@ _EXYNOS9810_COPY_SYSTEM "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/s
 _EXYNOS9810_COPY_VENDOR "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/vendor"
 _EXYNOS9810_COPY_ODM "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/odm"
 _EXYNOS9810_COPY_PRODUCT "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/common/product"
+_EXYNOS9810_KEEP_ONLY_CORTEXM4_HOTWORD
 
 _EXYNOS9810_COPY_SYSTEM "$EXYNOS9810_LEGACY_PORT_DIR/device_port/device/$EXYNOS9810_DEVICE/system"
 if [ -f "$SRC_DIR/target/$EXYNOS9810_DEVICE/camera/camera-feature.xml" ]; then
