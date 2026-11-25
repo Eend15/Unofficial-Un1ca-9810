@@ -45,5 +45,45 @@ class LayoutDecisionTests(unittest.TestCase):
         self.assertEqual((rc, repartitioned, state), (0, True, "repartitioned=1"))
 
 
+PREFLIGHT = REPART / "preflight.sh"
+
+
+class PreflightSizeTests(unittest.TestCase):
+    """The minimum layout depends on the build: EROFS accepts the 6700/725 layout."""
+
+    def run_preflight(self, fs_type, sizes):
+        with tempfile.TemporaryDirectory() as name:
+            d = Path(name)
+            block = d / "by-name"
+            block.mkdir()
+            for part, mib in sizes.items():
+                (block / part).write_text(str(mib))
+            text = PREFLIGHT.read_text().replace(
+                "BLOCK=/dev/block/platform/11120000.ufs/by-name", f"BLOCK={block}")
+            # fixture: each "node" holds its size in MiB; report it as 512-byte sectors
+            text = text.replace('sectors="$(blockdev --getsz "$node" 2>/dev/null)"',
+                                'sectors=$(( $(cat "$node") * 2048 ))')
+            (d / "preflight.sh").write_text(text)
+            if fs_type:
+                (d / "fs_type.prop").write_text(f"fs_type={fs_type}\n")
+            return subprocess.run(["sh", str(d / "preflight.sh"), "star2lte"],
+                                  capture_output=True, text=True).returncode
+
+    COMMUNITY = dict(SYSTEM=6700, VENDOR=725, ODM=700, CACHE=600)
+    EXT4 = dict(SYSTEM=9500, VENDOR=1300, ODM=700, CACHE=600)
+
+    def test_erofs_accepts_the_community_layout(self):
+        self.assertEqual(self.run_preflight("erofs", self.COMMUNITY), 0)
+
+    def test_ext4_needs_the_large_layout(self):
+        self.assertEqual(self.run_preflight("ext4", self.COMMUNITY), 1)
+        self.assertEqual(self.run_preflight("ext4", self.EXT4), 0)
+
+    def test_unknown_build_type_stays_on_the_safe_large_layout(self):
+        self.assertEqual(self.run_preflight(None, self.COMMUNITY), 1)
+
+    def test_erofs_still_rejects_a_too_small_system(self):
+        self.assertEqual(self.run_preflight("erofs", dict(self.COMMUNITY, SYSTEM=6000)), 1)
+
 if __name__ == "__main__":
     unittest.main()

@@ -22,14 +22,10 @@ SGDISK="$(find_sgdisk)" || {
 
 case "$1" in
     crownlte)
-        systemsize=9500
-        vendorsize=1300
         odmsize=860
         cachesize=520
         ;;
     starlte|star2lte|"")
-        systemsize=9500
-        vendorsize=1300
         odmsize=700
         cachesize=600
         ;;
@@ -38,6 +34,17 @@ case "$1" in
         exit 1
         ;;
 esac
+# EROFS releases (~6.2-6.4 GB system, ~670 MB vendor) use the common Exynos9810
+# community layout, the same sizes preflight.sh requires, so switching between such
+# ROMs never repartitions. Uncompressed ext4 test builds need the large layout.
+FS_TYPE="$(sed -n 's/^fs_type=//p' "$SELF_DIR/fs_type.prop" 2>/dev/null)"
+if [ "$FS_TYPE" = "erofs" ]; then
+    systemsize=6700
+    vendorsize=725
+else
+    systemsize=9500
+    vendorsize=1300
+fi
 
 partno()
 {

@@ -32,7 +32,7 @@ class RepartitionTests(unittest.TestCase):
         # WSL1 does not provide sparse allocation here. Scale only fixture
         # capacities to keep real GPT tests small; production units are intact.
         text = SOURCE.read_text().replace("DISK=/dev/block/sda", f"DISK={disk}")
-        for actual, scaled in ((9500, 95), (1300, 13), (860, 8),
+        for actual, scaled in ((9500, 95), (1300, 13), (6700, 67), (725, 9), (860, 8),
                                (700, 7), (520, 5), (600, 6)):
             text = text.replace(f"size={actual}\n", f"size={scaled}\n")
         script.write_text(text)
@@ -71,6 +71,19 @@ class RepartitionTests(unittest.TestCase):
                 self.assertGreater(after["USERDATA"][1] - after["USERDATA"][0], 0)
                 self.assertTrue((directory / "gpt-before-repartition.bin").is_file())
                 subprocess.run([SGDISK, "--verify", str(disk)], check=True, capture_output=True)
+
+    def test_erofs_build_creates_the_smaller_layout(self):
+        """EROFS releases get the community 6700/725 layout instead of the ext4 9500/1300."""
+        with tempfile.TemporaryDirectory() as name:
+            directory = Path(name)
+            disk, script = self.fixture(directory)
+            (directory / "fs_type.prop").write_text("fs_type=erofs\n")
+            result = subprocess.run(["sh", str(script), "star2lte"], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            after = self.table(disk)
+            for partition, mib in dict(SYSTEM=67, VENDOR=9, ODM=7, CACHE=6).items():
+                start, end, _ = after[partition]
+                self.assertEqual(end - start + 1, mib * 2048, partition)
 
     def test_insufficient_space_leaves_original_table_unchanged(self):
         with tempfile.TemporaryDirectory() as name:

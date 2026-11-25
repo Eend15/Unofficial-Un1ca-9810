@@ -69,8 +69,17 @@ check_partition()
 }
 
 target="$(detect_target "$1")"
-system_size_mib=9500
-vendor_size_mib=1300
+# Minimum sizes the installed layout must have. ext4 test builds are uncompressed and
+# need the large layout; EROFS releases fit the common Exynos9810 community layout
+# (6700/725), so switching from such a ROM does not repartition and wipe data.
+FS_TYPE="$(sed -n 's/^fs_type=//p' "$(dirname "$0")/fs_type.prop" 2>/dev/null)"
+if [ "$FS_TYPE" = "erofs" ]; then
+    system_size_mib=6700
+    vendor_size_mib=725
+else
+    system_size_mib=9500
+    vendor_size_mib=1300
+fi
 cache_size_mib=600
 odm_size_mib=700
 
