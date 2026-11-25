@@ -166,20 +166,6 @@ unica make_rom -z --fs-type ext4
 
 The correct **Enforcing KernelSU Next + SuSFS** kernel is selected automatically
 for EROFS or EXT4. The build creates the ROM ZIP in `out/`.
-
-To keep a log and continue in the background (closing the terminal does not
-stop it):
-
-```bash
-setsid nohup bash scripts/build_logged.sh star2lte out/star2lte.log out/star2lte.status \
-  --fs-type erofs --clean-work-dir > /dev/null 2>&1 &
-tail -f out/star2lte.log          # follow the build (Ctrl+C stops only the view)
-cat out/star2lte.status           # appears when done: 0 = success
-```
-
-`--clean-work-dir` starts from a fresh work dir; use it after changing the
-source or when a previous build stopped halfway.
-
 ## Installation
 
 ### Before you start
