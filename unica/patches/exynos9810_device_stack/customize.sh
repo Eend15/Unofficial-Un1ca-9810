@@ -944,6 +944,9 @@ _EXYNOS9810_DELETE_METADATA_PREFIX()
         sed -i "\|^$ENTRY\(/\\| \)|d" "$WORK_DIR/configs/fs_config-$PARTITION"
     [ -f "$WORK_DIR/configs/file_context-$PARTITION" ] && \
         sed -i "\|^$CONTEXT\(/\\| \)|d" "$WORK_DIR/configs/file_context-$PARTITION"
+    # A partition without its own configs (product folded into system) has nothing to
+    # delete; that must not fail the module under set -e.
+    return 0
 }
 
 _EXYNOS9810_DELETE_METADATA()

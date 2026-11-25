@@ -84,7 +84,26 @@ Snapdragon models are not supported.
 
 ## Build
 
-Use Ubuntu 24.04 (or Ubuntu in WSL). Keep the project on the Linux filesystem.
+Use Ubuntu 24.04 (or Ubuntu in WSL). Keep the project on the Linux filesystem
+(in WSL: under `~`, not `/mnt/c`). Plan for about **100 GB free space**: the
+firmware, the build tools and one device work dir take roughly 60 GB.
+
+### 0. Install the build dependencies
+
+```bash
+sudo apt update
+sudo apt install -y git git-lfs build-essential clang lld llvm cmake ninja-build \
+  pkg-config golang-go openjdk-21-jdk-headless python3 python3-venv python3-pip \
+  python3-cryptography p7zip-full bc brotli cpio curl webp ffmpeg file attr lz4 \
+  zstd zip unzip xxd rsync perl secilc protobuf-compiler libprotobuf-dev \
+  libbrotli-dev liblz4-dev libzstd-dev liblzma-dev libpcre2-dev libgtest-dev \
+  libunwind-dev zlib1g-dev
+```
+
+The build checks these first and prints any missing command.
+The first build also compiles the repository's own tools (apktool,
+android-tools, erofs-utils, samloader…) into `out/tools`; that happens
+automatically and only once.
 
 ### 1. Clone the source
 
@@ -100,9 +119,14 @@ git lfs pull
 **Git LFS is required** for the large kernel ZIP files and ROM payloads. Run
 `git lfs pull` after cloning so all required files are downloaded.
 
-### 2. Add the firmware
+### 2. Firmware
 
-Place the **extracted** firmware in `out/fw/`:
+The build **downloads and extracts the firmware itself** (Samsung servers via
+samloader) when it is not present yet: the S22 donor and the firmware of the
+device you build. Nothing to do unless the download fails or you want to use
+your own copies.
+
+To provide it yourself, place the **extracted** firmware in `out/fw/`:
 
 - **Donor (Galaxy S22):** `out/fw/SM-S901B_EUX`
 - **Galaxy S9:** `out/fw/SM-G960F_PHN`
@@ -142,6 +166,19 @@ unica make_rom -z --fs-type ext4
 
 The correct **Enforcing KernelSU Next + SuSFS** kernel is selected automatically
 for EROFS or EXT4. The build creates the ROM ZIP in `out/`.
+
+To keep a log and continue in the background (closing the terminal does not
+stop it):
+
+```bash
+setsid nohup bash scripts/build_logged.sh star2lte out/star2lte.log out/star2lte.status \
+  --fs-type erofs --clean-work-dir > /dev/null 2>&1 &
+tail -f out/star2lte.log          # follow the build (Ctrl+C stops only the view)
+cat out/star2lte.status           # appears when done: 0 = success
+```
+
+`--clean-work-dir` starts from a fresh work dir; use it after changing the
+source or when a previous build stopped halfway.
 
 ## Installation
 
