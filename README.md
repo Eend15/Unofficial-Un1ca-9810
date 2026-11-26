@@ -219,7 +219,8 @@ Flash only on supported Exynos models. Keep backups of EFS, modem, and important
 ## Credits
 
 - [salvogiangri](https://github.com/salvogiangri) and all upstream UN1CA contributors for the original project and build system
-- Exynos9810 kernel and device-port contributors in the Galaxy S9, Galaxy S9+, and Galaxy Note9 community
+- Big thanks to [duhansysl](https://github.com/duhansysl) for the Exynos9810 kernel this ROM's DS-ACK kernel is built on, and for the DuhanROM fixes and partition layout this port borrows from. This ROM is inspired by DuhanROM. Special thanks to him for his hard development work for the Exynos9810 community.
+- The whole Exynos9810 community and everyone who made this possible, including all kernel and device-port contributors for the Galaxy S9, Galaxy S9+ and Galaxy Note9
 - BluetoothLibraryPatcher, KnoxPatch, TrickyStore, Play Integrity Fix, and the other upstream projects used by UN1CA
 - Full credits go to [sampple-korea](https://github.com/sampple-korea) for [Dynamic Island](https://github.com/sampple-korea/dynamicisland)
 
